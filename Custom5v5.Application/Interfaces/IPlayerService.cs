@@ -11,4 +11,5 @@ public interface IPlayerService
     Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId);
     Task LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl);
     Task UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
+    Task RefreshAllMainRolesAsync();
 }

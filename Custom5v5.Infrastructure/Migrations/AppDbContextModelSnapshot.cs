@@ -39,6 +39,10 @@ namespace Custom5v5.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("lp");
 
+                    b.Property<string>("MainRole")
+                        .HasColumnType("text")
+                        .HasColumnName("main_role");
+
                     b.Property<string>("PUUID")
                         .IsRequired()
                         .HasColumnType("text")

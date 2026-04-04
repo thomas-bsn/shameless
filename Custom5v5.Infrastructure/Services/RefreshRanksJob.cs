@@ -10,13 +10,21 @@ public class RefreshRanksJob : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        int day = 0;
+
         while (!ct.IsCancellationRequested)
         {
             try
             {
                 using var scope = _services.CreateScope();
                 var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
+
                 await playerService.RefreshAllRanksAsync();
+
+                if (day % 7 == 0)
+                    await playerService.RefreshAllMainRolesAsync();
+
+                day++;
             }
             catch (Exception ex)
             {

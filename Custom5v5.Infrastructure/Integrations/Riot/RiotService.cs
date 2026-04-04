@@ -31,6 +31,31 @@ public class RiotService : IRiotService
         var res = await _http.GetFromJsonAsync<AccountResponse>(url);
         return res?.puuid;
     }
+    
+    public async Task<string?> GetMainRoleFromPuuidAsync(string puuid)
+    {
+        var url = $"lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=15";
+        var matchIds = await _http.GetFromJsonAsync<List<string>>(url);
+        if (matchIds == null || matchIds.Count == 0) return null;
+
+        var roleCounts = new Dictionary<string, int>();
+
+        foreach (var matchId in matchIds)
+        {
+            var matchUrl = $"lol/match/v5/matches/{matchId}";
+            var match = await _http.GetFromJsonAsync<MatchResponse>(matchUrl);
+            await Task.Delay(1200);
+            var participant = match?.Info?.Participants?.FirstOrDefault(p => p.Puuid == puuid);
+            if (participant == null) continue;
+
+            var role = participant.TeamPosition; // "TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"
+            if (string.IsNullOrWhiteSpace(role)) continue;
+
+            roleCounts[role] = roleCounts.GetValueOrDefault(role) + 1;
+        }
+
+        return roleCounts.Count == 0 ? null : roleCounts.MaxBy(x => x.Value).Key;
+    }
 
     // Bas niveau : puuid → rank
     public async Task<RiotRankDto?> GetRankFromPuuidAsync(string puuid)
@@ -55,4 +80,8 @@ public class RiotService : IRiotService
         if (parts.Length != 2) throw new ArgumentException("Format invalide, attendu: name#tag");
         return (parts[0], parts[1]);
     }
+    
+    public record MatchResponse(MatchInfo? Info);
+    public record MatchInfo(List<MatchParticipant>? Participants);
+    public record MatchParticipant(string Puuid, string TeamPosition);
 }

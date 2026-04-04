@@ -157,7 +157,7 @@ builder.Services.AddHttpClient<IRiotService, RiotService>((sp, client) =>
 {
     var riot = sp.GetRequiredService<IOptions<RiotApiOptions>>().Value;
     client.BaseAddress = new Uri(riot.BaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(10);
+    client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("X-Riot-Token", riot.ApiKey);
 });
 

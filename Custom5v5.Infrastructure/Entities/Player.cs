@@ -8,6 +8,7 @@ public class Player
     public string RiotId { get; set; } = null!;
     public string? RankTier { get; set; }
     public int? RankDivision { get; set; }
+    public string? MainRole { get; set; }
     public DateTime CreatedAt { get; set; }
     public int? LP { get; set; }
     public int? UserId { get; set; }

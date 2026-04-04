@@ -70,6 +70,16 @@ public class PlayerRepository : IPlayerRepository
 
         return player == null ? null : ToDto(player);
     }
+    
+    public async Task UpdateMainRoleAsync(int id, string? mainRole)
+    {
+        var player = await _db.Players.FindAsync(id);
+        if (player == null) return;
+
+        player.MainRole = mainRole;
+
+        await _db.SaveChangesAsync();
+    }
 
     public async Task UpdatePeakAsync(int playerId, string peakTier, int? peakDivision, string peakSeason, int peakLp)
     {
@@ -92,6 +102,7 @@ public class PlayerRepository : IPlayerRepository
         PUUID = p.PUUID,
         RankTier = p.RankTier ?? "UNRANKED",  // ← null → UNRANKED
         RankDivision = p.RankDivision,
+        MainRole = p.MainRole,
         LP = p.LP,
         PeakTier = p.PeakTier,
         PeakDivision = p.PeakDivision,

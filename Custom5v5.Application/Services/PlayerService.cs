@@ -30,6 +30,7 @@ public class PlayerService : IPlayerService
             throw new InvalidOperationException("Player already exists");
 
         var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var mainRole = await _riot.GetMainRoleFromPuuidAsync(puuid);
 
         var tier = rank?.Tier?.ToUpper();
         int? division = rank != null ? ParseDivision(rank.Division) : null;
@@ -43,6 +44,7 @@ public class PlayerService : IPlayerService
             Prenom = prenom,
             RiotId = riotId,
             PUUID = puuid,
+            MainRole = mainRole,
             RankTier = tier,
             RankDivision = division,
             LP = rank?.LP
@@ -109,16 +111,29 @@ public class PlayerService : IPlayerService
             if (string.IsNullOrWhiteSpace(player.PUUID)) continue;
 
             var rank = await _riot.GetRankFromPuuidAsync(player.PUUID);
-            if (rank == null) continue;
+            await Task.Delay(1200);
 
-            var tier = rank.Tier?.ToUpper();
-            var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
-                ? null
-                : (int?)ParseDivision(rank.Division);
+            if (rank != null)
+            {
+                var tier = rank.Tier?.ToUpper();
+                var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
+                    ? null
+                    : (int?)ParseDivision(rank.Division);
+                await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
+            }
+        }
+    }
+    
+    public async Task RefreshAllMainRolesAsync()
+    {
+        var players = await _players.GetAllAsync();
 
-            await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
+        foreach (var player in players)
+        {
+            if (string.IsNullOrWhiteSpace(player.PUUID)) continue;
 
-            await Task.Delay(1000); // 1 seconde entre chaque joueur
+            var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.PUUID);
+            await _players.UpdateMainRoleAsync(player.Id, mainRole);
         }
     }
 

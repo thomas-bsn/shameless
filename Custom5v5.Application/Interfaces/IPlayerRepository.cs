@@ -11,4 +11,5 @@ public interface IPlayerRepository
     Task LinkUserAsync(int playerId, int userId);
     Task<PlayerDto?> GetByUserIdAsync(int userId);
     Task UpdatePeakAsync(int playerId, string peakTier, int? peakDivision, string peakSeason, int peakLp);
+    Task UpdateMainRoleAsync(int id, string? mainRole);
 }
