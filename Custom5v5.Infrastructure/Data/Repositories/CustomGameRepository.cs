@@ -1,0 +1,67 @@
+using Custom5v5.Application.Entities;
+using Custom5v5.Application.Interfaces;
+using Custom5v5.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace Custom5v5.Infrastructure.Repositories;
+
+public class CustomGameRepository : ICustomGameRepository
+{
+    private readonly AppDbContext _db;
+
+    public CustomGameRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<CustomGame> AddAsync(CustomGame game)
+    {
+        _db.CustomGames.Add(game);
+        await _db.SaveChangesAsync();
+        return game;
+    }
+
+    public async Task<CustomGame?> GetByIdAsync(int id)
+    {
+        return await _db.CustomGames.FindAsync(id);
+    }
+
+    public async Task<CustomGame?> GetByIdWithParticipantsAsync(int id)
+    {
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+                .ThenInclude(p => p.Player)
+            .FirstOrDefaultAsync(g => g.Id == id);
+    }
+
+    public async Task<List<CustomGame>> GetByMonthAsync(DateTime month)
+    {
+        var startOfMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
+    
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.PlayedAt >= startOfMonth && g.PlayedAt < startOfNextMonth)
+            .OrderByDescending(g => g.PlayedAt)
+            .ToListAsync();
+    }
+
+    public async Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month)
+    {
+        var startOfMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
+    
+        return await _db.CustomGameParticipants
+            .Include(p => p.CustomGame)
+            .Where(p => p.PlayerId == playerId &&
+                        p.CustomGame.PlayedAt >= startOfMonth &&
+                        p.CustomGame.PlayedAt < startOfNextMonth)
+            .ToListAsync();
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _db.SaveChangesAsync();
+    }
+}

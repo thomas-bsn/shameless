@@ -1,4 +1,4 @@
-﻿namespace Custom5v5.Infrastructure.Entities;
+﻿namespace Custom5v5.Application.Entities;
 
 public class User
 {

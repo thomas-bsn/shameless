@@ -22,7 +22,7 @@ public class RefreshRanksJob : BackgroundService
                 await playerService.RefreshAllRanksAsync();
 
                 if (day % 7 == 0)
-                    await playerService.RefreshAllMainRolesAsync();
+                    //await playerService.RefreshAllMainRolesAsync();
 
                 day++;
             }

@@ -1,7 +1,7 @@
 ﻿using Custom5v5.Application.DTOs.Users;
+using Custom5v5.Application.Entities;
 using Custom5v5.Application.Interfaces;
 using Custom5v5.Infrastructure.Data;
-using Custom5v5.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Custom5v5.Infrastructure.Data.Repositories;

@@ -1,4 +1,6 @@
-﻿namespace Custom5v5.Application.Interfaces;
+﻿using Custom5v5.Application.Entities;
+
+namespace Custom5v5.Application.Interfaces;
 
 using Custom5v5.Application.DTOs.Players;
 
@@ -12,4 +14,9 @@ public interface IPlayerRepository
     Task<PlayerDto?> GetByUserIdAsync(int userId);
     Task UpdatePeakAsync(int playerId, string peakTier, int? peakDivision, string peakSeason, int peakLp);
     Task UpdateMainRoleAsync(int id, string? mainRole);
+    Task<Player?> GetByIdAsync(int id);
+    Task<List<Player>> GetByIdsAsync(List<int> ids);
+    Task<List<Player>> GetAllEntitiesAsync(); 
+    Task UpdateAsync(Player player);
+    Task UpdateRangeAsync(List<Player> players);
 }

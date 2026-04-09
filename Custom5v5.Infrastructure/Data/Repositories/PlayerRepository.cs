@@ -1,6 +1,6 @@
 ﻿using Custom5v5.Application.DTOs.Players;
+using Custom5v5.Application.Entities;
 using Custom5v5.Application.Interfaces;
-using Custom5v5.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Custom5v5.Infrastructure.Data.Repositories;
@@ -14,7 +14,7 @@ public class PlayerRepository : IPlayerRepository
     public async Task<List<PlayerDto>> GetAllAsync()
     {
         var players = await _db.Players.ToListAsync();
-        return players.Select(p => ToDto(p)).ToList();
+        return players.Select(ToDto).ToList();
     }
 
     public Task<bool> ExistsByPuuidAsync(string puuid) =>
@@ -52,7 +52,6 @@ public class PlayerRepository : IPlayerRepository
         return dto;
     }
 
-    // Lier un player à un user
     public async Task LinkUserAsync(int playerId, int userId)
     {
         var player = await _db.Players.FindAsync(playerId);
@@ -62,12 +61,9 @@ public class PlayerRepository : IPlayerRepository
         await _db.SaveChangesAsync();
     }
 
-    // Récupérer le player lié à un userId
     public async Task<PlayerDto?> GetByUserIdAsync(int userId)
     {
-        var player = await _db.Players
-            .FirstOrDefaultAsync(p => p.UserId == userId);
-
+        var player = await _db.Players.FirstOrDefaultAsync(p => p.UserId == userId);
         return player == null ? null : ToDto(player);
     }
     
@@ -77,7 +73,6 @@ public class PlayerRepository : IPlayerRepository
         if (player == null) return;
 
         player.MainRole = mainRole;
-
         await _db.SaveChangesAsync();
     }
 
@@ -94,13 +89,34 @@ public class PlayerRepository : IPlayerRepository
         await _db.SaveChangesAsync();
     }
 
+    public async Task<Player?> GetByIdAsync(int id) =>
+        await _db.Players.FindAsync(id);
+
+    public async Task<List<Player>> GetByIdsAsync(List<int> ids) =>
+        await _db.Players.Where(p => ids.Contains(p.Id)).ToListAsync();
+
+    public async Task<List<Player>> GetAllEntitiesAsync() =>
+        await _db.Players.ToListAsync();
+
+    public async Task UpdateAsync(Player player)
+    {
+        _db.Players.Update(player);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateRangeAsync(List<Player> players)
+    {
+        _db.Players.UpdateRange(players);
+        await _db.SaveChangesAsync();
+    }
+
     private static PlayerDto ToDto(Player p) => new()
     {
         Id = p.Id,
         Prenom = p.Prenom,
         RiotId = p.RiotId,
         PUUID = p.PUUID,
-        RankTier = p.RankTier ?? "UNRANKED",  // ← null → UNRANKED
+        RankTier = p.RankTier ?? "UNRANKED",
         RankDivision = p.RankDivision,
         MainRole = p.MainRole,
         LP = p.LP,

@@ -11,10 +11,14 @@ using Custom5v5.Api.Interfaces;
 using Custom5v5.Api.Services;
 using Custom5v5.Application.Interfaces;
 using Custom5v5.Application.Matches;
+using Custom5v5.Application.Services;
 using Custom5v5.Infrastructure.Data;
 using Custom5v5.Infrastructure.Data.Repositories;
 using Custom5v5.Infrastructure.Options;
+using Custom5v5.Infrastructure.Repositories;
 using Custom5v5.Infrastructure.Services;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -172,6 +176,11 @@ builder.Services.AddScoped<IPlayerService, PlayerService>();
 builder.Services.AddScoped<IMatchProvider, MatchProvider>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<MatchProcessor>();
+builder.Services.AddScoped<ICustomGameRepository, CustomGameRepository>();
+builder.Services.AddScoped<ICustomGameParticipantRepository, CustomGameParticipantRepository>();
+builder.Services.AddScoped<IPlayerMonthlyCostRepository, PlayerMonthlyCostRepository>();
+builder.Services.AddScoped<CustomGameService>();
+builder.Services.AddScoped<CostCalculationService>();
 
 builder.Services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
 builder.Services.AddSingleton<IJwtIssuer, JwtIssuer>();

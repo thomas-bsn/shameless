@@ -22,6 +22,92 @@ namespace Custom5v5.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.CustomGame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("PlayedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("played_at");
+
+                    b.Property<string>("RiotMatchData")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("riot_match_data");
+
+                    b.Property<string>("RiotMatchId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("riot_match_id");
+
+                    b.Property<string>("Winner")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("winner");
+
+                    b.HasKey("Id")
+                        .HasName("pk_custom_games");
+
+                    b.HasIndex("PlayedAt")
+                        .HasDatabaseName("ix_custom_games_played_at");
+
+                    b.ToTable("custom_games", (string)null);
+                });
+
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.CustomGameParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CustomGameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("custom_game_id");
+
+                    b.Property<int>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<string>("RiotParticipantData")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("riot_participant_data");
+
+                    b.Property<string>("Team")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("team");
+
+                    b.Property<bool>("Won")
+                        .HasColumnType("boolean")
+                        .HasColumnName("won");
+
+                    b.HasKey("Id")
+                        .HasName("pk_custom_game_participants");
+
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("ix_custom_game_participants_player_id");
+
+                    b.HasIndex("CustomGameId", "PlayerId")
+                        .HasDatabaseName("ix_custom_game_participants_custom_game_id_player_id");
+
+                    b.ToTable("custom_game_participants", (string)null);
+                });
+
             modelBuilder.Entity("Custom5v5.Infrastructure.Entities.Player", b =>
                 {
                     b.Property<int>("Id")
@@ -34,6 +120,18 @@ namespace Custom5v5.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<decimal>("CurrentCost")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(3,1)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("current_cost");
+
+                    b.Property<bool>("IsPlacement")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_placement");
 
                     b.Property<int?>("LP")
                         .HasColumnType("integer")
@@ -96,6 +194,53 @@ namespace Custom5v5.Infrastructure.Migrations
                     b.ToTable("players", (string)null);
                 });
 
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.PlayerMonthlyCost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BaseMMR")
+                        .HasColumnType("integer")
+                        .HasColumnName("base_mmr");
+
+                    b.Property<decimal>("FinalCost")
+                        .HasColumnType("numeric(3,1)")
+                        .HasColumnName("final_cost");
+
+                    b.Property<int>("GamesPlayed")
+                        .HasColumnType("integer")
+                        .HasColumnName("games_played");
+
+                    b.Property<DateTime>("Month")
+                        .HasColumnType("date")
+                        .HasColumnName("month");
+
+                    b.Property<int>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<int>("WinrateAdjustment")
+                        .HasColumnType("integer")
+                        .HasColumnName("winrate_adjustment");
+
+                    b.Property<int>("Wins")
+                        .HasColumnType("integer")
+                        .HasColumnName("wins");
+
+                    b.HasKey("Id")
+                        .HasName("pk_player_monthly_costs");
+
+                    b.HasIndex("PlayerId", "Month")
+                        .IsUnique()
+                        .HasDatabaseName("ix_player_monthly_costs_player_id_month");
+
+                    b.ToTable("player_monthly_costs", (string)null);
+                });
+
             modelBuilder.Entity("Custom5v5.Infrastructure.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -123,6 +268,27 @@ namespace Custom5v5.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.CustomGameParticipant", b =>
+                {
+                    b.HasOne("Custom5v5.Infrastructure.Entities.CustomGame", "CustomGame")
+                        .WithMany("Participants")
+                        .HasForeignKey("CustomGameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_custom_game_participants_custom_games_custom_game_id");
+
+                    b.HasOne("Custom5v5.Infrastructure.Entities.Player", "Player")
+                        .WithMany("CustomGameParticipations")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_custom_game_participants_players_player_id");
+
+                    b.Navigation("CustomGame");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Custom5v5.Infrastructure.Entities.Player", b =>
                 {
                     b.HasOne("Custom5v5.Infrastructure.Entities.User", "User")
@@ -131,6 +297,30 @@ namespace Custom5v5.Infrastructure.Migrations
                         .HasConstraintName("fk_players_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.PlayerMonthlyCost", b =>
+                {
+                    b.HasOne("Custom5v5.Infrastructure.Entities.Player", "Player")
+                        .WithMany("MonthlyCosts")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_player_monthly_costs_players_player_id");
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.CustomGame", b =>
+                {
+                    b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("Custom5v5.Infrastructure.Entities.Player", b =>
+                {
+                    b.Navigation("CustomGameParticipations");
+
+                    b.Navigation("MonthlyCosts");
                 });
 
             modelBuilder.Entity("Custom5v5.Infrastructure.Entities.User", b =>
