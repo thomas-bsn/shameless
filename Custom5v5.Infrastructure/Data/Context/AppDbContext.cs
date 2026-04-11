@@ -98,9 +98,6 @@ public class AppDbContext : DbContext
                   .HasMaxLength(10)
                   .IsRequired();
             
-            entity.Property(e => e.Won)
-                  .HasColumnName("won");
-            
             entity.Property(e => e.RiotParticipantData)
                   .HasColumnName("riot_participant_data")
                   .HasColumnType("jsonb");

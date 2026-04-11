@@ -51,12 +51,22 @@ public class CustomGameRepository : ICustomGameRepository
     {
         var startOfMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfNextMonth = startOfMonth.AddMonths(1);
-    
+        
         return await _db.CustomGameParticipants
             .Include(p => p.CustomGame)
-            .Where(p => p.PlayerId == playerId &&
-                        p.CustomGame.PlayedAt >= startOfMonth &&
-                        p.CustomGame.PlayedAt < startOfNextMonth)
+            .Where(p => p.PlayerId == playerId
+                        && p.CustomGame.PlayedAt.Year == month.Year
+                        && p.CustomGame.PlayedAt.Month == month.Month)
+            .ToListAsync();
+    }
+    
+    public async Task<List<CustomGame>> GetPendingAsync()
+    {
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.Status == "pending")
+            .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
 

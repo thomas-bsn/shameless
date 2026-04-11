@@ -10,4 +10,5 @@ public interface ICustomGameRepository
     Task<List<CustomGame>> GetByMonthAsync(DateTime month);
     Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month);
     Task SaveChangesAsync();
+    Task<List<CustomGame>> GetPendingAsync();
 }

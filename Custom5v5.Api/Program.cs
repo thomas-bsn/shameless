@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-
 using Custom5v5.Api.Interfaces;
 using Custom5v5.Api.Services;
 using Custom5v5.Application.Interfaces;
@@ -35,7 +34,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins.Split(","))
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // ✅ AJOUT
+              .AllowCredentials();
     });
 });
 

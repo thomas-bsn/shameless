@@ -30,35 +30,20 @@ public class CustomGameService
     public async Task<CustomGame> RecordCustomGame(
         List<int> blueTeamPlayerIds,
         List<int> redTeamPlayerIds,
-        string winner,
         DateTime? playedAt = null)
     {
-        // Validation
-        ValidateTeams(blueTeamPlayerIds, redTeamPlayerIds, winner);
-        
-        // Vérifier que tous les joueurs existent
-        var allPlayerIds = blueTeamPlayerIds.Concat(redTeamPlayerIds).ToList();
-        var existingPlayers = await _playerRepo.GetByIdsAsync(allPlayerIds);
-        
-        if (existingPlayers.Count != 10)
-            throw new ArgumentException("Some players do not exist in database");
-        
         // Créer la game
         var game = new CustomGame
         {
             PlayedAt = playedAt ?? DateTime.UtcNow,
-            Winner = winner.ToLower(),
             CreatedAt = DateTime.UtcNow
         };
         
         game = await _gameRepo.AddAsync(game);
         
         // Créer les participants
-        var participants = CreateParticipants(game.Id, blueTeamPlayerIds, redTeamPlayerIds, winner);
+        var participants = CreateParticipants(game.Id, blueTeamPlayerIds, redTeamPlayerIds);
         await _participantRepo.AddRangeAsync(participants);
-        
-        // Déclencher recalcul des costs
-        await _costService.RecalculateCosts(game.Id);
         
         return game;
     }
@@ -67,24 +52,31 @@ public class CustomGameService
     {
         return await _gameRepo.GetByMonthAsync(DateTime.UtcNow);
     }
-
-    private void ValidateTeams(List<int> blueTeam, List<int> redTeam, string winner)
+    
+    public async Task<List<CustomGame>> GetPendingGamesAsync()
     {
-        if (blueTeam.Count != 5)
-            throw new ArgumentException("Blue team must have exactly 5 players");
-        
-        if (redTeam.Count != 5)
-            throw new ArgumentException("Red team must have exactly 5 players");
-        
-        if (winner != "blue" && winner != "red")
-            throw new ArgumentException("Winner must be 'blue' or 'red'");
+        return await _gameRepo.GetPendingAsync();
+    }
+    
+    public async Task<CustomGame?> SetGameResultAsync(int gameId, string winner)
+    {
+        var game = await _gameRepo.GetByIdAsync(gameId);
+        if (game == null) return null;
+
+        game.Winner = winner;
+        game.Status = "completed";
+
+        await _gameRepo.SaveChangesAsync();
+        await _costService.RecalculateCosts(gameId);
+
+        return game;
     }
 
     private List<CustomGameParticipant> CreateParticipants(
         int gameId,
         List<int> blueTeamIds,
-        List<int> redTeamIds,
-        string winner)
+        List<int> redTeamIds
+        )
     {
         var participants = new List<CustomGameParticipant>();
         
@@ -94,8 +86,7 @@ public class CustomGameService
             {
                 CustomGameId = gameId,
                 PlayerId = playerId,
-                Team = "blue",
-                Won = winner == "blue"
+                Team = "blue"
             });
         }
         
@@ -105,8 +96,7 @@ public class CustomGameService
             {
                 CustomGameId = gameId,
                 PlayerId = playerId,
-                Team = "red",
-                Won = winner == "red"
+                Team = "red"
             });
         }
         
