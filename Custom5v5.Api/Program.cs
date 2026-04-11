@@ -1,4 +1,3 @@
-// Program.cs
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -35,7 +34,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(allowedOrigins.Split(","))
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); // ✅ AJOUT
     });
 });
 
@@ -207,8 +207,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors();
 app.MapControllers();
 app.Run();

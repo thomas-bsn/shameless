@@ -26,7 +26,7 @@ public class TestController : ControllerBase
         var game = await _gameService.RecordCustomGame(
             blueTeamPlayerIds: blueTeam,
             redTeamPlayerIds: redTeam,
-            winner: "blue",
+            winner: "red",
             playedAt: DateTime.UtcNow
         );
 
@@ -42,11 +42,12 @@ public class TestController : ControllerBase
     [HttpGet("player-cost/{playerId}")]
     public async Task<IActionResult> GetPlayerCost(int playerId)
     {
-        var (cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);
+        var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);
 
         return Ok(new
         {
             playerId,
+            name,
             cost,
             tier = MMRCalculationService.GetTierLabel(cost),
             mmr,

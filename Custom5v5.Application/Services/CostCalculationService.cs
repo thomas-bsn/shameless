@@ -92,7 +92,7 @@ public class CostCalculationService
         await _playerRepo.UpdateRangeAsync(players); // ✅ Nouvelle méthode
     }
 
-    public async Task<(decimal cost, int mmr, int baseMMR, int winrateAdjustment)> CalculatePlayerCostPreview(
+    public async Task<(string name, decimal cost, int mmr, int baseMMR, int winrateAdjustment)> CalculatePlayerCostPreview(
         int playerId,
         DateTime? month = null)
     {
@@ -110,7 +110,7 @@ public class CostCalculationService
         var winrateAdjustment = MMRCalculationService.CalculateWinrateAdjustment(gamesPlayed, wins);
         var finalMMR = baseMMR + winrateAdjustment;
         var cost = MMRCalculationService.MMRToCost(finalMMR);
-        
-        return (cost, finalMMR, baseMMR, winrateAdjustment);
+
+        return (player.Prenom,cost, finalMMR, baseMMR, winrateAdjustment);
     }
 }

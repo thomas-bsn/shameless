@@ -85,7 +85,6 @@ public sealed class AuthController : ControllerBase
 
         var me = await _discord.GetCurrentUserAsync(token.AccessToken, ct);
 
-        // Construire l'URL de l'avatar
         var avatarUrl = me.Avatar != null
             ? $"https://cdn.discordapp.com/avatars/{me.Id}/{me.Avatar}.png"
             : $"https://cdn.discordapp.com/embed/avatars/{long.Parse(me.Id) % 5}.png";
@@ -120,6 +119,13 @@ public sealed class AuthController : ControllerBase
             username,
             avatarUrl
         });
+    }
+    
+    [HttpGet("validate")]
+    [Authorize]
+    public IActionResult Validate()
+    {
+        return Ok(new { valid = true });
     }
 
     [HttpPost("logout")]
