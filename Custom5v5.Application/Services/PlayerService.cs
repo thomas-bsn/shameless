@@ -63,6 +63,24 @@ public class PlayerService : IPlayerService
         };
     }
     
+    public async Task RefreshRiotIdsAsync()
+    {
+        var players = await _players.GetAllAsync();
+
+        foreach (var player in players)
+        {
+            if (string.IsNullOrEmpty(player.PUUID)) continue;
+
+            var riotId = await _riot.GetRiotIdFromPuuidAsync(player.PUUID);
+            await Task.Delay(1200);
+
+            if (riotId == null) continue;
+
+            if (player.RiotId != riotId)
+                await _players.UpdateRiotIdAsync(player.Id, riotId);
+        }
+    }
+    
     public async Task LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl)
     {
         var discordIdLong = long.Parse(discordUserId);

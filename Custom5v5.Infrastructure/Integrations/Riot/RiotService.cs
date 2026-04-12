@@ -32,6 +32,14 @@ public class RiotService : IRiotService
         return res?.puuid;
     }
     
+    public async Task<string?> GetRiotIdFromPuuidAsync(string puuid)
+    {
+        var url = $"riot/account/v1/accounts/by-puuid/{puuid}";
+        var res = await _http.GetFromJsonAsync<AccountResponse>(url);
+        if (res == null) return null;
+        return $"{res.gameName}#{res.tagLine}";
+    }
+    
     public async Task<string?> GetMainRoleFromPuuidAsync(string puuid)
     {
         var url = $"lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=15";

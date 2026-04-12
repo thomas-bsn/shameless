@@ -200,6 +200,12 @@ using (var scope = app.Services.CreateScope())
     await playerService.RefreshAllRanksAsync();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
+    await playerService.RefreshRiotIdsAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

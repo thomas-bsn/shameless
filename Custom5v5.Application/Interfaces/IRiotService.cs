@@ -8,4 +8,5 @@ public interface IRiotService
     Task<RiotRankDto?> GetRankFromPuuidAsync(string puuid);
     Task<RiotRankDto?> GetRankAsync(string riotId); // raccourci des deux
     Task<string?> GetMainRoleFromPuuidAsync(string puuid);
+    Task<string?> GetRiotIdFromPuuidAsync(string puuid);
 }

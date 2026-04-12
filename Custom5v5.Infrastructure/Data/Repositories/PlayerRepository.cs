@@ -88,6 +88,16 @@ public class PlayerRepository : IPlayerRepository
 
         await _db.SaveChangesAsync();
     }
+    
+    public async Task UpdateRiotIdAsync(int id, string riotId)
+    {
+        var player = await _db.Players.FindAsync(id);
+        if (player == null) return;
+        player.RiotId = riotId;
+        await _db.SaveChangesAsync();
+    }
+    
+    public async Task SaveChangesAsync() => await _db.SaveChangesAsync();
 
     public async Task<Player?> GetByIdAsync(int id) =>
         await _db.Players.FindAsync(id);

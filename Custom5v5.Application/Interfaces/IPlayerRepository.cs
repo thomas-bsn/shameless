@@ -19,4 +19,6 @@ public interface IPlayerRepository
     Task<List<Player>> GetAllEntitiesAsync(); 
     Task UpdateAsync(Player player);
     Task UpdateRangeAsync(List<Player> players);
+    Task SaveChangesAsync();
+    Task UpdateRiotIdAsync(int id, string riotId);
 }
