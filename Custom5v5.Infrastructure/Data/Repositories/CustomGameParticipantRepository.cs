@@ -26,4 +26,11 @@ public class CustomGameParticipantRepository : ICustomGameParticipantRepository
             .Where(p => p.CustomGameId == gameId)
             .ToListAsync();
     }
+    
+    public async Task DeleteByGameIdAsync(int gameId)
+    {
+        var participants = await _db.CustomGameParticipants.Where(p => p.CustomGameId == gameId).ToListAsync();
+        _db.CustomGameParticipants.RemoveRange(participants);
+        await _db.SaveChangesAsync();
+    }
 }

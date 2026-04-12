@@ -9,6 +9,8 @@ public class CustomGame
     public string? RiotMatchData { get; set; }
     public string Status { get; set; } = "pending"; // "pending", "completed", "error"
     public DateTime CreatedAt { get; set; }
+    public int? SeriesId { get; set; }
+    public BestOfSeries? Series { get; set; }
     
     
     // Navigation properties

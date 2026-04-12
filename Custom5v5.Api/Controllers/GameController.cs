@@ -21,18 +21,44 @@ public class GameController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> PostGame([FromBody] RecordGameRequest request)
     {
-        var game = await _gameService.RecordCustomGame(
+        var (game, seriesId) = await _gameService.RecordCustomGame(
             blueTeamPlayerIds: request.BlueTeam,
             redTeamPlayerIds: request.RedTeam,
-            playedAt: DateTime.UtcNow
+            playedAt: DateTime.UtcNow,
+            seriesId: request.SeriesId,
+            boFormat: request.BoFormat
         );
 
         return Ok(new
         {
             message = "Game enregistrée !",
             gameId = game.Id,
-            playedAt = game.PlayedAt
+            playedAt = game.PlayedAt,
+            seriesId
         });
+    }
+    
+    [HttpPut("series/{seriesId}/abandon")]
+    public async Task<IActionResult> AbandonSeries(int seriesId)
+    {
+        var ok = await _gameService.AbandonSeriesAsync(seriesId);
+        if (!ok) return NotFound();
+        return Ok(new { success = true });
+    }
+    
+    [HttpGet("series/active")]
+    public async Task<IActionResult> GetActiveSeries()
+    {
+        var series = await _gameService.GetActiveSeriesAsync();
+        return Ok(new { series });
+    }
+    
+    [HttpGet("series/{seriesId}")]
+    public async Task<IActionResult> GetSeriesStatus(int seriesId)
+    {
+        var status = await _gameService.GetSeriesStatusAsync(seriesId);
+        if (status == null) return NotFound();
+        return Ok(status);
     }
     
     [HttpGet("history/{year}/{month}")]
@@ -82,6 +108,7 @@ public class GameController : ControllerBase
         {
             id = g.Id,
             playedAt = g.PlayedAt,
+            seriesId = g.SeriesId,
             status = g.Status,
             participants = g.Participants.Select(p => new
             {

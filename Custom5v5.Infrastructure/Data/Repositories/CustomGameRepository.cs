@@ -70,16 +70,42 @@ public class CustomGameRepository : ICustomGameRepository
             .ToListAsync();
     }
     
+    public async Task<List<CustomGame>> GetBySeriesIdAsync(int seriesId)
+    {
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.SeriesId == seriesId)
+            .OrderBy(g => g.Id)
+            .ToListAsync();
+    }
+    
+    public async Task<List<CustomGame>> GetAllWithSeriesAsync()
+    {
+        return await _db.CustomGames
+            .Include(g => g.Series)
+            .Where(g => g.SeriesId != null)
+            .ToListAsync();
+    }
+    
     public async Task<List<CustomGame>> GetByYearMonthAsync(int year, int month)
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
             .ThenInclude(p => p.Player)
+            .Include(g => g.Series)
             .Where(g => g.PlayedAt.Year == year
                         && g.PlayedAt.Month == month
                         && g.Status == "completed")
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
+    }
+    
+    public async Task DeleteBySeriesIdAsync(int seriesId)
+    {
+        var games = await _db.CustomGames.Where(g => g.SeriesId == seriesId).ToListAsync();
+        _db.CustomGames.RemoveRange(games);
+        await _db.SaveChangesAsync();
     }
 
     public async Task SaveChangesAsync()

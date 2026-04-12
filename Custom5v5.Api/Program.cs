@@ -180,6 +180,7 @@ builder.Services.AddScoped<ICustomGameParticipantRepository, CustomGameParticipa
 builder.Services.AddScoped<IPlayerMonthlyCostRepository, PlayerMonthlyCostRepository>();
 builder.Services.AddScoped<CustomGameService>();
 builder.Services.AddScoped<CostCalculationService>();
+builder.Services.AddScoped<IBestOfSeriesRepository, BestOfSeriesRepository>();
 
 builder.Services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
 builder.Services.AddSingleton<IJwtIssuer, JwtIssuer>();

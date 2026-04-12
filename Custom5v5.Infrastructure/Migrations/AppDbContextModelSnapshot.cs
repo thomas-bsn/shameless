@@ -22,6 +22,29 @@ namespace Custom5v5.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Custom5v5.Application.Entities.BestOfSeries", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Format")
+                        .HasColumnType("integer")
+                        .HasColumnName("format");
+
+                    b.Property<DateTime>("PlayedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("played_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_best_of_series");
+
+                    b.ToTable("best_of_series", (string)null);
+                });
+
             modelBuilder.Entity("Custom5v5.Application.Entities.CustomGame", b =>
                 {
                     b.Property<int>("Id")
@@ -50,6 +73,10 @@ namespace Custom5v5.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("riot_match_id");
 
+                    b.Property<int?>("SeriesId")
+                        .HasColumnType("integer")
+                        .HasColumnName("series_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text")
@@ -66,6 +93,9 @@ namespace Custom5v5.Infrastructure.Migrations
 
                     b.HasIndex("PlayedAt")
                         .HasDatabaseName("ix_custom_games_played_at");
+
+                    b.HasIndex("SeriesId")
+                        .HasDatabaseName("ix_custom_games_series_id");
 
                     b.ToTable("custom_games", (string)null);
                 });
@@ -269,6 +299,16 @@ namespace Custom5v5.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Custom5v5.Application.Entities.CustomGame", b =>
+                {
+                    b.HasOne("Custom5v5.Application.Entities.BestOfSeries", "Series")
+                        .WithMany("Games")
+                        .HasForeignKey("SeriesId")
+                        .HasConstraintName("fk_custom_games_best_of_series_series_id");
+
+                    b.Navigation("Series");
+                });
+
             modelBuilder.Entity("Custom5v5.Application.Entities.CustomGameParticipant", b =>
                 {
                     b.HasOne("Custom5v5.Application.Entities.CustomGame", "CustomGame")
@@ -310,6 +350,11 @@ namespace Custom5v5.Infrastructure.Migrations
                         .HasConstraintName("fk_player_monthly_costs_players_player_id");
 
                     b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Custom5v5.Application.Entities.BestOfSeries", b =>
+                {
+                    b.Navigation("Games");
                 });
 
             modelBuilder.Entity("Custom5v5.Application.Entities.CustomGame", b =>

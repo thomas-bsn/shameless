@@ -2,6 +2,7 @@
 
 public record GameHistoryResponse(
     int Id,
+    int? SeriesId,
     DateTime PlayedAt,
     string? Winner,
     List<GameParticipantDto> BlueTeam,

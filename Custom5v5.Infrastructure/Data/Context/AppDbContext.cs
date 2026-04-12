@@ -10,7 +10,7 @@ public class AppDbContext : DbContext
     // DbSets existants
     public DbSet<Player> Players => Set<Player>();
     public DbSet<User> Users => Set<User>();
-    
+    public DbSet<BestOfSeries> BestOfSeries { get; set; }
     public DbSet<CustomGame> CustomGames => Set<CustomGame>();
     public DbSet<CustomGameParticipant> CustomGameParticipants => Set<CustomGameParticipant>();
     public DbSet<PlayerMonthlyCost> PlayerMonthlyCosts => Set<PlayerMonthlyCost>();
