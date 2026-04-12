@@ -35,6 +35,13 @@ public class GameController : ControllerBase
         });
     }
     
+    [HttpGet("history/{year}/{month}")]
+    public async Task<IActionResult> GetHistory(int year, int month)
+    {
+        var games = await _gameService.GetHistoryAsync(year, month);
+        return Ok(new { games });
+    }
+    
     [HttpPut("{id}/result")]
     public async Task<IActionResult> SetResult(int id, [FromBody] SetGameResultRequest request)
     {

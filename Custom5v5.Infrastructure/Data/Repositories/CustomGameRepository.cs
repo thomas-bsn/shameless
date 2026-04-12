@@ -69,6 +69,18 @@ public class CustomGameRepository : ICustomGameRepository
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
+    
+    public async Task<List<CustomGame>> GetByYearMonthAsync(int year, int month)
+    {
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.PlayedAt.Year == year
+                        && g.PlayedAt.Month == month
+                        && g.Status == "completed")
+            .OrderByDescending(g => g.PlayedAt)
+            .ToListAsync();
+    }
 
     public async Task SaveChangesAsync()
     {

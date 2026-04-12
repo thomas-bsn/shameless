@@ -1,3 +1,4 @@
+using Custom5v5.Api.Contracts.Matches;
 using Custom5v5.Application.Entities;
 using Custom5v5.Application.Interfaces;
 using Custom5v5.Infrastructure.Repositories;
@@ -70,6 +71,25 @@ public class CustomGameService
         await _costService.RecalculateCosts(gameId);
 
         return game;
+    }
+    
+    public async Task<List<GameHistoryResponse>> GetHistoryAsync(int year, int month)
+    {
+        var games = await _gameRepo.GetByYearMonthAsync(year, month);
+
+        return games.Select(g => new GameHistoryResponse(
+            Id: g.Id,
+            PlayedAt: g.PlayedAt,
+            Winner: g.Winner,
+            BlueTeam: g.Participants
+                .Where(p => p.Team == "blue")
+                .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
+                .ToList(),
+            RedTeam: g.Participants
+                .Where(p => p.Team == "red")
+                .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
+                .ToList()
+        )).ToList();
     }
 
     private List<CustomGameParticipant> CreateParticipants(
