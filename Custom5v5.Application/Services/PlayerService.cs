@@ -1,19 +1,26 @@
 ﻿using Custom5v5.Application.DTOs.Players;
 using Custom5v5.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
-namespace Custom5v5.Api.Services;
+namespace Custom5v5.Application.Services;
 
 public class PlayerService : IPlayerService
 {
     private readonly IPlayerRepository _players;
     private readonly IRiotService _riot;
     private readonly IUserRepository _users;
+    private readonly ILogger<PlayerService> _logger;
 
-    public PlayerService(IPlayerRepository players, IRiotService riot, IUserRepository users)
+    public PlayerService(
+        IPlayerRepository players, 
+        IRiotService riot, 
+        IUserRepository users,
+        ILogger<PlayerService> logger)
     {
         _players = players;
         _users = users;
         _riot = riot;
+        _logger = logger;
     }
 
     public Task<List<PlayerDto>> GetPlayersAsync() =>
@@ -35,7 +42,6 @@ public class PlayerService : IPlayerService
         var tier = rank?.Tier?.ToUpper();
         int? division = rank != null ? ParseDivision(rank.Division) : null;
 
-        // Master+ n'a pas de division
         if (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
             division = null;
 
@@ -43,11 +49,11 @@ public class PlayerService : IPlayerService
         {
             Prenom = prenom,
             RiotId = riotId,
-            PUUID = puuid,
+            Puuid = puuid,
             MainRole = mainRole,
             RankTier = tier,
             RankDivision = division,
-            LP = rank?.LP
+            Lp = rank?.LP
         };
 
         var created = await _players.AddAsync(player);
@@ -59,7 +65,7 @@ public class PlayerService : IPlayerService
             RiotId = created.RiotId,
             RankTier = created.RankTier,
             RankDivision = created.RankDivision,
-            LP = created.LP
+            Lp = created.Lp
         };
     }
     
@@ -69,15 +75,21 @@ public class PlayerService : IPlayerService
 
         foreach (var player in players)
         {
-            if (string.IsNullOrEmpty(player.PUUID)) continue;
+            if (string.IsNullOrEmpty(player.Puuid)) continue;
 
-            var riotId = await _riot.GetRiotIdFromPuuidAsync(player.PUUID);
-            await Task.Delay(1200);
+            try
+            {
+                var riotId = await _riot.GetRiotIdFromPuuidAsync(player.Puuid);
 
-            if (riotId == null) continue;
+                if (riotId == null) continue;
 
-            if (player.RiotId != riotId)
-                await _players.UpdateRiotIdAsync(player.Id, riotId);
+                if (player.RiotId != riotId)
+                    await _players.UpdateRiotIdAsync(player.Id, riotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to refresh RiotId for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
+            }
         }
     }
     
@@ -126,18 +138,24 @@ public class PlayerService : IPlayerService
 
         foreach (var player in players)
         {
-            if (string.IsNullOrWhiteSpace(player.PUUID)) continue;
+            if (string.IsNullOrWhiteSpace(player.Puuid)) continue;
 
-            var rank = await _riot.GetRankFromPuuidAsync(player.PUUID);
-            await Task.Delay(1200);
-
-            if (rank != null)
+            try
             {
-                var tier = rank.Tier?.ToUpper();
-                var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
-                    ? null
-                    : (int?)ParseDivision(rank.Division);
-                await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
+                var rank = await _riot.GetRankFromPuuidAsync(player.Puuid);
+
+                if (rank != null)
+                {
+                    var tier = rank.Tier?.ToUpper();
+                    var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
+                        ? null
+                        : (int?)ParseDivision(rank.Division);
+                    await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to refresh rank for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
             }
         }
     }
@@ -148,10 +166,17 @@ public class PlayerService : IPlayerService
 
         foreach (var player in players)
         {
-            if (string.IsNullOrWhiteSpace(player.PUUID)) continue;
+            if (string.IsNullOrWhiteSpace(player.Puuid)) continue;
 
-            var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.PUUID);
-            await _players.UpdateMainRoleAsync(player.Id, mainRole);
+            try
+            {
+                var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.Puuid);
+                await _players.UpdateMainRoleAsync(player.Id, mainRole);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
+            }
         }
     }
 

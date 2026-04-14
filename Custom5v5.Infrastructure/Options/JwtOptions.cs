@@ -1,13 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Custom5v5.Infrastructure.Options;
 
 public sealed class JwtOptions
 {
+    [Required(ErrorMessage = "Auth:Jwt:Issuer missing")]
     public required string Issuer { get; init; }
+    
+    [Required(ErrorMessage = "Auth:Jwt:Audience missing")]
     public required string Audience { get; init; }
-
-    // Symmetric key (HMAC). Si tu fais RSA plus tard, ça changera.
+    
+    [Required(ErrorMessage = "Auth:Jwt:SigningKey missing")]
+    [MinLength(32, ErrorMessage = "Auth:Jwt:SigningKey must be at least 32 characters")]
     public required string SigningKey { get; init; }
-
-    // Optionnel: si tu veux centraliser la durée
+    
+    [Range(1, 1440)]
     public int AccessTokenMinutes { get; init; } = 60;
 }

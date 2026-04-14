@@ -2,10 +2,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Custom5v5.Api.Interfaces;
+using Custom5v5.Application.DTOs.Discord;
 using Microsoft.Extensions.Options;
 using Custom5v5.Infrastructure.Options;
 
-namespace Custom5v5.Api.Services;
+namespace Custom5v5.Infrastructure.Integrations.Discord;
 
 public sealed class DiscordOAuthClient : IDiscordOAuthClient
 {
@@ -70,7 +71,6 @@ public sealed class DiscordOAuthClient : IDiscordOAuthClient
 
         var json = await res.Content.ReadAsStringAsync(ct);
         var guilds = JsonSerializer.Deserialize<List<DiscordGuild>>(json) ?? new();
-        Console.WriteLine(guilds[0].Id);
         return guilds.Any(g => g.Id == guildId);
     }
 
@@ -98,11 +98,5 @@ public sealed class DiscordOAuthClient : IDiscordOAuthClient
         var json = await response.Content.ReadAsStringAsync(ct);
         return JsonSerializer.Deserialize<DiscordTokenResponse>(json)
                ?? throw new InvalidOperationException("Invalid refresh token response from Discord.");
-    }
-
-    public class DiscordGuild
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = default!;
     }
 }

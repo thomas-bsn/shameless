@@ -1,6 +1,5 @@
 ﻿using Custom5v5.Application.Entities;
 using Custom5v5.Application.Interfaces;
-using Custom5v5.Application.Entities;
 namespace Custom5v5.Infrastructure.Data.Repositories;
 
 public class BestOfSeriesRepository : IBestOfSeriesRepository

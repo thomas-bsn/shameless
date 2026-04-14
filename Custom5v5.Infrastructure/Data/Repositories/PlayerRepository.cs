@@ -17,8 +17,8 @@ public class PlayerRepository : IPlayerRepository
         return players.Select(ToDto).ToList();
     }
 
-    public Task<bool> ExistsByPuuidAsync(string puuid) =>
-        _db.Players.AnyAsync(p => p.PUUID == puuid);
+    public Task<bool> ExistsByPuuidAsync(string Puuid) =>
+        _db.Players.AnyAsync(p => p.PUUID == Puuid);
 
     public async Task UpdateRankAsync(int id, string? tier, int? division, int? lp)
     {
@@ -34,15 +34,21 @@ public class PlayerRepository : IPlayerRepository
 
     public async Task<PlayerDto> AddAsync(PlayerDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Prenom))
+            throw new ArgumentException("Prenom is required", nameof(dto.Prenom));
+    
+        if (string.IsNullOrWhiteSpace(dto.RiotId))
+            throw new ArgumentException("RiotId is required", nameof(dto.RiotId));
+    
         var player = new Player
         {
-            Prenom = dto.Prenom,
+            Prenom = dto.Prenom, 
             RiotId = dto.RiotId,
-            PUUID = dto.PUUID,
+            PUUID = dto.Puuid ?? throw new ArgumentException("Puuid is required"),
             RankTier = dto.RankTier,
             RankDivision = dto.RankDivision,
             CreatedAt = DateTime.UtcNow,
-            LP = dto.LP,
+            LP = dto.Lp,
         };
 
         _db.Players.Add(player);
@@ -76,7 +82,7 @@ public class PlayerRepository : IPlayerRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdatePeakAsync(int playerId, string peakTier, int? peakDivision, string peakSeason, int peakLp)
+    public async Task UpdatePeakAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
     {
         var player = await _db.Players.FindAsync(playerId);
         if (player == null) return;
@@ -125,11 +131,11 @@ public class PlayerRepository : IPlayerRepository
         Id = p.Id,
         Prenom = p.Prenom,
         RiotId = p.RiotId,
-        PUUID = p.PUUID,
+        Puuid = p.PUUID,
         RankTier = p.RankTier ?? "UNRANKED",
         RankDivision = p.RankDivision,
         MainRole = p.MainRole,
-        LP = p.LP,
+        Lp = p.LP,
         PeakTier = p.PeakTier,
         PeakDivision = p.PeakDivision,
         PeakSeason = p.PeakSeason,

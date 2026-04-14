@@ -1,52 +1,41 @@
-﻿using Custom5v5.Application.DTOs.Players;
+﻿using System.Security.Claims;
+using Custom5v5.Api.Models.Requests.Player;
+using Custom5v5.Api.Models.Responses.Player;
+using Custom5v5.Application.DTOs.Players;
 using Custom5v5.Application.Interfaces;
+using Custom5v5.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Custom5v5.Api.Controllers;
 
 [ApiController]
 [Route("players")]
-public class PlayersController : ControllerBase
+public sealed class PlayersController : ControllerBase
 {
-    private readonly IPlayerService _service;
+    private readonly IPlayerService _playerService;
+    private readonly CostCalculationService _costService;
 
-    public PlayersController(IPlayerService service)
+    public PlayersController(IPlayerService playerService, CostCalculationService costService)
     {
-        _service = service;
+        _playerService = playerService;
+        _costService = costService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetPlayers()
     {
-        var players = await _service.GetPlayersAsync();
+        var players = await _playerService.GetPlayersAsync();
         return Ok(players);
     }
 
     [HttpPost]
-    public async Task<ActionResult<PlayerResponse>> AddPlayer(CreatePlayerRequest request)
+    public async Task<IActionResult> CreatePlayer([FromBody] CreatePlayerRequest request)
     {
-        var player = await _service.CreatePlayerAsync(request.Prenom, request.RiotId);
+        var player = await _playerService.CreatePlayerAsync(request.Prenom, request.RiotId);
         return Ok(player);
     }
 
-    // Lier son compte Discord à un player
-    [HttpPost("link")]
-    [Authorize]
-    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request)
-    {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        var username = User.FindFirstValue(ClaimTypes.Name);
-        var avatarUrl = User.FindFirstValue("avatar_url");
-    
-        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
-
-        await _service.LinkPlayerAsync(discordUserId, request.PlayerId, username, avatarUrl);
-        return Ok(new { ok = true });
-    }
-
-    // Récupérer le player lié à son compte
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetMyPlayer()
@@ -54,30 +43,42 @@ public class PlayersController : ControllerBase
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
 
-        var player = await _service.GetPlayerByDiscordIdAsync(discordUserId);
+        var player = await _playerService.GetPlayerByDiscordIdAsync(discordUserId);
         if (player == null) return NotFound(new { error = "no_linked_player" });
 
         return Ok(player);
     }
 
-    [HttpPost("refresh-ranks")]
-    public async Task<IActionResult> RefreshRanks()
-    {
-        await _service.RefreshAllRanksAsync();
-        return Ok("Ranks mis à jour");
-    }
-    
-    [HttpDelete("peak")]
+    [HttpPost("link")]
     [Authorize]
-    public async Task<IActionResult> DeletePeak()
+    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request)
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var username = User.FindFirstValue(ClaimTypes.Name);
+        var avatarUrl = User.FindFirstValue("avatar_url");
+
         if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
 
-        await _service.UpdatePeakAsync(discordUserId, null, null, null, 0);
-        return Ok(new { ok = true });
+        await _playerService.LinkPlayerAsync(discordUserId, request.PlayerId, username, avatarUrl);
+        return Ok(new PlayerLinkResponse(Success: true));
     }
-    
+
+    [HttpGet("{playerId}/cost")]
+    public async Task<IActionResult> GetPlayerCost(int playerId)
+    {
+        var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);
+
+        return Ok(new PlayerCostResponse(
+            PlayerId: playerId,
+            Name: name,
+            Cost: cost,
+            Tier: MMRCalculationService.GetTierLabel(cost),
+            Mmr: mmr,
+            BaseMMR: baseMMR,
+            WinrateAdjustment: winrateAdj
+        ));
+    }
+
     [HttpPost("peak")]
     [Authorize]
     public async Task<IActionResult> UpdatePeak([FromBody] UpdatePeakRequest request)
@@ -85,9 +86,18 @@ public class PlayersController : ControllerBase
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
 
-        await _service.UpdatePeakAsync(discordUserId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        await _playerService.UpdatePeakAsync(discordUserId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        return Ok(new { ok = true });
+    }
+
+    [HttpDelete("peak")]
+    [Authorize]
+    public async Task<IActionResult> DeletePeak()
+    {
+        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
+
+        await _playerService.UpdatePeakAsync(discordUserId, null, null, null, 0);
         return Ok(new { ok = true });
     }
 }
-
-public record LinkPlayerRequest(int PlayerId);

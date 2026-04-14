@@ -1,8 +1,12 @@
 ﻿using System.Security.Claims;
+using Custom5v5.Api.Contracts.Matches;
 using Custom5v5.Api.Interfaces;
+using Custom5v5.Api.Models.Responses.Auth;
+using Custom5v5.Application.Interfaces;
+using Custom5v5.Infrastructure.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using Microsoft.Extensions.Options;
 
 namespace Custom5v5.Api.Controllers;
 
@@ -10,18 +14,18 @@ namespace Custom5v5.Api.Controllers;
 [Route("auth")]
 public sealed class AuthController : ControllerBase
 {
-    private readonly IConfiguration _config;
+    private readonly DiscordOAuthOptions _discordOptions;
     private readonly IOAuthStateStore _stateStore;
     private readonly IDiscordOAuthClient _discord;
     private readonly IJwtIssuer _jwt;
 
     public AuthController(
-        IConfiguration config,
+        IOptions<DiscordOAuthOptions> discordOptions,
         IOAuthStateStore stateStore,
         IDiscordOAuthClient discord,
         IJwtIssuer jwt)
     {
-        _config = config;
+        _discordOptions = discordOptions.Value;
         _stateStore = stateStore;
         _discord = discord;
         _jwt = jwt;
@@ -31,19 +35,13 @@ public sealed class AuthController : ControllerBase
     [AllowAnonymous]
     public IActionResult DiscordLogin([FromQuery] string? returnUrl = null)
     {
-        var clientId = _config["Auth:Discord:ClientId"];
-        var redirectUri = _config["Auth:Discord:RedirectUri"];
-
-        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(redirectUri))
-            return Problem("Missing Auth:Discord:ClientId or Auth:Discord:RedirectUri in configuration.");
-
         var state = _stateStore.CreateState(returnUrl);
         var scope = "identify guilds";
 
         var authorizeUrl =
             "https://discord.com/api/oauth2/authorize" +
-            $"?client_id={Uri.EscapeDataString(clientId)}" +
-            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+            $"?client_id={Uri.EscapeDataString(_discordOptions.ClientId)}" +
+            $"&redirect_uri={Uri.EscapeDataString(_discordOptions.RedirectUri)}" +
             "&response_type=code" +
             $"&scope={Uri.EscapeDataString(scope)}" +
             $"&state={Uri.EscapeDataString(state)}";
@@ -68,18 +66,12 @@ public sealed class AuthController : ControllerBase
         if (stateData is null)
             return Unauthorized(new { error = "invalid_state" });
 
-        var allowedGuildId = _config["Auth:Discord:AllowedGuildId"];
-        if (string.IsNullOrWhiteSpace(allowedGuildId))
+        if (string.IsNullOrWhiteSpace(_discordOptions.AllowedGuildId))
             throw new InvalidOperationException("Missing Auth:Discord:AllowedGuildId configuration.");
 
         var token = await _discord.ExchangeCodeAsync(code, ct);
-
-        if (string.IsNullOrWhiteSpace(token.AccessToken))
-            throw new InvalidOperationException(
-                $"Discord returned empty access_token. Raw response: {JsonSerializer.Serialize(token)}"
-            );
-
-        var isMember = await _discord.IsMemberOfGuildAsync(token.AccessToken, allowedGuildId, ct);
+        
+        var isMember = await _discord.IsMemberOfGuildAsync(token.AccessToken, _discordOptions.AllowedGuildId, ct);
         if (!isMember)
             return StatusCode(403, new { error = "not_in_guild" });
 
@@ -95,37 +87,29 @@ public sealed class AuthController : ControllerBase
             Discriminator: me.Discriminator,
             AvatarUrl: avatarUrl
         ));
-        
-        var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:3000";
-        var frontUrl = $"{frontendUrl}/account/callback" +
-                       $"?token={Uri.EscapeDataString(jwt.AccessToken)}" +
-                       $"&username={Uri.EscapeDataString(me.Username ?? "")}" +
-                       $"&avatarUrl={Uri.EscapeDataString(avatarUrl)}";
 
-        return Redirect(frontUrl);
+        var redirectUrl = $"{_discordOptions.FrontendUrl}/account/callback" +
+                          $"?token={Uri.EscapeDataString(jwt.AccessToken)}" +
+                          $"&username={Uri.EscapeDataString(me.Username ?? "")}" +
+                          $"&avatarUrl={Uri.EscapeDataString(avatarUrl)}";
+
+        return Redirect(redirectUrl);
     }
 
     [HttpGet("me")]
     [Authorize]
-    public IActionResult Me()
+    public IActionResult GetCurrentUser()
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         var username = User.FindFirstValue(ClaimTypes.Name);
         var avatarUrl = User.FindFirstValue("avatar_url");
 
-        return Ok(new
-        {
-            discordUserId,
-            username,
-            avatarUrl
-        });
-    }
-    
-    [HttpGet("validate")]
-    [Authorize]
-    public IActionResult Validate()
-    {
-        return Ok(new { valid = true });
+        return Ok(new AuthUserResponse(
+            Valid: true,
+            DiscordUserId: discordUserId,
+            Username: username,
+            AvatarUrl: avatarUrl
+        ));
     }
 
     [HttpPost("logout")]

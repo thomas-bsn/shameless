@@ -1,5 +1,4 @@
-using Custom5v5.Api.Contracts.Matches;
-using Custom5v5.Application.DTOs.Matches;
+using Custom5v5.Application.DTOs.Match;
 using Custom5v5.Application.Entities;
 using Custom5v5.Application.Interfaces;
 using Custom5v5.Infrastructure.Repositories;

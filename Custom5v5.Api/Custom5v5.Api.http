@@ -1,6 +1,0 @@
-@Custom5v5.Api_HostAddress = http://localhost:5221
-
-GET {{Custom5v5.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
