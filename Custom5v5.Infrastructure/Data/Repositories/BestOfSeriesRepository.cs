@@ -15,6 +15,11 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
         return series;
     }
     
+    public async Task SaveChangesAsync()
+    {
+        await _db.SaveChangesAsync();
+    }
+    
     public async Task DeleteAsync(int seriesId)
     {
         var series = await _db.BestOfSeries.FindAsync(seriesId);

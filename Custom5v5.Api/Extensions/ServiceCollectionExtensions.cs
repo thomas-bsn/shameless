@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Background jobs
-        // services.AddHostedService<RefreshRanksJob>();
+        services.AddHostedService<RefreshRanksJob>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();

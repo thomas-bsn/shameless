@@ -52,14 +52,22 @@ public class CustomGameService
         int? seriesId = null,
         int? boFormat = null)
     {
+        BestOfSeries? series = null;
+    
         if (seriesId == null && boFormat != null)
         {
-            var series = await _seriesRepo.AddAsync(new BestOfSeries
+            series = await _seriesRepo.AddAsync(new BestOfSeries
             {
                 PlayedAt = playedAt ?? DateTime.UtcNow,
-                Format = boFormat.Value
+                Format = boFormat.Value,
+                TeamAWins = 0,
+                TeamBWins = 0
             });
             seriesId = series.Id;
+        }
+        else if (seriesId != null)
+        {
+            series = await _seriesRepo.GetByIdAsync(seriesId.Value);
         }
 
         var game = new CustomGame
@@ -72,6 +80,14 @@ public class CustomGameService
         game = await _gameRepo.AddAsync(game);
         var participants = CreateParticipants(game.Id, blueTeamPlayerIds, redTeamPlayerIds);
         await _participantRepo.AddRangeAsync(participants);
+
+        if (series != null && string.IsNullOrEmpty(series.TeamAReference))
+        {
+            var bluePlayers = await _playerRepo.GetByIdsAsync(blueTeamPlayerIds);
+            var teamARiotIds = bluePlayers.Select(p => p.RiotId).ToList();
+            series.TeamAReference = System.Text.Json.JsonSerializer.Serialize(teamARiotIds);
+            await _seriesRepo.SaveChangesAsync();
+        }
 
         return (game, seriesId);
     }
@@ -89,12 +105,21 @@ public class CustomGameService
 
         var lastGame = games.LastOrDefault();
 
+        List<string>? teamAReference = null;
+        if (!string.IsNullOrEmpty(series.TeamAReference))
+        {
+            teamAReference = System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference);
+        }
+
         return new
         {
             seriesId = series.Id,
             format = series.Format,
             blueWins,
             redWins,
+            teamAWins = series.TeamAWins,     
+            teamBWins = series.TeamBWins,    
+            teamAReference = teamAReference,  
             lastGame = lastGame == null ? null : new
             {
                 id = lastGame.Id,
@@ -116,9 +141,8 @@ public class CustomGameService
     
     public async Task<List<object>> GetActiveSeriesAsync()
     {
-        // Récupère toutes les séries qui ont au moins une game
         var allGames = await _gameRepo.GetAllWithSeriesAsync();
-    
+
         var activeSeries = allGames
             .Where(g => g.SeriesId != null)
             .GroupBy(g => g.SeriesId!.Value)
@@ -126,13 +150,10 @@ public class CustomGameService
             {
                 var series = group.First().Series;
                 if (series == null) return false;
-            
-                var blueWins = group.Count(g => g.Status == "completed" && g.Winner == "blue");
-                var redWins  = group.Count(g => g.Status == "completed" && g.Winner == "red");
-                var needed   = (series.Format / 2) + 1;
-            
-                // Série active si : pas encore de vainqueur
-                return blueWins < needed && redWins < needed;
+        
+                var needed = (series.Format / 2) + 1;
+        
+                return series.TeamAWins < needed && series.TeamBWins < needed;
             })
             .Select(g => g.Key)
             .ToList();
@@ -153,11 +174,36 @@ public class CustomGameService
     
     public async Task<CustomGame?> SetGameResultAsync(int gameId, string winner)
     {
-        var game = await _gameRepo.GetByIdAsync(gameId);
+        var game = await _gameRepo.GetByIdWithParticipantsAsync(gameId);
         if (game == null) return null;
 
         game.Winner = winner;
         game.Status = "completed";
+
+        if (game.SeriesId != null)
+        {
+            var series = await _seriesRepo.GetByIdAsync(game.SeriesId.Value);
+            if (series != null && !string.IsNullOrEmpty(series.TeamAReference))
+            {
+                var teamARiotIds = System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference);
+            
+                // Déterminer quelle équipe est sur blue side
+                var blueTeamRiotIds = game.Participants
+                    .Where(p => p.Team == "blue")
+                    .Select(p => p.Player.RiotId)
+                    .ToList();
+            
+                bool isTeamAOnBlue = teamARiotIds!.Any(riotId => blueTeamRiotIds.Contains(riotId));
+                bool teamAWon = (winner == "blue" && isTeamAOnBlue) || (winner == "red" && !isTeamAOnBlue);
+            
+                if (teamAWon)
+                    series.TeamAWins++;
+                else
+                    series.TeamBWins++;
+            
+                await _seriesRepo.SaveChangesAsync();
+            }
+        }
 
         await _gameRepo.SaveChangesAsync();
         await _costService.RecalculateCosts(gameId);
@@ -180,6 +226,9 @@ public class CustomGameService
                     SeriesId: group.Key ?? 0,
                     Format: series?.Format ?? 1,
                     PlayedAt: series?.PlayedAt ?? firstGame.PlayedAt,
+                    TeamAReference: series?.TeamAReference != null 
+                        ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference) 
+                        : null,
                     Games: group.Select(g => new GameHistoryResponse(
                         Id: g.Id,
                         SeriesId: g.SeriesId,

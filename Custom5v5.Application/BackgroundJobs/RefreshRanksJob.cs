@@ -39,7 +39,7 @@ public class RefreshRanksJob : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "RefreshRanksJob failed"); // ✅ Log mais continue
+                _logger.LogError(ex, "RefreshRanksJob failed");
             }
 
             await Task.Delay(TimeSpan.FromHours(24), ct);
