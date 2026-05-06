@@ -40,13 +40,14 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var origin  = configuration["AllowedOrigins"] ?? "http://localhost:3000";
+        var origins = (configuration["AllowedOrigins"] ?? "http://localhost:3000")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
         services.AddCors(options => 
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.WithOrigins(origin)
+                policy.WithOrigins(origins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
