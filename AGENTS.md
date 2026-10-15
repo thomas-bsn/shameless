@@ -16,6 +16,4 @@ Single-context : un `CONTEXT.md` et `docs/adr/` à la racine. See `docs/agents/d
 
 ### Roadmap
 
-Les phases (0 à 3) sont dans `docs/[ROADMAP.md](http://ROADMAP.md)`  sur la branche main. Chaque phase devient une issue de spec
-
-dans GitHub Issues. Quand une phase est finie, cocher ses cases dans la roadmap.
+Les phases (0 à 3) sont dans `docs/ROADMAP.md` sur la branche main. Chaque phase devient une issue de spec dans GitHub Issues. Quand une phase est finie, cocher ses cases dans la roadmap.
