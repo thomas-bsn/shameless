@@ -48,6 +48,7 @@ Toutes les variables sont décrites dans [`.env.example`](.env.example). Les pri
 | `ADMIN_DISCORD_IDS` | IDs Discord des admins (saisie des résultats, abandon de série, cost et peak). |
 | `SESSION_LIFETIME_DAYS` | Durée de la session, prolongée à chaque utilisation (14 jours par défaut). |
 | `RIOT_API_KEY` | Clé Riot, optionnelle : sans elle, le rafraîchissement des rangs est désactivé. |
+| `SOIREE_AUTO_CLOSE_AFTER` | Période sans game au bout de laquelle la Soirée ouverte se ferme seule, au format `hh:mm:ss` (3 h par défaut). |
 | `SHAMELESS_SITE_ADDRESS` | `:80` en local, ou un nom de domaine pour le HTTPS automatique de Caddy. |
 
 Aucun secret ni identifiant d'environnement n'est versionné : tout passe par `.env`, qui est ignoré par Git.

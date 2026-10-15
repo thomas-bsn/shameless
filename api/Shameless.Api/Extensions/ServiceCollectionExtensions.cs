@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
     {
         // Background jobs
         services.AddHostedService<RefreshRanksJob>();
+        services.AddHostedService<FermetureAutomatiqueSoireeJob>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
