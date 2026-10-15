@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Shameless.Application.Entities;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -83,13 +81,9 @@ public class RevancheTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 5);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
-        // Arrêter (#21) n'est pas encore exposé : on pose l'issue interrompue directement.
-        await using (var db = Factory.CreateDbContext())
-        {
-            var series = await db.BestOfSeries.SingleAsync(s => s.Id == serie.SeriesId, Ct);
-            series.Outcome = SeriesOutcome.Interrompue;
-            await db.SaveChangesAsync(Ct);
-        }
+        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
+        Assert.Equal("Interrompue", (await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct)))
+            .GetProperty("outcome").GetString());
 
         var response = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/rematch", new { format = 3 }, Ct);
 
