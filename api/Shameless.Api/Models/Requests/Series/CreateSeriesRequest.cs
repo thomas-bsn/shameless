@@ -15,5 +15,15 @@ public sealed record CreateSeriesRequest(
 /// </summary>
 public sealed record PlayGameRequest(string? TeamASide);
 
+/// <summary>
+/// Revanche : les mêmes Équipes rejouent une nouvelle Série, au format 1, 2, 3 ou 5 choisi ici,
+/// avec ou sans Fearless et alternance automatique des Sides.
+/// </summary>
+public sealed record RematchRequest(
+    int Format,
+    bool Fearless = false,
+    bool AlternateSides = false
+);
+
 /// <summary>Remplacement : le joueur remplacé quitte son Équipe, le remplaçant prend sa place pour la prochaine game.</summary>
 public sealed record ReplacePlayerRequest(int ReplacedPlayerId, int ReplacementPlayerId);
