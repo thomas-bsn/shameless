@@ -10,7 +10,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSessionAuthentication(builder.Configuration);
 builder.Services.AddHttpClients();
 builder.Services.AddApplicationServices();
-builder.Services.AddApiServices(builder.Configuration);
+builder.Services.AddApiServices();
 
 var app = builder.Build();
 

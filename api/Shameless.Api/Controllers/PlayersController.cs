@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using Shameless.Api.Auth;
+﻿using Shameless.Api.Auth;
 using Shameless.Api.Models.Requests.Player;
 using Shameless.Api.Models.Responses.Player;
 using Shameless.Application.DTOs.Players;
@@ -40,11 +39,8 @@ public sealed class PlayersController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMyPlayer()
     {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
-
-        var player = await _playerService.GetPlayerByDiscordIdAsync(discordUserId);
-        if (player == null) return NotFound(new { error = "no_linked_player" });
+        var player = await _playerService.GetPlayerByDiscordIdAsync(User.DiscordId());
+        if (player == null) return NoLinkedPlayer();
 
         return Ok(player);
     }
@@ -52,18 +48,17 @@ public sealed class PlayersController : ControllerBase
     [HttpPost("link")]
     public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request, [FromServices] IAuthorizationService authorization)
     {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        var username = User.FindFirstValue(ClaimTypes.Name);
-        var avatarUrl = User.FindFirstValue("avatar_url");
+        var isAdmin = await authorization.IsAdminAsync(User);
+        var result = await _playerService.LinkPlayerAsync(User.DiscordId(), request.PlayerId, User.Username(), User.AvatarUrl(), canTakeOver: isAdmin);
 
-        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
-
-        var isAdmin = (await authorization.AuthorizeAsync(User, Policies.Admin)).Succeeded;
-        var result = await _playerService.LinkPlayerAsync(discordUserId, request.PlayerId, username, avatarUrl, canTakeOver: isAdmin);
-        if (result == LinkResult.AlreadyLinkedToAnotherUser)
-            return Conflict(new { error = "player_already_linked" });
-
-        return Ok(new PlayerLinkResponse(Success: true));
+        return result switch
+        {
+            LinkResult.PlayerNotFound => NotFound(),
+            LinkResult.AlreadyLinkedToAnotherUser => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                detail: "Ce joueur est déjà lié à un autre compte Discord. Demande à un admin."),
+            _ => Ok(new PlayerLinkResponse(Success: true))
+        };
     }
 
     [HttpGet("{playerId}/cost")]
@@ -109,20 +104,17 @@ public sealed class PlayersController : ControllerBase
     [HttpPost("peak")]
     public async Task<IActionResult> UpdatePeak([FromBody] UpdatePeakRequest request)
     {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
-
-        await _playerService.UpdatePeakAsync(discordUserId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
-        return Ok(new { ok = true });
+        var found = await _playerService.UpdatePeakAsync(User.DiscordId(), request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        return found ? Ok(new { ok = true }) : NoLinkedPlayer();
     }
 
     [HttpDelete("peak")]
     public async Task<IActionResult> DeletePeak()
     {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
-
-        await _playerService.UpdatePeakAsync(discordUserId, null, null, null, 0);
-        return Ok(new { ok = true });
+        var found = await _playerService.UpdatePeakAsync(User.DiscordId(), null, null, null, 0);
+        return found ? Ok(new { ok = true }) : NoLinkedPlayer();
     }
+
+    private ObjectResult NoLinkedPlayer() =>
+        Problem(statusCode: StatusCodes.Status404NotFound, detail: "Aucun joueur n'est lié à ton compte Discord.");
 }

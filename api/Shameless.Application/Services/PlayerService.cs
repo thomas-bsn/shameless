@@ -95,30 +95,28 @@ public class PlayerService : IPlayerService
     
     public async Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver)
     {
+        var player = await _players.GetByIdAsync(playerId);
+        if (player is null) return LinkResult.PlayerNotFound;
+
         var discordIdLong = long.Parse(discordUserId);
-        var user = await _users.GetByDiscordIdAsync(discordIdLong)
-                   ?? await _users.CreateAsync(discordIdLong, username, avatarUrl);
+        var user = await _users.GetByDiscordIdAsync(discordIdLong);
 
-        var player = await _players.GetByIdAsync(playerId)
-                     ?? throw new InvalidOperationException("Player not found");
-
-        if (player.UserId is { } ownerId && ownerId != user.Id && !canTakeOver)
+        if (player.UserId is { } ownerId && ownerId != user?.Id && !canTakeOver)
             return LinkResult.AlreadyLinkedToAnotherUser;
+
+        user ??= await _users.CreateAsync(discordIdLong, username, avatarUrl);
 
         await _players.LinkUserAsync(playerId, user.Id);
         return LinkResult.Linked;
     }
     
-    public async Task UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
+    public async Task<bool> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
     {
-        var discordIdLong = long.Parse(discordUserId);
-        var user = await _users.GetByDiscordIdAsync(discordIdLong);
-        if (user == null) throw new Exception("User not found");
-
-        var player = await _players.GetByUserIdAsync(user.Id);
-        if (player == null) throw new Exception("Player not found");
+        var player = await GetPlayerByDiscordIdAsync(discordUserId);
+        if (player == null) return false;
 
         await _players.UpdatePeakAsync(player.Id, peakTier, peakDivision, peakSeason, peakLp);
+        return true;
     }
 
     public async Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)

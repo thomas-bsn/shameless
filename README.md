@@ -14,6 +14,8 @@ docker compose up -d --build
 
 Puis ouvrir http://localhost:8080. L'API est servie sous `/api` ; `http://localhost:8080/api/health` doit répondre `Healthy`.
 
+Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'acceptent sur `http://localhost`, Safari non : en local, utiliser l'un des deux, ou servir l'instance en HTTPS. Sur un vrai domaine, renseigner `SHAMELESS_SITE_ADDRESS` pour que Caddy active le HTTPS.
+
 Au démarrage, le compose lance dans l'ordre :
 
 1. **postgres** : la base, dans le volume nommé `postgres-data` ;
@@ -74,7 +76,7 @@ dotnet test
 
 Les outils EF sont déclarés dans le manifeste local : `dotnet tool restore`, puis par exemple `dotnet ef migrations add <Nom> -p Shameless.Infrastructure -s Shameless.Infrastructure`.
 
-Le document OpenAPI est exposé en développement uniquement, sur `/openapi/v1.json`.
+Le document OpenAPI est exposé en développement uniquement, sur `/openapi/v1.json`, sans session pour pouvoir générer le client TS du front.
 
 ## CI
 

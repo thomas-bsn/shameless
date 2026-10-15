@@ -15,8 +15,6 @@ namespace Shameless.Api.Controllers;
 [Route("auth")]
 public sealed class AuthController : ControllerBase
 {
-    private const string AvatarClaim = "avatar_url";
-
     private readonly DiscordOAuthOptions _discordOptions;
     private readonly AuthOptions _authOptions;
     private readonly IOAuthStateStore _stateStore;
@@ -39,7 +37,7 @@ public sealed class AuthController : ControllerBase
     public IActionResult DiscordLogin([FromQuery] string? returnUrl = null)
     {
         if (returnUrl is not null && !ReturnUrlPolicy.IsAllowed(returnUrl, _authOptions.ReturnOrigins))
-            return BadRequest(new { error = "invalid_return_url" });
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "Cette URL de retour n'est pas autorisée.");
 
         var state = _stateStore.CreateState(returnUrl);
         var scope = "identify guilds";
@@ -63,20 +61,20 @@ public sealed class AuthController : ControllerBase
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return BadRequest(new { error = "missing_code" });
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "Code OAuth manquant.");
 
         if (string.IsNullOrWhiteSpace(state))
-            return BadRequest(new { error = "missing_state" });
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "Paramètre state manquant.");
 
         var stateData = _stateStore.ConsumeState(state);
         if (stateData is null)
-            return Unauthorized(new { error = "invalid_state" });
+            return Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "Connexion expirée ou invalide, recommence depuis le début.");
 
         var token = await _discord.ExchangeCodeAsync(code, ct);
 
         var isMember = await _discord.IsMemberOfGuildAsync(token.AccessToken, _discordOptions.AllowedGuildId, ct);
         if (!isMember)
-            return StatusCode(403, new { error = "not_in_guild" });
+            return Problem(statusCode: StatusCodes.Status403Forbidden, detail: "Shameless est réservé aux membres du serveur Discord de la communauté.");
 
         var me = await _discord.GetCurrentUserAsync(token.AccessToken, ct);
 
@@ -88,7 +86,7 @@ public sealed class AuthController : ControllerBase
         [
             new Claim(ClaimTypes.NameIdentifier, me.Id),
             new Claim(ClaimTypes.Name, me.Username),
-            new Claim(AvatarClaim, avatarUrl)
+            new Claim(ClaimsPrincipalExtensions.AvatarClaim, avatarUrl)
         ], CookieAuthenticationDefaults.AuthenticationScheme);
 
         await HttpContext.SignInAsync(
@@ -107,14 +105,12 @@ public sealed class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrentUser([FromServices] IAuthorizationService authorization)
     {
-        var isAdmin = (await authorization.AuthorizeAsync(User, Policies.Admin)).Succeeded;
-
         return Ok(new AuthUserResponse(
             Valid: true,
-            DiscordUserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
-            Username: User.FindFirstValue(ClaimTypes.Name),
-            AvatarUrl: User.FindFirstValue(AvatarClaim),
-            IsAdmin: isAdmin
+            DiscordUserId: User.DiscordId(),
+            Username: User.Username(),
+            AvatarUrl: User.AvatarUrl(),
+            IsAdmin: await authorization.IsAdminAsync(User)
         ));
     }
 

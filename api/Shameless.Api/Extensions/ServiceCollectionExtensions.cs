@@ -35,22 +35,8 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        var origins = (configuration["AllowedOrigins"] ?? "http://localhost:3000")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-        services.AddCors(options => 
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.WithOrigins(origins)
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
-        });
-
         services.AddControllers()
             .AddJsonOptions(o =>
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())

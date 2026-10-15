@@ -9,7 +9,6 @@ public static class ApplicationStartup
             app.UseExceptionHandler();
         app.UseStatusCodePages();
 
-        app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

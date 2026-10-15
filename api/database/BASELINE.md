@@ -10,6 +10,8 @@ Comparaison faite à la main le 2026-10-15 : Baseline appliquée sur un Postgres
 
 ## Écarts restants
 
+Les données réelles ont été contrôlées le 2026-10-15 sur un dump complet fourni par le mainteneur (gardé hors du repo, jamais commité) : aucune valeur nulle dans les colonnes concernées, aucun joueur lié deux fois au même utilisateur. À revérifier sur la base au moment de la bascule : l'étape 1 de la procédure échoue proprement sinon.
+
 | Écart | Base réelle | Baseline | Pourquoi on garde la Baseline |
 |---|---|---|---|
 | `best_of_series.team_a_wins` / `team_b_wins` | nullable, défaut 0 | `NOT NULL`, défaut 0 | Le code les incrémente comme des entiers ; aucune valeur nulle dans les données réelles. |
