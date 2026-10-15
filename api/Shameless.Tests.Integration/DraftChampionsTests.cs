@@ -66,6 +66,10 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         await Factory.CreateAnonymousClient().PostAsJsonAsync(
             $"/liens/{Uri.EscapeDataString(lien)}/draft-champions/actions", new { tour, championId }, Ct);
 
+    /// <summary>L'organisateur connecté joue le tour à la place de l'Équipe attendue, une fois le délai écoulé.</summary>
+    private async Task<HttpResponseMessage> JouerALaPlaceAsync(HttpClient client, int gameId, int tour, string championId) =>
+        await client.PostAsJsonAsync($"/games/{gameId}/draft-champions/actions", new { tour, championId }, Ct);
+
     private async Task<HttpResponseMessage> LireParLienAsync(string lien) =>
         await Factory.CreateAnonymousClient().GetAsync($"/liens/{Uri.EscapeDataString(lien)}/draft-champions", Ct);
 
@@ -472,5 +476,136 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.True(paths.TryGetProperty("/games/{gameId}/draft-champions", out _));
         Assert.True(paths.TryGetProperty("/liens/{lien}/draft-champions", out _));
         Assert.True(paths.TryGetProperty("/liens/{lien}/draft-champions/actions", out _));
+        Assert.True(paths.TryGetProperty("/games/{gameId}/draft-champions/actions", out _));
+    }
+
+    /// <summary>L'horloge calée sur une seconde ronde, pour comparer les dates restituées.</summary>
+    private DateTimeOffset CalerHorloge()
+    {
+        var maintenant = Factory.Clock.GetUtcNow();
+        var debut = new DateTimeOffset(maintenant.Ticks - maintenant.Ticks % TimeSpan.TicksPerSecond, TimeSpan.Zero).AddMinutes(1);
+        Factory.Clock.SetUtcNow(debut);
+        return debut;
+    }
+
+    [Fact]
+    public async Task L_etat_restitue_l_echeance_du_tour_courant_soixante_secondes_apres_son_debut()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        var debut = CalerHorloge();
+
+        var ouverte = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(42));
+        var apres = await ReadJsonAsync(await JouerAsync(preparee.LienA, 1, "Ahri"));
+        var parLien = await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur));
+
+        Assert.Equal(debut.AddSeconds(60).UtcDateTime, ouverte.GetProperty("tourCourant").GetProperty("echeance").GetDateTime());
+        Assert.Equal(debut.AddSeconds(102).UtcDateTime, apres.GetProperty("tourCourant").GetProperty("echeance").GetDateTime());
+        Assert.Equal(debut.AddSeconds(102).UtcDateTime, parLien.GetProperty("tourCourant").GetProperty("echeance").GetDateTime());
+    }
+
+    [Fact]
+    public async Task Avant_l_echeance_l_organisateur_ne_joue_pas_a_la_place_d_un_capitaine()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(59));
+
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"), HttpStatusCode.Conflict);
+
+        Assert.Empty((await LireAsync(client, preparee.GameId)).GetProperty("actions").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Apres_l_echeance_l_organisateur_joue_l_action_de_l_equipe_attendue()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client, teamASide: "red");
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+
+        var response = await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var draft = await ReadJsonAsync(response);
+        var action = Assert.Single(draft.GetProperty("actions").EnumerateArray());
+        Assert.Equal(1, action.GetProperty("numero").GetInt32());
+        Assert.Equal("B", action.GetProperty("equipe").GetString());
+        Assert.Equal("Ahri", action.GetProperty("championId").GetString());
+        Assert.Equal(2, draft.GetProperty("tourCourant").GetProperty("numero").GetInt32());
+        Assert.Equal("A", draft.GetProperty("tourCourant").GetProperty("equipe").GetString());
+    }
+
+    [Fact]
+    public async Task Le_delai_repart_a_chaque_tour()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await ReadJsonAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"));
+
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 2, "Garen"), HttpStatusCode.Conflict);
+
+        Factory.Clock.Advance(TimeSpan.FromSeconds(60));
+        Assert.Equal(HttpStatusCode.OK, (await JouerALaPlaceAsync(client, preparee.GameId, 2, "Garen")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Apres_l_echeance_le_capitaine_peut_toujours_jouer_tant_que_le_tour_n_a_pas_change()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(90));
+
+        Assert.Equal(HttpStatusCode.OK, (await JouerAsync(preparee.LienA, 1, "Ahri")).StatusCode);
+
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Garen"), HttpStatusCode.Conflict);
+        var draft = await LireAsync(client, preparee.GameId);
+        Assert.Equal("Ahri", Assert.Single(draft.GetProperty("actions").EnumerateArray()).GetProperty("championId").GetString());
+    }
+
+    [Fact]
+    public async Task Le_capitaine_ne_rejoue_pas_un_tour_deja_joue_par_l_organisateur()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await ReadJsonAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"));
+
+        await AssertRefusAsync(await JouerAsync(preparee.LienA, 1, "Garen"), HttpStatusCode.Conflict);
+
+        Assert.Single((await LireAsync(client, preparee.GameId)).GetProperty("actions").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task L_organisateur_ne_joue_ni_hors_tour_ni_un_champion_deja_utilise_ni_une_draft_terminee()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        await JouerToursAsync(preparee, "blue", 1, 1);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 3, "Garen"), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 2, "Ahri"), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 2, "Inconnu"), HttpStatusCode.BadRequest);
+
+        await JouerToursAsync(preparee, "blue", 2, 20);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 20, "Zed"), HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Jouer_a_la_place_sur_une_game_sans_draft_repond_404()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"), HttpStatusCode.NotFound);
     }
 }

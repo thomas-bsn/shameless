@@ -37,7 +37,7 @@ public sealed record DraftChampionsResponse(
             Terminee: draft.EstTerminee,
             TourCourant: tour == null
                 ? null
-                : new TourCourantResponse(tour.Numero, tour.Action, tour.Side, draft.EquipeDuTour(tour.Numero), draft.TourCommenceLe),
+                : new TourCourantResponse(tour.Numero, tour.Action, tour.Side, draft.EquipeDuTour(tour.Numero), draft.TourCommenceLe, draft.Echeance),
             Actions: draft.Actions.OrderBy(a => a.Numero).Select(a =>
             {
                 var joue = OrdreTournament.Tour(a.Numero);
@@ -57,8 +57,10 @@ public sealed record DraftChampionsResponse(
     }
 }
 
-/// <summary>Le tour à jouer : son numéro (1 à 20), "ban" | "pick", le Side et l'Équipe attendue, et quand il a commencé.</summary>
-public sealed record TourCourantResponse(int Numero, string Action, string Side, string Equipe, DateTime CommenceLe);
+/// <summary>Le tour à jouer : son numéro (1 à 20), "ban" | "pick", le Side et l'Équipe attendue, quand il a commencé et son
+/// échéance (60 secondes plus tard), après laquelle l'organisateur connecté peut jouer à la place de l'Équipe attendue.
+/// </summary>
+public sealed record TourCourantResponse(int Numero, string Action, string Side, string Equipe, DateTime CommenceLe, DateTime Echeance);
 
 /// <summary>Un tour joué : le champion banni ou pick pour l'Équipe, sans joueur associé.</summary>
 public sealed record ActionDraftResponse(int Numero, string Action, string Side, string Equipe, string ChampionId);
