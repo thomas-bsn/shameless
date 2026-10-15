@@ -27,24 +27,46 @@ Statut : `pending`, `completed`, `error`.
 - **Équipe** : les cinq joueurs d'un même camp dans une série. Une équipe garde son  
 identité d'une game à l'autre, même si elle change de side.
 - **Side** : le camp sur la carte pour une game donnée, `blue` ou `red`. À ne pas  
-confondre avec l'équipe.
+confondre avec l'équipe. Choisi à la main à chaque game, ou alterné automatiquement  
+si demandé.
 - **Série** : une suite de games entre les deux mêmes équipes. Entité `BestOfSeries`.  
-Formats : BO1, BO2, BO3, BO5. Une série se termine quand une équipe a gagné, ou  
-quand elle est abandonnée.
+Formats : BO1, BO2, BO3, BO5. Une série finit **gagnée** (une équipe atteint le nombre  
+de victoires du format), **nulle** (BO2 terminé à 1-1) ou **interrompue**.
+- **Interrompre une série** : arrêter une série en cours qui a au moins une game  
+terminée, sans vainqueur. Ses games terminées restent et comptent (stats, cost, votes,  
+clips).
+- **Annuler une série** : effacer une série en cours qui n'a aucune game terminée,  
+typiquement créée par erreur. Comme si elle n'avait jamais existé. Une série terminée  
+ou interrompue ne peut pas être annulée.
+- **Revanche** : une nouvelle série lancée avec les mêmes équipes, sans repasser par  
+le Picker. Le format peut changer.
+- **Remplacement** : un joueur d'une équipe est remplacé par un autre en cours de série.  
+L'équipe et la série restent les mêmes ; la composition est connue game par game.
 - **Fearless** : option d'une série. Un champion joué dans une game ne peut plus être  
-joué dans les games suivantes de la série.
-- **Soirée** : l'ensemble des séries jouées lors d'une même session. L'état de la  
-soirée est sauvegardé côté API.
+joué dans les games suivantes de la série, par aucune des deux équipes. L'app affiche  
+les champions déjà joués, elle n'empêche rien.
+- **Soirée** : une session de jeu qui regroupe des séries. Toute série appartient à une  
+soirée. Une seule soirée ouverte à la fois par instance. Ouverte à la main, fermée à la  
+main ou automatiquement après une période sans game. Peut passer minuit. Son état est  
+sauvegardé côté API.
 - **Récap** : le résumé d'une game terminée (vainqueur, stats des dix joueurs, votes),  
 affiché sur le site et posté par le bot.
 
 ## Former les équipes : le Picker
 
-- **Picker** : l'écran qui transforme dix joueurs choisis en deux équipes.
-- **Draft** : deux capitaines choisissent les joueurs à tour de rôle.
-- **Roulette** : tirage des équipes au hasard, ou équilibré selon le cost.
-- **Autorole** : attribution automatique des rôles (top, jungle, mid, ADC, support)  
-dans chaque équipe.
+- **Picker** : l'écran qui transforme dix joueurs choisis en deux équipes, par Draft  
+ou par Roulette.
+- **Draft** : deux capitaines choisissent les joueurs à tour de rôle, un par un. Les  
+capitaines sont désignés à la main, au hasard, ou ce sont les deux plus gros costs.  
+Ils font partie des dix joueurs. Le premier à choisir est tiré à pile ou face ou  
+désigné à la main.
+- **Roulette** : tirage des équipes, en deux variantes au choix. **Aléatoire** :  
+hasard pur. **Équilibrée** : tirage au hasard parmi les compositions dont les équipes  
+ont un cost total proche ; relancer donne d'autres équipes.
+- **Autorole** : étape facultative après la formation des équipes. Attribue  
+automatiquement un rôle (top, jungle, mid, ADC, support) à chaque joueur, en deux  
+variantes au choix. **Hors rôle** : personne ne joue son rôle principal. **Aléatoire** :  
+hasard pur. Ne forme pas les équipes.
 
 ## Niveau des joueurs
 
