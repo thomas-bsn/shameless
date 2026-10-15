@@ -22,7 +22,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(serie.SeriesId, game.GetProperty("seriesId").GetInt32());
         Assert.Equal("pending", game.GetProperty("status").GetString());
         var participants = game.GetProperty("participants").EnumerateArray()
-            .Select(p => (p.GetProperty("prenom").GetString(), p.GetProperty("team").GetString(), p.GetProperty("equipe").GetString()))
+            .Select(p => (p.GetProperty("prenom").GetString(), p.GetProperty("side").GetString(), p.GetProperty("equipe").GetString()))
             .OrderBy(p => p.Item1)
             .ToList();
         Assert.Equal(10, participants.Count);

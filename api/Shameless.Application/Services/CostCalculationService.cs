@@ -44,7 +44,7 @@ public class CostCalculationService
         var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, utcMonth);
 
         var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(g => g.CustomGame.EquipeOn(g.Team) == g.CustomGame.WinningTeam);
+        var wins = monthGames.Count(participant => participant.HasWon);
 
         var finalMMR = MMRCalculationService.CalculateFinalMMR(
             player.PeakTier,
@@ -95,7 +95,7 @@ public class CostCalculationService
         var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, targetMonth);
 
         var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(g => g.CustomGame.EquipeOn(g.Team) == g.CustomGame.WinningTeam);
+        var wins = monthGames.Count(participant => participant.HasWon);
 
         var baseMMR = MMRCalculationService.GetPeakRankMMR(player.PeakTier, player.PeakDivision);
         var winrateAdjustment = MMRCalculationService.CalculateWinrateAdjustment(gamesPlayed, wins);

@@ -117,7 +117,7 @@ public sealed class SeriesService
                 .Select(p => new CustomGameParticipant
                 {
                     PlayerId = p.PlayerId,
-                    Team = p.Equipe == Equipes.A ? side : Sides.Other(side)
+                    Side = p.Equipe == Equipes.A ? side : Sides.Other(side)
                 })
                 .ToList()
         };

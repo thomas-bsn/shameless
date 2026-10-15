@@ -24,5 +24,5 @@ public class CustomGame
 
     /// <summary>La composition d'une Équipe pour cette game.</summary>
     public IEnumerable<CustomGameParticipant> ParticipantsOf(string equipe) =>
-        Participants.Where(p => EquipeOn(p.Team) == equipe);
+        Participants.Where(p => EquipeOn(p.Side) == equipe);
 }

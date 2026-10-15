@@ -116,7 +116,8 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
 
-            entity.Property(e => e.Team).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Side).HasColumnName("team").HasMaxLength(10).IsRequired();
+            entity.Ignore(e => e.HasWon);
             entity.Property(e => e.RiotParticipantData).HasColumnType("jsonb");
 
             entity.HasOne(e => e.CustomGame)

@@ -2058,7 +2058,7 @@ export interface components {
         PendingGameParticipant: {
             /** Format: int32 */
             playerId: number;
-            team: string;
+            side: string;
             equipe: string;
             prenom: string;
         };
