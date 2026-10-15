@@ -12,7 +12,8 @@ export function ApiStatus() {
       ) : health.isSuccess ? (
         <Badge variant="secondary">{health.data}</Badge>
       ) : (
-        <Badge variant="destructive">Injoignable</Badge>
+        // Une API qui répond 503 renvoie son état (« Unhealthy ») ; sans réponse, elle est injoignable.
+        <Badge variant="destructive">{typeof health.error === "string" && health.error ? health.error : "Injoignable"}</Badge>
       )}
     </p>
   );

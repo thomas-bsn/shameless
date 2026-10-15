@@ -57,3 +57,13 @@ describe("Session expirée", () => {
     expect(router.state.location.pathname).toBe("/connexion");
   });
 });
+
+describe("Connexion", () => {
+  it("sends an already signed-in user back to the requested page, never to another site", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /health": new Response("Healthy") });
+
+    const { router } = renderApp("/connexion?redirect=https%3A%2F%2Fevil.example%2F");
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/"));
+  });
+});

@@ -1,14 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { loginUrl, sessionQuery } from "@/lib/session";
+import { isLocalPath, loginUrl, sessionQuery } from "@/lib/session";
 
 export const Route = createFileRoute("/connexion")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
     typeof search.redirect === "string" ? { redirect: search.redirect } : {},
   beforeLoad: async ({ context, search }) => {
     const user = await context.queryClient.ensureQueryData(sessionQuery);
-    if (user) throw redirect({ href: search.redirect ?? "/" });
+    // Seul un chemin local est suivi : pas de redirection vers un autre site.
+    if (user) throw redirect({ href: search.redirect && isLocalPath(search.redirect) ? search.redirect : "/" });
   },
   component: Connexion,
 });

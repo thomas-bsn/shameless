@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { fetchClient } from "@/api/client";
 
 /** Chemin local uniquement, comme l'exige l'API (ReturnUrlPolicy). */
-const isLocalPath = (path: string) => path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
+export const isLocalPath = (path: string) => path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
 
 /** Lance le login Discord de l'API ; elle redirige ensuite vers `returnTo`. */
 export function loginUrl(returnTo: string): string {

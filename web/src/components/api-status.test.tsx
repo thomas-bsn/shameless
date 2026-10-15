@@ -13,8 +13,16 @@ describe("ApiStatus", () => {
     expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe("/api/health");
   });
 
-  it("says the API is unreachable when the health check fails", async () => {
+  it("shows an unhealthy API as such", async () => {
     mockApi({ "GET /health": new Response("Unhealthy", { status: 503 }) });
+
+    renderComponent(<ApiStatus />);
+
+    expect(await screen.findByText("Unhealthy")).toBeInTheDocument();
+  });
+
+  it("says the API is unreachable when nothing answers", async () => {
+    mockApi({ "GET /health": () => Promise.reject(new TypeError("Failed to fetch")) });
 
     renderComponent(<ApiStatus />);
 
