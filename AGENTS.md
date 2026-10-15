@@ -13,3 +13,9 @@ Labels par défaut : `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for
 ### Domain docs
 
 Single-context : un `CONTEXT.md` et `docs/adr/` à la racine. See `docs/agents/domain.md`.
+
+### Roadmap
+
+Les phases (0 à 3) sont dans `docs/[ROADMAP.md](http://ROADMAP.md)`  sur la branche main. Chaque phase devient une issue de spec
+
+dans GitHub Issues. Quand une phase est finie, cocher ses cases dans la roadmap.
