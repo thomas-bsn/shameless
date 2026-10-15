@@ -10,6 +10,7 @@ public sealed record PendingGameResponse(
 
 public sealed record PendingGameParticipant(  
     int PlayerId,
-    string Team,
+    string Team, // Side : "blue" | "red"
+    string Equipe, // "A" | "B"
     string Prenom
 );

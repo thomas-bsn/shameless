@@ -4,9 +4,11 @@ public record GameHistoryResponse(
     int Id,
     int? SeriesId,
     DateTime PlayedAt,
-    string? Winner,
-    List<GameParticipantDto> BlueTeam,
-    List<GameParticipantDto> RedTeam
+    string TeamASide,
+    string TeamBSide,
+    string? Winner, // Équipe gagnante : "A" | "B"
+    List<GameParticipantDto> TeamA,
+    List<GameParticipantDto> TeamB
 );
 
 public record GameParticipantDto(

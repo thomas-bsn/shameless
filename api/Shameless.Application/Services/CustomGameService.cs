@@ -77,72 +77,72 @@ public class CustomGameService
         {
             PlayedAt = playedAt ?? _clock.GetUtcNow().UtcDateTime,
             CreatedAt = _clock.GetUtcNow().UtcDateTime,
-            SeriesId = seriesId
+            SeriesId = seriesId,
+            TeamASide = series == null
+                ? Sides.Blue
+                : await TeamASideAsync(series.Id, blueTeamPlayerIds, redTeamPlayerIds)
         };
 
         game = await _gameRepo.AddAsync(game);
         var participants = CreateParticipants(game.Id, blueTeamPlayerIds, redTeamPlayerIds);
         await _participantRepo.AddRangeAsync(participants);
 
-        if (series != null && string.IsNullOrEmpty(series.TeamAReference))
-        {
-            var bluePlayers = await _playerRepo.GetByIdsAsync(blueTeamPlayerIds);
-            var teamARiotIds = bluePlayers.Select(p => p.RiotId).ToList();
-            series.TeamAReference = System.Text.Json.JsonSerializer.Serialize(teamARiotIds);
-            await _seriesRepo.SaveChangesAsync();
-        }
-
         return (game, seriesId);
     }
-    
-    public async Task<object?> GetSeriesStatusAsync(int seriesId)
+
+    /// <summary>
+    /// L'Équipe A est le côté bleu de la première game d'une Série. Ensuite, c'est le Side
+    /// où l'on retrouve le plus de joueurs de l'Équipe A de la game précédente.
+    /// </summary>
+    private async Task<string> TeamASideAsync(int seriesId, List<int> bluePlayerIds, List<int> redPlayerIds)
+    {
+        var previous = (await _gameRepo.GetBySeriesIdAsync(seriesId)).LastOrDefault();
+        if (previous == null) return Sides.Blue;
+
+        var teamA = previous.ParticipantsOf(Equipes.A).Select(p => p.PlayerId).ToHashSet();
+        return redPlayerIds.Count(teamA.Contains) > bluePlayerIds.Count(teamA.Contains)
+            ? Sides.Red
+            : Sides.Blue;
+    }
+
+    public async Task<SeriesResponse?> GetSeriesStatusAsync(int seriesId)
     {
         var series = await _seriesRepo.GetByIdAsync(seriesId);
         if (series == null) return null;
 
         var games = await _gameRepo.GetBySeriesIdAsync(seriesId);
-        var completed = games.Where(g => g.Status == "completed").ToList();
-
-        var blueWins = completed.Count(g => g.Winner == "blue");
-        var redWins  = completed.Count(g => g.Winner == "red");
-
         var lastGame = games.LastOrDefault();
 
-        List<string>? teamAReference = null;
-        if (!string.IsNullOrEmpty(series.TeamAReference))
-        {
-            teamAReference = System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference);
-        }
-
-        return new
-        {
-            seriesId = series.Id,
-            format = series.Format,
-            blueWins,
-            redWins,
-            teamAWins = series.TeamAWins,     
-            teamBWins = series.TeamBWins,    
-            teamAReference = teamAReference,  
-            lastGame = lastGame == null ? null : new
-            {
-                id = lastGame.Id,
-                winner = lastGame.Winner,
-                blueTeam = lastGame.Participants
-                    .Where(p => p.Team == "blue")
-                    .Select(p => new { prenom = p.Player.Prenom, riotId = p.Player.RiotId, rankTier = p.Player.RankTier, rankDivision = p.Player.RankDivision }),
-                redTeam = lastGame.Participants
-                    .Where(p => p.Team == "red")
-                    .Select(p => new { prenom = p.Player.Prenom, riotId = p.Player.RiotId, rankTier = p.Player.RankTier, rankDivision = p.Player.RankDivision }),
-            }
-        };
+        return new SeriesResponse(
+            SeriesId: series.Id,
+            Format: series.Format,
+            TeamAWins: series.TeamAWins,
+            TeamBWins: series.TeamBWins,
+            TeamA: lastGame == null ? [] : ToDtos(lastGame.ParticipantsOf(Equipes.A)),
+            TeamB: lastGame == null ? [] : ToDtos(lastGame.ParticipantsOf(Equipes.B)),
+            Games: games.Select(g => new SeriesGameResponse(
+                Id: g.Id,
+                Status: g.Status,
+                TeamASide: g.TeamASide,
+                TeamBSide: g.TeamBSide,
+                Winner: g.WinningTeam,
+                TeamA: ToDtos(g.ParticipantsOf(Equipes.A)),
+                TeamB: ToDtos(g.ParticipantsOf(Equipes.B))
+            )).ToList()
+        );
     }
+
+    private static List<GameParticipantDto> ToDtos(IEnumerable<CustomGameParticipant> participants) =>
+        participants
+            .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
+            .ToList();
 
     public async Task<List<CustomGame>> GetCurrentMonthGames()
     {
         return await _gameRepo.GetByMonthAsync(_clock.GetUtcNow().UtcDateTime);
     }
     
-    public async Task<List<object>> GetActiveSeriesAsync()
+    public async Task<List<SeriesResponse>> GetActiveSeriesAsync()
     {
         var allGames = await _gameRepo.GetAllWithSeriesAsync();
 
@@ -161,7 +161,7 @@ public class CustomGameService
             .Select(g => g.Key)
             .ToList();
 
-        var result = new List<object>();
+        var result = new List<SeriesResponse>();
         foreach (var seriesId in activeSeries)
         {
             var status = await GetSeriesStatusAsync(seriesId);
@@ -175,40 +175,30 @@ public class CustomGameService
         return await _gameRepo.GetPendingAsync();
     }
     
-    public async Task<CustomGame?> SetGameResultAsync(int gameId, string winner)
+    /// <summary>Saisit l'Équipe gagnante ("A" ou "B") d'une game.</summary>
+    public async Task<CustomGame?> SetGameResultAsync(int gameId, string winningTeam)
     {
         var game = await _gameRepo.GetByIdWithParticipantsAsync(gameId);
         if (game == null) return null;
 
-        game.Winner = winner;
+        game.WinningTeam = winningTeam;
         game.Status = "completed";
+        await _gameRepo.SaveChangesAsync();
 
         if (game.SeriesId != null)
         {
             var series = await _seriesRepo.GetByIdAsync(game.SeriesId.Value);
-            if (series != null && !string.IsNullOrEmpty(series.TeamAReference))
+            if (series != null)
             {
-                var teamARiotIds = System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference);
-            
-                // Déterminer quelle équipe est sur blue side
-                var blueTeamRiotIds = game.Participants
-                    .Where(p => p.Team == "blue")
-                    .Select(p => p.Player.RiotId)
+                var completed = (await _gameRepo.GetBySeriesIdAsync(series.Id))
+                    .Where(g => g.Status == "completed")
                     .ToList();
-            
-                bool isTeamAOnBlue = teamARiotIds!.Any(riotId => blueTeamRiotIds.Contains(riotId));
-                bool teamAWon = (winner == "blue" && isTeamAOnBlue) || (winner == "red" && !isTeamAOnBlue);
-            
-                if (teamAWon)
-                    series.TeamAWins++;
-                else
-                    series.TeamBWins++;
-            
+                series.TeamAWins = completed.Count(g => g.WinningTeam == Equipes.A);
+                series.TeamBWins = completed.Count(g => g.WinningTeam == Equipes.B);
                 await _seriesRepo.SaveChangesAsync();
             }
         }
 
-        await _gameRepo.SaveChangesAsync();
         await _costService.RecalculateCosts(gameId);
 
         return game;
@@ -229,22 +219,15 @@ public class CustomGameService
                     SeriesId: group.Key ?? 0,
                     Format: series?.Format ?? 1,
                     PlayedAt: series?.PlayedAt ?? firstGame.PlayedAt,
-                    TeamAReference: series?.TeamAReference != null 
-                        ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(series.TeamAReference) 
-                        : null,
                     Games: group.Select(g => new GameHistoryResponse(
                         Id: g.Id,
                         SeriesId: g.SeriesId,
                         PlayedAt: g.PlayedAt,
-                        Winner: g.Winner,
-                        BlueTeam: g.Participants
-                            .Where(p => p.Team == "blue")
-                            .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
-                            .ToList(),
-                        RedTeam: g.Participants
-                            .Where(p => p.Team == "red")
-                            .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
-                            .ToList()
+                        TeamASide: g.TeamASide,
+                        TeamBSide: g.TeamBSide,
+                        Winner: g.WinningTeam,
+                        TeamA: ToDtos(g.ParticipantsOf(Equipes.A)),
+                        TeamB: ToDtos(g.ParticipantsOf(Equipes.B))
                     )).ToList()
                 );
             })
