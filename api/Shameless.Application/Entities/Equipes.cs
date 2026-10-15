@@ -6,6 +6,9 @@ public static class Equipes
     public const string A = "A";
     public const string B = "B";
 
+    /// <summary>Une Équipe compte cinq joueurs.</summary>
+    public const int PlayersPerTeam = 5;
+
     public static bool IsValid(string? equipe) => equipe is A or B;
 
     public static string Other(string equipe) => equipe == A ? B : A;

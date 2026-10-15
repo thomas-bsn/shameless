@@ -11,7 +11,7 @@ namespace Shameless.Application.Services;
 /// </summary>
 public sealed class PickerService
 {
-    public const int PlayersCount = 2 * Roulette.PlayersPerTeam;
+    public const int PlayersCount = 2 * Equipes.PlayersPerTeam;
 
     private readonly ISoireeRepository _soirees;
     private readonly IPickerSessionRepository _sessions;

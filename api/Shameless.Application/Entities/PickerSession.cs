@@ -41,8 +41,8 @@ public class PickerSession
 
     /// <summary>Les deux Équipes sont complètes : la session peut créer la Série.</summary>
     public bool CanValidate =>
-        Players.Count(p => p.Equipe == Equipes.A) == Roulette.PlayersPerTeam &&
-        Players.Count(p => p.Equipe == Equipes.B) == Roulette.PlayersPerTeam;
+        Players.Count(p => p.Equipe == Equipes.A) == Equipes.PlayersPerTeam &&
+        Players.Count(p => p.Equipe == Equipes.B) == Equipes.PlayersPerTeam;
 
     /// <summary>Le capitaine de l'Équipe dans la Draft, ou null.</summary>
     public int? CapitaineOf(string equipe) =>

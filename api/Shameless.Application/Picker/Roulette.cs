@@ -1,3 +1,4 @@
+using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
 namespace Shameless.Application.Picker;
@@ -16,7 +17,6 @@ public sealed record Composition(IReadOnlyList<int> TeamA, IReadOnlyList<int> Te
 /// </summary>
 public static class Roulette
 {
-    public const int PlayersPerTeam = 5;
     public const decimal EcartMaxEquilibre = 1m;
 
     public static Composition Aleatoire(IReadOnlyList<int> joueurs, IRandomSource random)
@@ -28,7 +28,7 @@ public static class Roulette
             var j = random.Next(i + 1);
             (melange[i], melange[j]) = (melange[j], melange[i]);
         }
-        return new Composition(melange[..PlayersPerTeam], melange[PlayersPerTeam..]);
+        return new Composition(melange[..Equipes.PlayersPerTeam], melange[Equipes.PlayersPerTeam..]);
     }
 
     public static Composition Equilibree(IReadOnlyList<PickerPlayer> joueurs, IRandomSource random)
@@ -64,7 +64,7 @@ public static class Roulette
         var autres = joueurs.Skip(1).ToList();
         for (var masque = 0; masque < 1 << autres.Count; masque++)
         {
-            if (System.Numerics.BitOperations.PopCount((uint)masque) != PlayersPerTeam - 1) continue;
+            if (System.Numerics.BitOperations.PopCount((uint)masque) != Equipes.PlayersPerTeam - 1) continue;
 
             var teamA = new List<int> { joueurs[0] };
             var teamB = new List<int>();
@@ -76,7 +76,7 @@ public static class Roulette
 
     private static void EnsureDix(int count)
     {
-        if (count != 2 * PlayersPerTeam)
+        if (count != 2 * Equipes.PlayersPerTeam)
             throw new ArgumentException("Le Picker forme les Équipes à partir de dix joueurs.");
     }
 }

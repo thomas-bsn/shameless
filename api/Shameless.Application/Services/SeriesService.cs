@@ -11,8 +11,6 @@ namespace Shameless.Application.Services;
 /// </summary>
 public sealed class SeriesService
 {
-    public const int PlayersPerTeam = 5;
-
     private const string ModifieeEntreTemps =
         "Cette Série vient d'être modifiée par une autre commande : rechargez-la et réessayez.";
 
@@ -72,7 +70,7 @@ public sealed class SeriesService
     {
         if (!BestOfSeries.IsValidFormat(format))
             return CommandResult<BestOfSeries>.Invalid("Le format d'une Série est BO1, BO2, BO3 ou BO5.");
-        if (teamA.Count != PlayersPerTeam || teamB.Count != PlayersPerTeam)
+        if (teamA.Count != Equipes.PlayersPerTeam || teamB.Count != Equipes.PlayersPerTeam)
             return CommandResult<BestOfSeries>.Invalid("Chaque Équipe compte exactement cinq joueurs.");
 
         var ids = teamA.Concat(teamB).ToList();

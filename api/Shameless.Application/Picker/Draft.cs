@@ -12,7 +12,7 @@ public sealed record Capitaines(int CapitaineA, int CapitaineB);
 /// </summary>
 public static class Draft
 {
-    public const int PicksCount = 2 * (Roulette.PlayersPerTeam - 1);
+    public const int PicksCount = 2 * (Equipes.PlayersPerTeam - 1);
 
     /// <summary>Les deux plus gros costs parmi les dix ; à cost égal, l'ordre de la sélection départage.</summary>
     public static Capitaines CapitainesParPlusGrosCost(IReadOnlyList<PickerPlayer> joueurs)
@@ -53,7 +53,7 @@ public static class Draft
 
     private static void EnsureDix(int count)
     {
-        if (count != 2 * Roulette.PlayersPerTeam)
+        if (count != 2 * Equipes.PlayersPerTeam)
             throw new ArgumentException("Le Picker forme les Équipes à partir de dix joueurs.");
     }
 }
