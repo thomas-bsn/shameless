@@ -19,3 +19,10 @@ public static class Sides
 
     public static string Other(string side) => side == Blue ? Red : Blue;
 }
+
+/// <summary>Le statut d'une game : en attente de son résultat, puis terminée.</summary>
+public static class GameStatuses
+{
+    public const string Pending = "pending";
+    public const string Completed = "completed";
+}

@@ -92,7 +92,7 @@ public sealed class SeriesService
             return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : elle n'accepte plus de game.");
-        if (series.Games.Any(g => g.Status == "pending"))
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
 
         if (teamASide != null && teamASide is not (Sides.Blue or Sides.Red))
@@ -112,7 +112,7 @@ public sealed class SeriesService
             CreatedAt = now,
             SeriesId = series.Id,
             TeamASide = side,
-            Status = "pending",
+            Status = GameStatuses.Pending,
             Participants = series.Players
                 .Select(p => new CustomGameParticipant
                 {
@@ -137,7 +137,7 @@ public sealed class SeriesService
         var game = await _games.GetByIdWithParticipantsAsync(gameId);
         if (game == null)
             return CommandResult<CustomGame>.NotFound("Cette game n'existe pas.");
-        if (game.Status == "completed")
+        if (game.Status == GameStatuses.Completed)
             return CommandResult<CustomGame>.Conflict("Le résultat de cette game est déjà saisi.");
 
         var series = game.SeriesId == null ? null : await _series.GetWithGamesAsync(game.SeriesId.Value);
@@ -145,7 +145,7 @@ public sealed class SeriesService
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : son score ne change plus.");
 
         game.WinningTeam = winningTeam;
-        game.Status = "completed";
+        game.Status = GameStatuses.Completed;
         series?.ApplyResults(series.Games);
         await _games.SaveChangesAsync();
 
@@ -168,7 +168,7 @@ public sealed class SeriesService
         if (!series.IsEnCours)
             return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
 
-        var pending = series.Games.Where(g => g.Status != "completed").ToList();
+        var pending = series.Games.Where(g => g.Status != GameStatuses.Completed).ToList();
         foreach (var game in pending)
             _games.Remove(game);
 
@@ -195,7 +195,7 @@ public sealed class SeriesService
             return CommandResult<SeriesResponse>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
             return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : sa composition ne change plus.");
-        if (series.Games.Any(g => g.Status == "pending"))
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<SeriesResponse>.Conflict(
                 "Une game de cette Série attend son résultat : le remplacement se fait entre deux games.");
 

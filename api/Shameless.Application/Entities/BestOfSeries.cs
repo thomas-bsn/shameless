@@ -46,7 +46,7 @@ public class BestOfSeries
     /// </summary>
     public void ApplyResults(IEnumerable<CustomGame> games)
     {
-        var completed = games.Where(g => g.Status == "completed").ToList();
+        var completed = games.Where(g => g.Status == GameStatuses.Completed).ToList();
         TeamAWins = completed.Count(g => g.WinningTeam == Equipes.A);
         TeamBWins = completed.Count(g => g.WinningTeam == Equipes.B);
 

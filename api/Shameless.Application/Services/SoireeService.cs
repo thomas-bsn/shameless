@@ -58,7 +58,7 @@ public sealed class SoireeService
 
         var derniereGameTerminee = soiree.Series
             .SelectMany(s => s.Games)
-            .Where(g => g.Status == "completed")
+            .Where(g => g.Status == GameStatuses.Completed)
             .Select(g => (DateTime?)g.PlayedAt)
             .Max();
         var derniereActivite = derniereGameTerminee ?? soiree.OpenedAt;

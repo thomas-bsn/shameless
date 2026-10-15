@@ -8,7 +8,7 @@ public class CustomGame
     public string? WinningTeam { get; set; } // Équipe gagnante : "A" | "B", null tant que la game n'est pas terminée
     public string? RiotMatchId { get; set; } // NULL pour maintenant, rempli plus tard
     public string? RiotMatchData { get; set; }
-    public string Status { get; set; } = "pending"; // "pending", "completed", "error"
+    public string Status { get; set; } = GameStatuses.Pending; // voir GameStatuses
     public DateTime CreatedAt { get; set; }
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }

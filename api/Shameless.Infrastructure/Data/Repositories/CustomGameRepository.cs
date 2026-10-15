@@ -65,7 +65,7 @@ public class CustomGameRepository : ICustomGameRepository
         return await _db.CustomGames
             .Include(g => g.Participants)
             .ThenInclude(p => p.Player)
-            .Where(g => g.Status == "pending")
+            .Where(g => g.Status == GameStatuses.Pending)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
@@ -88,7 +88,7 @@ public class CustomGameRepository : ICustomGameRepository
             .Include(g => g.Series)
             .Where(g => g.PlayedAt.Year == year
                         && g.PlayedAt.Month == month
-                        && g.Status == "completed")
+                        && g.Status == GameStatuses.Completed)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
