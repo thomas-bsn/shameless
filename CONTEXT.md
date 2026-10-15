@@ -1,0 +1,102 @@
+# Shameless — Contexte du domaine
+
+Shameless est une app open source (MIT) pour organiser des parties personnalisées 5v5  
+de League of Legends entre amis : former les équipes, jouer des séries, récupérer les  
+stats, garder l'historique et voter MVP et DOFD. Chaque communauté héberge sa propre  
+instance.
+
+Ce fichier est le vocabulaire du projet. Le code, les issues et les specs utilisent ces  
+mots, avec ce sens-là. Un terme nouveau ou qui change de sens est ajouté ici.
+
+## Acteurs
+
+- **Utilisateur** : une personne connectée avec son compte Discord. Seul moyen de  
+connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl).
+- **Joueur** : une personne qui joue les customs, identifiée par son compte Riot  
+(RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
+joueur ; un joueur peut exister sans utilisateur lié.
+- **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
+des pronostics.
+- **Instance** : un déploiement de Shameless pour une communauté, avec son serveur  
+Discord, sa base de données et sa propre clé Riot.
+
+## Jeu
+
+- **Game** : une partie personnalisée 5v5 jouée par dix joueurs. Entité `CustomGame`.  
+Statut : `pending`, `completed`, `error`.
+- **Équipe** : les cinq joueurs d'un même camp dans une série. Une équipe garde son  
+identité d'une game à l'autre, même si elle change de side.
+- **Side** : le camp sur la carte pour une game donnée, `blue` ou `red`. À ne pas  
+confondre avec l'équipe.
+- **Série** : une suite de games entre les deux mêmes équipes. Entité `BestOfSeries`.  
+Formats : BO1, BO2, BO3, BO5. Une série se termine quand une équipe a gagné, ou  
+quand elle est abandonnée.
+- **Fearless** : option d'une série. Un champion joué dans une game ne peut plus être  
+joué dans les games suivantes de la série.
+- **Soirée** : l'ensemble des séries jouées lors d'une même session. L'état de la  
+soirée est sauvegardé côté API.
+- **Récap** : le résumé d'une game terminée (vainqueur, stats des dix joueurs, votes),  
+affiché sur le site et posté par le bot.
+
+## Former les équipes : le Picker
+
+- **Picker** : l'écran qui transforme dix joueurs choisis en deux équipes.
+- **Draft** : deux capitaines choisissent les joueurs à tour de rôle.
+- **Roulette** : tirage des équipes au hasard, ou équilibré selon le cost.
+- **Autorole** : attribution automatique des rôles (top, jungle, mid, ADC, support)  
+dans chaque équipe.
+
+## Niveau des joueurs
+
+- **Rang SoloQ** : le rang classé d'un joueur en solo, lu via l'API Riot.
+- **Peak** : le meilleur rang qu'un joueur déclare avoir atteint (tier, division,  
+saison).
+- **MMR** : score interne calculé à partir du peak, puis ajusté par le winrate du mois  
+en customs. Ce n'est pas un Elo.
+- **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6, affichée en  
+tiers D, C, B, A, S, SS. Dérivé du MMR, recalculé après chaque game, remis à zéro  
+chaque mois (`PlayerMonthlyCost`).
+
+## Votes et titres
+
+- **MVP** : le meilleur joueur d'une game, élu par les dix joueurs. Titre affiché :  
+Roi ou Reine.
+- **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
+élu par les dix joueurs. Illustré par une bouse de cheval.
+- **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
+plus de morts, plus faible participation aux kills), sans vote.
+- **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
+- **Pronostic** : le pari d'un spectateur avant la game sur l'équipe gagnante, le MVP  
+et le DOFD. Un bon pronostic rapporte des points.
+- **Doyen** *(à valider)* : le spectateur qui a le plus de points de pronostic sur le  
+mois. Sa voix compte double aux votes MVP et DOFD.
+
+## Modes de jeu
+
+- **Mode classique** : une série normale.
+- **Undercover** : un traître est tiré au sort dans chaque équipe et prévenu en  
+message privé. Son objectif est de faire perdre son équipe sans se faire repérer. À  
+la fin, chaque équipe vote pour désigner son traître.
+- **Mode Proxchat** : la série se joue avec le chat vocal de proximité activé.
+
+## Logiciels
+
+- **Web** : l'interface Shameless (Vite, React).
+- **API** : le backend Shameless (.NET). Source de vérité des données.
+- **Companion** : l'app PC qui lit les stats de fin de game dans le client LoL et les  
+envoie à l'API. Un seul joueur équipé par game suffit.
+- **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
+séries, poste les récaps, gère les votes et rattache les clips.
+- **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
+- **Clip** : une vidéo d'un moment de game, postée par un joueur dans le salon `#clips`  
+de Discord, puis rattachée à la game par le bot.
+
+## Données Riot
+
+- **Clé Personal** : la clé API Riot dont dispose chaque instance. Elle donne les  
+rangs SoloQ, mais pas les données des parties personnalisées.
+- **Clé Production** : clé qui donne accès à la Tournament API et aux games créées  
+avec un tournament code. Demandée, en attente.
+- **RiotId** : l'identifiant visible d'un compte Riot, `Nom#TAG`. Peut changer.
+- **PUUID** : l'identifiant permanent d'un compte Riot. Sert de clé stable.
+
