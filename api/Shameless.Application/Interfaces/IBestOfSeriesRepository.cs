@@ -12,11 +12,11 @@ public interface IBestOfSeriesRepository
     /// <summary>La Série avec sa composition courante et ses games (participants et joueurs), games triées par id.</summary>
     Task<BestOfSeries?> GetWithGamesAsync(int id);
 
-    /// <summary>Ids des Séries en cours, de la plus ancienne à la plus récente.</summary>
-    Task<List<int>> GetEnCoursIdsAsync();
+    /// <summary>Les Séries en cours avec leurs games, de la plus ancienne à la plus récente.</summary>
+    Task<List<BestOfSeries>> GetEnCoursWithGamesAsync();
 
-    /// <summary>Ids des Séries d'une Soirée, de la plus ancienne à la plus récente.</summary>
-    Task<List<int>> GetIdsBySoireeAsync(int soireeId);
+    /// <summary>Les Séries d'une Soirée avec leurs games, de la plus ancienne à la plus récente.</summary>
+    Task<List<BestOfSeries>> GetBySoireeWithGamesAsync(int soireeId);
 
     /// <summary>Marque la Série pour suppression, avec sa composition ; effectif au prochain enregistrement.</summary>
     void Remove(BestOfSeries series);
