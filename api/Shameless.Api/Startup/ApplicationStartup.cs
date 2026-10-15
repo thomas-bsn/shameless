@@ -4,15 +4,19 @@ public static class ApplicationStartup
 {
     public static WebApplication ConfigureApplication(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
+        // Hors développement : ProblemDetails générique, sans stack trace.
+        if (!app.Environment.IsDevelopment())
+            app.UseExceptionHandler();
+        app.UseStatusCodePages();
 
         app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHealthChecks("/health").AllowAnonymous();
+
+        if (app.Environment.IsDevelopment())
+            app.MapOpenApi().AllowAnonymous();
 
         return app;
     }

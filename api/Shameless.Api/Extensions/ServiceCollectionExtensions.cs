@@ -57,6 +57,7 @@ public static class ServiceCollectionExtensions
             );
 
         services.AddOpenApi();
+        services.AddProblemDetails();
 
         return services;
     }

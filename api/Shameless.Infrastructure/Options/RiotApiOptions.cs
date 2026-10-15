@@ -4,8 +4,8 @@ namespace Shameless.Infrastructure.Options;
 
 public sealed class RiotApiOptions
 {
-    [Required(ErrorMessage = "Auth:Riot:ApiKey missing")]
-    public required string ApiKey { get; init; }
+    /// <summary>Optionnelle : sans clé, l'instance démarre et le rafraîchissement des rangs est désactivé.</summary>
+    public string? ApiKey { get; init; }
     
     [Required]
     [Url]

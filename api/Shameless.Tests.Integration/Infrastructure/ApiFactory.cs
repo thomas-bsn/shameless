@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using Npgsql;
+using Microsoft.Extensions.Logging.Testing;
 using Shameless.Api.Interfaces;
-using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Data;
 using Testcontainers.PostgreSql;
@@ -53,21 +51,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        var connection = new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString());
-
         builder.UseEnvironment("Testing");
-        builder.UseSetting("Database:Host", connection.Host);
-        builder.UseSetting("Database:Port", connection.Port.ToString());
-        builder.UseSetting("Database:Database", connection.Database);
-        builder.UseSetting("Database:Username", connection.Username);
-        builder.UseSetting("Database:Password", connection.Password);
+        builder.UseSetting("ConnectionStrings:Shameless", _postgres.GetConnectionString());
         builder.UseSetting("Auth:Discord:ClientId", "test-client");
         builder.UseSetting("Auth:Discord:ClientSecret", "test-secret");
         builder.UseSetting("Auth:Discord:RedirectUri", "http://localhost/api/auth/discord/callback");
         builder.UseSetting("Auth:Discord:AllowedGuildId", TestSession.GuildId);
         builder.UseSetting("Auth:AllowedReturnOrigins", TestSession.AllowedOrigin);
         builder.UseSetting("Auth:AdminDiscordIds", TestSession.AdminDiscordId);
-        builder.UseSetting("Auth:Riot:ApiKey", "test-riot-key");
+        // Pas de clé Riot : l'instance doit démarrer, job de rangs désactivé. Riot est simulé.
+        builder.UseSetting("Auth:Riot:ApiKey", "");
 
         builder.ConfigureTestServices(services =>
         {
@@ -75,9 +68,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IRiotService>(Riot);
             services.RemoveAll<IDiscordOAuthClient>();
             services.AddSingleton<IDiscordOAuthClient>(Discord);
-
-            var job = services.Single(d => d.ImplementationType == typeof(RefreshRanksJob));
-            services.Remove(job);
+            services.AddFakeLogging();
         });
     }
 

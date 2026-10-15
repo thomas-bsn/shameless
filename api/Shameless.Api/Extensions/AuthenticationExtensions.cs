@@ -65,7 +65,8 @@ public static class AuthenticationExtensions
                 var riot = sp.GetRequiredService<IOptions<RiotApiOptions>>().Value;
                 client.BaseAddress = new Uri(riot.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(riot.TimeoutSeconds);
-                client.DefaultRequestHeaders.Add("X-Riot-Token", riot.ApiKey);
+                if (!string.IsNullOrWhiteSpace(riot.ApiKey))
+                    client.DefaultRequestHeaders.Add("X-Riot-Token", riot.ApiKey);
             })
             .AddPolicyHandler(GetRetryPolicy())
             .AddPolicyHandler(GetCircuitBreakerPolicy());

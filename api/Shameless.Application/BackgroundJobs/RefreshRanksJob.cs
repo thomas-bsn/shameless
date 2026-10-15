@@ -2,21 +2,30 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Shameless.Application.BackgroundJobs;
 public class RefreshRanksJob : BackgroundService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<RefreshRanksJob> _logger;
+    private readonly RefreshRanksJobOptions _options;
 
-    public RefreshRanksJob(IServiceProvider services, ILogger<RefreshRanksJob> logger)
+    public RefreshRanksJob(IServiceProvider services, ILogger<RefreshRanksJob> logger, IOptions<RefreshRanksJobOptions> options)
     {
         _services = services;
         _logger = logger;
+        _options = options.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        if (!_options.Enabled)
+        {
+            _logger.LogWarning("No Riot API key configured: rank refresh disabled");
+            return;
+        }
+
         while (!ct.IsCancellationRequested)
         {
             try
