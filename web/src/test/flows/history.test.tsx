@@ -1,0 +1,70 @@
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { Schemas } from "@/api/client";
+import { mockApi } from "@/test/api";
+import { user } from "@/test/fixtures";
+import { renderApp } from "@/test/render";
+
+const team = (...prenoms: string[]): Schemas["GameParticipantDto"][] =>
+  prenoms.map((prenom) => ({ prenom, riotId: `${prenom}#EUW`, rankTier: "GOLD", rankDivision: 2, cost: 3 }));
+
+const game = (id: number, winner: string | null, blue: string[], red: string[]): Schemas["GameHistoryResponse"] => ({
+  id,
+  seriesId: 5,
+  playedAt: "2026-10-03T20:30:00Z",
+  winner,
+  blueTeam: team(...blue),
+  redTeam: team(...red),
+});
+
+const october: Schemas["GameHistoryListResponse"] = {
+  games: [
+    {
+      seriesId: 5,
+      format: 3,
+      playedAt: "2026-10-03T20:00:00Z",
+      teamAReference: ["Alice#EUW", "Bob#EUW"],
+      games: [
+        game(11, "blue", ["Alice", "Bob"], ["Chloé", "Dan"]),
+        game(12, "blue", ["Chloé", "Dan"], ["Alice", "Bob"]),
+        game(13, "red", ["Chloé", "Dan"], ["Alice", "Bob"]),
+      ],
+    },
+  ],
+};
+
+describe("Historique", () => {
+  it("shows the series of the month with their teams, score and winners", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    expect(await screen.findByRole("heading", { name: "Octobre 2026" })).toBeInTheDocument();
+    const series = await screen.findByRole("article", { name: "Série BO3" });
+    expect(within(series).getByText("Équipe A 2 – 1 Équipe B")).toBeInTheDocument();
+
+    const games = within(series).getAllByRole("listitem");
+    expect(games).toHaveLength(3);
+    expect(within(games[0]!).getByText("Équipe A gagne")).toBeInTheDocument();
+    expect(within(games[1]!).getByText("Équipe B gagne")).toBeInTheDocument();
+    expect(within(games[2]!).getByText("Équipe A gagne")).toBeInTheDocument();
+    expect(within(games[1]!).getByRole("group", { name: "Équipe A · Red side" })).toHaveTextContent("Alice");
+  });
+
+  it("navigates from month to month", async () => {
+    const fetch = mockApi({
+      "GET /auth/me": user(),
+      "GET /games/history/2026/10": october,
+      "GET /games/history/2026/9": { games: [] },
+    });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    await userEvent.click(await screen.findByRole("link", { name: "← Septembre 2026" }));
+
+    expect(await screen.findByRole("heading", { name: "Septembre 2026" })).toBeInTheDocument();
+    expect(await screen.findByText("Aucune game ce mois-ci.")).toBeInTheDocument();
+    expect(fetch.mock.calls.some(([r]) => r.url.endsWith("/api/games/history/2026/9"))).toBe(true);
+    expect(screen.getByRole("link", { name: "Octobre 2026 →" })).toBeInTheDocument();
+  });
+});

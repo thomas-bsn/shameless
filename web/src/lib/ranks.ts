@@ -27,12 +27,12 @@ export function normalizeTier(tier: string | null | undefined): SoloQTier {
   return (SOLOQ_TIERS as readonly string[]).includes(upper ?? "") ? (upper as SoloQTier) : "UNRANKED";
 }
 
-/** « Gold II · 40 LP », « Master · 120 LP », « Unranked ». */
+/** « Gold II · 40 LP », « Master · 120 LP », « Unranked » ; sans LP connus, « Gold II ». */
 export function rankLabel(tier: string | null, division: number | null, lp: number | null): string {
   const normalized = normalizeTier(tier);
   if (normalized === "UNRANKED") return "Unranked";
   const roman = !isMasterPlus(normalized) && division ? DIVISIONS[division - 1] : undefined;
-  return `${tierName(normalized)}${roman ? ` ${roman}` : ""} · ${lp ?? 0} LP`;
+  return `${tierName(normalized)}${roman ? ` ${roman}` : ""}${lp === null ? "" : ` · ${lp} LP`}`;
 }
 
 const ROLES: Record<string, string> = {
