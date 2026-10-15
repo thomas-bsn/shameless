@@ -20,6 +20,7 @@ import { Route as ConnecteJoueursPlayerIdRouteImport } from './routes/_connecte/
 import { Route as ConnecteJoueursNouveauRouteImport } from './routes/_connecte/joueurs/nouveau'
 import { Route as ConnecteSeriesSeriesIdRouteImport } from './routes/_connecte/series/$seriesId'
 import { Route as ConnecteSoireeIndexRouteImport } from './routes/_connecte/soiree/index'
+import { Route as ConnecteSoireePickerRouteImport } from './routes/_connecte/soiree_.picker'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -75,6 +76,11 @@ const ConnecteSoireeIndexRoute = ConnecteSoireeIndexRouteImport.update({
   path: '/soiree/',
   getParentRoute: () => ConnecteRoute,
 } as any)
+const ConnecteSoireePickerRoute = ConnecteSoireePickerRouteImport.update({
+  id: '/soiree_/picker',
+  path: '/soiree/picker',
+  getParentRoute: () => ConnecteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
+  '/soiree/picker': typeof ConnecteSoireePickerRoute
   '/joueurs/': typeof ConnecteJoueursIndexRoute
   '/soiree/': typeof ConnecteSoireeIndexRoute
 }
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
+  '/soiree/picker': typeof ConnecteSoireePickerRoute
   '/joueurs': typeof ConnecteJoueursIndexRoute
   '/soiree': typeof ConnecteSoireeIndexRoute
 }
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/_connecte/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/_connecte/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/_connecte/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
+  '/_connecte/soiree_/picker': typeof ConnecteSoireePickerRoute
   '/_connecte/joueurs/': typeof ConnecteJoueursIndexRoute
   '/_connecte/soiree/': typeof ConnecteSoireeIndexRoute
 }
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
     | '/series/$seriesId'
+    | '/soiree/picker'
     | '/joueurs/'
     | '/soiree/'
   fileRoutesByTo: FileRoutesByTo
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
     | '/series/$seriesId'
+    | '/soiree/picker'
     | '/joueurs'
     | '/soiree'
   id:
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/_connecte/joueurs/$playerId'
     | '/_connecte/joueurs/nouveau'
     | '/_connecte/series/$seriesId'
+    | '/_connecte/soiree_/picker'
     | '/_connecte/joueurs/'
     | '/_connecte/soiree/'
   fileRoutesById: FileRoutesById
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnecteSoireeIndexRouteImport
       parentRoute: typeof ConnecteRoute
     }
+    '/_connecte/soiree_/picker': {
+      id: '/_connecte/soiree_/picker'
+      path: '/soiree/picker'
+      fullPath: '/soiree/picker'
+      preLoaderRoute: typeof ConnecteSoireePickerRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
   }
 }
 
@@ -249,6 +268,7 @@ interface ConnecteRouteChildren {
   ConnecteJoueursPlayerIdRoute: typeof ConnecteJoueursPlayerIdRoute
   ConnecteJoueursNouveauRoute: typeof ConnecteJoueursNouveauRoute
   ConnecteSeriesSeriesIdRoute: typeof ConnecteSeriesSeriesIdRoute
+  ConnecteSoireePickerRoute: typeof ConnecteSoireePickerRoute
   ConnecteJoueursIndexRoute: typeof ConnecteJoueursIndexRoute
   ConnecteSoireeIndexRoute: typeof ConnecteSoireeIndexRoute
 }
@@ -260,6 +280,7 @@ const ConnecteRouteChildren: ConnecteRouteChildren = {
   ConnecteJoueursPlayerIdRoute: ConnecteJoueursPlayerIdRoute,
   ConnecteJoueursNouveauRoute: ConnecteJoueursNouveauRoute,
   ConnecteSeriesSeriesIdRoute: ConnecteSeriesSeriesIdRoute,
+  ConnecteSoireePickerRoute: ConnecteSoireePickerRoute,
   ConnecteJoueursIndexRoute: ConnecteJoueursIndexRoute,
   ConnecteSoireeIndexRoute: ConnecteSoireeIndexRoute,
 }

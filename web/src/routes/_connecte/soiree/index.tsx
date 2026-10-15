@@ -12,12 +12,6 @@ export const Route = createFileRoute("/_connecte/soiree/")({
   component: SoireePage,
 });
 
-/**
- * L'écran Picker (#28) vit sous cette URL. Lien HTML simple tant que sa route n'existe pas dans
- * l'arbre des routes ; à remplacer par un <Link> une fois le Picker fusionné.
- */
-const PICKER_PATH = "/soiree/picker";
-
 const timeLabel = (iso: string) =>
   new Date(iso).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
@@ -52,7 +46,7 @@ function SoireePage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild>
-              <a href={PICKER_PATH}>{soiree.picker ? "Reprendre le Picker" : "Former les équipes"}</a>
+              <Link to="/soiree/picker">{soiree.picker ? "Reprendre le Picker" : "Former les équipes"}</Link>
             </Button>
             <Button
               variant="outline"
