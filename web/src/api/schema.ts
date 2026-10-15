@@ -2058,7 +2058,7 @@ export interface components {
         PendingGameParticipant: {
             /** Format: int32 */
             playerId: number;
-            team: string;
+            side: string;
             equipe: string;
             prenom: string;
         };
@@ -2208,10 +2208,12 @@ export interface components {
             format: number;
             /** Format: date-time */
             playedAt: string;
+            outcome: null | components["schemas"]["SeriesOutcome"];
+            winningTeam: null | string;
             games: components["schemas"]["GameHistoryResponse"][];
         };
         /** @enum {unknown} */
-        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue";
+        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue" | null;
         SeriesResponse: {
             /** Format: int32 */
             seriesId: number;

@@ -96,11 +96,14 @@ public class AppDbContext : DbContext
             entity.Ignore(e => e.TeamBSide);
             entity.Property(e => e.RiotMatchId).HasMaxLength(100);
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
-            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("");
+            // Jeton de concurrence : le résultat d'une game ne se saisit qu'une fois, même simultanément.
+            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("").IsConcurrencyToken();
 
             entity.Property(e => e.CreatedAt)
                   .HasColumnType(Timestamp)
                   .HasDefaultValueSql("now()");
+
+            entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
 
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)
@@ -116,7 +119,8 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
 
-            entity.Property(e => e.Team).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Side).HasColumnName("team").HasMaxLength(10).IsRequired();
+            entity.Ignore(e => e.HasWon);
             entity.Property(e => e.RiotParticipantData).HasColumnType("jsonb");
 
             entity.HasOne(e => e.CustomGame)

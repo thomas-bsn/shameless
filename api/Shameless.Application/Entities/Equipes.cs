@@ -6,6 +6,9 @@ public static class Equipes
     public const string A = "A";
     public const string B = "B";
 
+    /// <summary>Une Équipe compte cinq joueurs.</summary>
+    public const int PlayersPerTeam = 5;
+
     public static bool IsValid(string? equipe) => equipe is A or B;
 
     public static string Other(string equipe) => equipe == A ? B : A;
@@ -18,4 +21,11 @@ public static class Sides
     public const string Red = "red";
 
     public static string Other(string side) => side == Blue ? Red : Blue;
+}
+
+/// <summary>Le statut d'une game : en attente de son résultat, puis terminée.</summary>
+public static class GameStatuses
+{
+    public const string Pending = "pending";
+    public const string Completed = "completed";
 }

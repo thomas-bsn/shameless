@@ -68,6 +68,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("team_b_wins");
 
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
                     b.Property<string>("WinningTeam")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
@@ -90,6 +95,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("completed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -115,6 +124,7 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnName("series_id");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text")
@@ -165,7 +175,7 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("riot_participant_data");
 
-                    b.Property<string>("Team")
+                    b.Property<string>("Side")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
@@ -208,6 +218,11 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<string>("Variante")
                         .HasColumnType("text")
                         .HasColumnName("variante");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
 
                     b.HasKey("Id")
                         .HasName("pk_picker_sessions");

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
@@ -17,6 +16,9 @@ public class SoireeRepository : ISoireeRepository
     public async Task<Soiree?> GetByIdAsync(int id) =>
         await _db.Soirees.FindAsync(id);
 
+    public Task<Soiree?> GetWithSeriesAsync(int id) =>
+        _db.Soirees.Include(s => s.Series).SingleOrDefaultAsync(s => s.Id == id);
+
     public Task<Soiree?> GetOpenWithSeriesAndGamesAsync() =>
         _db.Soirees
             .Include(s => s.Series)
@@ -24,20 +26,7 @@ public class SoireeRepository : ISoireeRepository
             .AsSplitQuery()
             .SingleOrDefaultAsync(s => s.Status == SoireeStatus.Open);
 
-    public async Task<bool> TryAddAsync(Soiree soiree)
-    {
-        _db.Soirees.Add(soiree);
-        try
-        {
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            _db.Entry(soiree).State = EntityState.Detached;
-            return false;
-        }
-    }
+    public Task<bool> TryAddAsync(Soiree soiree) => _db.TryAddAsync(soiree);
 
     public Task SaveChangesAsync() => _db.SaveChangesAsync();
 }

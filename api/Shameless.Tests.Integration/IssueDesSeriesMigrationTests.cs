@@ -9,7 +9,7 @@ namespace Shameless.Tests.Integration;
 
 /// <summary>
 /// Conversion des séries existantes : issue calculée à partir du score, composition courante des
-/// Équipes reprise de la dernière game.
+/// Équipes reprise de la dernière game, games en attente des séries interrompues supprimées (ADR 0009).
 /// </summary>
 public class IssueDesSeriesMigrationTests(ApiFactory factory) : IAsyncLifetime
 {
@@ -54,6 +54,8 @@ public class IssueDesSeriesMigrationTests(ApiFactory factory) : IAsyncLifetime
                 (10, '2026-09-01 21:00', 'blue', 'A', 'completed', 1),
                 (11, '2026-09-01 21:40', 'red',  'B', 'completed', 1),
                 (12, '2026-09-01 22:20', 'red',  'B', 'completed', 1),
+                (30, '2026-09-03 21:00', 'blue', 'A', 'completed', 3),
+                (31, '2026-09-03 21:40', 'red',  NULL, 'pending', 3),
                 (40, '2026-09-04 21:00', 'blue', 'A', 'completed', 4);
 
             -- Remplacement en cours de série 1 : C1 prend la place de A1 à la dernière game.
@@ -61,6 +63,8 @@ public class IssueDesSeriesMigrationTests(ApiFactory factory) : IAsyncLifetime
                 (10, 1, 'blue'), (10, 2, 'red'),
                 (11, 1, 'red'),  (11, 2, 'blue'),
                 (12, 3, 'red'),  (12, 2, 'blue'),
+                (30, 1, 'blue'), (30, 2, 'red'),
+                (31, 1, 'red'),  (31, 2, 'blue'),
                 (40, 1, 'blue'), (40, 2, 'red');
             """, Ct);
 
@@ -81,7 +85,10 @@ public class IssueDesSeriesMigrationTests(ApiFactory factory) : IAsyncLifetime
         var players = await QueryAsync(
             "SELECT series_id, player_id, equipe FROM series_players ORDER BY series_id, player_id",
             r => (r.GetInt32(0), r.GetInt32(1), r.GetString(2)));
-        Assert.Equal([(1, 2, "B"), (1, 3, "A"), (4, 1, "A"), (4, 2, "B")], players);
+        Assert.Equal([(1, 2, "B"), (1, 3, "A"), (3, 1, "A"), (3, 2, "B"), (4, 1, "A"), (4, 2, "B")], players);
+
+        var games = await QueryAsync("SELECT id FROM custom_games ORDER BY id", r => r.GetInt32(0));
+        Assert.Equal([10, 11, 12, 30, 40], games);
     }
 
     private async Task<List<T>> QueryAsync<T>(string sql, Func<System.Data.Common.DbDataReader, T> read)

@@ -56,8 +56,8 @@ public sealed class GamesController : ControllerBase
             Status: g.Status,
             Participants: g.Participants.Select(p => new PendingGameParticipant(
                 PlayerId: p.PlayerId,
-                Team: p.Team,
-                Equipe: g.EquipeOn(p.Team),
+                Side: p.Side,
+                Equipe: g.EquipeOn(p.Side),
                 Prenom: p.Player.Prenom
             )).ToList()
         )).ToList();

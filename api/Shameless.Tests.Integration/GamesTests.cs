@@ -22,7 +22,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(serie.SeriesId, game.GetProperty("seriesId").GetInt32());
         Assert.Equal("pending", game.GetProperty("status").GetString());
         var participants = game.GetProperty("participants").EnumerateArray()
-            .Select(p => (p.GetProperty("prenom").GetString(), p.GetProperty("team").GetString(), p.GetProperty("equipe").GetString()))
+            .Select(p => (p.GetProperty("prenom").GetString(), p.GetProperty("side").GetString(), p.GetProperty("equipe").GetString()))
             .OrderBy(p => p.Item1)
             .ToList();
         Assert.Equal(10, participants.Count);
@@ -67,6 +67,28 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(4m, a1.GetProperty("cost").GetDecimal());
         var b1 = game.GetProperty("teamB").EnumerateArray().Single(p => p.GetProperty("prenom").GetString() == "B1");
         Assert.Equal(1m, b1.GetProperty("cost").GetDecimal());
+    }
+
+    [Fact]
+    public async Task L_historique_donne_l_issue_de_chaque_serie_et_l_equipe_gagnante()
+    {
+        var client = Factory.CreateSignedInClient();
+        var gagnee = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, gagnee.SeriesId, "B");
+        var interrompue = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{gagnee.SeriesId}/rematch",
+            new { format = 3, fearless = false, alternateSides = true }, Ct));
+        var interrompueId = interrompue.GetProperty("seriesId").GetInt32();
+        await PlayAndWinAsync(client, interrompueId, "A");
+        await ReadJsonAsync(await client.PostAsync($"/series/{interrompueId}/stop", null, Ct));
+
+        var now = Factory.Clock.GetUtcNow();
+        var history = await ReadJsonAsync(await client.GetAsync($"/games/history/{now.Year}/{now.Month}", Ct));
+
+        var issues = history.GetProperty("games").EnumerateArray()
+            .ToDictionary(s => s.GetProperty("seriesId").GetInt32(),
+                s => (s.GetProperty("outcome").GetString(), s.GetProperty("winningTeam").GetString()));
+        Assert.Equal(("Gagnee", "B"), issues[gagnee.SeriesId]);
+        Assert.Equal(("Interrompue", null), issues[interrompueId]);
     }
 
     [Fact]

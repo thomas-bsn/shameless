@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
@@ -16,26 +15,9 @@ public class PickerSessionRepository : IPickerSessionRepository
             .Include(s => s.Players.OrderBy(p => p.Position)).ThenInclude(p => p.Player)
             .SingleOrDefaultAsync(s => s.SoireeId == soireeId);
 
-    public async Task<bool> TryAddAsync(PickerSession session)
-    {
-        _db.PickerSessions.Add(session);
-        try
-        {
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            _db.Entry(session).State = EntityState.Detached;
-            return false;
-        }
-    }
+    public Task<bool> TryAddAsync(PickerSession session) => _db.TryAddAsync(session);
 
-    public async Task RemoveAsync(PickerSession session)
-    {
-        _db.PickerSessions.Remove(session);
-        await _db.SaveChangesAsync();
-    }
+    public void Remove(PickerSession session) => _db.PickerSessions.Remove(session);
 
-    public Task SaveChangesAsync() => _db.SaveChangesAsync();
+    public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

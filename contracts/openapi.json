@@ -2495,7 +2495,7 @@
       "PendingGameParticipant": {
         "required": [
           "playerId",
-          "team",
+          "side",
           "equipe",
           "prenom"
         ],
@@ -2505,7 +2505,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "team": {
+          "side": {
             "type": "string"
           },
           "equipe": {
@@ -3080,6 +3080,8 @@
           "seriesId",
           "format",
           "playedAt",
+          "outcome",
+          "winningTeam",
           "games"
         ],
         "type": "object",
@@ -3096,6 +3098,22 @@
             "type": "string",
             "format": "date-time"
           },
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeriesOutcome"
+              }
+            ]
+          },
+          "winningTeam": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "games": {
             "type": "array",
             "items": {
@@ -3109,7 +3127,8 @@
           "EnCours",
           "Gagnee",
           "Nulle",
-          "Interrompue"
+          "Interrompue",
+          null
         ]
       },
       "SeriesResponse": {

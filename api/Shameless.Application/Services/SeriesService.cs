@@ -11,7 +11,8 @@ namespace Shameless.Application.Services;
 /// </summary>
 public sealed class SeriesService
 {
-    public const int PlayersPerTeam = 5;
+    private const string ModifieeEntreTemps =
+        "Cette Série vient d'être modifiée par une autre commande : rechargez-la et réessayez.";
 
     private readonly IBestOfSeriesRepository _series;
     private readonly ICustomGameRepository _games;
@@ -38,9 +39,28 @@ public sealed class SeriesService
 
     /// <summary>
     /// Crée une Série en cours dans la Soirée ouverte, entre deux Équipes de cinq joueurs distincts.
-    /// Sert aussi au Picker (validation du tirage) et à la Revanche.
+    /// Sert aussi à la Revanche.
     /// </summary>
     public async Task<CommandResult<BestOfSeries>> CreateAsync(
+        IReadOnlyCollection<int> teamA,
+        IReadOnlyCollection<int> teamB,
+        int format,
+        bool fearless,
+        bool alternateSides)
+    {
+        var prepared = await PrepareAsync(teamA, teamB, format, fearless, alternateSides);
+        if (!prepared.IsOk) return prepared;
+
+        return await _series.TrySaveChangesAsync()
+            ? prepared
+            : CommandResult<BestOfSeries>.Conflict("La Série n'a pas pu être créée : réessayez.");
+    }
+
+    /// <summary>
+    /// Prépare la création d'une Série (voir <see cref="CreateAsync"/>) sans l'enregistrer : l'appelant
+    /// l'enregistre avec ses propres changements, en une transaction (validation du Picker).
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> PrepareAsync(
         IReadOnlyCollection<int> teamA,
         IReadOnlyCollection<int> teamB,
         int format,
@@ -50,7 +70,7 @@ public sealed class SeriesService
     {
         if (!BestOfSeries.IsValidFormat(format))
             return CommandResult<BestOfSeries>.Invalid("Le format d'une Série est BO1, BO2, BO3 ou BO5.");
-        if (teamA.Count != PlayersPerTeam || teamB.Count != PlayersPerTeam)
+        if (teamA.Count != Equipes.PlayersPerTeam || teamB.Count != Equipes.PlayersPerTeam)
             return CommandResult<BestOfSeries>.Invalid("Chaque Équipe compte exactement cinq joueurs.");
 
         var ids = teamA.Concat(teamB).ToList();
@@ -75,7 +95,8 @@ public sealed class SeriesService
                 .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B, Role = RoleOf(id) }))
                 .ToList()
         };
-        return CommandResult<BestOfSeries>.Ok(await _series.AddAsync(series));
+        _series.Add(series);
+        return CommandResult<BestOfSeries>.Ok(series);
 
         Role? RoleOf(int playerId) => roles != null && roles.TryGetValue(playerId, out var role) ? role : null;
     }
@@ -92,7 +113,7 @@ public sealed class SeriesService
             return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : elle n'accepte plus de game.");
-        if (series.Games.Any(g => g.Status == "pending"))
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
 
         if (teamASide != null && teamASide is not (Sides.Blue or Sides.Red))
@@ -112,16 +133,20 @@ public sealed class SeriesService
             CreatedAt = now,
             SeriesId = series.Id,
             TeamASide = side,
-            Status = "pending",
+            Status = GameStatuses.Pending,
             Participants = series.Players
                 .Select(p => new CustomGameParticipant
                 {
                     PlayerId = p.PlayerId,
-                    Team = p.Equipe == Equipes.A ? side : Sides.Other(side)
+                    Side = p.Equipe == Equipes.A ? side : Sides.Other(side)
                 })
                 .ToList()
         };
-        await _games.AddAsync(game);
+        _games.Add(game);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
         return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
     }
 
@@ -137,7 +162,7 @@ public sealed class SeriesService
         var game = await _games.GetByIdWithParticipantsAsync(gameId);
         if (game == null)
             return CommandResult<CustomGame>.NotFound("Cette game n'existe pas.");
-        if (game.Status == "completed")
+        if (game.Status == GameStatuses.Completed)
             return CommandResult<CustomGame>.Conflict("Le résultat de cette game est déjà saisi.");
 
         var series = game.SeriesId == null ? null : await _series.GetWithGamesAsync(game.SeriesId.Value);
@@ -145,9 +170,12 @@ public sealed class SeriesService
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : son score ne change plus.");
 
         game.WinningTeam = winningTeam;
-        game.Status = "completed";
+        game.Status = GameStatuses.Completed;
+        game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
         series?.ApplyResults(series.Games);
-        await _games.SaveChangesAsync();
+        series?.Touch();
+        if (!await _games.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
 
         await _costs.RecalculateCosts(gameId);
 
@@ -168,7 +196,7 @@ public sealed class SeriesService
         if (!series.IsEnCours)
             return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
 
-        var pending = series.Games.Where(g => g.Status != "completed").ToList();
+        var pending = series.Games.Where(g => g.Status != GameStatuses.Completed).ToList();
         foreach (var game in pending)
             _games.Remove(game);
 
@@ -178,7 +206,9 @@ public sealed class SeriesService
         else
             series.Outcome = SeriesOutcome.Interrompue;
 
-        await _series.SaveChangesAsync();
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<ArretSerie>.Conflict(ModifieeEntreTemps);
         return CommandResult<ArretSerie>.Ok(arret);
     }
 
@@ -195,7 +225,7 @@ public sealed class SeriesService
             return CommandResult<SeriesResponse>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
             return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : sa composition ne change plus.");
-        if (series.Games.Any(g => g.Status == "pending"))
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<SeriesResponse>.Conflict(
                 "Une game de cette Série attend son résultat : le remplacement se fait entre deux games.");
 
@@ -210,7 +240,9 @@ public sealed class SeriesService
 
         replaced.Player = replacement;
         replaced.PlayerId = replacement.Id;
-        await _series.SaveChangesAsync();
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
 
         return CommandResult<SeriesResponse>.Ok(ToResponse(series));
     }
@@ -251,20 +283,12 @@ public sealed class SeriesService
     }
 
     /// <summary>Les Séries en cours, de la plus ancienne à la plus récente.</summary>
-    public async Task<List<SeriesResponse>> GetEnCoursAsync() => await GetAllAsync(await _series.GetEnCoursIdsAsync());
+    public async Task<List<SeriesResponse>> GetEnCoursAsync() =>
+        (await _series.GetEnCoursWithGamesAsync()).Select(ToResponse).ToList();
 
     /// <summary>Les Séries d'une Soirée avec leur issue, de la plus ancienne à la plus récente.</summary>
     public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
-        await GetAllAsync(await _series.GetIdsBySoireeAsync(soireeId));
-
-    private async Task<List<SeriesResponse>> GetAllAsync(IEnumerable<int> ids)
-    {
-        var result = new List<SeriesResponse>();
-        foreach (var id in ids)
-            if (await GetAsync(id) is { } series)
-                result.Add(series);
-        return result;
-    }
+        (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
 
     private static SeriesResponse ToResponse(BestOfSeries series) => new(
         SeriesId: series.Id,

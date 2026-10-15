@@ -1,18 +1,20 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Crown } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
-import { RankBadge } from "@/components/rank";
+import { SeriesOptionsForm } from "@/components/series-options-form";
+import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { joueursLibres, parRole, type PickerStep, pickerStep } from "@/lib/picker";
+import { points } from "@/lib/cost";
+import { joueursLibres, type PickerStep, pickerStep } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
 import { cn } from "@/lib/utils";
 
@@ -33,16 +35,6 @@ const stepDescriptions: Record<PickerStep, string> = {
   draft: "Les capitaines choisissent leurs joueurs à tour de rôle.",
   equipes: "Les Équipes sont formées : Autorole facultatif, puis valide pour créer la Série.",
 };
-
-const roleLabels: Record<NonNullable<Schemas["Role"]>, string> = {
-  Top: "Top",
-  Jungle: "Jungle",
-  Mid: "Mid",
-  Adc: "ADC",
-  Support: "Support",
-};
-
-const points = (cost: number) => `${Number(cost.toFixed(2))} pts`;
 
 /** Toute commande du Picker renvoie l'état à jour : on relit la Soirée ouverte qui le porte. */
 function usePickerRefresh() {
@@ -191,12 +183,7 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
                       checked && "border-primary bg-accent/50",
                     )}
                   >
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={checked}
-                      onChange={() => toggle(p.id)}
-                    />
+                    <Checkbox checked={checked} onCheckedChange={() => toggle(p.id)} />
                     <span className="flex-1 truncate">
                       {p.prenom} <span className="text-xs text-muted-foreground">{p.riotId}</span>
                     </span>
@@ -544,12 +531,7 @@ function Autorole({ picker }: { picker: Picker }) {
   );
 }
 
-const formats = [1, 2, 3, 5] as const;
-
 function Valider() {
-  const [format, setFormat] = useState<string>("3");
-  const [fearless, setFearless] = useState(false);
-  const [alternateSides, setAlternateSides] = useState(false);
   const refresh = usePickerRefresh();
   const navigate = useNavigate();
   const validate = $api.useMutation("post", "/soirees/open/picker/validate", {
@@ -564,32 +546,13 @@ function Valider() {
       <CardHeader>
         <CardTitle>Créer la Série</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <Field label="Format">
-          <Select value={format} onValueChange={setFormat}>
-            <SelectTrigger aria-label="Format" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {formats.map((f) => (
-                <SelectItem key={f} value={String(f)}>
-                  BO{f}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Checkbox label="Fearless" checked={fearless} onChange={setFearless} />
-        <Checkbox label="Alterner les Sides à chaque game" checked={alternateSides} onChange={setAlternateSides} />
-        {validate.isError && <ErrorAlert error={validate.error} />}
-        <div>
-          <Button
-            disabled={validate.isPending}
-            onClick={() => validate.mutate({ body: { format: Number(format), fearless, alternateSides } })}
-          >
-            Valider et créer la Série
-          </Button>
-        </div>
+      <CardContent>
+        <SeriesOptionsForm
+          submitLabel="Valider et créer la Série"
+          pending={validate.isPending}
+          error={validate.isError ? validate.error : null}
+          onSubmit={(options) => validate.mutate({ body: options })}
+        />
       </CardContent>
     </Card>
   );
@@ -623,73 +586,11 @@ function Teams({ picker, highlight }: { picker: Picker; highlight?: Equipe }) {
   );
 }
 
-function TeamCard({
-  equipe,
-  players,
-  cost,
-  capitaine,
-  highlighted,
-}: {
-  equipe: Equipe;
-  players: Participant[];
-  cost: number;
-  capitaine: number | null;
-  highlighted: boolean;
-}) {
-  return (
-    <Card role="group" aria-label={`Équipe ${equipe}`} className={cn(highlighted && "border-primary")}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Équipe {equipe}</CardTitle>
-        <span className="text-sm text-muted-foreground">{points(cost)}</span>
-      </CardHeader>
-      <CardContent>
-        {players.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Personne pour l'instant.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {parRole(players).map((p) => (
-              <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
-                <span className="flex items-center gap-2 truncate">
-                  {p.role && (
-                    <Badge variant="outline" className="w-16 justify-center">
-                      {roleLabels[p.role]}
-                    </Badge>
-                  )}
-                  {p.prenom}
-                  {p.playerId === capitaine && <Crown aria-label="Capitaine" className="size-4 text-amber-400" />}
-                </span>
-                <span className="flex items-center gap-2">
-                  <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />
-                  <span className="text-xs text-muted-foreground">{points(p.cost ?? 0)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
       <Label>{label}</Label>
       {children}
     </div>
-  );
-}
-
-function Checkbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        className="size-4 accent-primary"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </label>
   );
 }

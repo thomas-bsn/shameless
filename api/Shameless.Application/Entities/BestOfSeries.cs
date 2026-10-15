@@ -30,6 +30,12 @@ public class BestOfSeries
     public int? SoireeId { get; set; }
     public Soiree? Soiree { get; set; }
 
+    /// <summary>
+    /// Jeton de concurrence : chaque commande sur la Série l'incrémente (<see cref="Touch"/>) ; son
+    /// enregistrement est refusé si une commande simultanée l'a incrémenté entre-temps.
+    /// </summary>
+    public int Version { get; set; }
+
     public ICollection<CustomGame> Games { get; set; } = new List<CustomGame>();
     public ICollection<SeriesPlayer> Players { get; set; } = new List<SeriesPlayer>();
 
@@ -40,13 +46,16 @@ public class BestOfSeries
 
     public static bool IsValidFormat(int format) => Formats.Contains(format);
 
+    /// <summary>Marque la Série comme modifiée par la commande en cours (voir <see cref="Version"/>).</summary>
+    public void Touch() => Version++;
+
     /// <summary>
     /// Recompte le score à partir des games terminées et en déduit l'issue : gagnée quand une
     /// Équipe atteint le nombre de victoires du format, nulle pour un BO2 à 1-1.
     /// </summary>
     public void ApplyResults(IEnumerable<CustomGame> games)
     {
-        var completed = games.Where(g => g.Status == "completed").ToList();
+        var completed = games.Where(g => g.Status == GameStatuses.Completed).ToList();
         TeamAWins = completed.Count(g => g.WinningTeam == Equipes.A);
         TeamBWins = completed.Count(g => g.WinningTeam == Equipes.B);
 
