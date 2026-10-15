@@ -39,6 +39,28 @@ public class BestOfSeries
     public ICollection<CustomGame> Games { get; set; } = new List<CustomGame>();
     public ICollection<SeriesPlayer> Players { get; set; } = new List<SeriesPlayer>();
 
+    /// <summary>Les liens d'accès (ADR 0010) : un Lien capitaine par Équipe et le Lien spectateur.</summary>
+    public ICollection<LienAcces> Liens { get; set; } = new List<LienAcces>();
+
+    /// <summary>
+    /// L'organisateur a indiqué avoir envoyé les Liens capitaine : le Lien spectateur est disponible.
+    /// </summary>
+    public bool LiensCapitaineEnvoyes { get; set; }
+
+    public LienAcces LienCapitaine(string equipe) =>
+        Liens.Single(l => l.Portee == PorteeLien.Capitaine && l.Equipe == equipe);
+
+    public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
+
+    /// <summary>
+    /// L'accès que donne ce lien de la Série, ou null s'il n'en donne aucun : le Lien spectateur ne vaut
+    /// qu'une fois les Liens capitaine envoyés.
+    /// </summary>
+    public AccesParLien? AccesPar(LienAcces lien) =>
+        lien.Portee == PorteeLien.Spectateur && !LiensCapitaineEnvoyes
+            ? null
+            : new AccesParLien(Id, lien.Portee, lien.Equipe);
+
     public bool IsEnCours => Outcome == SeriesOutcome.EnCours;
 
     /// <summary>Victoires nécessaires pour gagner : 1, 2, 2, 3 pour BO1, BO2, BO3, BO5.</summary>
@@ -71,6 +93,16 @@ public class BestOfSeries
     }
 
     public IEnumerable<SeriesPlayer> PlayersOf(string equipe) => Players.Where(p => p.Equipe == equipe);
+
+    /// <summary>Fait du joueur le Capitaine de son Équipe, à la place du précédent.</summary>
+    public void DesignerCapitaine(SeriesPlayer capitaine)
+    {
+        foreach (var player in PlayersOf(capitaine.Equipe))
+            player.Capitaine = player == capitaine;
+    }
+
+    /// <summary>Le Capitaine de l'Équipe, ou null tant qu'aucun n'est désigné.</summary>
+    public int? CapitaineOf(string equipe) => PlayersOf(equipe).SingleOrDefault(p => p.Capitaine)?.PlayerId;
 }
 
 /// <summary>L'issue d'une Série.</summary>

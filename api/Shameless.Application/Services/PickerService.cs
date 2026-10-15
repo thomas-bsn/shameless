@@ -182,7 +182,11 @@ public sealed class PickerService
 
         var created = await _series.PrepareAsync(
             session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless, alternateSides,
-            session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value));
+            session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value),
+            // Les capitaines de la Draft restent ceux de la Série ; après une Roulette, il n'y en a pas.
+            session.Methode == PickerMethode.Draft
+                ? new Capitaines(session.CapitaineOf(Equipes.A)!.Value, session.CapitaineOf(Equipes.B)!.Value)
+                : null);
         if (!created.IsOk) return created;
 
         // La Série et la fin de la session s'enregistrent ensemble, ou pas du tout.

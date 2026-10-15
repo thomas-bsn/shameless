@@ -65,6 +65,24 @@ public sealed class SeriesController : ControllerBase
     }
 
     /// <summary>
+    /// Désigne le Capitaine d'une Équipe ("A" | "B") d'une Série en cours : à la main, au hasard ou le
+    /// plus gros cost de l'Équipe. Remplace le capitaine précédent de cette Équipe.
+    /// </summary>
+    [HttpPut("{id:int}/capitaines/{equipe}")]
+    [ProducesResponseType<SeriesResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<SeriesResponse>> DesignerCapitaine(
+        int id, string equipe, [FromBody] DesignerCapitaineRequest request)
+    {
+        var result = await _seriesService.DesignerCapitaineAsync(id, equipe, request.Designation, request.PlayerId);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return result.Value!;
+    }
+
+    /// <summary>
     /// Lance la Revanche d'une Série terminée : une nouvelle Série dans la même Soirée, encore
     /// ouverte, entre les mêmes Équipes dans leur dernière composition.
     /// </summary>
