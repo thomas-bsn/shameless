@@ -6,6 +6,7 @@ namespace Shameless.Api.Models.Responses.Picker;
 /// <summary>
 /// La session de Picker de la Soirée ouverte : les dix joueurs cochés, la méthode, la composition
 /// courante des deux Équipes (vides tant que rien n'est tiré), leur cost total et leur écart.
+/// Pendant une Draft : les capitaines, le premier pick, les picks faits et l'Équipe au trait.
 /// </summary>
 public sealed record PickerResponse(
     List<GameParticipantDto> Players,
@@ -16,7 +17,12 @@ public sealed record PickerResponse(
     decimal TeamACost,
     decimal TeamBCost,
     decimal EcartCost,
-    bool CanValidate)
+    bool CanValidate,
+    int? CapitaineA,
+    int? CapitaineB,
+    string? PremierPick,
+    List<DraftPickResponse> Picks,
+    string? EquipeAuTrait)
 {
     public static PickerResponse From(PickerSession session)
     {
@@ -37,6 +43,14 @@ public sealed record PickerResponse(
             TeamACost: teamACost,
             TeamBCost: teamBCost,
             EcartCost: Math.Abs(teamACost - teamBCost),
-            CanValidate: session.CanValidate);
+            CanValidate: session.CanValidate,
+            CapitaineA: session.CapitaineOf(Equipes.A),
+            CapitaineB: session.CapitaineOf(Equipes.B),
+            PremierPick: session.PremierPick,
+            Picks: session.Picks.Select(p => new DraftPickResponse(p.PlayerId, p.Equipe!)).ToList(),
+            EquipeAuTrait: session.EquipeAuTrait);
     }
 }
+
+/// <summary>Un pick de la Draft : le joueur pris et l'Équipe qui l'a pris.</summary>
+public sealed record DraftPickResponse(int PlayerId, string Equipe);
