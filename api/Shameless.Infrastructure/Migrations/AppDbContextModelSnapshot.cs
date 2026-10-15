@@ -39,6 +39,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("played_at");
 
+                    b.Property<int?>("SoireeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("soiree_id");
+
                     b.Property<string>("TeamAReference")
                         .HasColumnType("text")
                         .HasColumnName("team_a_reference");
@@ -57,6 +61,9 @@ namespace Shameless.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("best_of_series_pkey");
+
+                    b.HasIndex("SoireeId")
+                        .HasDatabaseName("ix_best_of_series_soiree_id");
 
                     b.ToTable("best_of_series", (string)null);
                 });
@@ -295,6 +302,39 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("player_monthly_costs", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.Soiree", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("opened_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_soirees");
+
+                    b.HasIndex("Status")
+                        .IsUnique()
+                        .HasDatabaseName("ix_soirees_une_seule_ouverte")
+                        .HasFilter("status = 'open'");
+
+                    b.ToTable("soirees", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -320,6 +360,17 @@ namespace Shameless.Infrastructure.Migrations
                         .HasName("users_pk");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Soiree", "Soiree")
+                        .WithMany("Series")
+                        .HasForeignKey("SoireeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_best_of_series_soirees_soiree_id");
+
+                    b.Navigation("Soiree");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
@@ -390,6 +441,11 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("CustomGameParticipations");
 
                     b.Navigation("MonthlyCosts");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.Soiree", b =>
+                {
+                    b.Navigation("Series");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.User", b =>

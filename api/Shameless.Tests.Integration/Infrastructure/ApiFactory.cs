@@ -24,6 +24,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeRiotService Riot { get; } = new();
 
+    public string ConnectionString => _postgres.GetConnectionString();
+
     public FakeDiscord Discord { get; } = new();
 
     /// <summary>Horloge de l'API : réglable (<c>SetUtcNow</c>) et avançable (<c>Advance</c>). Remise à l'heure réelle avant chaque test.</summary>
@@ -54,7 +56,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE custom_game_participants, custom_games, best_of_series, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE custom_game_participants, custom_games, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

@@ -1,5 +1,6 @@
 ﻿using Shameless.Application.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shameless.Infrastructure.Data.Configurations;
 
 namespace Shameless.Infrastructure.Data;
 
@@ -25,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<CustomGame> CustomGames => Set<CustomGame>();
     public DbSet<CustomGameParticipant> CustomGameParticipants => Set<CustomGameParticipant>();
     public DbSet<PlayerMonthlyCost> PlayerMonthlyCosts => Set<PlayerMonthlyCost>();
+    public DbSet<Soiree> Soirees => Set<Soiree>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,5 +146,7 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.PlayerId, e.Month }).IsUnique();
         });
+
+        modelBuilder.ApplyConfiguration(new SoireeConfiguration());
     }
 }
