@@ -72,7 +72,7 @@ public sealed class SoireeService
 
     /// <summary>
     /// Une Série est en cours tant qu'aucune équipe n'a atteint le score de victoire de son format.
-    /// Seul endroit qui en décide : à remplacer par l'issue explicite de la Série quand elle existera (#19, #20).
+    /// Seul endroit qui en décide : à remplacer par l'issue explicite de la Série quand elle existera (#20).
     /// </summary>
     private static bool EstEnCours(BestOfSeries serie)
     {

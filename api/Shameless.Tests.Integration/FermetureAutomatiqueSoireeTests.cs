@@ -88,13 +88,13 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
     /// <summary>BO3 gagnée 2-0 par l'équipe A, dernière game terminée à <paramref name="derniereGame"/>.</summary>
     private Task AjouterSerieTermineeAsync(int soireeId, DateTime derniereGame) =>
         AjouterSerieAsync(soireeId, teamAWins: 2,
-            new CustomGame { PlayedAt = derniereGame.AddMinutes(-40), CreatedAt = derniereGame, Winner = "blue", Status = "completed" },
-            new CustomGame { PlayedAt = derniereGame, CreatedAt = derniereGame, Winner = "red", Status = "completed" });
+            new CustomGame { PlayedAt = derniereGame.AddMinutes(-40), CreatedAt = derniereGame, WinningTeam = Equipes.A, Status = "completed" },
+            new CustomGame { PlayedAt = derniereGame, CreatedAt = derniereGame, WinningTeam = Equipes.A, TeamASide = Sides.Red, Status = "completed" });
 
     /// <summary>BO3 à 1-0, deuxième game pas encore jouée.</summary>
     private Task AjouterSerieEnCoursAsync(int soireeId, DateTime premiereGame) =>
         AjouterSerieAsync(soireeId, teamAWins: 1,
-            new CustomGame { PlayedAt = premiereGame, CreatedAt = premiereGame, Winner = "blue", Status = "completed" });
+            new CustomGame { PlayedAt = premiereGame, CreatedAt = premiereGame, WinningTeam = Equipes.A, Status = "completed" });
 
     private async Task AjouterSerieAsync(int soireeId, int teamAWins, params CustomGame[] games)
     {
