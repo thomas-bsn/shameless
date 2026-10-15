@@ -9,6 +9,9 @@ public class Soiree
     public DateTime? ClosedAt { get; set; }
 
     public ICollection<BestOfSeries> Series { get; set; } = new List<BestOfSeries>();
+
+    /// <summary>La session de Picker en cours, s'il y en a une.</summary>
+    public PickerSession? Picker { get; set; }
 }
 
 public enum SoireeStatus

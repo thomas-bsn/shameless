@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<PlayerMonthlyCost> PlayerMonthlyCosts => Set<PlayerMonthlyCost>();
     public DbSet<Soiree> Soirees => Set<Soiree>();
     public DbSet<SeriesPlayer> SeriesPlayers => Set<SeriesPlayer>();
+    public DbSet<PickerSession> PickerSessions => Set<PickerSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -152,5 +153,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SoireeConfiguration());
         modelBuilder.ApplyConfiguration(new SeriesConfiguration());
         modelBuilder.ApplyConfiguration(new SeriesPlayerConfiguration());
+        modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
     }
 }

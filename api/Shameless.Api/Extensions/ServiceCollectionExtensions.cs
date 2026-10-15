@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPlayerMonthlyCostRepository, PlayerMonthlyCostRepository>();
         services.AddScoped<IBestOfSeriesRepository, BestOfSeriesRepository>();
         services.AddScoped<ISoireeRepository, SoireeRepository>();
+        services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CostCalculationService>();
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();
+        services.AddScoped<PickerService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();

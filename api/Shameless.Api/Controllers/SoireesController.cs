@@ -9,15 +9,22 @@ namespace Shameless.Api.Controllers;
 public sealed class SoireesController : ControllerBase
 {
     private readonly SoireeService _soireeService;
+    private readonly PickerService _pickerService;
 
-    public SoireesController(SoireeService soireeService) => _soireeService = soireeService;
+    public SoireesController(SoireeService soireeService, PickerService pickerService)
+    {
+        _soireeService = soireeService;
+        _pickerService = pickerService;
+    }
 
     [HttpGet("open")]
     [ProducesResponseType<OpenSoireeResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<OpenSoireeResponse>> GetOpen()
     {
         var soiree = await _soireeService.GetOpenAsync();
-        return new OpenSoireeResponse(soiree == null ? null : SoireeResponse.From(soiree));
+        if (soiree == null) return new OpenSoireeResponse(null);
+
+        return new OpenSoireeResponse(SoireeResponse.From(soiree, await _pickerService.GetAsync(soiree.Id)));
     }
 
     [HttpPost]
