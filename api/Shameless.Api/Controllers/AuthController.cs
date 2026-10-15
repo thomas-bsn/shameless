@@ -105,19 +105,20 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
-    [Authorize]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser([FromServices] IAuthorizationService authorization)
     {
+        var isAdmin = (await authorization.AuthorizeAsync(User, Policies.Admin)).Succeeded;
+
         return Ok(new AuthUserResponse(
             Valid: true,
             DiscordUserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
             Username: User.FindFirstValue(ClaimTypes.Name),
-            AvatarUrl: User.FindFirstValue(AvatarClaim)
+            AvatarUrl: User.FindFirstValue(AvatarClaim),
+            IsAdmin: isAdmin
         ));
     }
 
     [HttpPost("logout")]
-    [Authorize]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Shameless.Api.Auth;
 using Shameless.Api.Models.Requests.Player;
 using Shameless.Api.Models.Responses.Player;
 using Shameless.Application.DTOs.Players;
@@ -37,7 +38,6 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet("me")]
-    [Authorize]
     public async Task<IActionResult> GetMyPlayer()
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -50,8 +50,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpPost("link")]
-    [Authorize]
-    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request)
+    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request, [FromServices] IAuthorizationService authorization)
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         var username = User.FindFirstValue(ClaimTypes.Name);
@@ -59,7 +58,11 @@ public sealed class PlayersController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(discordUserId)) return Unauthorized();
 
-        await _playerService.LinkPlayerAsync(discordUserId, request.PlayerId, username, avatarUrl);
+        var isAdmin = (await authorization.AuthorizeAsync(User, Policies.Admin)).Succeeded;
+        var result = await _playerService.LinkPlayerAsync(discordUserId, request.PlayerId, username, avatarUrl, canTakeOver: isAdmin);
+        if (result == LinkResult.AlreadyLinkedToAnotherUser)
+            return Conflict(new { error = "player_already_linked" });
+
         return Ok(new PlayerLinkResponse(Success: true));
     }
 
@@ -79,8 +82,31 @@ public sealed class PlayersController : ControllerBase
         ));
     }
 
+    [HttpPut("{playerId}/cost")]
+    [Authorize(Policy = Policies.Admin)]
+    public async Task<IActionResult> SetPlayerCost(int playerId, [FromBody] SetCostRequest request)
+    {
+        if (!await _playerService.SetCostAsync(playerId, request.Cost)) return NotFound();
+        return Ok(new { playerId, cost = request.Cost });
+    }
+
+    [HttpPost("{playerId}/peak")]
+    [Authorize(Policy = Policies.Admin)]
+    public async Task<IActionResult> SetPlayerPeak(int playerId, [FromBody] UpdatePeakRequest request)
+    {
+        var found = await _playerService.UpdatePeakForPlayerAsync(playerId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        return found ? Ok(new { ok = true }) : NotFound();
+    }
+
+    [HttpDelete("{playerId}/peak")]
+    [Authorize(Policy = Policies.Admin)]
+    public async Task<IActionResult> DeletePlayerPeak(int playerId)
+    {
+        var found = await _playerService.UpdatePeakForPlayerAsync(playerId, null, null, null, 0);
+        return found ? Ok(new { ok = true }) : NotFound();
+    }
+
     [HttpPost("peak")]
-    [Authorize]
     public async Task<IActionResult> UpdatePeak([FromBody] UpdatePeakRequest request)
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -91,7 +117,6 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpDelete("peak")]
-    [Authorize]
     public async Task<IActionResult> DeletePeak()
     {
         var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

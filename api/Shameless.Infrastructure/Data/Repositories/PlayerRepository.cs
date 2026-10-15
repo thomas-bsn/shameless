@@ -63,6 +63,11 @@ public class PlayerRepository : IPlayerRepository
         var player = await _db.Players.FindAsync(playerId);
         if (player == null) throw new InvalidOperationException("Player not found");
 
+        // Un utilisateur n'est lié qu'à un seul joueur : on détache l'ancien.
+        var previous = await _db.Players.Where(p => p.UserId == userId && p.Id != playerId).ToListAsync();
+        foreach (var other in previous)
+            other.UserId = null;
+
         player.UserId = userId;
         await _db.SaveChangesAsync();
     }
@@ -140,5 +145,6 @@ public class PlayerRepository : IPlayerRepository
         PeakDivision = p.PeakDivision,
         PeakSeason = p.PeakSeason,
         PeakLp = p.PeakLp,
+        CurrentCost = p.CurrentCost,
     };
 }

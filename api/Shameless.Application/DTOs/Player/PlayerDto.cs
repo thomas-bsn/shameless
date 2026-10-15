@@ -14,4 +14,5 @@ public class PlayerDto
     public int? PeakDivision { get; set; }
     public string? PeakSeason { get; set; }
     public int PeakLp { get; set; } = 0;
+    public decimal CurrentCost { get; set; }
 }

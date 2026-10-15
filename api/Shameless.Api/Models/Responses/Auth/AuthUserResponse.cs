@@ -4,5 +4,6 @@ public sealed record AuthUserResponse(
     bool Valid,
     string? DiscordUserId,
     string? Username,
-    string? AvatarUrl
+    string? AvatarUrl,
+    bool IsAdmin
 );

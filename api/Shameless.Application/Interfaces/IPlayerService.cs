@@ -2,15 +2,18 @@
 
 namespace Shameless.Application.Interfaces;
 
+public enum LinkResult { Linked, AlreadyLinkedToAnotherUser }
+
 public interface IPlayerService
 {
     Task<List<PlayerDto>> GetPlayersAsync();
     Task<PlayerResponse> CreatePlayerAsync(string prenom, string riotId);
     Task RefreshAllRanksAsync();
-    Task LinkPlayerAsync(string discordUserId, int playerId);
     Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId);
-    Task LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl);
+    Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver);
     Task UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
+    Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
+    Task<bool> SetCostAsync(int playerId, decimal cost);
     Task RefreshAllMainRolesAsync();
     Task RefreshRiotIdsAsync();
 }

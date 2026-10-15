@@ -1,7 +1,9 @@
+using Shameless.Api.Auth;
 using Shameless.Api.Contracts.Matches;
 using Shameless.Api.Models.Requests.Game;
 using Shameless.Api.Models.Responses.Game;
 using Shameless.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Shameless.Api.Controllers;
@@ -37,6 +39,7 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpPut("{id}/result")]
+    [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> SetGameResult(int id, [FromBody] SetGameResultRequest request)
     {
         var game = await _gameService.SetGameResultAsync(id, request.Winner);

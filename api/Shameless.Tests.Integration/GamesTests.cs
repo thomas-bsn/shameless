@@ -10,7 +10,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task A_recorded_game_is_pending_until_its_result_is_entered()
     {
-        var client = Factory.CreateSignedInClient();
+        var client = Factory.CreateAdminClient();
         var ids = await CreatePlayersAsync(client, "A1", "A2", "B1", "B2");
 
         var created = await ReadJsonAsync(await client.PostAsJsonAsync("/games",
@@ -39,7 +39,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Completed_games_appear_in_the_monthly_history_with_recalculated_costs()
     {
-        var client = Factory.CreateSignedInClient(discordId: "3001");
+        var client = Factory.CreateAdminClient();
         var ids = await CreatePlayersAsync(client, "Blue", "Red");
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId = ids[0] }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/peak",
@@ -73,7 +73,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Entering_the_result_of_an_unknown_game_returns_404()
     {
-        var client = Factory.CreateSignedInClient();
+        var client = Factory.CreateAdminClient();
 
         var response = await client.PutAsJsonAsync("/games/999/result", new { winner = "blue" }, Ct);
 

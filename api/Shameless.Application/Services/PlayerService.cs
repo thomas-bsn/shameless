@@ -93,22 +93,20 @@ public class PlayerService : IPlayerService
         }
     }
     
-    public async Task LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl)
+    public async Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver)
     {
         var discordIdLong = long.Parse(discordUserId);
         var user = await _users.GetByDiscordIdAsync(discordIdLong)
                    ?? await _users.CreateAsync(discordIdLong, username, avatarUrl);
 
-        await _players.LinkUserAsync(playerId, user.Id);
-    }
-    
-    public async Task LinkPlayerAsync(string discordUserId, int playerId)
-    {
-        var discordIdLong = long.Parse(discordUserId);
-        var user = await _users.GetByDiscordIdAsync(discordIdLong)
-                   ?? await _users.CreateAsync(discordIdLong, null, null);
+        var player = await _players.GetByIdAsync(playerId)
+                     ?? throw new InvalidOperationException("Player not found");
+
+        if (player.UserId is { } ownerId && ownerId != user.Id && !canTakeOver)
+            return LinkResult.AlreadyLinkedToAnotherUser;
 
         await _players.LinkUserAsync(playerId, user.Id);
+        return LinkResult.Linked;
     }
     
     public async Task UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
@@ -121,6 +119,24 @@ public class PlayerService : IPlayerService
         if (player == null) throw new Exception("Player not found");
 
         await _players.UpdatePeakAsync(player.Id, peakTier, peakDivision, peakSeason, peakLp);
+    }
+
+    public async Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
+    {
+        if (await _players.GetByIdAsync(playerId) is null) return false;
+
+        await _players.UpdatePeakAsync(playerId, peakTier, peakDivision, peakSeason, peakLp);
+        return true;
+    }
+
+    public async Task<bool> SetCostAsync(int playerId, decimal cost)
+    {
+        var player = await _players.GetByIdAsync(playerId);
+        if (player is null) return false;
+
+        player.CurrentCost = cost;
+        await _players.UpdateAsync(player);
+        return true;
     }
 
     public async Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId)

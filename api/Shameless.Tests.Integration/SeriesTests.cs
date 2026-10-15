@@ -10,7 +10,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task A_best_of_3_tracks_team_wins_across_side_swaps_until_it_is_decided()
     {
-        var client = Factory.CreateSignedInClient();
+        var client = Factory.CreateAdminClient();
         var ids = await CreatePlayersAsync(client, "TeamA", "TeamB");
         int[] teamA = [ids[0]], teamB = [ids[1]];
 
@@ -48,7 +48,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Abandoning_a_series_deletes_it_with_its_games()
     {
-        var client = Factory.CreateSignedInClient();
+        var client = Factory.CreateAdminClient();
         var ids = await CreatePlayersAsync(client, "X", "Y");
         var created = await ReadJsonAsync(await client.PostAsJsonAsync("/games",
             new { blueTeam = new[] { ids[0] }, redTeam = new[] { ids[1] }, boFormat = 5 }, Ct));
@@ -64,7 +64,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Abandoning_an_unknown_series_returns_404()
     {
-        var client = Factory.CreateSignedInClient();
+        var client = Factory.CreateAdminClient();
 
         var response = await client.PutAsync("/series/999/abandon", null, Ct);
 

@@ -1,4 +1,6 @@
+using Shameless.Api.Auth;
 using Shameless.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Shameless.Api.Controllers;
@@ -30,6 +32,7 @@ public sealed class SeriesController : ControllerBase
     }
 
     [HttpPut("{id}/abandon")]
+    [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> AbandonSeries(int id)
     {
         var ok = await _gameService.AbandonSeriesAsync(id);
