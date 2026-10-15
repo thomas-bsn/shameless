@@ -31,9 +31,22 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseSerialColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AlternateSides")
+                        .HasColumnType("boolean")
+                        .HasColumnName("alternate_sides");
+
+                    b.Property<bool>("Fearless")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fearless");
+
                     b.Property<int>("Format")
                         .HasColumnType("integer")
                         .HasColumnName("format");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("outcome");
 
                     b.Property<DateTime>("PlayedAt")
                         .HasColumnType("timestamp without time zone")
@@ -54,6 +67,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("team_b_wins");
+
+                    b.Property<string>("WinningTeam")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("winning_team");
 
                     b.HasKey("Id")
                         .HasName("best_of_series_pkey");
@@ -303,6 +321,42 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("player_monthly_costs", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.SeriesPlayer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Equipe")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
+                    b.Property<int>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<int>("SeriesId")
+                        .HasColumnType("integer")
+                        .HasColumnName("series_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_series_players");
+
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("ix_series_players_player_id");
+
+                    b.HasIndex("SeriesId", "PlayerId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_series_players_series_id_player_id");
+
+                    b.ToTable("series_players", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.Soiree", b =>
                 {
                     b.Property<int>("Id")
@@ -427,9 +481,32 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.SeriesPlayer", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_series_players_players_player_id");
+
+                    b.HasOne("Shameless.Application.Entities.BestOfSeries", "Series")
+                        .WithMany("Players")
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_series_players_best_of_series_series_id");
+
+                    b.Navigation("Player");
+
+                    b.Navigation("Series");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>
                 {
                     b.Navigation("Games");
+
+                    b.Navigation("Players");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>

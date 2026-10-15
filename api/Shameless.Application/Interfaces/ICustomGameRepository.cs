@@ -13,6 +13,5 @@ public interface ICustomGameRepository
     Task<List<CustomGame>> GetPendingAsync();
     Task<List<CustomGame>> GetByYearMonthAsync(int year, int month);
     Task<List<CustomGame>> GetBySeriesIdAsync(int seriesId);
-    Task<List<CustomGame>> GetAllWithSeriesAsync();
     Task DeleteBySeriesIdAsync(int seriesId);
 }

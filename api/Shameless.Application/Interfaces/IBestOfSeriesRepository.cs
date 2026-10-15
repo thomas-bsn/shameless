@@ -6,6 +6,13 @@ public interface IBestOfSeriesRepository
 {
     Task<BestOfSeries> AddAsync(BestOfSeries series);
     Task<BestOfSeries?> GetByIdAsync(int id);
+
+    /// <summary>La Série avec sa composition courante et ses games (participants et joueurs), games triées par id.</summary>
+    Task<BestOfSeries?> GetWithGamesAsync(int id);
+
+    /// <summary>Ids des Séries en cours, de la plus ancienne à la plus récente.</summary>
+    Task<List<int>> GetEnCoursIdsAsync();
+
     Task DeleteAsync(int seriesId);
     Task SaveChangesAsync();
 }

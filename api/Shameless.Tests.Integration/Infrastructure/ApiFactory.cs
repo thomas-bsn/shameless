@@ -56,7 +56,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE custom_game_participants, custom_games, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

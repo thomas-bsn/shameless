@@ -16,5 +16,10 @@ public record GameParticipantDto(
     string RiotId,
     string? RankTier,
     int? RankDivision,
-    decimal? Cost
-);
+    decimal? Cost,
+    int PlayerId
+)
+{
+    public static GameParticipantDto From(Entities.Player player) =>
+        new(player.Prenom, player.RiotId, player.RankTier, player.RankDivision, player.CurrentCost, player.Id);
+}

@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<CustomGameParticipant> CustomGameParticipants => Set<CustomGameParticipant>();
     public DbSet<PlayerMonthlyCost> PlayerMonthlyCosts => Set<PlayerMonthlyCost>();
     public DbSet<Soiree> Soirees => Set<Soiree>();
+    public DbSet<SeriesPlayer> SeriesPlayers => Set<SeriesPlayer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -149,5 +150,7 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.ApplyConfiguration(new SoireeConfiguration());
+        modelBuilder.ApplyConfiguration(new SeriesConfiguration());
+        modelBuilder.ApplyConfiguration(new SeriesPlayerConfiguration());
     }
 }
