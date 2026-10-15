@@ -82,6 +82,8 @@ namespace Shameless.Infrastructure.Migrations
             // bout (leurs Soirées reconstituées sont fermées) : elles sont interrompues, sans
             // vainqueur, et ne bloquent pas la fermeture automatique.
             // La composition courante de chaque Équipe est celle de la dernière game de la série.
+            // Comme pour un arrêt (ADR 0009), les games en attente d'une série interrompue sont
+            // supprimées (leurs participants suivent en cascade) ; ses games terminées restent.
             migrationBuilder.Sql("""
                 UPDATE best_of_series
                 SET outcome = CASE
@@ -105,6 +107,12 @@ namespace Shameless.Infrastructure.Migrations
                 ) g
                 JOIN custom_game_participants cp ON cp.custom_game_id = g.id
                 ORDER BY g.series_id, cp.player_id;
+
+                DELETE FROM custom_games g
+                USING best_of_series s
+                WHERE g.series_id = s.id
+                  AND s.outcome = 'interrompue'
+                  AND g.status <> 'completed';
                 """);
         }
 
