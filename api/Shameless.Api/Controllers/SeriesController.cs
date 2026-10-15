@@ -1,10 +1,8 @@
-using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Series;
 using Shameless.Api.Models.Responses.Series;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Shameless.Api.Controllers;
@@ -13,12 +11,10 @@ namespace Shameless.Api.Controllers;
 [Route("series")]
 public sealed class SeriesController : ControllerBase
 {
-    private readonly CustomGameService _gameService;
     private readonly SeriesService _seriesService;
 
-    public SeriesController(CustomGameService gameService, SeriesService seriesService)
+    public SeriesController(SeriesService seriesService)
     {
-        _gameService = gameService;
         _seriesService = seriesService;
     }
 
@@ -83,12 +79,19 @@ public sealed class SeriesController : ControllerBase
         return series;
     }
 
-    [HttpPut("{id}/abandon")]
-    [Authorize(Policy = Policies.Admin)]
-    public async Task<IActionResult> AbandonSeries(int id)
+    /// <summary>
+    /// Arrête une Série en cours : annulée (effacée) si aucune game n'est terminée, sinon interrompue
+    /// sans vainqueur, ses games terminées conservées.
+    /// </summary>
+    [HttpPost("{id:int}/stop")]
+    [ProducesResponseType<StopSeriesResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<StopSeriesResponse>> Stop(int id)
     {
-        var ok = await _gameService.AbandonSeriesAsync(id);
-        if (!ok) return NotFound();
-        return Ok(new { success = true });
+        var result = await _seriesService.StopAsync(id);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return new StopSeriesResponse(id, result.Value);
     }
 }

@@ -22,13 +22,7 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int seriesId)
-    {
-        var series = await _db.BestOfSeries.FindAsync(seriesId);
-        if (series == null) return;
-        _db.BestOfSeries.Remove(series);
-        await _db.SaveChangesAsync();
-    }
+    public void Remove(BestOfSeries series) => _db.BestOfSeries.Remove(series);
 
     public async Task<BestOfSeries?> GetByIdAsync(int id) =>
         await _db.BestOfSeries.FindAsync(id);
