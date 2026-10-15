@@ -22,6 +22,12 @@ public class PlayerRepository : IPlayerRepository
         return players.Select(ToDto).ToList();
     }
 
+    public async Task<PlayerDto?> GetDtoByIdAsync(int id)
+    {
+        var player = await _db.Players.FindAsync(id);
+        return player == null ? null : ToDto(player);
+    }
+
     public Task<bool> ExistsByPuuidAsync(string Puuid) =>
         _db.Players.AnyAsync(p => p.PUUID == Puuid);
 

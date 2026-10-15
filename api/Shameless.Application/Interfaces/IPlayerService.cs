@@ -7,6 +7,8 @@ public enum LinkResult { Linked, PlayerNotFound, AlreadyLinkedToAnotherUser }
 public interface IPlayerService
 {
     Task<List<PlayerDto>> GetPlayersAsync();
+    Task<PlayerDto?> GetPlayerAsync(int playerId);
+    Task<RiotAccountPreview?> PreviewRiotAccountAsync(string riotId);
     Task<PlayerResponse> CreatePlayerAsync(string prenom, string riotId);
     Task RefreshAllRanksAsync();
     Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId);

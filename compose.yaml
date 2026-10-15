@@ -1,4 +1,4 @@
-# Instance Shameless complète : base, migration, API et reverse proxy.
+# Instance Shameless complète : base, migration, API et reverse proxy qui sert le front.
 # Uniquement des images, des volumes nommés et une configuration par .env.
 name: shameless
 
@@ -60,6 +60,8 @@ services:
     image: ${SHAMELESS_IMAGE_PREFIX:-shameless}-proxy:${SHAMELESS_VERSION:-local}
     build:
       context: ./deploy/caddy
+      additional_contexts:
+        web: ./web
     restart: unless-stopped
     environment:
       SHAMELESS_SITE_ADDRESS: ${SHAMELESS_SITE_ADDRESS:-:80}

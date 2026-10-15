@@ -47,10 +47,15 @@ public static class ServiceCollectionExtensions
     {
         services.AddControllers()
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
-            );
+            {
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                // Les nombres restent des nombres : sinon le contrat OpenAPI les type « integer | string ».
+                o.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+            });
 
-        services.AddOpenApi();
+        // Lues par le générateur OpenAPI pour décrire les schémas.
+        services.ConfigureHttpJsonOptions(o => o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+        services.AddOpenApi(options => options.AddShamelessContract());
         services.AddProblemDetails();
 
         return services;

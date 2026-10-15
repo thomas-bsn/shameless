@@ -82,4 +82,51 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(2m, cost.GetProperty("cost").GetDecimal());
         Assert.Equal("C", cost.GetProperty("tier").GetString());
     }
+
+    [Fact]
+    public async Task A_player_can_be_read_by_id()
+    {
+        Factory.Riot.AddAccount("Caps#EUW", "MASTER", "I", lp: 300, mainRole: "MIDDLE");
+        var client = Factory.CreateSignedInClient();
+        var created = await ReadJsonAsync(await client.PostAsJsonAsync("/players", new { prenom = "Rasmus", riotId = "Caps#EUW" }, Ct));
+
+        var player = await ReadJsonAsync(await client.GetAsync($"/players/{created.GetProperty("id").GetInt32()}", Ct));
+
+        Assert.Equal("Rasmus", player.GetProperty("prenom").GetString());
+        Assert.Equal("Caps#EUW", player.GetProperty("riotId").GetString());
+        Assert.Equal("MASTER", player.GetProperty("rankTier").GetString());
+        Assert.Equal(300, player.GetProperty("lp").GetInt32());
+        Assert.Equal("MIDDLE", player.GetProperty("mainRole").GetString());
+        Assert.True(player.TryGetProperty("currentCost", out _));
+    }
+
+    [Fact]
+    public async Task The_riot_preview_shows_the_account_rank_and_role_without_saving_a_player()
+    {
+        Factory.Riot.AddAccount("Faker#KR1", "CHALLENGER", "I", lp: 1200, mainRole: "MIDDLE");
+        var client = Factory.CreateSignedInClient();
+
+        var preview = await ReadJsonAsync(await client.GetAsync("/players/riot-preview?riotId=Faker%23KR1", Ct));
+
+        Assert.Equal("Faker#KR1", preview.GetProperty("riotId").GetString());
+        Assert.Equal("CHALLENGER", preview.GetProperty("rankTier").GetString());
+        Assert.Equal(JsonValueKind.Null, preview.GetProperty("rankDivision").ValueKind);
+        Assert.Equal(1200, preview.GetProperty("lp").GetInt32());
+        Assert.Equal("MIDDLE", preview.GetProperty("mainRole").GetString());
+        Assert.False(preview.GetProperty("alreadyRegistered").GetBoolean());
+        Assert.Empty((await client.GetFromJsonAsync<JsonElement>("/players", Ct)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task The_riot_preview_flags_an_account_that_is_already_a_player()
+    {
+        var client = Factory.CreateSignedInClient();
+        await CreatePlayerAsync(client, "Deja", "GOLD", "III");
+
+        var preview = await ReadJsonAsync(await client.GetAsync("/players/riot-preview?riotId=Deja%23EUW", Ct));
+
+        Assert.Equal("GOLD", preview.GetProperty("rankTier").GetString());
+        Assert.Equal(3, preview.GetProperty("rankDivision").GetInt32());
+        Assert.True(preview.GetProperty("alreadyRegistered").GetBoolean());
+    }
 }

@@ -44,6 +44,7 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpGet("pending")]
+    [ProducesResponseType<List<PendingGameResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingGames()
     {
         var pendingGames = await _gameService.GetPendingGamesAsync();
@@ -65,9 +66,10 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpGet("history/{year}/{month}")]
+    [ProducesResponseType<GameHistoryListResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory(int year, int month)
     {
         var games = await _gameService.GetHistoryAsync(year, month);
-        return Ok(new { games });
+        return Ok(new GameHistoryListResponse(games));
     }
 }

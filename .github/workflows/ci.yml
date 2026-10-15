@@ -30,8 +30,47 @@ jobs:
         run: dotnet build Shameless.sln --no-restore -c Release
 
       # Les tests d'intégration démarrent un Postgres via Testcontainers (Docker est fourni par le runner).
+      # ContractTests échoue si contracts/openapi.json ne correspond plus à l'API.
       - name: Test
         run: dotnet test --solution Shameless.sln --no-build -c Release
+
+  web:
+    name: Front (lint, typecheck, tests et build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Client généré à jour
+        run: |
+          npm run gen:api
+          git diff --exit-code -- src/api/schema.ts || (echo "::error::Client TypeScript obsolète : lancer npm run gen:api" && exit 1)
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Arbre des routes à jour
+        run: git diff --exit-code -- src/routeTree.gen.ts
 
   images:
     name: Images du compose

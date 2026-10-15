@@ -21,7 +21,7 @@ Au démarrage, le compose lance dans l'ordre :
 1. **postgres** : la base, dans le volume nommé `postgres-data` ;
 2. **migrate** : applique les migrations puis s'arrête ;
 3. **api** : ne démarre qu'une fois la base saine et la migration réussie ;
-4. **proxy** : Caddy, qui sert `/api` vers l'API et une page d'attente sur `/`.
+4. **proxy** : Caddy, qui sert `/api` vers l'API et le front (build Vite, construit dans l'image) sur tout le reste.
 
 Les migrations ne s'appliquent jamais au démarrage de l'API, seulement via le service `migrate`.
 
@@ -60,7 +60,9 @@ api/              Backend .NET 10 (Api / Application / Infrastructure)
   database/       Schéma legacy de référence et procédure de bascule (BASELINE.md)
   Shameless.Tests.Unit/         Tests du calcul MMR / cost
   Shameless.Tests.Integration/  Tests HTTP de bout en bout sur un vrai Postgres
-deploy/caddy/     Reverse proxy et page d'attente
+web/              Front : SPA Vite + React + TanStack + Tailwind + shadcn/ui
+contracts/        Document OpenAPI de l'API, source du client TypeScript du front
+deploy/caddy/     Reverse proxy, qui construit et sert le front
 compose.yaml      Instance complète (images et volumes nommés uniquement)
 docs/agents/      Configuration des skills d'agents (tracker, labels)
 ```
@@ -77,8 +79,41 @@ dotnet test
 
 Les outils EF sont déclarés dans le manifeste local : `dotnet tool restore`, puis par exemple `dotnet ef migrations add <Nom> -p Shameless.Infrastructure -s Shameless.Infrastructure`.
 
-Le document OpenAPI est exposé en développement uniquement, sur `/openapi/v1.json`, sans session pour pouvoir générer le client TS du front.
+Le document OpenAPI est exposé en développement uniquement, sur `/openapi/v1.json`, sans session. Sa version commitée, `contracts/openapi.json`, est vérifiée par les tests d'intégration (`ContractTests`). Après un changement de contrat :
+
+```sh
+cd api
+UPDATE_CONTRACTS=1 dotnet test --project Shameless.Tests.Integration --filter-class "*ContractTests"
+cd ../web
+npm run gen:api
+```
+
+## Développer sur le front
+
+Prérequis : Node 24.
+
+```sh
+cd web
+npm ci
+npm run dev
+```
+
+Le front tourne sur http://localhost:5173 et relaie `/api` vers l'API lancée avec `dotnet run` (`http://localhost:5221` par défaut, `SHAMELESS_API_URL` pour changer de cible). Pour se connecter en local, déclarer `http://localhost:5173/api/auth/discord/callback` dans les Redirects de l'application Discord et le mettre dans `Auth:Discord:RedirectUri`.
+
+| Commande | Rôle |
+|---|---|
+| `npm run gen:api` | Régénère le client TypeScript (`src/api/schema.ts`) depuis `contracts/openapi.json`. |
+| `npm run lint` | ESLint, qui interdit aussi les styles inline (ADR 0002). |
+| `npm run typecheck` | Vérification des types. |
+| `npm test` | Tests Vitest. |
+| `npm run build` | Build de production dans `dist/`. |
+
+Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `fetchClient`, typés par le client généré. Les routes sont des fichiers dans `src/routes/` (TanStack Router) ; `src/routeTree.gen.ts` est régénéré par Vite et commité. Les composants shadcn/ui s'ajoutent avec `npx shadcn@latest add <composant>`.
 
 ## CI
 
-À chaque PR et push sur `main`, GitHub Actions restaure, compile et teste l'API, puis construit les images du compose.
+À chaque PR et push sur `main`, GitHub Actions :
+
+- restaure, compile et teste l'API, et vérifie que `contracts/openapi.json` est à jour ;
+- vérifie que le client TypeScript commité correspond au contrat, puis lance lint, typecheck, tests et build du front ;
+- construit les images du compose.
