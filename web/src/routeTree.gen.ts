@@ -18,6 +18,8 @@ import { Route as ConnecteHistoriqueRouteImport } from './routes/_connecte/histo
 import { Route as ConnecteJoueursIndexRouteImport } from './routes/_connecte/joueurs/index'
 import { Route as ConnecteJoueursPlayerIdRouteImport } from './routes/_connecte/joueurs/$playerId'
 import { Route as ConnecteJoueursNouveauRouteImport } from './routes/_connecte/joueurs/nouveau'
+import { Route as ConnecteSeriesSeriesIdRouteImport } from './routes/_connecte/series/$seriesId'
+import { Route as ConnecteSoireeIndexRouteImport } from './routes/_connecte/soiree/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +65,16 @@ const ConnecteJoueursNouveauRoute = ConnecteJoueursNouveauRouteImport.update({
   path: '/joueurs/nouveau',
   getParentRoute: () => ConnecteRoute,
 } as any)
+const ConnecteSeriesSeriesIdRoute = ConnecteSeriesSeriesIdRouteImport.update({
+  id: '/series/$seriesId',
+  path: '/series/$seriesId',
+  getParentRoute: () => ConnecteRoute,
+} as any)
+const ConnecteSoireeIndexRoute = ConnecteSoireeIndexRouteImport.update({
+  id: '/soiree/',
+  path: '/soiree/',
+  getParentRoute: () => ConnecteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,7 +84,9 @@ export interface FileRoutesByFullPath {
   '/historique': typeof ConnecteHistoriqueRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/joueurs/': typeof ConnecteJoueursIndexRoute
+  '/soiree/': typeof ConnecteSoireeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,7 +96,9 @@ export interface FileRoutesByTo {
   '/historique': typeof ConnecteHistoriqueRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/joueurs': typeof ConnecteJoueursIndexRoute
+  '/soiree': typeof ConnecteSoireeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,7 +110,9 @@ export interface FileRoutesById {
   '/_connecte/historique': typeof ConnecteHistoriqueRoute
   '/_connecte/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/_connecte/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/_connecte/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/_connecte/joueurs/': typeof ConnecteJoueursIndexRoute
+  '/_connecte/soiree/': typeof ConnecteSoireeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,7 +124,9 @@ export interface FileRouteTypes {
     | '/historique'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
+    | '/series/$seriesId'
     | '/joueurs/'
+    | '/soiree/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -116,7 +136,9 @@ export interface FileRouteTypes {
     | '/historique'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
+    | '/series/$seriesId'
     | '/joueurs'
+    | '/soiree'
   id:
     | '__root__'
     | '/'
@@ -127,7 +149,9 @@ export interface FileRouteTypes {
     | '/_connecte/historique'
     | '/_connecte/joueurs/$playerId'
     | '/_connecte/joueurs/nouveau'
+    | '/_connecte/series/$seriesId'
     | '/_connecte/joueurs/'
+    | '/_connecte/soiree/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,6 +225,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnecteJoueursNouveauRouteImport
       parentRoute: typeof ConnecteRoute
     }
+    '/_connecte/series/$seriesId': {
+      id: '/_connecte/series/$seriesId'
+      path: '/series/$seriesId'
+      fullPath: '/series/$seriesId'
+      preLoaderRoute: typeof ConnecteSeriesSeriesIdRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
+    '/_connecte/soiree/': {
+      id: '/_connecte/soiree/'
+      path: '/soiree'
+      fullPath: '/soiree/'
+      preLoaderRoute: typeof ConnecteSoireeIndexRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
   }
 }
 
@@ -210,7 +248,9 @@ interface ConnecteRouteChildren {
   ConnecteHistoriqueRoute: typeof ConnecteHistoriqueRoute
   ConnecteJoueursPlayerIdRoute: typeof ConnecteJoueursPlayerIdRoute
   ConnecteJoueursNouveauRoute: typeof ConnecteJoueursNouveauRoute
+  ConnecteSeriesSeriesIdRoute: typeof ConnecteSeriesSeriesIdRoute
   ConnecteJoueursIndexRoute: typeof ConnecteJoueursIndexRoute
+  ConnecteSoireeIndexRoute: typeof ConnecteSoireeIndexRoute
 }
 
 const ConnecteRouteChildren: ConnecteRouteChildren = {
@@ -219,7 +259,9 @@ const ConnecteRouteChildren: ConnecteRouteChildren = {
   ConnecteHistoriqueRoute: ConnecteHistoriqueRoute,
   ConnecteJoueursPlayerIdRoute: ConnecteJoueursPlayerIdRoute,
   ConnecteJoueursNouveauRoute: ConnecteJoueursNouveauRoute,
+  ConnecteSeriesSeriesIdRoute: ConnecteSeriesSeriesIdRoute,
   ConnecteJoueursIndexRoute: ConnecteJoueursIndexRoute,
+  ConnecteSoireeIndexRoute: ConnecteSoireeIndexRoute,
 }
 
 const ConnecteRouteWithChildren = ConnecteRoute._addFileChildren(
