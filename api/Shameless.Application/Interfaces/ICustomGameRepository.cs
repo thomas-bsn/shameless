@@ -13,5 +13,7 @@ public interface ICustomGameRepository
     Task<List<CustomGame>> GetPendingAsync();
     Task<List<CustomGame>> GetByYearMonthAsync(int year, int month);
     Task<List<CustomGame>> GetBySeriesIdAsync(int seriesId);
-    Task DeleteBySeriesIdAsync(int seriesId);
+
+    /// <summary>Marque la game pour suppression, avec ses participants ; effectif au prochain SaveChangesAsync.</summary>
+    void Remove(CustomGame game);
 }

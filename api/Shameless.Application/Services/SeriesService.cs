@@ -150,6 +150,67 @@ public sealed class SeriesService
         return CommandResult<CustomGame>.Ok(game);
     }
 
+    /// <summary>
+    /// Arrête une Série en cours (ADR 0009). Sans game terminée, elle est annulée : effacée avec ses
+    /// games en attente. Sinon elle est interrompue : elle se termine sans vainqueur, ses games en
+    /// attente sont supprimées et ses games terminées restent et comptent. Aucun cost n'est recalculé :
+    /// aucune game terminée n'est effacée.
+    /// </summary>
+    public async Task<CommandResult<ArretSerie>> StopAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<ArretSerie>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
+
+        var pending = series.Games.Where(g => g.Status != "completed").ToList();
+        foreach (var game in pending)
+            _games.Remove(game);
+
+        var arret = series.Games.Count == pending.Count ? ArretSerie.Annulee : ArretSerie.Interrompue;
+        if (arret == ArretSerie.Annulee)
+            _series.Remove(series);
+        else
+            series.Outcome = SeriesOutcome.Interrompue;
+
+        await _series.SaveChangesAsync();
+        return CommandResult<ArretSerie>.Ok(arret);
+    }
+
+    /// <summary>
+    /// Remplace, entre deux games d'une Série en cours, un joueur d'une Équipe par un joueur qui
+    /// n'est pas dans la Série. Seule la composition courante change : elle s'applique à la
+    /// prochaine game, les games déjà lancées gardent leurs participants et le score ne bouge pas.
+    /// Refusé tant qu'une game attend son résultat : on n'est alors pas « entre deux games ».
+    /// </summary>
+    public async Task<CommandResult<SeriesResponse>> ReplacePlayerAsync(int seriesId, int replacedPlayerId, int replacementPlayerId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<SeriesResponse>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : sa composition ne change plus.");
+        if (series.Games.Any(g => g.Status == "pending"))
+            return CommandResult<SeriesResponse>.Conflict(
+                "Une game de cette Série attend son résultat : le remplacement se fait entre deux games.");
+
+        var replaced = series.Players.SingleOrDefault(p => p.PlayerId == replacedPlayerId);
+        if (replaced == null)
+            return CommandResult<SeriesResponse>.Invalid("Le joueur remplacé n'est pas dans cette Série.");
+        if (series.Players.Any(p => p.PlayerId == replacementPlayerId))
+            return CommandResult<SeriesResponse>.Conflict("Le remplaçant est déjà dans cette Série.");
+        var replacement = await _players.GetByIdAsync(replacementPlayerId);
+        if (replacement == null)
+            return CommandResult<SeriesResponse>.Invalid("Le remplaçant n'existe pas.");
+
+        replaced.Player = replacement;
+        replaced.PlayerId = replacement.Id;
+        await _series.SaveChangesAsync();
+
+        return CommandResult<SeriesResponse>.Ok(ToResponse(series));
+    }
+
     public async Task<SeriesResponse?> GetAsync(int seriesId)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
