@@ -183,6 +183,76 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("custom_game_participants", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Methode")
+                        .HasColumnType("text")
+                        .HasColumnName("methode");
+
+                    b.Property<int>("SoireeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("soiree_id");
+
+                    b.Property<string>("Variante")
+                        .HasColumnType("text")
+                        .HasColumnName("variante");
+
+                    b.HasKey("Id")
+                        .HasName("pk_picker_sessions");
+
+                    b.HasIndex("SoireeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_picker_sessions_soiree_id");
+
+                    b.ToTable("picker_sessions", (string)null);
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.PickerSessionPlayer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
+                    b.Property<int>("PickerSessionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("picker_session_id");
+
+                    b.Property<int>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.HasKey("Id")
+                        .HasName("pk_picker_session_players");
+
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("ix_picker_session_players_player_id");
+
+                    b.HasIndex("PickerSessionId", "PlayerId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_picker_session_players_picker_session_id_player_id");
+
+                    b.ToTable("picker_session_players", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.Player", b =>
                 {
                     b.Property<int>("Id")
@@ -459,6 +529,37 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Soiree", "Soiree")
+                        .WithOne("Picker")
+                        .HasForeignKey("Shameless.Application.Entities.PickerSession", "SoireeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_picker_sessions_soirees_soiree_id");
+
+                    b.Navigation("Soiree");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.PickerSessionPlayer", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.PickerSession", null)
+                        .WithMany("Players")
+                        .HasForeignKey("PickerSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_picker_session_players_picker_sessions_picker_session_id");
+
+                    b.HasOne("Shameless.Application.Entities.Player", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_picker_session_players_players_player_id");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.Player", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.User", "User")
@@ -514,6 +615,11 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Participants");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
+                {
+                    b.Navigation("Players");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.Player", b =>
                 {
                     b.Navigation("CustomGameParticipations");
@@ -523,6 +629,8 @@ namespace Shameless.Infrastructure.Migrations
 
             modelBuilder.Entity("Shameless.Application.Entities.Soiree", b =>
                 {
+                    b.Navigation("Picker");
+
                     b.Navigation("Series");
                 });
 
