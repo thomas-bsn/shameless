@@ -6,7 +6,6 @@ using Shameless.Application.Interfaces;
 using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
 using Shameless.Infrastructure.Repositories;
-using Shameless.Infrastructure.Services;
 
 namespace Shameless.Api.Extensions;
 
