@@ -77,6 +77,21 @@ public class SoireeTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Une_soiree_peut_passer_minuit_et_garde_ses_heures_d_ouverture_et_de_fermeture()
+    {
+        var client = Factory.CreateSignedInClient();
+        var ouverture = Factory.Clock.GetUtcNow().AddMinutes(1);
+        Factory.Clock.SetUtcNow(ouverture);
+        var id = (await ReadJsonAsync(await client.PostAsync("/soirees", null, Ct))).GetProperty("id").GetInt32();
+
+        Factory.Clock.Advance(TimeSpan.FromHours(4));
+        var closed = await ReadJsonAsync(await client.PostAsync($"/soirees/{id}/close", null, Ct));
+
+        Assert.Equal(ouverture.UtcDateTime, closed.GetProperty("openedAt").GetDateTime(), TimeSpan.FromMilliseconds(1));
+        Assert.Equal(ouverture.UtcDateTime.AddHours(4), closed.GetProperty("closedAt").GetDateTime(), TimeSpan.FromMilliseconds(1));
+    }
+
+    [Fact]
     public async Task Fermer_une_soiree_deja_fermee_repond_409()
     {
         var client = Factory.CreateSignedInClient();
