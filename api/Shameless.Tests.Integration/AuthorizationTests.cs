@@ -157,7 +157,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             Content = method switch
             {
                 "DELETE" => null,
-                _ when url.EndsWith("/result") => JsonContent.Create(new { winner = "blue" }),
+                _ when url.EndsWith("/result") => JsonContent.Create(new { winner = "A" }),
                 _ when url.EndsWith("/cost") => JsonContent.Create(new { cost = 3 }),
                 _ when url.EndsWith("/peak") => JsonContent.Create(new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S2025", peakLp = 10 }),
                 _ => null

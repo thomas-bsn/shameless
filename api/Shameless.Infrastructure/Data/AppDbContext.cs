@@ -80,7 +80,6 @@ public class AppDbContext : DbContext
             entity.Property(e => e.PlayedAt).HasColumnType(Timestamp);
             entity.Property(e => e.TeamAWins).HasDefaultValue(0);
             entity.Property(e => e.TeamBWins).HasDefaultValue(0);
-            entity.Property(e => e.TeamAReference).HasColumnType("text");
         });
 
         modelBuilder.Entity<CustomGame>(entity =>
@@ -90,7 +89,9 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
 
             entity.Property(e => e.PlayedAt).HasColumnType(Timestamp);
-            entity.Property(e => e.Winner).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.TeamASide).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.WinningTeam).HasMaxLength(1);
+            entity.Ignore(e => e.TeamBSide);
             entity.Property(e => e.RiotMatchId).HasMaxLength(100);
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
             entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("");

@@ -1,4 +1,5 @@
 using Shameless.Api.Auth;
+using Shameless.Application.DTOs.Match;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,8 @@ public sealed class SeriesController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType<SeriesResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSeriesStatus(int id)
     {
         var status = await _gameService.GetSeriesStatusAsync(id);

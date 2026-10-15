@@ -19,7 +19,7 @@ public class HorlogeTests(ApiFactory factory) : IntegrationTest(factory)
 
         Assert.Equal(new DateTime(2025, 3, 14, 21, 30, 0), created.GetProperty("playedAt").GetDateTime());
         var gameId = created.GetProperty("gameId").GetInt32();
-        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "blue" }, Ct));
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
 
         var history = await ReadJsonAsync(await client.GetAsync("/games/history/2025/3", Ct));
         var serie = Assert.Single(history.GetProperty("games").EnumerateArray());

@@ -43,10 +43,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("soiree_id");
 
-                    b.Property<string>("TeamAReference")
-                        .HasColumnType("text")
-                        .HasColumnName("team_a_reference");
-
                     b.Property<int>("TeamAWins")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -107,11 +103,16 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDefaultValue("")
                         .HasColumnName("status");
 
-                    b.Property<string>("Winner")
+                    b.Property<string>("TeamASide")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
-                        .HasColumnName("winner");
+                        .HasColumnName("team_a_side");
+
+                    b.Property<string>("WinningTeam")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("winning_team");
 
                     b.HasKey("Id")
                         .HasName("pk_custom_games");

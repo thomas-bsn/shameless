@@ -42,9 +42,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await db.Database.MigrateAsync();
     }
 
-    public AppDbContext CreateDbContext() =>
+    public AppDbContext CreateDbContext(string? connectionString = null) =>
         new(new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_postgres.GetConnectionString())
+            .UseNpgsql(connectionString ?? _postgres.GetConnectionString())
             .UseSnakeCaseNamingConvention()
             .Options);
 
