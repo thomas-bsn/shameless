@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { SessionMenu } from "@/components/session-menu";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -37,6 +38,9 @@ function RootLayout() {
               </Link>
             ))}
           </nav>
+          <div className="ml-auto">
+            <SessionMenu />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">

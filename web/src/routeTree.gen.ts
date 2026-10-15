@@ -10,63 +10,96 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ClassementsRouteImport } from './routes/classements'
-import { Route as HistoriqueRouteImport } from './routes/historique'
-import { Route as JoueursRouteImport } from './routes/joueurs'
+import { Route as ConnecteRouteImport } from './routes/_connecte'
+import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as ConnecteClassementsRouteImport } from './routes/_connecte/classements'
+import { Route as ConnecteCompteRouteImport } from './routes/_connecte/compte'
+import { Route as ConnecteHistoriqueRouteImport } from './routes/_connecte/historique'
+import { Route as ConnecteJoueursRouteImport } from './routes/_connecte/joueurs'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClassementsRoute = ClassementsRouteImport.update({
+const ConnecteRoute = ConnecteRouteImport.update({
+  id: '/_connecte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnecteClassementsRoute = ConnecteClassementsRouteImport.update({
   id: '/classements',
   path: '/classements',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ConnecteRoute,
 } as any)
-const HistoriqueRoute = HistoriqueRouteImport.update({
+const ConnecteCompteRoute = ConnecteCompteRouteImport.update({
+  id: '/compte',
+  path: '/compte',
+  getParentRoute: () => ConnecteRoute,
+} as any)
+const ConnecteHistoriqueRoute = ConnecteHistoriqueRouteImport.update({
   id: '/historique',
   path: '/historique',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ConnecteRoute,
 } as any)
-const JoueursRoute = JoueursRouteImport.update({
+const ConnecteJoueursRoute = ConnecteJoueursRouteImport.update({
   id: '/joueurs',
   path: '/joueurs',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ConnecteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/classements': typeof ClassementsRoute
-  '/historique': typeof HistoriqueRoute
-  '/joueurs': typeof JoueursRoute
+  '/connexion': typeof ConnexionRoute
+  '/classements': typeof ConnecteClassementsRoute
+  '/compte': typeof ConnecteCompteRoute
+  '/historique': typeof ConnecteHistoriqueRoute
+  '/joueurs': typeof ConnecteJoueursRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/classements': typeof ClassementsRoute
-  '/historique': typeof HistoriqueRoute
-  '/joueurs': typeof JoueursRoute
+  '/connexion': typeof ConnexionRoute
+  '/classements': typeof ConnecteClassementsRoute
+  '/compte': typeof ConnecteCompteRoute
+  '/historique': typeof ConnecteHistoriqueRoute
+  '/joueurs': typeof ConnecteJoueursRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/classements': typeof ClassementsRoute
-  '/historique': typeof HistoriqueRoute
-  '/joueurs': typeof JoueursRoute
+  '/_connecte': typeof ConnecteRouteWithChildren
+  '/connexion': typeof ConnexionRoute
+  '/_connecte/classements': typeof ConnecteClassementsRoute
+  '/_connecte/compte': typeof ConnecteCompteRoute
+  '/_connecte/historique': typeof ConnecteHistoriqueRoute
+  '/_connecte/joueurs': typeof ConnecteJoueursRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/classements' | '/historique' | '/joueurs'
+  fullPaths:
+    '/' | '/connexion' | '/classements' | '/compte' | '/historique' | '/joueurs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/classements' | '/historique' | '/joueurs'
-  id: '__root__' | '/' | '/classements' | '/historique' | '/joueurs'
+  to:
+    '/' | '/connexion' | '/classements' | '/compte' | '/historique' | '/joueurs'
+  id:
+    | '__root__'
+    | '/'
+    | '/_connecte'
+    | '/connexion'
+    | '/_connecte/classements'
+    | '/_connecte/compte'
+    | '/_connecte/historique'
+    | '/_connecte/joueurs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ClassementsRoute: typeof ClassementsRoute
-  HistoriqueRoute: typeof HistoriqueRoute
-  JoueursRoute: typeof JoueursRoute
+  ConnecteRoute: typeof ConnecteRouteWithChildren
+  ConnexionRoute: typeof ConnexionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,35 +111,73 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/classements': {
-      id: '/classements'
+    '/_connecte': {
+      id: '/_connecte'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ConnecteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_connecte/classements': {
+      id: '/_connecte/classements'
       path: '/classements'
       fullPath: '/classements'
-      preLoaderRoute: typeof ClassementsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ConnecteClassementsRouteImport
+      parentRoute: typeof ConnecteRoute
     }
-    '/historique': {
-      id: '/historique'
+    '/_connecte/compte': {
+      id: '/_connecte/compte'
+      path: '/compte'
+      fullPath: '/compte'
+      preLoaderRoute: typeof ConnecteCompteRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
+    '/_connecte/historique': {
+      id: '/_connecte/historique'
       path: '/historique'
       fullPath: '/historique'
-      preLoaderRoute: typeof HistoriqueRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ConnecteHistoriqueRouteImport
+      parentRoute: typeof ConnecteRoute
     }
-    '/joueurs': {
-      id: '/joueurs'
+    '/_connecte/joueurs': {
+      id: '/_connecte/joueurs'
       path: '/joueurs'
       fullPath: '/joueurs'
-      preLoaderRoute: typeof JoueursRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ConnecteJoueursRouteImport
+      parentRoute: typeof ConnecteRoute
     }
   }
 }
 
+interface ConnecteRouteChildren {
+  ConnecteClassementsRoute: typeof ConnecteClassementsRoute
+  ConnecteCompteRoute: typeof ConnecteCompteRoute
+  ConnecteHistoriqueRoute: typeof ConnecteHistoriqueRoute
+  ConnecteJoueursRoute: typeof ConnecteJoueursRoute
+}
+
+const ConnecteRouteChildren: ConnecteRouteChildren = {
+  ConnecteClassementsRoute: ConnecteClassementsRoute,
+  ConnecteCompteRoute: ConnecteCompteRoute,
+  ConnecteHistoriqueRoute: ConnecteHistoriqueRoute,
+  ConnecteJoueursRoute: ConnecteJoueursRoute,
+}
+
+const ConnecteRouteWithChildren = ConnecteRoute._addFileChildren(
+  ConnecteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ClassementsRoute: ClassementsRoute,
-  HistoriqueRoute: HistoriqueRoute,
-  JoueursRoute: JoueursRoute,
+  ConnecteRoute: ConnecteRouteWithChildren,
+  ConnexionRoute: ConnexionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

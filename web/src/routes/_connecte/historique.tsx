@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/classements")({
+export const Route = createFileRoute("/_connecte/historique")({
   component: () => <p className="text-muted-foreground">Bientôt.</p>,
 });

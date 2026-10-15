@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { routeTree } from "@/routeTree.gen";
+import { createApp } from "@/router";
 
 const newQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -32,12 +32,7 @@ export function renderComponent(ui: ReactNode) {
 
 /** Rend l'application complète sur une URL donnée. */
 export function renderApp(url: string) {
-  const queryClient = newQueryClient();
-  const router = createRouter({
-    routeTree,
-    context: { queryClient },
-    history: createMemoryHistory({ initialEntries: [url] }),
-  });
+  const { queryClient, router } = createApp(createMemoryHistory({ initialEntries: [url] }));
   const view = render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
