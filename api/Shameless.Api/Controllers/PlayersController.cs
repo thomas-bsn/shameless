@@ -23,13 +23,34 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType<List<PlayerDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPlayers()
     {
         var players = await _playerService.GetPlayersAsync();
         return Ok(players);
     }
 
+    [HttpGet("{playerId:int}")]
+    [ProducesResponseType<PlayerDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPlayer(int playerId)
+    {
+        var player = await _playerService.GetPlayerAsync(playerId);
+        return player == null ? NotFound() : Ok(player);
+    }
+
+    /// <summary>Le compte Riot tel qu'il serait enregistré, sans créer de Joueur.</summary>
+    [HttpGet("riot-preview")]
+    [ProducesResponseType<RiotAccountPreview>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> PreviewRiotAccount([FromQuery] string riotId)
+    {
+        var preview = await _playerService.PreviewRiotAccountAsync(riotId);
+        return preview == null
+            ? Problem(statusCode: StatusCodes.Status404NotFound, detail: "Compte Riot introuvable. Vérifie le RiotId (Pseudo#TAG).")
+            : Ok(preview);
+    }
+
     [HttpPost]
+    [ProducesResponseType<PlayerResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> CreatePlayer([FromBody] CreatePlayerRequest request)
     {
         var player = await _playerService.CreatePlayerAsync(request.Prenom, request.RiotId);
@@ -37,6 +58,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet("me")]
+    [ProducesResponseType<PlayerDto>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyPlayer()
     {
         var player = await _playerService.GetPlayerByDiscordIdAsync(User.DiscordId());
@@ -46,6 +68,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpPost("link")]
+    [ProducesResponseType<PlayerLinkResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request, [FromServices] IAuthorizationService authorization)
     {
         var isAdmin = await authorization.IsAdminAsync(User);
@@ -62,6 +85,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet("{playerId}/cost")]
+    [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPlayerCost(int playerId)
     {
         var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);

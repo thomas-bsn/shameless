@@ -1,4 +1,5 @@
 ﻿using Shameless.Application.DTOs.Players;
+using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -26,6 +27,28 @@ public class PlayerService : IPlayerService
     public Task<List<PlayerDto>> GetPlayersAsync() =>
         _players.GetAllAsync();
 
+    public Task<PlayerDto?> GetPlayerAsync(int playerId) =>
+        _players.GetDtoByIdAsync(playerId);
+
+    public async Task<RiotAccountPreview?> PreviewRiotAccountAsync(string riotId)
+    {
+        if (string.IsNullOrWhiteSpace(riotId)) return null;
+
+        var puuid = await _riot.GetPuuidFromRiotIdAsync(riotId);
+        if (puuid == null) return null;
+
+        var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var (tier, division) = NormalizeRank(rank);
+
+        return new RiotAccountPreview(
+            RiotId: riotId,
+            RankTier: tier,
+            RankDivision: division,
+            Lp: rank?.LP,
+            MainRole: await _riot.GetMainRoleFromPuuidAsync(puuid),
+            AlreadyRegistered: await _players.ExistsByPuuidAsync(puuid));
+    }
+
     public async Task<PlayerResponse> CreatePlayerAsync(string prenom, string riotId)
     {
         if (string.IsNullOrWhiteSpace(prenom) || string.IsNullOrWhiteSpace(riotId))
@@ -38,12 +61,7 @@ public class PlayerService : IPlayerService
 
         var rank = await _riot.GetRankFromPuuidAsync(puuid);
         var mainRole = await _riot.GetMainRoleFromPuuidAsync(puuid);
-
-        var tier = rank?.Tier?.ToUpper();
-        int? division = rank != null ? ParseDivision(rank.Division) : null;
-
-        if (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
-            division = null;
+        var (tier, division) = NormalizeRank(rank);
 
         var player = new PlayerDto
         {
@@ -192,6 +210,16 @@ public class PlayerService : IPlayerService
                 _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
             }
         }
+    }
+
+    /// <summary>Tier en majuscules ; pas de division à partir de Master.</summary>
+    private static (string? Tier, int? Division) NormalizeRank(RiotRankDto? rank)
+    {
+        var tier = rank?.Tier?.ToUpper();
+        int? division = rank != null && tier is not ("MASTER" or "GRANDMASTER" or "CHALLENGER")
+            ? ParseDivision(rank.Division)
+            : null;
+        return (tier, division);
     }
 
     private static int ParseDivision(string division) => division switch

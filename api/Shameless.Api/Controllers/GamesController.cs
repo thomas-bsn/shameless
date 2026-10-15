@@ -20,6 +20,7 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType<CreateGameResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateGame([FromBody] CreateGameRequest request)
     {
         var (game, seriesId) = await _gameService.RecordCustomGame(
@@ -40,6 +41,7 @@ public sealed class GamesController : ControllerBase
 
     [HttpPut("{id}/result")]
     [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<SetGameResultResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> SetGameResult(int id, [FromBody] SetGameResultRequest request)
     {
         var game = await _gameService.SetGameResultAsync(id, request.Winner);
@@ -53,6 +55,7 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpGet("pending")]
+    [ProducesResponseType<List<PendingGameResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingGames()
     {
         var pendingGames = await _gameService.GetPendingGamesAsync();
@@ -73,9 +76,10 @@ public sealed class GamesController : ControllerBase
     }
 
     [HttpGet("history/{year}/{month}")]
+    [ProducesResponseType<GameHistoryListResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory(int year, int month)
     {
         var games = await _gameService.GetHistoryAsync(year, month);
-        return Ok(new { games });
+        return Ok(new GameHistoryListResponse(games));
     }
 }

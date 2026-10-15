@@ -12,7 +12,7 @@ public static class ApplicationStartup
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-        app.MapHealthChecks("/health").AllowAnonymous();
+        app.MapHealth();
 
         if (app.Environment.IsDevelopment())
             app.MapOpenApi().AllowAnonymous();
