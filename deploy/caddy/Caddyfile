@@ -1,0 +1,15 @@
+# Adresse du site : ":80" en local (HTTP), un nom de domaine en production (HTTPS automatique).
+{$SHAMELESS_SITE_ADDRESS::80} {
+	encode gzip
+
+	# L'API est servie sous /api ; le préfixe est retiré avant de la joindre.
+	handle_path /api/* {
+		reverse_proxy api:8080
+	}
+
+	# En attendant le nouveau front : une page statique.
+	handle {
+		root * /srv
+		file_server
+	}
+}

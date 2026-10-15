@@ -1,0 +1,4 @@
+**/bin/
+**/obj/
+Shameless.Tests.*/
+database/

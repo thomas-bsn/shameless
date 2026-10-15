@@ -1,23 +1,5 @@
-# LoL Custom 5v5 — Backend
+# Shameless — API
 
-Backend API for managing League of Legends custom 5v5 games.
+Backend .NET 10 de Shameless. Voir le [README du monorepo](../README.md) pour le lancement, les variables et la structure.
 
-## Features
-
-- Player management and ranked data
-- Riot Games API integration
-- MMR-based team generation
-- Match and game history
-- REST API
-- PostgreSQL persistence
-
-## Tech Stack
-
-- C#
-- ASP.NET Core
-- Entity Framework Core
-- PostgreSQL
-- Docker
-- Riot Games API
-
-The backend provides the core API and business logic for the LoL Custom 5v5 platform.
+L'historique Git du backend legacy (`thomas-lol-custom-5v5-backend`) est conservé dans ce dossier.

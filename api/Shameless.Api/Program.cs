@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplicationOptions(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddSessionAuthentication();
+builder.Services.AddSessionAuthentication(builder.Configuration);
 builder.Services.AddHttpClients();
 builder.Services.AddApplicationServices();
 builder.Services.AddApiServices(builder.Configuration);

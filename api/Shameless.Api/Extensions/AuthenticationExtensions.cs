@@ -1,6 +1,7 @@
 using Shameless.Api.Auth;
 using Shameless.Api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Shameless.Application.Interfaces;
@@ -20,8 +21,15 @@ public static class AuthenticationExtensions
     /// Session par cookie posé à la fin du login Discord. Le scheme par défaut est un
     /// sélecteur : un futur jeton révocable (Companion, bot) s'y branchera sans refonte.
     /// </summary>
-    public static IServiceCollection AddSessionAuthentication(this IServiceCollection services)
+    public static IServiceCollection AddSessionAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
+        // Les clés qui chiffrent le cookie doivent survivre aux redémarrages du conteneur.
+        var keysPath = configuration["DataProtection:KeysPath"];
+        if (!string.IsNullOrWhiteSpace(keysPath))
+            services.AddDataProtection()
+                .SetApplicationName("Shameless")
+                .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+
         services.AddAuthentication(DefaultScheme)
             .AddPolicyScheme(DefaultScheme, DefaultScheme, options =>
             {
