@@ -47,6 +47,8 @@ public class CustomGameService
                     SeriesId: group.Key ?? 0,
                     Format: series?.Format ?? 1,
                     PlayedAt: series?.PlayedAt ?? firstGame.PlayedAt,
+                    Outcome: series?.Outcome,
+                    WinningTeam: series?.WinningTeam,
                     Games: group.Select(g => new GameHistoryResponse(
                         Id: g.Id,
                         SeriesId: g.SeriesId,

@@ -70,6 +70,28 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task L_historique_donne_l_issue_de_chaque_serie_et_l_equipe_gagnante()
+    {
+        var client = Factory.CreateSignedInClient();
+        var gagnee = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, gagnee.SeriesId, "B");
+        var interrompue = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{gagnee.SeriesId}/rematch",
+            new { format = 3, fearless = false, alternateSides = true }, Ct));
+        var interrompueId = interrompue.GetProperty("seriesId").GetInt32();
+        await PlayAndWinAsync(client, interrompueId, "A");
+        await ReadJsonAsync(await client.PostAsync($"/series/{interrompueId}/stop", null, Ct));
+
+        var now = Factory.Clock.GetUtcNow();
+        var history = await ReadJsonAsync(await client.GetAsync($"/games/history/{now.Year}/{now.Month}", Ct));
+
+        var issues = history.GetProperty("games").EnumerateArray()
+            .ToDictionary(s => s.GetProperty("seriesId").GetInt32(),
+                s => (s.GetProperty("outcome").GetString(), s.GetProperty("winningTeam").GetString()));
+        Assert.Equal(("Gagnee", "B"), issues[gagnee.SeriesId]);
+        Assert.Equal(("Interrompue", null), issues[interrompueId]);
+    }
+
+    [Fact]
     public async Task Le_cost_est_recalcule_apres_chaque_game_et_compte_les_victoires_de_l_equipe_quel_que_soit_son_side()
     {
         var client = Factory.CreateSignedInClient();

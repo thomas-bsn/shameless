@@ -33,7 +33,17 @@ const october: Schemas["GameHistoryListResponse"] = {
       seriesId: 5,
       format: 3,
       playedAt: "2026-10-03T20:00:00Z",
+      outcome: "Gagnee",
+      winningTeam: "A",
       games: [game(11, "A", "blue"), game(12, "B", "red"), game(13, "A", "red")],
+    },
+    {
+      seriesId: 6,
+      format: 5,
+      playedAt: "2026-10-03T22:00:00Z",
+      outcome: "Interrompue",
+      winningTeam: null,
+      games: [{ ...game(14, "B", "blue"), seriesId: 6 }],
     },
   ],
 };
@@ -47,6 +57,9 @@ describe("Historique", () => {
     expect(await screen.findByRole("heading", { name: "Octobre 2026" })).toBeInTheDocument();
     const series = await screen.findByRole("article", { name: "Série BO3" });
     expect(within(series).getByText("Équipe A 2 – 1 Équipe B")).toBeInTheDocument();
+    expect(within(series).getByText("Gagnée par l'Équipe A")).toBeInTheDocument();
+    const interrompue = screen.getByRole("article", { name: "Série BO5" });
+    expect(within(interrompue).getByText("Interrompue")).toBeInTheDocument();
 
     const games = within(series).getAllByRole("listitem");
     expect(games).toHaveLength(3);

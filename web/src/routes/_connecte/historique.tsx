@@ -5,6 +5,7 @@ import { RankBadge } from "@/components/rank";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
+import { outcomeLabel } from "@/lib/series";
 import { cn } from "@/lib/utils";
 
 const currentMonth = (): Month => {
@@ -92,9 +93,12 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
             {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateLabel(series.playedAt)}</span>
           </CardTitle>
           {series.seriesId !== 0 && (
-            <span className="font-semibold">
-              Équipe A {score.a} – {score.b} Équipe B
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold">
+                Équipe A {score.a} – {score.b} Équipe B
+              </span>
+              {series.outcome && <Badge variant="secondary">{outcomeLabel(series)}</Badge>}
+            </div>
           )}
         </CardHeader>
         <CardContent>
