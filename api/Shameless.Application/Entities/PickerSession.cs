@@ -47,10 +47,24 @@ public class PickerSession
         Methode = PickerMethode.Roulette;
         Variante = variante;
         foreach (var player in Players)
+        {
             player.Equipe = composition.TeamA.Contains(player.PlayerId) ? Equipes.A
                 : composition.TeamB.Contains(player.PlayerId) ? Equipes.B
                 : null;
+            // Nouvelles Équipes : les rôles de l'Autorole sont à refaire.
+            player.Role = null;
+        }
     }
+
+    /// <summary>Retient une attribution de l'Autorole ; la composition des Équipes ne change pas.</summary>
+    public void ApplyAutorole(IReadOnlyDictionary<int, Role> roles)
+    {
+        foreach (var player in Players)
+            player.Role = roles.TryGetValue(player.PlayerId, out var role) ? role : null;
+    }
+
+    /// <summary>La composition courante des deux Équipes.</summary>
+    public Composition Composition => new(PlayerIdsOf(Equipes.A), PlayerIdsOf(Equipes.B));
 
     public IReadOnlyList<int> PlayerIdsOf(string equipe) =>
         Players.OrderBy(p => p.Position).Where(p => p.Equipe == equipe).Select(p => p.PlayerId).ToList();
@@ -69,6 +83,9 @@ public class PickerSessionPlayer
 
     /// <summary>L'Équipe du joueur dans la composition courante ("A" | "B"), null s'il n'est pas encore placé.</summary>
     public string? Equipe { get; set; }
+
+    /// <summary>Le rôle attribué par l'Autorole, null tant qu'il n'a pas été lancé.</summary>
+    public Role? Role { get; set; }
 }
 
 public enum PickerMethode

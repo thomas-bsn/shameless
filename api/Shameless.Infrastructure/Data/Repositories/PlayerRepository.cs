@@ -52,6 +52,7 @@ public class PlayerRepository : IPlayerRepository
             PUUID = dto.Puuid ?? throw new ArgumentException("Puuid is required"),
             RankTier = dto.RankTier,
             RankDivision = dto.RankDivision,
+            MainRole = dto.MainRole,
             CreatedAt = _clock.GetUtcNow().UtcDateTime,
             LP = dto.Lp,
         };

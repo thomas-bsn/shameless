@@ -83,6 +83,23 @@ public sealed class PickerService
         return CommandResult<PickerSession>.Ok(session);
     }
 
+    /// <summary>
+    /// Attribue un rôle à chaque joueur des deux Équipes formées (voir <see cref="Autorole"/>) ; lancer à
+    /// nouveau relance et remplace l'attribution courante. Les Équipes ne changent pas.
+    /// </summary>
+    public async Task<CommandResult<PickerSession>> AutoroleAsync(AutoroleVariante variante)
+    {
+        var (session, refus) = await GetSessionOfOpenSoireeAsync();
+        if (session == null) return refus!;
+        if (!session.CanValidate)
+            return CommandResult<PickerSession>.Conflict("Les deux Équipes ne sont pas encore formées : tirez-les avant l'Autorole.");
+
+        var rolesPrincipaux = session.Players.ToDictionary(p => p.PlayerId, p => Autorole.RolePrincipal(p.Player.MainRole));
+        session.ApplyAutorole(Autorole.Attribuer(variante, session.Composition, rolesPrincipaux, _random));
+        await _sessions.SaveChangesAsync();
+        return CommandResult<PickerSession>.Ok(session);
+    }
+
     /// <summary>Valide la composition courante : crée la Série entre les deux Équipes et clôt la session.</summary>
     public async Task<CommandResult<BestOfSeries>> ValidateAsync(int format, bool fearless, bool alternateSides)
     {
@@ -92,7 +109,8 @@ public sealed class PickerService
             return CommandResult<BestOfSeries>.Conflict("Les deux Équipes ne sont pas encore formées : tirez-les avant de valider.");
 
         var created = await _series.CreateAsync(
-            session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless, alternateSides);
+            session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless, alternateSides,
+            session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value));
         if (!created.IsOk) return created;
 
         await _sessions.RemoveAsync(session);

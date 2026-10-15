@@ -43,6 +43,7 @@ public sealed class PickerSessionPlayerConfiguration : IEntityTypeConfiguration<
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityByDefaultColumn();
         entity.Property(e => e.Equipe).HasMaxLength(1);
+        entity.Property(e => e.Role).HasColumnType("text").HasConversion(RoleText.Converter);
 
         entity.HasOne(e => e.Player)
               .WithMany()

@@ -17,9 +17,10 @@ public record GameParticipantDto(
     string? RankTier,
     int? RankDivision,
     decimal? Cost,
-    int PlayerId
+    int PlayerId,
+    Picker.Role? Role = null // le rôle attribué par l'Autorole, quand il y en a un
 )
 {
-    public static GameParticipantDto From(Entities.Player player) =>
-        new(player.Prenom, player.RiotId, player.RankTier, player.RankDivision, player.CurrentCost, player.Id);
+    public static GameParticipantDto From(Entities.Player player, Picker.Role? role = null) =>
+        new(player.Prenom, player.RiotId, player.RankTier, player.RankDivision, player.CurrentCost, player.Id, role);
 }
