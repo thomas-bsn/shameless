@@ -23,9 +23,9 @@ Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 Objectif : une soirée complète sans saisie manuelle.
 
 ### 1a. Équipes et séries
-- [ ] Picker : Draft, Roulette, Autorole (nouveau)
-- [ ] Séries BO1, BO2, BO3, BO5 + option Fearless
-- [ ] État de la soirée sauvegardé côté API (plus de perte au refresh)
+- [x] Picker : Draft, Roulette, Autorole (nouveau)
+- [x] Séries BO1, BO2, BO3, BO5 + option Fearless
+- [x] État de la soirée sauvegardé côté API (plus de perte au refresh)
 
 ### 1b. Companion (récupération des stats)
 - [ ] App .NET 10 Avalonia, icône barre des tâches, login Discord
