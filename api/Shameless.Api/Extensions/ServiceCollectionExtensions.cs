@@ -7,7 +7,6 @@ using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
 using Shameless.Infrastructure.Repositories;
 using Shameless.Infrastructure.Services;
-using Microsoft.OpenApi.Models;
 
 namespace Shameless.Api.Extensions;
 
@@ -59,36 +58,7 @@ public static class ServiceCollectionExtensions
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter())
             );
 
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerConfiguration();
-
-        return services;
-    }
-
-    private static IServiceCollection AddSwaggerConfiguration(this IServiceCollection services)
-    {
-        services.AddSwaggerGen(options =>
-        {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shameless.Api", Version = "v1" });
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Name = "Authorization",
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                In = ParameterLocation.Header
-            });
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                    },
-                    Array.Empty<string>()
-                }
-            });
-        });
+        services.AddOpenApi();
 
         return services;
     }

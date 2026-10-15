@@ -12,8 +12,7 @@ public static class ApplicationStartup
 
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.MapOpenApi();
         }
 
         app.UseCors();
