@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
@@ -63,6 +64,7 @@ function SeriePage() {
 
 function SerieView({ series }: { series: Series }) {
   const enCours = series.outcome === "EnCours";
+  const refresh = useRefreshSeries();
 
   return (
     <>
@@ -83,12 +85,13 @@ function SerieView({ series }: { series: Series }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <TeamCard equipe="A" players={series.teamA} />
-        <TeamCard equipe="B" players={series.teamB} />
+        <TeamCard equipe="A" players={series.teamA} capitaine={series.capitaineA} />
+        <TeamCard equipe="B" players={series.teamB} capitaine={series.capitaineB} />
       </div>
 
       {enCours ? (
         <>
+          <CapitainesLiensPanel series={series} onSeriesChanged={refresh} />
           <GamePanel series={series} />
           <ReplacementPanel series={series} />
           <StopPanel series={series} />
