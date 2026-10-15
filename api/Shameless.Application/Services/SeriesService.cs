@@ -211,6 +211,35 @@ public sealed class SeriesService
         return CommandResult<SeriesResponse>.Ok(ToResponse(series));
     }
 
+    /// <summary>
+    /// Lance la Revanche d'une Série : une nouvelle Série dans la même Soirée, entre les mêmes
+    /// Équipes dans leur dernière composition (Remplacements compris), sans repasser par le Picker.
+    /// Le format, l'option Fearless et l'alternance des Sides sont choisis pour la Revanche.
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> CreateRevancheAsync(
+        int seriesId,
+        int format,
+        bool fearless,
+        bool alternateSides)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<BestOfSeries>.NotFound("Cette Série n'existe pas.");
+        if (series.IsEnCours)
+            return CommandResult<BestOfSeries>.Conflict("Cette Série est en cours : la Revanche se lance une fois la Série terminée.");
+
+        var soiree = await _soirees.GetOpenAsync();
+        if (soiree == null || soiree.Id != series.SoireeId)
+            return CommandResult<BestOfSeries>.Conflict("La Soirée de cette Série est fermée : la Revanche n'est plus possible.");
+
+        return await CreateAsync(
+            series.PlayersOf(Equipes.A).Select(p => p.PlayerId).ToList(),
+            series.PlayersOf(Equipes.B).Select(p => p.PlayerId).ToList(),
+            format,
+            fearless,
+            alternateSides);
+    }
+
     public async Task<SeriesResponse?> GetAsync(int seriesId)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
