@@ -82,6 +82,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<TimeProvider>(Clock);
             services.RemoveAll<IRandomSource>();
             services.AddSingleton<IRandomSource>(Random);
+            services.RemoveAll<IChampionCatalog>();
+            services.AddSingleton<IChampionCatalog, FakeChampionCatalog>();
             services.AddFakeLogging();
         });
     }
