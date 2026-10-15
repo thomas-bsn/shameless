@@ -16,6 +16,9 @@ public class SoireeRepository : ISoireeRepository
     public async Task<Soiree?> GetByIdAsync(int id) =>
         await _db.Soirees.FindAsync(id);
 
+    public Task<Soiree?> GetWithSeriesAsync(int id) =>
+        _db.Soirees.Include(s => s.Series).SingleOrDefaultAsync(s => s.Id == id);
+
     public Task<Soiree?> GetOpenWithSeriesAndGamesAsync() =>
         _db.Soirees
             .Include(s => s.Series)

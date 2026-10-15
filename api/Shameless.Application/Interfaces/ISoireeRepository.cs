@@ -7,6 +7,9 @@ public interface ISoireeRepository
     Task<Soiree?> GetOpenAsync();
     Task<Soiree?> GetByIdAsync(int id);
 
+    /// <summary>La Soirée avec ses séries (sans leurs games), ou null.</summary>
+    Task<Soiree?> GetWithSeriesAsync(int id);
+
     /// <summary>La Soirée ouverte avec ses séries et leurs games, ou null.</summary>
     Task<Soiree?> GetOpenWithSeriesAndGamesAsync();
 

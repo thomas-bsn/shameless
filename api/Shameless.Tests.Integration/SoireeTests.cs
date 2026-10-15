@@ -106,6 +106,22 @@ public class SoireeTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Fermer_une_soiree_avec_une_serie_en_cours_repond_409_et_la_laisse_ouverte()
+    {
+        var client = Factory.CreateSignedInClient();
+        var id = await OpenSoireeAsync(client);
+        await CreateSerieAsync(client);
+
+        var response = await client.PostAsync($"/soirees/{id}/close", null, Ct);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(Ct);
+        Assert.Contains("arrêtez", problem.GetProperty("detail").GetString());
+        var open = await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct));
+        Assert.Equal(id, open.GetProperty("soiree").GetProperty("id").GetInt32());
+    }
+
+    [Fact]
     public async Task Fermer_une_soiree_inexistante_repond_404()
     {
         var response = await Factory.CreateSignedInClient().PostAsync("/soirees/999/close", null, Ct);

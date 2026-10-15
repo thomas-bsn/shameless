@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Shameless.Api.Extensions;
 using Shameless.Api.Models.Responses.Soiree;
 using Shameless.Application.Services;
 
@@ -46,25 +47,22 @@ public sealed class SoireesController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     public async Task<ActionResult<SoireeResponse>> Open()
     {
-        var soiree = await _soireeService.OpenAsync();
-        if (soiree == null)
-            return Problem(statusCode: StatusCodes.Status409Conflict, detail: "Une Soirée est déjà ouverte.");
+        var result = await _soireeService.OpenAsync();
+        if (!result.IsOk) return this.Refusal(result);
 
-        return Created("/soirees/open", SoireeResponse.From(soiree));
+        return Created("/soirees/open", SoireeResponse.From(result.Value!));
     }
 
+    /// <summary>Ferme une Soirée ouverte ; refusé (409) tant qu'une de ses Séries est en cours.</summary>
     [HttpPost("{id:int}/close")]
     [ProducesResponseType<SoireeResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     public async Task<ActionResult<SoireeResponse>> Close(int id)
     {
-        var (result, soiree) = await _soireeService.CloseAsync(id);
-        return result switch
-        {
-            CloseSoireeResult.NotFound => Problem(statusCode: StatusCodes.Status404NotFound, detail: "Cette Soirée n'existe pas."),
-            CloseSoireeResult.AlreadyClosed => Problem(statusCode: StatusCodes.Status409Conflict, detail: "Cette Soirée est déjà fermée."),
-            _ => SoireeResponse.From(soiree!)
-        };
+        var result = await _soireeService.CloseAsync(id);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return SoireeResponse.From(result.Value!);
     }
 }

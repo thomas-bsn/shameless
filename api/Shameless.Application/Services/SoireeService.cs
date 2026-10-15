@@ -3,13 +3,7 @@ using Shameless.Application.Interfaces;
 
 namespace Shameless.Application.Services;
 
-public enum CloseSoireeResult
-{
-    Closed,
-    NotFound,
-    AlreadyClosed
-}
-
+/// <summary>Les commandes d'une Soirée : l'ouvrir, la fermer à la main ou après une période sans game.</summary>
 public sealed class SoireeService
 {
     private readonly ISoireeRepository _soirees;
@@ -25,25 +19,31 @@ public sealed class SoireeService
 
     public Task<Soiree?> GetAsync(int id) => _soirees.GetByIdAsync(id);
 
-    /// <summary>Ouvre une Soirée. Renvoie null si une Soirée est déjà ouverte.</summary>
-    public async Task<Soiree?> OpenAsync()
+    /// <summary>Ouvre une Soirée ; refusé si une Soirée est déjà ouverte.</summary>
+    public async Task<CommandResult<Soiree>> OpenAsync()
     {
-        if (await _soirees.GetOpenAsync() != null) return null;
+        if (await _soirees.GetOpenAsync() != null) return DejaOuverte();
 
         var soiree = new Soiree { Status = SoireeStatus.Open, OpenedAt = _clock.GetUtcNow().UtcDateTime };
-        return await _soirees.TryAddAsync(soiree) ? soiree : null;
+        return await _soirees.TryAddAsync(soiree) ? CommandResult<Soiree>.Ok(soiree) : DejaOuverte();
     }
 
-    public async Task<(CloseSoireeResult Result, Soiree? Soiree)> CloseAsync(int id)
+    /// <summary>Ferme une Soirée ouverte ; refusé tant qu'une de ses Séries est en cours.</summary>
+    public async Task<CommandResult<Soiree>> CloseAsync(int id)
     {
-        var soiree = await _soirees.GetByIdAsync(id);
-        if (soiree == null) return (CloseSoireeResult.NotFound, null);
-        if (soiree.Status == SoireeStatus.Closed) return (CloseSoireeResult.AlreadyClosed, soiree);
+        var soiree = await _soirees.GetWithSeriesAsync(id);
+        if (soiree == null)
+            return CommandResult<Soiree>.NotFound("Cette Soirée n'existe pas.");
+        if (soiree.Status == SoireeStatus.Closed)
+            return CommandResult<Soiree>.Conflict("Cette Soirée est déjà fermée.");
+        if (soiree.Series.Any(s => s.IsEnCours))
+            return CommandResult<Soiree>.Conflict(
+                "Une Série de cette Soirée est en cours : arrêtez la Série d'abord.");
 
         soiree.Status = SoireeStatus.Closed;
         soiree.ClosedAt = _clock.GetUtcNow().UtcDateTime;
         await _soirees.SaveChangesAsync();
-        return (CloseSoireeResult.Closed, soiree);
+        return CommandResult<Soiree>.Ok(soiree);
     }
 
     /// <summary>
@@ -72,4 +72,6 @@ public sealed class SoireeService
         await _soirees.SaveChangesAsync();
         return soiree;
     }
+
+    private static CommandResult<Soiree> DejaOuverte() => CommandResult<Soiree>.Conflict("Une Soirée est déjà ouverte.");
 }
