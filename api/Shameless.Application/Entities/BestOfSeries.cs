@@ -1,4 +1,4 @@
-﻿namespace Shameless.Application.Entities;
+namespace Shameless.Application.Entities;
 
 public class BestOfSeries
 {
@@ -8,6 +8,9 @@ public class BestOfSeries
 
     public int TeamAWins { get; set; } = 0;
     public int TeamBWins { get; set; } = 0;
+
+    public int? SoireeId { get; set; }
+    public Soiree? Soiree { get; set; }
 
     public ICollection<CustomGame> Games { get; set; } = new List<CustomGame>();
 }

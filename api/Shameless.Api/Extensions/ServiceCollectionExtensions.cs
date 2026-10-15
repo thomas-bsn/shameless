@@ -23,14 +23,18 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICustomGameParticipantRepository, CustomGameParticipantRepository>();
         services.AddScoped<IPlayerMonthlyCostRepository, PlayerMonthlyCostRepository>();
         services.AddScoped<IBestOfSeriesRepository, BestOfSeriesRepository>();
+        services.AddScoped<ISoireeRepository, SoireeRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
         services.AddScoped<CustomGameService>();
         services.AddScoped<CostCalculationService>();
+        services.AddScoped<SoireeService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IRandomSource, SharedRandomSource>();
 
         return services;
     }

@@ -24,7 +24,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeRiotService Riot { get; } = new();
 
+    public string ConnectionString => _postgres.GetConnectionString();
+
     public FakeDiscord Discord { get; } = new();
+
+    /// <summary>Horloge de l'API : réglable (<c>SetUtcNow</c>) et avançable (<c>Advance</c>). Remise à l'heure réelle avant chaque test.</summary>
+    public FakeClock Clock { get; } = new();
+
+    /// <summary>Aléa de l'API, graine fixe rejouée depuis le début avant chaque test.</summary>
+    public SeededRandomSource Random { get; } = new(42);
 
     public async ValueTask InitializeAsync()
     {
@@ -33,8 +41,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await using var db = CreateDbContext();
         await db.Database.MigrateAsync();
     }
-
-    public string ConnectionString => _postgres.GetConnectionString();
 
     public AppDbContext CreateDbContext(string? connectionString = null) =>
         new(new DbContextOptionsBuilder<AppDbContext>()
@@ -46,9 +52,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         Riot.Reset();
         Discord.Reset();
+        Clock.Reset();
+        Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE custom_game_participants, custom_games, best_of_series, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE custom_game_participants, custom_games, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -70,6 +78,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IRiotService>(Riot);
             services.RemoveAll<IDiscordOAuthClient>();
             services.AddSingleton<IDiscordOAuthClient>(Discord);
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
+            services.RemoveAll<IRandomSource>();
+            services.AddSingleton<IRandomSource>(Random);
             services.AddFakeLogging();
         });
     }
