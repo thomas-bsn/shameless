@@ -6,14 +6,12 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { CostTierBadge } from "@/components/rank";
 import { TierSection } from "@/components/tier-section";
 import { Button } from "@/components/ui/button";
-import { groupByCostTier } from "@/lib/cost";
+import { COST_POINTS, groupByCostTier } from "@/lib/cost";
 import { costTierClasses } from "@/lib/tier-styles";
 
 export const Route = createFileRoute("/_connecte/joueurs/")({
   component: Joueurs,
 });
-
-const COST_POINTS = { SS: 6, S: 5, A: 4, B: 3, C: 2, D: 1 } as const;
 
 function Joueurs() {
   const players = $api.useQuery("get", "/players");

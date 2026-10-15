@@ -1,9 +1,23 @@
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import type { Schemas } from "@/api/client";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
 
-/** Carte d'un Joueur dans une liste, vers sa fiche. */
-export function PlayerCard({ player, showCost = false }: { player: Schemas["PlayerDto"]; showCost?: boolean }) {
+/**
+ * Carte d'un Joueur dans une liste, vers sa fiche. Affiche son rang SoloQ, ou `rank`
+ * (le peak au classement, par exemple).
+ */
+export function PlayerCard({
+  player,
+  rank = { tier: player.rankTier, division: player.rankDivision, lp: player.lp },
+  showCost = false,
+  tag,
+}: {
+  player: Schemas["PlayerDto"];
+  rank?: { tier: string | null; division: number | null; lp: number | null };
+  showCost?: boolean;
+  tag?: ReactNode;
+}) {
   return (
     <Link
       to="/joueurs/$playerId"
@@ -16,7 +30,10 @@ export function PlayerCard({ player, showCost = false }: { player: Schemas["Play
         <RoleIcon role={player.mainRole} />
       </span>
       <span className="truncate text-xs text-muted-foreground">{player.riotId}</span>
-      <RankBadge tier={player.rankTier} division={player.rankDivision} lp={player.lp} className="self-start" />
+      <span className="flex flex-wrap items-center gap-1.5">
+        <RankBadge tier={rank.tier} division={rank.division} lp={rank.lp} />
+        {tag}
+      </span>
     </Link>
   );
 }

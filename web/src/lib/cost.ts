@@ -3,6 +3,9 @@ export const COST_TIERS = ["SS", "S", "A", "B", "C", "D"] as const;
 
 export type CostTier = (typeof COST_TIERS)[number];
 
+/** Le cost qui correspond à chaque tier. */
+export const COST_POINTS: Record<CostTier, number> = { SS: 6, S: 5, A: 4, B: 3, C: 2, D: 1 };
+
 /** Un cost fractionnaire (fixé par un admin) est arrondi ; sans cost, le Joueur est en D. */
 export function costTier(cost: number): CostTier {
   const rounded = Math.min(6, Math.max(1, Math.round(cost)));
