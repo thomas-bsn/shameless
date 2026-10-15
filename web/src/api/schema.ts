@@ -152,58 +152,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/games": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateGameRequest"];
-                    "text/json": components["schemas"]["CreateGameRequest"];
-                    "application/*+json": components["schemas"]["CreateGameRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CreateGameResponse"];
-                        "application/json": components["schemas"]["CreateGameResponse"];
-                        "text/json": components["schemas"]["CreateGameResponse"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/games/{id}/result": {
         parameters: {
             query?: never;
@@ -238,6 +186,33 @@ export interface paths {
                         "text/plain": components["schemas"]["SetGameResultResponse"];
                         "application/json": components["schemas"]["SetGameResultResponse"];
                         "text/json": components["schemas"]["SetGameResultResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Erreur */
@@ -347,6 +322,426 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SelectPlayersRequest"];
+                    "text/json": components["schemas"]["SelectPlayersRequest"];
+                    "application/*+json": components["schemas"]["SelectPlayersRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PickerResponse"];
+                        "application/json": components["schemas"]["PickerResponse"];
+                        "text/json": components["schemas"]["PickerResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/roulette": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TirerRouletteRequest"];
+                    "text/json": components["schemas"]["TirerRouletteRequest"];
+                    "application/*+json": components["schemas"]["TirerRouletteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PickerResponse"];
+                        "application/json": components["schemas"]["PickerResponse"];
+                        "text/json": components["schemas"]["PickerResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LancerDraftRequest"];
+                    "text/json": components["schemas"]["LancerDraftRequest"];
+                    "application/*+json": components["schemas"]["LancerDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PickerResponse"];
+                        "application/json": components["schemas"]["PickerResponse"];
+                        "text/json": components["schemas"]["PickerResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/draft/picks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PickRequest"];
+                    "text/json": components["schemas"]["PickRequest"];
+                    "application/*+json": components["schemas"]["PickRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PickerResponse"];
+                        "application/json": components["schemas"]["PickerResponse"];
+                        "text/json": components["schemas"]["PickerResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/autorole": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AutoroleRequest"];
+                    "text/json": components["schemas"]["AutoroleRequest"];
+                    "application/*+json": components["schemas"]["AutoroleRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PickerResponse"];
+                        "application/json": components["schemas"]["PickerResponse"];
+                        "text/json": components["schemas"]["PickerResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ValidatePickerRequest"];
+                    "text/json": components["schemas"]["ValidatePickerRequest"];
+                    "application/*+json": components["schemas"]["ValidatePickerRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateSeriesResponse"];
+                        "application/json": components["schemas"]["CreateSeriesResponse"];
+                        "text/json": components["schemas"]["CreateSeriesResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -863,6 +1258,319 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateSeriesRequest"];
+                    "text/json": components["schemas"]["CreateSeriesRequest"];
+                    "application/*+json": components["schemas"]["CreateSeriesRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateSeriesResponse"];
+                        "application/json": components["schemas"]["CreateSeriesResponse"];
+                        "text/json": components["schemas"]["CreateSeriesResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlayGameRequest"];
+                    "text/json": components["schemas"]["PlayGameRequest"];
+                    "application/*+json": components["schemas"]["PlayGameRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesGameResponse"];
+                        "application/json": components["schemas"]["SeriesGameResponse"];
+                        "text/json": components["schemas"]["SeriesGameResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/replacements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReplacePlayerRequest"];
+                    "text/json": components["schemas"]["ReplacePlayerRequest"];
+                    "application/*+json": components["schemas"]["ReplacePlayerRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesResponse"];
+                        "application/json": components["schemas"]["SeriesResponse"];
+                        "text/json": components["schemas"]["SeriesResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/rematch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RematchRequest"];
+                    "text/json": components["schemas"]["RematchRequest"];
+                    "application/*+json": components["schemas"]["RematchRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateSeriesResponse"];
+                        "application/json": components["schemas"]["CreateSeriesResponse"];
+                        "text/json": components["schemas"]["CreateSeriesResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/active": {
         parameters: {
             query?: never;
@@ -884,7 +1592,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["ActiveSeriesResponse"];
+                        "application/json": components["schemas"]["ActiveSeriesResponse"];
+                        "text/json": components["schemas"]["ActiveSeriesResponse"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -928,7 +1640,22 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["SeriesResponse"];
+                        "application/json": components["schemas"]["SeriesResponse"];
+                        "text/json": components["schemas"]["SeriesResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -949,7 +1676,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/series/{id}/abandon": {
+    "/series/{id}/stop": {
         parameters: {
             query?: never;
             header?: never;
@@ -957,7 +1684,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: {
+        put?: never;
+        post: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -973,7 +1701,29 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["StopSeriesResponse"];
+                        "application/json": components["schemas"]["StopSeriesResponse"];
+                        "text/json": components["schemas"]["StopSeriesResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -986,7 +1736,173 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OpenSoireeResponse"];
+                        "application/json": components["schemas"]["OpenSoireeResponse"];
+                        "text/json": components["schemas"]["OpenSoireeResponse"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SoireeResponse"];
+                        "application/json": components["schemas"]["SoireeResponse"];
+                        "text/json": components["schemas"]["SoireeResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SoireeResponse"];
+                        "application/json": components["schemas"]["SoireeResponse"];
+                        "text/json": components["schemas"]["SoireeResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -997,6 +1913,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ActiveSeriesResponse: {
+            series: components["schemas"]["SeriesResponse"][];
+        };
+        /** @enum {unknown} */
+        ArretSerie: "Annulee" | "Interrompue";
         AuthUserResponse: {
             valid: boolean;
             discordUserId: null | string;
@@ -1004,26 +1925,35 @@ export interface components {
             avatarUrl: null | string;
             isAdmin: boolean;
         };
-        CreateGameRequest: {
-            blueTeam: number[];
-            redTeam: number[];
-            /** Format: int32 */
-            seriesId: null | number;
-            /** Format: int32 */
-            boFormat: null | number;
+        AutoroleRequest: {
+            variante: components["schemas"]["AutoroleVariante"];
         };
-        CreateGameResponse: {
-            /** Format: int32 */
-            gameId: number;
-            /** Format: date-time */
-            playedAt: string;
-            /** Format: int32 */
-            seriesId: null | number;
-            message: string;
-        };
+        /** @enum {unknown} */
+        AutoroleVariante: "HorsRole" | "Aleatoire";
         CreatePlayerRequest: {
             prenom: string;
             riotId: string;
+        };
+        CreateSeriesRequest: {
+            teamA: number[];
+            teamB: number[];
+            /** Format: int32 */
+            format: number;
+            /** @default false */
+            fearless: boolean;
+            /** @default false */
+            alternateSides: boolean;
+        };
+        CreateSeriesResponse: {
+            /** Format: int32 */
+            seriesId: number;
+        };
+        /** @enum {unknown} */
+        DesignationCapitaines: "Manuels" | "AuHasard" | "PlusGrosCosts";
+        DraftPickResponse: {
+            /** Format: int32 */
+            playerId: number;
+            equipe: string;
         };
         GameHistoryListResponse: {
             games: components["schemas"]["SeriesHistoryResponse"][];
@@ -1035,9 +1965,11 @@ export interface components {
             seriesId: null | number;
             /** Format: date-time */
             playedAt: string;
+            teamASide: string;
+            teamBSide: string;
             winner: null | string;
-            blueTeam: components["schemas"]["GameParticipantDto"][];
-            redTeam: components["schemas"]["GameParticipantDto"][];
+            teamA: components["schemas"]["GameParticipantDto"][];
+            teamB: components["schemas"]["GameParticipantDto"][];
         };
         GameParticipantDto: {
             prenom: string;
@@ -1047,15 +1979,30 @@ export interface components {
             rankDivision: null | number;
             /** Format: double */
             cost: null | number;
+            /** Format: int32 */
+            playerId: number;
+            role: null | components["schemas"]["Role"];
+        };
+        LancerDraftRequest: {
+            capitaines: components["schemas"]["DesignationCapitaines"];
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
+            premierPick: null | string;
         };
         LinkPlayerRequest: {
             /** Format: int32 */
             playerId: number;
         };
+        OpenSoireeResponse: {
+            soiree: null | components["schemas"]["SoireeResponse"];
+        };
         PendingGameParticipant: {
             /** Format: int32 */
             playerId: number;
             team: string;
+            equipe: string;
             prenom: string;
         };
         PendingGameResponse: {
@@ -1067,6 +2014,34 @@ export interface components {
             seriesId: null | number;
             status: string;
             participants: components["schemas"]["PendingGameParticipant"][];
+        };
+        /** @enum {unknown} */
+        PickerMethode: "Roulette" | "Draft" | null;
+        PickerResponse: {
+            players: components["schemas"]["GameParticipantDto"][];
+            methode: null | components["schemas"]["PickerMethode"];
+            variante: null | components["schemas"]["RouletteVariante"];
+            teamA: components["schemas"]["GameParticipantDto"][];
+            teamB: components["schemas"]["GameParticipantDto"][];
+            /** Format: double */
+            teamACost: number;
+            /** Format: double */
+            teamBCost: number;
+            /** Format: double */
+            ecartCost: number;
+            canValidate: boolean;
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
+            premierPick: null | string;
+            picks: components["schemas"]["DraftPickResponse"][];
+            equipeAuTrait: null | string;
+        };
+        PickRequest: {
+            equipe: string;
+            /** Format: int32 */
+            playerId: number;
         };
         PlayerCostResponse: {
             /** Format: int32 */
@@ -1117,6 +2092,9 @@ export interface components {
             /** Format: int32 */
             lp: null | number;
         };
+        PlayGameRequest: {
+            teamASide: null | string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -1124,6 +2102,20 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        RematchRequest: {
+            /** Format: int32 */
+            format: number;
+            /** @default false */
+            fearless: boolean;
+            /** @default false */
+            alternateSides: boolean;
+        };
+        ReplacePlayerRequest: {
+            /** Format: int32 */
+            replacedPlayerId: number;
+            /** Format: int32 */
+            replacementPlayerId: number;
         };
         RiotAccountPreview: {
             riotId: string;
@@ -1135,6 +2127,23 @@ export interface components {
             mainRole: null | string;
             alreadyRegistered: boolean;
         };
+        /** @enum {unknown} */
+        Role: "Top" | "Jungle" | "Mid" | "Adc" | "Support" | null;
+        /** @enum {unknown} */
+        RouletteVariante: "Aleatoire" | "Equilibree" | null;
+        SelectPlayersRequest: {
+            playerIds: number[];
+        };
+        SeriesGameResponse: {
+            /** Format: int32 */
+            id: number;
+            status: string;
+            teamASide: string;
+            teamBSide: string;
+            winner: null | string;
+            teamA: components["schemas"]["GameParticipantDto"][];
+            teamB: components["schemas"]["GameParticipantDto"][];
+        };
         SeriesHistoryResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -1142,8 +2151,28 @@ export interface components {
             format: number;
             /** Format: date-time */
             playedAt: string;
-            teamAReference: null | string[];
             games: components["schemas"]["GameHistoryResponse"][];
+        };
+        /** @enum {unknown} */
+        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue";
+        SeriesResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            soireeId: null | number;
+            /** Format: int32 */
+            format: number;
+            fearless: boolean;
+            alternateSides: boolean;
+            outcome: components["schemas"]["SeriesOutcome"];
+            winningTeam: null | string;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            teamA: components["schemas"]["GameParticipantDto"][];
+            teamB: components["schemas"]["GameParticipantDto"][];
+            games: components["schemas"]["SeriesGameResponse"][];
         };
         SetCostRequest: {
             /** Format: double */
@@ -1156,7 +2185,29 @@ export interface components {
             /** Format: int32 */
             gameId: number;
             winner: null | string;
+            teamASide: string;
+            teamBSide: string;
             status: string;
+        };
+        SoireeResponse: {
+            /** Format: int32 */
+            id: number;
+            status: components["schemas"]["SoireeStatus"];
+            /** Format: date-time */
+            openedAt: string;
+            /** Format: date-time */
+            closedAt: null | string;
+            picker: null | components["schemas"]["PickerResponse"];
+        };
+        /** @enum {unknown} */
+        SoireeStatus: "Open" | "Closed";
+        StopSeriesResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            arret: components["schemas"]["ArretSerie"];
+        };
+        TirerRouletteRequest: {
+            variante: components["schemas"]["RouletteVariante"];
         };
         UpdatePeakRequest: {
             peakTier: null | string;
@@ -1165,6 +2216,14 @@ export interface components {
             peakSeason: null | string;
             /** Format: int32 */
             peakLp: number;
+        };
+        ValidatePickerRequest: {
+            /** Format: int32 */
+            format: number;
+            /** @default false */
+            fearless: boolean;
+            /** @default false */
+            alternateSides: boolean;
         };
     };
     responses: never;
