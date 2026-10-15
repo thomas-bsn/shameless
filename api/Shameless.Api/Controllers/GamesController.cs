@@ -1,64 +1,46 @@
-using Shameless.Api.Auth;
 using Shameless.Api.Contracts.Matches;
-using Shameless.Api.Models.Requests.Game;
+using Shameless.Api.Extensions;
 using Shameless.Api.Models.Responses.Game;
-using Shameless.Application.Entities;
 using Shameless.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Shameless.Api.Controllers;
 
+/// <summary>
+/// Les games. Une game se crée dans une Série (<c>POST /series/{id}/games</c>).
+/// </summary>
 [ApiController]
 [Route("games")]
 public sealed class GamesController : ControllerBase
 {
     private readonly CustomGameService _gameService;
+    private readonly SeriesService _seriesService;
 
-    public GamesController(CustomGameService gameService)
+    public GamesController(CustomGameService gameService, SeriesService seriesService)
     {
         _gameService = gameService;
+        _seriesService = seriesService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateGame([FromBody] CreateGameRequest request)
-    {
-        var (game, seriesId) = await _gameService.RecordCustomGame(
-            blueTeamPlayerIds: request.BlueTeam,
-            redTeamPlayerIds: request.RedTeam,
-            seriesId: request.SeriesId,
-            boFormat: request.BoFormat
-        );
-
-        return Ok(new CreateGameResponse(
-            GameId: game.Id,
-            PlayedAt: game.PlayedAt,
-            SeriesId: seriesId,
-            Message: "Game enregistrée !"
-        ));
-    }
-
+    /// <summary>Saisit l'Équipe gagnante d'une game. Permis à tout utilisateur connecté.</summary>
     [HttpPut("{id}/result")]
-    [Authorize(Policy = Policies.Admin)]
     [ProducesResponseType<SetGameResultResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SetGameResult(int id, [FromBody] SetGameResultRequest request)
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<SetGameResultResponse>> SetGameResult(int id, [FromBody] SetGameResultRequest request)
     {
-        if (!Equipes.IsValid(request.Winner))
-            return Problem(statusCode: StatusCodes.Status400BadRequest,
-                detail: "Le vainqueur d'une game est une Équipe : « A » ou « B ».");
+        var result = await _seriesService.RecordResultAsync(id, request.Winner);
+        if (!result.IsOk) return this.Refusal(result);
 
-        var game = await _gameService.SetGameResultAsync(id, request.Winner);
-        if (game == null) return NotFound();
-
-        return Ok(new SetGameResultResponse(
+        var game = result.Value!;
+        return new SetGameResultResponse(
             GameId: game.Id,
             Winner: game.WinningTeam,
             TeamASide: game.TeamASide,
             TeamBSide: game.TeamBSide,
             Status: game.Status
-        ));
+        );
     }
 
     [HttpGet("pending")]
@@ -71,7 +53,7 @@ public sealed class GamesController : ControllerBase
             PlayedAt: g.PlayedAt,
             SeriesId: g.SeriesId,
             Status: g.Status,
-            Participants: g.Participants.Select(p => new PendingGameParticipant(  // ✅
+            Participants: g.Participants.Select(p => new PendingGameParticipant(
                 PlayerId: p.PlayerId,
                 Team: p.Team,
                 Equipe: g.EquipeOn(p.Team),

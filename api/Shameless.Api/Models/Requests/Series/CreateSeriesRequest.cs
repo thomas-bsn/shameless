@@ -1,0 +1,16 @@
+namespace Shameless.Api.Models.Requests.Series;
+
+/// <summary>Une Série entre l'Équipe A et l'Équipe B (cinq joueurs chacune), au format 1, 2, 3 ou 5.</summary>
+public sealed record CreateSeriesRequest(
+    List<int> TeamA,
+    List<int> TeamB,
+    int Format,
+    bool Fearless = false,
+    bool AlternateSides = false
+);
+
+/// <summary>
+/// La prochaine game : Side de l'Équipe A ("blue" | "red"). Facultatif avec l'alternance
+/// automatique, qui inverse alors le Side de la game précédente.
+/// </summary>
+public sealed record PlayGameRequest(string? TeamASide);

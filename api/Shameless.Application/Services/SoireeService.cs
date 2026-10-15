@@ -52,7 +52,7 @@ public sealed class SoireeService
     {
         var soiree = await _soirees.GetOpenWithSeriesAndGamesAsync();
         if (soiree == null) return null;
-        if (soiree.Series.Any(EstEnCours)) return null;
+        if (soiree.Series.Any(s => s.IsEnCours)) return null;
 
         var derniereGameTerminee = soiree.Series
             .SelectMany(s => s.Games)
@@ -68,15 +68,5 @@ public sealed class SoireeService
         soiree.ClosedAt = now;
         await _soirees.SaveChangesAsync();
         return soiree;
-    }
-
-    /// <summary>
-    /// Une Série est en cours tant qu'aucune équipe n'a atteint le score de victoire de son format.
-    /// Seul endroit qui en décide : à remplacer par l'issue explicite de la Série quand elle existera (#20).
-    /// </summary>
-    private static bool EstEnCours(BestOfSeries serie)
-    {
-        var victoiresNecessaires = serie.Format / 2 + 1;
-        return serie.TeamAWins < victoiresNecessaires && serie.TeamBWins < victoiresNecessaires;
     }
 }

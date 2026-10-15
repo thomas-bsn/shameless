@@ -10,34 +10,32 @@ public class HorlogeTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Une_game_et_sa_serie_sont_datees_par_l_horloge_de_l_api()
     {
-        var client = Factory.CreateAdminClient();
+        var client = Factory.CreateSignedInClient();
         Factory.Clock.SetUtcNow(new DateTimeOffset(2025, 3, 14, 21, 30, 0, TimeSpan.Zero));
-        var ids = await CreatePlayersAsync(client, "A1", "B1");
-
-        var created = await ReadJsonAsync(await client.PostAsJsonAsync("/games",
-            new { blueTeam = new[] { ids[0] }, redTeam = new[] { ids[1] }, boFormat = 3 }, Ct));
-
-        Assert.Equal(new DateTime(2025, 3, 14, 21, 30, 0), created.GetProperty("playedAt").GetDateTime());
-        var gameId = created.GetProperty("gameId").GetInt32();
-        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+        var created = await CreateSerieAsync(client, format: 3);
+        await PlayAndWinAsync(client, created.SeriesId, "A");
 
         var history = await ReadJsonAsync(await client.GetAsync("/games/history/2025/3", Ct));
         var serie = Assert.Single(history.GetProperty("games").EnumerateArray());
-        Assert.Equal(created.GetProperty("seriesId").GetInt32(), serie.GetProperty("seriesId").GetInt32());
+        Assert.Equal(created.SeriesId, serie.GetProperty("seriesId").GetInt32());
+        Assert.Equal(new DateTime(2025, 3, 14, 21, 30, 0), serie.GetProperty("playedAt").GetDateTime());
+        var game = Assert.Single(serie.GetProperty("games").EnumerateArray());
+        Assert.Equal(new DateTime(2025, 3, 14, 21, 30, 0), game.GetProperty("playedAt").GetDateTime());
     }
 
     [Fact]
     public async Task L_horloge_avance_a_la_demande()
     {
-        var client = Factory.CreateAdminClient();
+        var client = Factory.CreateSignedInClient();
         Factory.Clock.SetUtcNow(new DateTimeOffset(2025, 3, 31, 23, 0, 0, TimeSpan.Zero));
+        var serie = await CreateSerieAsync(client, format: 3);
         Factory.Clock.Advance(TimeSpan.FromHours(2));
-        var ids = await CreatePlayersAsync(client, "A1", "B1");
 
-        var created = await ReadJsonAsync(await client.PostAsJsonAsync("/games",
-            new { blueTeam = new[] { ids[0] }, redTeam = new[] { ids[1] } }, Ct));
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
 
-        Assert.Equal(new DateTime(2025, 4, 1, 1, 0, 0), created.GetProperty("playedAt").GetDateTime());
+        var history = await ReadJsonAsync(await client.GetAsync("/games/history/2025/4", Ct));
+        var game = Assert.Single(Assert.Single(history.GetProperty("games").EnumerateArray()).GetProperty("games").EnumerateArray());
+        Assert.Equal(new DateTime(2025, 4, 1, 1, 0, 0), game.GetProperty("playedAt").GetDateTime());
     }
 
     [Fact]

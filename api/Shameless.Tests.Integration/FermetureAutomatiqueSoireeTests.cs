@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Shameless.Application.BackgroundJobs;
-using Shameless.Application.Entities;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -40,7 +39,8 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
         var client = Factory.CreateSignedInClient();
         var id = await OuvrirSoireeAsync(client);
         Factory.Clock.Advance(TimeSpan.FromHours(2));
-        await AjouterSerieTermineeAsync(id, Factory.Clock.GetUtcNow().UtcDateTime);
+        var serie = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
 
         Factory.Clock.Advance(TimeSpan.FromHours(2));
         await TickAsync(Factory.Services);
@@ -56,7 +56,8 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
     {
         var client = Factory.CreateSignedInClient();
         var id = await OuvrirSoireeAsync(client);
-        await AjouterSerieEnCoursAsync(id, Factory.Clock.GetUtcNow().UtcDateTime);
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
 
         Factory.Clock.Advance(TimeSpan.FromHours(12));
         await TickAsync(Factory.Services);
@@ -82,33 +83,6 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
 
     private async Task<int> OuvrirSoireeAsync(HttpClient client) =>
         (await ReadJsonAsync(await client.PostAsync("/soirees", null, Ct))).GetProperty("id").GetInt32();
-
-    // Aucune route ne rattache encore une Série à la Soirée : on les pose directement en base.
-
-    /// <summary>BO3 gagnée 2-0 par l'équipe A, dernière game terminée à <paramref name="derniereGame"/>.</summary>
-    private Task AjouterSerieTermineeAsync(int soireeId, DateTime derniereGame) =>
-        AjouterSerieAsync(soireeId, teamAWins: 2,
-            new CustomGame { PlayedAt = derniereGame.AddMinutes(-40), CreatedAt = derniereGame, WinningTeam = Equipes.A, Status = "completed" },
-            new CustomGame { PlayedAt = derniereGame, CreatedAt = derniereGame, WinningTeam = Equipes.A, TeamASide = Sides.Red, Status = "completed" });
-
-    /// <summary>BO3 à 1-0, deuxième game pas encore jouée.</summary>
-    private Task AjouterSerieEnCoursAsync(int soireeId, DateTime premiereGame) =>
-        AjouterSerieAsync(soireeId, teamAWins: 1,
-            new CustomGame { PlayedAt = premiereGame, CreatedAt = premiereGame, WinningTeam = Equipes.A, Status = "completed" });
-
-    private async Task AjouterSerieAsync(int soireeId, int teamAWins, params CustomGame[] games)
-    {
-        await using var db = Factory.CreateDbContext();
-        db.BestOfSeries.Add(new BestOfSeries
-        {
-            SoireeId = soireeId,
-            PlayedAt = games[0].PlayedAt,
-            Format = 3,
-            TeamAWins = teamAWins,
-            Games = games
-        });
-        await db.SaveChangesAsync(Ct);
-    }
 
     private static Task TickAsync(IServiceProvider services) =>
         services.GetServices<IHostedService>().OfType<FermetureAutomatiqueSoireeJob>().Single().FermerSiInactiveAsync();

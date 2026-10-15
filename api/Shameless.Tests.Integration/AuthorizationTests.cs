@@ -18,7 +18,6 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     public static TheoryData<string> AdminActions() =>
     [
-        "PUT games/{0}/result",
         "PUT series/{1}/abandon",
         "PUT players/{2}/cost",
         "POST players/{2}/peak",
@@ -139,16 +138,44 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     private async Task<(string Method, string Url)> PrepareAdminActionAsync(string action)
     {
         var admin = Factory.CreateAdminClient();
-        var ids = await CreatePlayersAsync(admin, "P1", "P2");
-        var game = await ReadJsonAsync(await admin.PostAsJsonAsync("/games",
-            new { blueTeam = new[] { ids[0] }, redTeam = new[] { ids[1] }, boFormat = 3 }, Ct));
+        var serie = await CreateSerieAsync(admin, format: 3);
+        var gameId = await PlayGameAsync(admin, serie.SeriesId);
 
         var parts = action.Split(' ');
-        var url = "/" + string.Format(parts[1],
-            game.GetProperty("gameId").GetInt32(),
-            game.GetProperty("seriesId").GetInt32(),
-            ids[0]);
+        var url = "/" + string.Format(parts[1], gameId, serie.SeriesId, serie.TeamA[0]);
         return (parts[0], url);
+    }
+
+    [Fact]
+    public async Task Un_utilisateur_connecte_non_admin_organise_une_serie_et_saisit_les_resultats()
+    {
+        var client = Factory.CreateSignedInClient("7005");
+        var serie = await CreateSerieAsync(client, format: 1);
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+
+        var response = await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "B" }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Un_visiteur_non_connecte_ne_cree_pas_de_serie_ni_de_game_ni_de_resultat()
+    {
+        var organisateur = Factory.CreateSignedInClient("7006");
+        var serie = await CreateSerieAsync(organisateur, format: 3);
+        var gameId = await PlayGameAsync(organisateur, serie.SeriesId);
+        var anonymous = Factory.CreateAnonymousClient();
+
+        var create = await anonymous.PostAsJsonAsync("/series",
+            new { teamA = serie.TeamA, teamB = serie.TeamB, format = 3 }, Ct);
+        var result = await anonymous.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct);
+        var next = await anonymous.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, create.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, next.StatusCode);
+        var lue = await ReadJsonAsync(await organisateur.GetAsync($"/series/{serie.SeriesId}", Ct));
+        Assert.Equal("pending", Assert.Single(lue.GetProperty("games").EnumerateArray()).GetProperty("status").GetString());
     }
 
     private static HttpRequestMessage AdminRequest(string method, string url) =>

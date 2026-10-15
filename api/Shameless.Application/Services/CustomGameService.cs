@@ -6,34 +6,28 @@ using Shameless.Infrastructure.Repositories;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Service responsable de la gestion des custom games
-/// SRP: Enregistrement et récupération des games uniquement
+/// Lecture des custom games (en attente, historique) et abandon d'une série.
+/// La création des Séries, de leurs games et la saisie des résultats sont dans <see cref="SeriesService"/>.
 /// </summary>
 public class CustomGameService
 {
     private readonly ICustomGameRepository _gameRepo;
     private readonly ICustomGameParticipantRepository _participantRepo;
-    private readonly IPlayerRepository _playerRepo;
-    private readonly CostCalculationService _costService;
     private readonly IBestOfSeriesRepository _seriesRepo;
     private readonly TimeProvider _clock;
 
     public CustomGameService(
         ICustomGameRepository gameRepo,
         ICustomGameParticipantRepository participantRepo,
-        IPlayerRepository playerRepo,
-        CostCalculationService costService,
         IBestOfSeriesRepository seriesRepo,
         TimeProvider clock)
     {
         _gameRepo = gameRepo;
         _participantRepo = participantRepo;
-        _playerRepo = playerRepo;
-        _costService = costService;
         _seriesRepo = seriesRepo;
         _clock = clock;
     }
-    
+
     public async Task<bool> AbandonSeriesAsync(int seriesId)
     {
         var games = await _gameRepo.GetBySeriesIdAsync(seriesId);
@@ -48,162 +42,16 @@ public class CustomGameService
         return true;
     }
 
-    public async Task<(CustomGame game, int? seriesId)> RecordCustomGame(
-        List<int> blueTeamPlayerIds,
-        List<int> redTeamPlayerIds,
-        DateTime? playedAt = null,
-        int? seriesId = null,
-        int? boFormat = null)
-    {
-        BestOfSeries? series = null;
-    
-        if (seriesId == null && boFormat != null)
-        {
-            series = await _seriesRepo.AddAsync(new BestOfSeries
-            {
-                PlayedAt = playedAt ?? _clock.GetUtcNow().UtcDateTime,
-                Format = boFormat.Value,
-                TeamAWins = 0,
-                TeamBWins = 0
-            });
-            seriesId = series.Id;
-        }
-        else if (seriesId != null)
-        {
-            series = await _seriesRepo.GetByIdAsync(seriesId.Value);
-        }
-
-        var game = new CustomGame
-        {
-            PlayedAt = playedAt ?? _clock.GetUtcNow().UtcDateTime,
-            CreatedAt = _clock.GetUtcNow().UtcDateTime,
-            SeriesId = seriesId,
-            TeamASide = series == null
-                ? Sides.Blue
-                : await TeamASideAsync(series.Id, blueTeamPlayerIds, redTeamPlayerIds)
-        };
-
-        game = await _gameRepo.AddAsync(game);
-        var participants = CreateParticipants(game.Id, blueTeamPlayerIds, redTeamPlayerIds);
-        await _participantRepo.AddRangeAsync(participants);
-
-        return (game, seriesId);
-    }
-
-    /// <summary>
-    /// L'Équipe A est le côté bleu de la première game d'une Série. Ensuite, c'est le Side
-    /// où l'on retrouve le plus de joueurs de l'Équipe A de la game précédente.
-    /// </summary>
-    private async Task<string> TeamASideAsync(int seriesId, List<int> bluePlayerIds, List<int> redPlayerIds)
-    {
-        var previous = (await _gameRepo.GetBySeriesIdAsync(seriesId)).LastOrDefault();
-        if (previous == null) return Sides.Blue;
-
-        var teamA = previous.ParticipantsOf(Equipes.A).Select(p => p.PlayerId).ToHashSet();
-        return redPlayerIds.Count(teamA.Contains) > bluePlayerIds.Count(teamA.Contains)
-            ? Sides.Red
-            : Sides.Blue;
-    }
-
-    public async Task<SeriesResponse?> GetSeriesStatusAsync(int seriesId)
-    {
-        var series = await _seriesRepo.GetByIdAsync(seriesId);
-        if (series == null) return null;
-
-        var games = await _gameRepo.GetBySeriesIdAsync(seriesId);
-        var lastGame = games.LastOrDefault();
-
-        return new SeriesResponse(
-            SeriesId: series.Id,
-            Format: series.Format,
-            TeamAWins: series.TeamAWins,
-            TeamBWins: series.TeamBWins,
-            TeamA: lastGame == null ? [] : ToDtos(lastGame.ParticipantsOf(Equipes.A)),
-            TeamB: lastGame == null ? [] : ToDtos(lastGame.ParticipantsOf(Equipes.B)),
-            Games: games.Select(g => new SeriesGameResponse(
-                Id: g.Id,
-                Status: g.Status,
-                TeamASide: g.TeamASide,
-                TeamBSide: g.TeamBSide,
-                Winner: g.WinningTeam,
-                TeamA: ToDtos(g.ParticipantsOf(Equipes.A)),
-                TeamB: ToDtos(g.ParticipantsOf(Equipes.B))
-            )).ToList()
-        );
-    }
-
-    private static List<GameParticipantDto> ToDtos(IEnumerable<CustomGameParticipant> participants) =>
-        participants
-            .Select(p => new GameParticipantDto(p.Player.Prenom, p.Player.RiotId, p.Player.RankTier, p.Player.RankDivision, p.Player.CurrentCost))
-            .ToList();
-
     public async Task<List<CustomGame>> GetCurrentMonthGames()
     {
         return await _gameRepo.GetByMonthAsync(_clock.GetUtcNow().UtcDateTime);
     }
-    
-    public async Task<List<SeriesResponse>> GetActiveSeriesAsync()
-    {
-        var allGames = await _gameRepo.GetAllWithSeriesAsync();
 
-        var activeSeries = allGames
-            .Where(g => g.SeriesId != null)
-            .GroupBy(g => g.SeriesId!.Value)
-            .Where(group =>
-            {
-                var series = group.First().Series;
-                if (series == null) return false;
-        
-                var needed = (series.Format / 2) + 1;
-        
-                return series.TeamAWins < needed && series.TeamBWins < needed;
-            })
-            .Select(g => g.Key)
-            .ToList();
-
-        var result = new List<SeriesResponse>();
-        foreach (var seriesId in activeSeries)
-        {
-            var status = await GetSeriesStatusAsync(seriesId);
-            if (status != null) result.Add(status);
-        }
-        return result;
-    }
-    
     public async Task<List<CustomGame>> GetPendingGamesAsync()
     {
         return await _gameRepo.GetPendingAsync();
     }
-    
-    /// <summary>Saisit l'Équipe gagnante ("A" ou "B") d'une game.</summary>
-    public async Task<CustomGame?> SetGameResultAsync(int gameId, string winningTeam)
-    {
-        var game = await _gameRepo.GetByIdWithParticipantsAsync(gameId);
-        if (game == null) return null;
 
-        game.WinningTeam = winningTeam;
-        game.Status = "completed";
-        await _gameRepo.SaveChangesAsync();
-
-        if (game.SeriesId != null)
-        {
-            var series = await _seriesRepo.GetByIdAsync(game.SeriesId.Value);
-            if (series != null)
-            {
-                var completed = (await _gameRepo.GetBySeriesIdAsync(series.Id))
-                    .Where(g => g.Status == "completed")
-                    .ToList();
-                series.TeamAWins = completed.Count(g => g.WinningTeam == Equipes.A);
-                series.TeamBWins = completed.Count(g => g.WinningTeam == Equipes.B);
-                await _seriesRepo.SaveChangesAsync();
-            }
-        }
-
-        await _costService.RecalculateCosts(gameId);
-
-        return game;
-    }
-    
     public async Task<List<SeriesHistoryResponse>> GetHistoryAsync(int year, int month)
     {
         var games = await _gameRepo.GetByYearMonthAsync(year, month);
@@ -226,43 +74,12 @@ public class CustomGameService
                         TeamASide: g.TeamASide,
                         TeamBSide: g.TeamBSide,
                         Winner: g.WinningTeam,
-                        TeamA: ToDtos(g.ParticipantsOf(Equipes.A)),
-                        TeamB: ToDtos(g.ParticipantsOf(Equipes.B))
+                        TeamA: g.ParticipantsOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player)).ToList(),
+                        TeamB: g.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList()
                     )).ToList()
                 );
             })
             .OrderByDescending(s => s.PlayedAt)
             .ToList();
-    }
-
-    private List<CustomGameParticipant> CreateParticipants(
-        int gameId,
-        List<int> blueTeamIds,
-        List<int> redTeamIds
-        )
-    {
-        var participants = new List<CustomGameParticipant>();
-        
-        foreach (var playerId in blueTeamIds)
-        {
-            participants.Add(new CustomGameParticipant
-            {
-                CustomGameId = gameId,
-                PlayerId = playerId,
-                Team = "blue"
-            });
-        }
-        
-        foreach (var playerId in redTeamIds)
-        {
-            participants.Add(new CustomGameParticipant
-            {
-                CustomGameId = gameId,
-                PlayerId = playerId,
-                Team = "red"
-            });
-        }
-        
-        return participants;
     }
 }

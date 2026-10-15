@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CustomGameService>();
         services.AddScoped<CostCalculationService>();
         services.AddScoped<SoireeService>();
+        services.AddScoped<SeriesService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
