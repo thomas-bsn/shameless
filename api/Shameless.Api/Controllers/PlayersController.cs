@@ -23,6 +23,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet]
+    [ProducesResponseType<List<PlayerDto>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPlayers()
     {
         var players = await _playerService.GetPlayersAsync();
@@ -30,6 +31,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType<PlayerResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> CreatePlayer([FromBody] CreatePlayerRequest request)
     {
         var player = await _playerService.CreatePlayerAsync(request.Prenom, request.RiotId);
@@ -37,6 +39,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet("me")]
+    [ProducesResponseType<PlayerDto>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyPlayer()
     {
         var player = await _playerService.GetPlayerByDiscordIdAsync(User.DiscordId());
@@ -46,6 +49,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpPost("link")]
+    [ProducesResponseType<PlayerLinkResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request, [FromServices] IAuthorizationService authorization)
     {
         var isAdmin = await authorization.IsAdminAsync(User);
@@ -62,6 +66,7 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpGet("{playerId}/cost")]
+    [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPlayerCost(int playerId)
     {
         var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);

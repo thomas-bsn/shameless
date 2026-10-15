@@ -34,6 +34,7 @@ public sealed class AuthController : ControllerBase
 
     [HttpGet("discord/login")]
     [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status302Found)]
     public IActionResult DiscordLogin([FromQuery] string? returnUrl = null)
     {
         if (returnUrl is not null && !ReturnUrlPolicy.IsAllowed(returnUrl, _authOptions.ReturnOrigins))
@@ -55,6 +56,7 @@ public sealed class AuthController : ControllerBase
 
     [HttpGet("discord/callback")]
     [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> DiscordCallback(
         [FromQuery] string? code,
         [FromQuery] string? state,
@@ -103,6 +105,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
+    [ProducesResponseType<AuthUserResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCurrentUser([FromServices] IAuthorizationService authorization)
     {
         return Ok(new AuthUserResponse(
@@ -115,6 +118,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
