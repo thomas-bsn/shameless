@@ -30,6 +30,7 @@ public class AppDbContext : DbContext
     public DbSet<SeriesPlayer> SeriesPlayers => Set<SeriesPlayer>();
     public DbSet<PickerSession> PickerSessions => Set<PickerSession>();
     public DbSet<LienAcces> LiensAcces => Set<LienAcces>();
+    public DbSet<DraftChampions> DraftsChampions => Set<DraftChampions>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -161,5 +162,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
         modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
         modelBuilder.ApplyConfiguration(new LienAccesConfiguration());
+        modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
+        modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
     }
 }

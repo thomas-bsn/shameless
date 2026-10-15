@@ -18,9 +18,15 @@ namespace Shameless.Api.Auth;
 /// toucher que sa Série, et une commande de capitaine que son Équipe. Aucun cookie n'est posé.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class AccesParLienAttribute : Attribute, IAllowAnonymous, IAsyncActionFilter
+public sealed class AccesParLienAttribute : Attribute, IAllowAnonymous, IAsyncActionFilter, IOrderedFilter
 {
     public const string RouteParameter = "lien";
+
+    /// <summary>
+    /// Le lien se vérifie avant la validation du corps (filtre de <c>[ApiController]</c>, ordre -2000) :
+    /// un lien inconnu répond 404 et un Lien spectateur 403, quel que soit le corps envoyé.
+    /// </summary>
+    public int Order => -3000;
 
     /// <summary>L'action est une commande de capitaine : un Lien spectateur est refusé.</summary>
     public bool CapitaineRequis { get; init; }

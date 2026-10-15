@@ -19,7 +19,7 @@ public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
                 c.GetProperty("name").GetString(),
                 c.GetProperty("imageUrl").GetString()))
             .ToList();
-        Assert.Equal(5, lus.Count);
+        Assert.Equal(25, lus.Count);
         Assert.Contains(("LeeSin", "64", "Lee Sin", "https://ddragon.test/img/champion/LeeSin.png"), lus);
     }
 
@@ -31,6 +31,6 @@ public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         var response = await anonymous.GetAsync("/champions", Ct);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(5, (await ReadJsonAsync(response)).GetArrayLength());
+        Assert.Equal(25, (await ReadJsonAsync(response)).GetArrayLength());
     }
 }

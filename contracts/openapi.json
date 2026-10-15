@@ -195,6 +195,314 @@
         }
       }
     },
+    "/series/{id}/draft-champions": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{gameId}/draft-champions": {
+      "get": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions": {
+      "get": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/actions": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/games/{id}/result": {
       "put": {
         "tags": [
@@ -2611,6 +2919,34 @@
           }
         }
       },
+      "ActionDraftResponse": {
+        "required": [
+          "numero",
+          "action",
+          "side",
+          "equipe",
+          "championId"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
+            "type": "string"
+          },
+          "championId": {
+            "type": "string"
+          }
+        }
+      },
       "ActiveSeriesResponse": {
         "required": [
           "series"
@@ -2805,6 +3141,87 @@
           }
         }
       },
+      "DraftChampionsResponse": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "fearless",
+          "equipeBlue",
+          "equipeRed",
+          "terminee",
+          "tourCourant",
+          "actions",
+          "teamA",
+          "teamB",
+          "capitaineA",
+          "capitaineB"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean"
+          },
+          "equipeBlue": {
+            "type": "string"
+          },
+          "equipeRed": {
+            "type": "string"
+          },
+          "terminee": {
+            "type": "boolean"
+          },
+          "tourCourant": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TourCourantResponse"
+              }
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDraftResponse"
+            }
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "DraftPickResponse": {
         "required": [
           "playerId",
@@ -2940,6 +3357,22 @@
                 "$ref": "#/components/schemas/Role"
               }
             ]
+          }
+        }
+      },
+      "JouerDraftChampionsRequest": {
+        "required": [
+          "tour",
+          "championId"
+        ],
+        "type": "object",
+        "properties": {
+          "tour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "championId": {
+            "type": "string"
           }
         }
       },
@@ -3917,6 +4350,35 @@
           }
         }
       },
+      "TourCourantResponse": {
+        "required": [
+          "numero",
+          "action",
+          "side",
+          "equipe",
+          "commenceLe"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
+            "type": "string"
+          },
+          "commenceLe": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "UpdatePeakRequest": {
         "required": [
           "peakTier",
@@ -3984,6 +4446,9 @@
     },
     {
       "name": "Champions"
+    },
+    {
+      "name": "DraftChampions"
     },
     {
       "name": "Games"
