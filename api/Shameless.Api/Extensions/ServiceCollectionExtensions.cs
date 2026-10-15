@@ -53,8 +53,13 @@ public static class ServiceCollectionExtensions
                 o.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
             });
 
-        // Lues par le générateur OpenAPI pour décrire les schémas.
-        services.ConfigureHttpJsonOptions(o => o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+        // Lues par le générateur OpenAPI pour décrire les schémas : mêmes réglages que les contrôleurs,
+        // sinon les enums (écrites en texte) seraient décrites comme des entiers.
+        services.ConfigureHttpJsonOptions(o =>
+        {
+            o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+        });
         services.AddOpenApi(options => options.AddShamelessContract());
         services.AddProblemDetails();
 
