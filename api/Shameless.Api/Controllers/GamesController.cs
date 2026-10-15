@@ -25,7 +25,6 @@ public sealed class GamesController : ControllerBase
         var (game, seriesId) = await _gameService.RecordCustomGame(
             blueTeamPlayerIds: request.BlueTeam,
             redTeamPlayerIds: request.RedTeam,
-            playedAt: DateTime.UtcNow,
             seriesId: request.SeriesId,
             boFormat: request.BoFormat
         );

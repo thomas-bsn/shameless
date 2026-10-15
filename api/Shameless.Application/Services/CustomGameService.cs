@@ -16,19 +16,22 @@ public class CustomGameService
     private readonly IPlayerRepository _playerRepo;
     private readonly CostCalculationService _costService;
     private readonly IBestOfSeriesRepository _seriesRepo;
+    private readonly TimeProvider _clock;
 
     public CustomGameService(
         ICustomGameRepository gameRepo,
         ICustomGameParticipantRepository participantRepo,
         IPlayerRepository playerRepo,
         CostCalculationService costService,
-        IBestOfSeriesRepository seriesRepo)
+        IBestOfSeriesRepository seriesRepo,
+        TimeProvider clock)
     {
         _gameRepo = gameRepo;
         _participantRepo = participantRepo;
         _playerRepo = playerRepo;
         _costService = costService;
         _seriesRepo = seriesRepo;
+        _clock = clock;
     }
     
     public async Task<bool> AbandonSeriesAsync(int seriesId)
@@ -58,7 +61,7 @@ public class CustomGameService
         {
             series = await _seriesRepo.AddAsync(new BestOfSeries
             {
-                PlayedAt = playedAt ?? DateTime.UtcNow,
+                PlayedAt = playedAt ?? _clock.GetUtcNow().UtcDateTime,
                 Format = boFormat.Value,
                 TeamAWins = 0,
                 TeamBWins = 0
@@ -72,8 +75,8 @@ public class CustomGameService
 
         var game = new CustomGame
         {
-            PlayedAt = playedAt ?? DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow,
+            PlayedAt = playedAt ?? _clock.GetUtcNow().UtcDateTime,
+            CreatedAt = _clock.GetUtcNow().UtcDateTime,
             SeriesId = seriesId
         };
 
@@ -136,7 +139,7 @@ public class CustomGameService
 
     public async Task<List<CustomGame>> GetCurrentMonthGames()
     {
-        return await _gameRepo.GetByMonthAsync(DateTime.UtcNow);
+        return await _gameRepo.GetByMonthAsync(_clock.GetUtcNow().UtcDateTime);
     }
     
     public async Task<List<object>> GetActiveSeriesAsync()
