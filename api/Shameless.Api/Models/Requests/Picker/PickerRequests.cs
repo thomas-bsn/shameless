@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Picker;
 
 namespace Shameless.Api.Models.Requests.Picker;
 
@@ -17,6 +18,9 @@ public sealed record LancerDraftRequest(
 
 /// <summary>Un pick de la Draft : le capitaine de l'Équipe ("A" ou "B") prend le joueur.</summary>
 public sealed record PickRequest(string Equipe, int PlayerId);
+
+/// <summary>Un Autorole : "HorsRole" ou "Aleatoire". Lancer à nouveau relance.</summary>
+public sealed record AutoroleRequest(AutoroleVariante Variante);
 
 /// <summary>Valide le tirage : la Série au format 1, 2, 3 ou 5, avec ses options.</summary>
 public sealed record ValidatePickerRequest(int Format, bool Fearless = false, bool AlternateSides = false);

@@ -343,4 +343,22 @@ public class DraftTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.True(paths.TryGetProperty(DraftUrl, out _));
         Assert.True(paths.TryGetProperty(Picks, out _));
     }
+
+    [Fact]
+    public async Task Relancer_la_draft_apres_l_autorole_efface_les_roles()
+    {
+        var client = Factory.CreateSignedInClient();
+        var dix = await DraftLanceeAsync(client, premierPick: "A");
+        for (var i = 2; i < 10; i++)
+            await ReadJsonAsync(await client.PostAsJsonAsync(Picks, new { equipe = i % 2 == 0 ? "A" : "B", playerId = dix[i] }, Ct));
+        var autorole = await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/autorole", new { variante = "Aleatoire" }, Ct));
+        Assert.All(autorole.GetProperty("teamA").EnumerateArray(), j => Assert.NotEqual(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+
+        await ReadJsonAsync(await client.PostAsJsonAsync(DraftUrl,
+            new { capitaines = "Manuels", capitaineA = dix[0], capitaineB = dix[1], premierPick = "A" }, Ct));
+
+        var picker = await PickerDeLaSoireeOuverteAsync(client);
+        Assert.All(picker.GetProperty("teamA").EnumerateArray().Concat(picker.GetProperty("teamB").EnumerateArray()),
+            j => Assert.Equal(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+    }
 }

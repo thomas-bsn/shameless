@@ -253,6 +253,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("position");
 
+                    b.Property<string>("Role")
+                        .HasColumnType("text")
+                        .HasColumnName("role");
+
                     b.HasKey("Id")
                         .HasName("pk_picker_session_players");
 
@@ -422,6 +426,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<int>("PlayerId")
                         .HasColumnType("integer")
                         .HasColumnName("player_id");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text")
+                        .HasColumnName("role");
 
                     b.Property<int>("SeriesId")
                         .HasColumnType("integer")

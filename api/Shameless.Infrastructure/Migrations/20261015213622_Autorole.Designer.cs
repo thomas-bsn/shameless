@@ -12,8 +12,8 @@ using Shameless.Infrastructure.Data;
 namespace Shameless.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261015213420_PickerDraft")]
-    partial class PickerDraft
+    [Migration("20261015213622_Autorole")]
+    partial class Autorole
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -199,11 +199,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("methode");
 
-                    b.Property<string>("PremierPick")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
-                        .HasColumnName("premier_pick");
-
                     b.Property<int>("SoireeId")
                         .HasColumnType("integer")
                         .HasColumnName("soiree_id");
@@ -231,18 +226,10 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Capitaine")
-                        .HasColumnType("boolean")
-                        .HasColumnName("capitaine");
-
                     b.Property<string>("Equipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
                         .HasColumnName("equipe");
-
-                    b.Property<int?>("PickOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("pick_order");
 
                     b.Property<int>("PickerSessionId")
                         .HasColumnType("integer")
@@ -255,6 +242,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<int>("Position")
                         .HasColumnType("integer")
                         .HasColumnName("position");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text")
+                        .HasColumnName("role");
 
                     b.HasKey("Id")
                         .HasName("pk_picker_session_players");
@@ -425,6 +416,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<int>("PlayerId")
                         .HasColumnType("integer")
                         .HasColumnName("player_id");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text")
+                        .HasColumnName("role");
 
                     b.Property<int>("SeriesId")
                         .HasColumnType("integer")

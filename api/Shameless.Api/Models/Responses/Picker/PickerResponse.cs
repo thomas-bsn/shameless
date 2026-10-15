@@ -28,7 +28,7 @@ public sealed record PickerResponse(
     {
         var players = session.Players.OrderBy(p => p.Position).ToList();
         List<GameParticipantDto> Of(string equipe) =>
-            players.Where(p => p.Equipe == equipe).Select(p => GameParticipantDto.From(p.Player)).ToList();
+            players.Where(p => p.Equipe == equipe).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList();
 
         var teamA = Of(Equipes.A);
         var teamB = Of(Equipes.B);

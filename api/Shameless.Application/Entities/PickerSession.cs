@@ -72,6 +72,8 @@ public class PickerSession
             player.Equipe = composition.TeamA.Contains(player.PlayerId) ? Equipes.A
                 : composition.TeamB.Contains(player.PlayerId) ? Equipes.B
                 : null;
+            // Nouvelles Équipes : les rôles de l'Autorole sont à refaire.
+            player.Role = null;
         }
     }
 
@@ -88,6 +90,7 @@ public class PickerSession
             player.Equipe = player.PlayerId == capitaines.CapitaineA ? Equipes.A
                 : player.PlayerId == capitaines.CapitaineB ? Equipes.B
                 : null;
+            player.Role = null;
         }
     }
 
@@ -98,7 +101,20 @@ public class PickerSession
         var player = Players.Single(p => p.PlayerId == playerId);
         player.PickOrder = Picks.Count;
         player.Equipe = equipe;
+        // Les Équipes changent : les rôles de l'Autorole sont à refaire.
+        foreach (var p in Players)
+            p.Role = null;
     }
+
+    /// <summary>Retient une attribution de l'Autorole ; la composition des Équipes ne change pas.</summary>
+    public void ApplyAutorole(IReadOnlyDictionary<int, Role> roles)
+    {
+        foreach (var player in Players)
+            player.Role = roles.TryGetValue(player.PlayerId, out var role) ? role : null;
+    }
+
+    /// <summary>La composition courante des deux Équipes.</summary>
+    public Composition Composition => new(PlayerIdsOf(Equipes.A), PlayerIdsOf(Equipes.B));
 
     public IReadOnlyList<int> PlayerIdsOf(string equipe) =>
         Players.OrderBy(p => p.Position).Where(p => p.Equipe == equipe).Select(p => p.PlayerId).ToList();
@@ -123,6 +139,9 @@ public class PickerSessionPlayer
 
     /// <summary>Rang du pick qui l'a pris dans la Draft (0 pour le premier), null s'il n'a pas été pris.</summary>
     public int? PickOrder { get; set; }
+
+    /// <summary>Le rôle attribué par l'Autorole, null tant qu'il n'a pas été lancé.</summary>
+    public Role? Role { get; set; }
 }
 
 public enum PickerMethode
