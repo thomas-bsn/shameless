@@ -6,15 +6,25 @@ import { user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const team = (...prenoms: string[]): Schemas["GameParticipantDto"][] =>
-  prenoms.map((prenom) => ({ prenom, riotId: `${prenom}#EUW`, rankTier: "GOLD", rankDivision: 2, cost: 3 }));
+  prenoms.map((prenom, i) => ({
+    prenom,
+    riotId: `${prenom}#EUW`,
+    rankTier: "GOLD",
+    rankDivision: 2,
+    cost: 3,
+    playerId: i + 1,
+    role: null,
+  }));
 
-const game = (id: number, winner: string | null, blue: string[], red: string[]): Schemas["GameHistoryResponse"] => ({
+const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({
   id,
   seriesId: 5,
   playedAt: "2026-10-03T20:30:00Z",
+  teamASide,
+  teamBSide: teamASide === "blue" ? "red" : "blue",
   winner,
-  blueTeam: team(...blue),
-  redTeam: team(...red),
+  teamA: team("Alice", "Bob"),
+  teamB: team("Chloé", "Dan"),
 });
 
 const october: Schemas["GameHistoryListResponse"] = {
@@ -23,12 +33,7 @@ const october: Schemas["GameHistoryListResponse"] = {
       seriesId: 5,
       format: 3,
       playedAt: "2026-10-03T20:00:00Z",
-      teamAReference: ["Alice#EUW", "Bob#EUW"],
-      games: [
-        game(11, "blue", ["Alice", "Bob"], ["Chloé", "Dan"]),
-        game(12, "blue", ["Chloé", "Dan"], ["Alice", "Bob"]),
-        game(13, "red", ["Chloé", "Dan"], ["Alice", "Bob"]),
-      ],
+      games: [game(11, "A", "blue"), game(12, "B", "red"), game(13, "A", "red")],
     },
   ],
 };
