@@ -68,6 +68,24 @@ public sealed class SeriesController : ControllerBase
         return result.Value!;
     }
 
+    /// <summary>
+    /// Lance la Revanche d'une Série terminée : une nouvelle Série dans la même Soirée, encore
+    /// ouverte, entre les mêmes Équipes dans leur dernière composition.
+    /// </summary>
+    [HttpPost("{id:int}/rematch")]
+    [ProducesResponseType<CreateSeriesResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<CreateSeriesResponse>> Rematch(int id, [FromBody] RematchRequest request)
+    {
+        var result = await _seriesService.CreateRevancheAsync(id, request.Format, request.Fearless, request.AlternateSides);
+        if (!result.IsOk) return this.Refusal(result);
+
+        var revancheId = result.Value!.Id;
+        return Created($"/series/{revancheId}", new CreateSeriesResponse(revancheId));
+    }
+
     [HttpGet("active")]
     [ProducesResponseType<ActiveSeriesResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ActiveSeriesResponse>> GetActiveSeries() =>
