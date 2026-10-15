@@ -30,6 +30,25 @@ public sealed class PlayersController : ControllerBase
         return Ok(players);
     }
 
+    [HttpGet("{playerId:int}")]
+    [ProducesResponseType<PlayerDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPlayer(int playerId)
+    {
+        var player = await _playerService.GetPlayerAsync(playerId);
+        return player == null ? NotFound() : Ok(player);
+    }
+
+    /// <summary>Le compte Riot tel qu'il serait enregistré, sans créer de Joueur.</summary>
+    [HttpGet("riot-preview")]
+    [ProducesResponseType<RiotAccountPreview>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> PreviewRiotAccount([FromQuery] string riotId)
+    {
+        var preview = await _playerService.PreviewRiotAccountAsync(riotId);
+        return preview == null
+            ? Problem(statusCode: StatusCodes.Status404NotFound, detail: "Compte Riot introuvable. Vérifie le RiotId (Pseudo#TAG).")
+            : Ok(preview);
+    }
+
     [HttpPost]
     [ProducesResponseType<PlayerResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> CreatePlayer([FromBody] CreatePlayerRequest request)

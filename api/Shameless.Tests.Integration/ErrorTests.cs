@@ -44,6 +44,23 @@ public class ErrorTests(ApiFactory factory) : IntegrationTest(factory)
         await AssertProblemAsync(response, HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task An_unknown_player_is_a_404_problem()
+    {
+        var response = await Factory.CreateSignedInClient().GetAsync("/players/999", Ct);
+
+        await AssertProblemAsync(response, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Previewing_an_unknown_riot_account_is_a_404_problem()
+    {
+        var response = await Factory.CreateSignedInClient().GetAsync("/players/riot-preview?riotId=Personne%23EUW", Ct);
+
+        await AssertProblemAsync(response, HttpStatusCode.NotFound);
+        Assert.Contains("Compte Riot introuvable", await response.Content.ReadAsStringAsync(Ct));
+    }
+
     [Theory]
     [InlineData(6.4)]
     [InlineData(0.6)]

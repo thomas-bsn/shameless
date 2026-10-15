@@ -435,6 +435,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/{playerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlayerDto"];
+                        "application/json": components["schemas"]["PlayerDto"];
+                        "text/json": components["schemas"]["PlayerDto"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/riot-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    riotId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RiotAccountPreview"];
+                        "application/json": components["schemas"]["RiotAccountPreview"];
+                        "text/json": components["schemas"]["RiotAccountPreview"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/me": {
         parameters: {
             query?: never;
@@ -1028,6 +1124,16 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        RiotAccountPreview: {
+            riotId: string;
+            rankTier: null | string;
+            /** Format: int32 */
+            rankDivision: null | number;
+            /** Format: int32 */
+            lp: null | number;
+            mainRole: null | string;
+            alreadyRegistered: boolean;
         };
         SeriesHistoryResponse: {
             /** Format: int32 */

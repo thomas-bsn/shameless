@@ -34,3 +34,15 @@ export function rankLabel(tier: string | null, division: number | null, lp: numb
   const roman = !isMasterPlus(normalized) && division ? DIVISIONS[division - 1] : undefined;
   return `${tierName(normalized)}${roman ? ` ${roman}` : ""} · ${lp ?? 0} LP`;
 }
+
+const ROLES: Record<string, string> = {
+  TOP: "Top",
+  JUNGLE: "Jungle",
+  MIDDLE: "Mid",
+  BOTTOM: "ADC",
+  UTILITY: "Support",
+};
+
+/** Poste Riot (teamPosition) tel que les joueurs le disent. */
+export const roleLabel = (role: string | null | undefined): string | null =>
+  (role && ROLES[role.toUpperCase()]) || null;

@@ -7,6 +7,7 @@ using Shameless.Application.DTOs.Players;
 public interface IPlayerRepository
 {
     Task<List<PlayerDto>> GetAllAsync();
+    Task<PlayerDto?> GetDtoByIdAsync(int id);
     Task<bool> ExistsByPuuidAsync(string puuid);
     Task<PlayerDto> AddAsync(PlayerDto player);
     Task UpdateRankAsync(int id, string? tier, int? division, int? lp);

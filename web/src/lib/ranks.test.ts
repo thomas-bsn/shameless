@@ -1,4 +1,4 @@
-import { rankLabel } from "./ranks";
+import { rankLabel, roleLabel } from "./ranks";
 
 describe("rankLabel", () => {
   it("names the tier, the division in roman numerals and the LP", () => {
@@ -13,5 +13,22 @@ describe("rankLabel", () => {
   it("says Unranked without a rank", () => {
     expect(rankLabel(null, null, null)).toBe("Unranked");
     expect(rankLabel("UNRANKED", null, 0)).toBe("Unranked");
+  });
+});
+
+describe("roleLabel", () => {
+  it("names the Riot positions the way players say them", () => {
+    expect(["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"].map(roleLabel)).toEqual([
+      "Top",
+      "Jungle",
+      "Mid",
+      "ADC",
+      "Support",
+    ]);
+  });
+
+  it("has nothing to say about an unknown role", () => {
+    expect(roleLabel(null)).toBeNull();
+    expect(roleLabel("")).toBeNull();
   });
 });
