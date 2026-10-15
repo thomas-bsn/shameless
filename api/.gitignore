@@ -1,0 +1,52 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ===== Build =====
+bin/
+obj/
+out/
+
+# ===== .NET =====
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.tmp
+
+# ===== NuGet =====
+.nuget/
+packages/
+
+# ===== Rider =====
+.idea/
+*.iml
+
+# ===== Tests =====
+TestResults/
+replacements.txt
+
+# ===== Environment / secrets =====
+appsettings.Development.json
+appsettings.Local.json
+.env
+.env.*
+
+# ===== Coverage =====
+coverage/
+*.coverage
+*.coveragexml
+
+# ===== Misc =====
+*.ncrunch*
+*.DotSettings.user

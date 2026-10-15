@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Custom5v5.Api", "Custom5v5.Api\Custom5v5.Api.csproj", "{19ECD4E0-4CF1-406C-ABB3-8EABBE8DD626}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Custom5v5.Infrastructure", "Custom5v5.Infrastructure\Custom5v5.Infrastructure.csproj", "{A13CD8EA-A9DD-4A08-B8A8-482FE2F361DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Custom5v5.Application", "Custom5v5.Application\Custom5v5.Application.csproj", "{46F12F46-6417-4231-8A80-386FCD8B0486}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19ECD4E0-4CF1-406C-ABB3-8EABBE8DD626}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19ECD4E0-4CF1-406C-ABB3-8EABBE8DD626}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19ECD4E0-4CF1-406C-ABB3-8EABBE8DD626}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19ECD4E0-4CF1-406C-ABB3-8EABBE8DD626}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A13CD8EA-A9DD-4A08-B8A8-482FE2F361DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A13CD8EA-A9DD-4A08-B8A8-482FE2F361DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A13CD8EA-A9DD-4A08-B8A8-482FE2F361DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A13CD8EA-A9DD-4A08-B8A8-482FE2F361DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46F12F46-6417-4231-8A80-386FCD8B0486}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46F12F46-6417-4231-8A80-386FCD8B0486}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46F12F46-6417-4231-8A80-386FCD8B0486}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46F12F46-6417-4231-8A80-386FCD8B0486}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
