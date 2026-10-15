@@ -23,6 +23,9 @@ public static class OptionsExtensions
         services.AddOptions<RefreshRanksJobOptions>()
             .Configure(job => job.Enabled = !string.IsNullOrWhiteSpace(configuration["Auth:Riot:ApiKey"]));
 
+        services.AddOptions<FermetureAutomatiqueSoireeOptions>()
+            .Bind(configuration.GetSection(FermetureAutomatiqueSoireeOptions.Section));
+
         return services;
     }
 }

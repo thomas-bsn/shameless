@@ -43,4 +43,40 @@ public sealed class SoireeService
         await _soirees.SaveChangesAsync();
         return (CloseSoireeResult.Closed, soiree);
     }
+
+    /// <summary>
+    /// Ferme la Soirée ouverte si sa dernière activité (dernière game terminée, sinon l'ouverture)
+    /// date de plus que <paramref name="delai"/>. Renvoie la Soirée fermée, ou null.
+    /// </summary>
+    public async Task<Soiree?> CloseIfIdleAsync(TimeSpan delai)
+    {
+        var soiree = await _soirees.GetOpenWithSeriesAndGamesAsync();
+        if (soiree == null) return null;
+        if (soiree.Series.Any(EstEnCours)) return null;
+
+        var derniereGameTerminee = soiree.Series
+            .SelectMany(s => s.Games)
+            .Where(g => g.Status == "completed")
+            .Select(g => (DateTime?)g.PlayedAt)
+            .Max();
+        var derniereActivite = derniereGameTerminee ?? soiree.OpenedAt;
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        if (now - derniereActivite <= delai) return null;
+
+        soiree.Status = SoireeStatus.Closed;
+        soiree.ClosedAt = now;
+        await _soirees.SaveChangesAsync();
+        return soiree;
+    }
+
+    /// <summary>
+    /// Une Série est en cours tant qu'aucune équipe n'a atteint le score de victoire de son format.
+    /// Seul endroit qui en décide : à remplacer par l'issue explicite de la Série quand elle existera (#20).
+    /// </summary>
+    private static bool EstEnCours(BestOfSeries serie)
+    {
+        var victoiresNecessaires = serie.Format / 2 + 1;
+        return serie.TeamAWins < victoiresNecessaires && serie.TeamBWins < victoiresNecessaires;
+    }
 }
