@@ -43,6 +43,8 @@ Objectif : une soirée complète sans saisie manuelle.
 ### 1d. Bot Discord (repo séparé, Python)
 - [ ] Réécriture : un cog par projet, config env, base de données, Docker
 - [ ] Cog Shameless : détecte joueurs/specs en vocal, annonce la série, poste le récap en embed
+- [ ] Pré-remplit le Picker avec les joueurs en vocal (utilisateur lié à un joueur)
+- [ ] Déplace les équipes formées dans team-1 / team-2 ; les autres restent spectateurs
 - [ ] Communication par API HTTP authentifiée + webhooks
 
 ## Phase 2 — V2 : votes, spectateurs, clips
