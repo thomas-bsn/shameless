@@ -74,6 +74,32 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         }
     }
 
+    [Fact]
+    public async Task Le_lien_spectateur_est_refuse_en_403_sur_toute_commande_de_capitaine()
+    {
+        var organisateur = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(organisateur);
+        var liens = await ReadJsonAsync(await organisateur.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var spectateur = Uri.EscapeDataString(liens.GetProperty("lienSpectateur").GetString()!);
+        var commandes = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.Metadata.GetMetadata<AccesParLienAttribute>() is { CapitaineRequis: true })
+            .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
+                .Select(method => (Method: method, Route: e.RoutePattern.RawText!.TrimStart('/'))))
+            .ToList();
+        var anonymous = Factory.CreateAnonymousClient();
+
+        Assert.NotEmpty(commandes);
+        foreach (var (method, route) in commandes)
+        {
+            var request = AnyRequest(method, route.Replace($"{{{AccesParLienAttribute.RouteParameter}}}", spectateur));
+            var response = await anonymous.SendAsync(request, Ct);
+
+            Assert.True(response.StatusCode == HttpStatusCode.Forbidden,
+                $"{method} {route} returned {(int)response.StatusCode} with a spectator link");
+        }
+    }
+
     [Theory]
     [MemberData(nameof(AdminActions))]
     public async Task A_non_admin_player_is_refused_admin_actions(string action)
