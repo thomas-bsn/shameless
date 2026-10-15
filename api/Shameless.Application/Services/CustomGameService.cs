@@ -6,40 +6,20 @@ using Shameless.Infrastructure.Repositories;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Lecture des custom games (en attente, historique) et abandon d'une série.
-/// La création des Séries, de leurs games et la saisie des résultats sont dans <see cref="SeriesService"/>.
+/// Lecture des custom games (en attente, historique).
+/// La création des Séries, de leurs games, la saisie des résultats et l'arrêt sont dans <see cref="SeriesService"/>.
 /// </summary>
 public class CustomGameService
 {
     private readonly ICustomGameRepository _gameRepo;
-    private readonly ICustomGameParticipantRepository _participantRepo;
-    private readonly IBestOfSeriesRepository _seriesRepo;
     private readonly TimeProvider _clock;
 
     public CustomGameService(
         ICustomGameRepository gameRepo,
-        ICustomGameParticipantRepository participantRepo,
-        IBestOfSeriesRepository seriesRepo,
         TimeProvider clock)
     {
         _gameRepo = gameRepo;
-        _participantRepo = participantRepo;
-        _seriesRepo = seriesRepo;
         _clock = clock;
-    }
-
-    public async Task<bool> AbandonSeriesAsync(int seriesId)
-    {
-        var games = await _gameRepo.GetBySeriesIdAsync(seriesId);
-        if (!games.Any()) return false;
-
-        foreach (var game in games)
-            await _participantRepo.DeleteByGameIdAsync(game.Id);
-
-        await _gameRepo.DeleteBySeriesIdAsync(seriesId);
-        await _seriesRepo.DeleteAsync(seriesId);
-
-        return true;
     }
 
     public async Task<List<CustomGame>> GetCurrentMonthGames()

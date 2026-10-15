@@ -150,6 +150,34 @@ public sealed class SeriesService
         return CommandResult<CustomGame>.Ok(game);
     }
 
+    /// <summary>
+    /// Arrête une Série en cours (ADR 0009). Sans game terminée, elle est annulée : effacée avec ses
+    /// games en attente. Sinon elle est interrompue : elle se termine sans vainqueur, ses games en
+    /// attente sont supprimées et ses games terminées restent et comptent. Aucun cost n'est recalculé :
+    /// aucune game terminée n'est effacée.
+    /// </summary>
+    public async Task<CommandResult<ArretSerie>> StopAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<ArretSerie>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
+
+        var pending = series.Games.Where(g => g.Status != "completed").ToList();
+        foreach (var game in pending)
+            _games.Remove(game);
+
+        var arret = series.Games.Count == pending.Count ? ArretSerie.Annulee : ArretSerie.Interrompue;
+        if (arret == ArretSerie.Annulee)
+            _series.Remove(series);
+        else
+            series.Outcome = SeriesOutcome.Interrompue;
+
+        await _series.SaveChangesAsync();
+        return CommandResult<ArretSerie>.Ok(arret);
+    }
+
     public async Task<SeriesResponse?> GetAsync(int seriesId)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
