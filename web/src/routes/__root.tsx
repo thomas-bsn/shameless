@@ -12,6 +12,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 const navigation = [
+  { to: "/soiree/picker", label: "Picker" },
   { to: "/joueurs", label: "Joueurs" },
   { to: "/classements", label: "Classements" },
   { to: "/historique", label: "Historique" },

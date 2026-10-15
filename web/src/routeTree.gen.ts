@@ -18,6 +18,7 @@ import { Route as ConnecteHistoriqueRouteImport } from './routes/_connecte/histo
 import { Route as ConnecteJoueursIndexRouteImport } from './routes/_connecte/joueurs/index'
 import { Route as ConnecteJoueursPlayerIdRouteImport } from './routes/_connecte/joueurs/$playerId'
 import { Route as ConnecteJoueursNouveauRouteImport } from './routes/_connecte/joueurs/nouveau'
+import { Route as ConnecteSoireePickerRouteImport } from './routes/_connecte/soiree_.picker'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +64,11 @@ const ConnecteJoueursNouveauRoute = ConnecteJoueursNouveauRouteImport.update({
   path: '/joueurs/nouveau',
   getParentRoute: () => ConnecteRoute,
 } as any)
+const ConnecteSoireePickerRoute = ConnecteSoireePickerRouteImport.update({
+  id: '/soiree_/picker',
+  path: '/soiree/picker',
+  getParentRoute: () => ConnecteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/historique': typeof ConnecteHistoriqueRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/soiree/picker': typeof ConnecteSoireePickerRoute
   '/joueurs/': typeof ConnecteJoueursIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/historique': typeof ConnecteHistoriqueRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/soiree/picker': typeof ConnecteSoireePickerRoute
   '/joueurs': typeof ConnecteJoueursIndexRoute
 }
 export interface FileRoutesById {
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/_connecte/historique': typeof ConnecteHistoriqueRoute
   '/_connecte/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/_connecte/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
+  '/_connecte/soiree_/picker': typeof ConnecteSoireePickerRoute
   '/_connecte/joueurs/': typeof ConnecteJoueursIndexRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/historique'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
+    | '/soiree/picker'
     | '/joueurs/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/historique'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
+    | '/soiree/picker'
     | '/joueurs'
   id:
     | '__root__'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/_connecte/historique'
     | '/_connecte/joueurs/$playerId'
     | '/_connecte/joueurs/nouveau'
+    | '/_connecte/soiree_/picker'
     | '/_connecte/joueurs/'
   fileRoutesById: FileRoutesById
 }
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnecteJoueursNouveauRouteImport
       parentRoute: typeof ConnecteRoute
     }
+    '/_connecte/soiree_/picker': {
+      id: '/_connecte/soiree_/picker'
+      path: '/soiree/picker'
+      fullPath: '/soiree/picker'
+      preLoaderRoute: typeof ConnecteSoireePickerRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
   }
 }
 
@@ -210,6 +229,7 @@ interface ConnecteRouteChildren {
   ConnecteHistoriqueRoute: typeof ConnecteHistoriqueRoute
   ConnecteJoueursPlayerIdRoute: typeof ConnecteJoueursPlayerIdRoute
   ConnecteJoueursNouveauRoute: typeof ConnecteJoueursNouveauRoute
+  ConnecteSoireePickerRoute: typeof ConnecteSoireePickerRoute
   ConnecteJoueursIndexRoute: typeof ConnecteJoueursIndexRoute
 }
 
@@ -219,6 +239,7 @@ const ConnecteRouteChildren: ConnecteRouteChildren = {
   ConnecteHistoriqueRoute: ConnecteHistoriqueRoute,
   ConnecteJoueursPlayerIdRoute: ConnecteJoueursPlayerIdRoute,
   ConnecteJoueursNouveauRoute: ConnecteJoueursNouveauRoute,
+  ConnecteSoireePickerRoute: ConnecteSoireePickerRoute,
   ConnecteJoueursIndexRoute: ConnecteJoueursIndexRoute,
 }
 
