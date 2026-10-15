@@ -14,12 +14,7 @@ public class CustomGameRepository : ICustomGameRepository
         _db = db;
     }
 
-    public async Task<CustomGame> AddAsync(CustomGame game)
-    {
-        _db.CustomGames.Add(game);
-        await _db.SaveChangesAsync();
-        return game;
-    }
+    public void Add(CustomGame game) => _db.CustomGames.Add(game);
 
     public async Task<CustomGame?> GetByIdAsync(int id)
     {
@@ -65,7 +60,7 @@ public class CustomGameRepository : ICustomGameRepository
         return await _db.CustomGames
             .Include(g => g.Participants)
             .ThenInclude(p => p.Player)
-            .Where(g => g.Status == "pending")
+            .Where(g => g.Status == GameStatuses.Pending)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
@@ -80,14 +75,6 @@ public class CustomGameRepository : ICustomGameRepository
             .ToListAsync();
     }
     
-    public async Task<List<CustomGame>> GetAllWithSeriesAsync()
-    {
-        return await _db.CustomGames
-            .Include(g => g.Series)
-            .Where(g => g.SeriesId != null)
-            .ToListAsync();
-    }
-    
     public async Task<List<CustomGame>> GetByYearMonthAsync(int year, int month)
     {
         return await _db.CustomGames
@@ -96,20 +83,12 @@ public class CustomGameRepository : ICustomGameRepository
             .Include(g => g.Series)
             .Where(g => g.PlayedAt.Year == year
                         && g.PlayedAt.Month == month
-                        && g.Status == "completed")
+                        && g.Status == GameStatuses.Completed)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
     }
     
-    public async Task DeleteBySeriesIdAsync(int seriesId)
-    {
-        var games = await _db.CustomGames.Where(g => g.SeriesId == seriesId).ToListAsync();
-        _db.CustomGames.RemoveRange(games);
-        await _db.SaveChangesAsync();
-    }
+    public void Remove(CustomGame game) => _db.CustomGames.Remove(game);
 
-    public async Task SaveChangesAsync()
-    {
-        await _db.SaveChangesAsync();
-    }
+    public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

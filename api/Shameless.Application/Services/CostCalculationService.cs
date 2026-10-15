@@ -8,15 +8,18 @@ public class CostCalculationService
     private readonly ICustomGameRepository _gameRepo;
     private readonly IPlayerRepository _playerRepo;
     private readonly IPlayerMonthlyCostRepository _monthlyCostRepo;
+    private readonly TimeProvider _clock;
 
     public CostCalculationService(
         ICustomGameRepository gameRepo,
         IPlayerRepository playerRepo,
-        IPlayerMonthlyCostRepository monthlyCostRepo)
+        IPlayerMonthlyCostRepository monthlyCostRepo,
+        TimeProvider clock)
     {
         _gameRepo = gameRepo;
         _playerRepo = playerRepo;
         _monthlyCostRepo = monthlyCostRepo;
+        _clock = clock;
     }
 
     public async Task RecalculateCosts(int gameId)
@@ -41,7 +44,7 @@ public class CostCalculationService
         var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, utcMonth);
 
         var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(g => g.Team == g.CustomGame.Winner);
+        var wins = monthGames.Count(participant => participant.HasWon);
 
         var finalMMR = MMRCalculationService.CalculateFinalMMR(
             player.PeakTier,
@@ -60,7 +63,7 @@ public class CostCalculationService
 
     public async Task InitializeNewMonth()
     {
-        var lastMonth = DateTime.UtcNow.AddMonths(-1);
+        var lastMonth = _clock.GetUtcNow().UtcDateTime.AddMonths(-1);
         var lastMonthStart = new DateTime(lastMonth.Year, lastMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var lastMonthlyCosts = await _monthlyCostRepo.GetByMonthAsync(lastMonthStart);
@@ -88,11 +91,11 @@ public class CostCalculationService
         if (player == null)
             throw new ArgumentException($"Player {playerId} not found");
 
-        var targetMonth = month ?? DateTime.UtcNow;
+        var targetMonth = month ?? _clock.GetUtcNow().UtcDateTime;
         var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, targetMonth);
 
         var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(g => g.Team == g.CustomGame.Winner);
+        var wins = monthGames.Count(participant => participant.HasWon);
 
         var baseMMR = MMRCalculationService.GetPeakRankMMR(player.PeakTier, player.PeakDivision);
         var winrateAdjustment = MMRCalculationService.CalculateWinrateAdjustment(gamesPlayed, wins);

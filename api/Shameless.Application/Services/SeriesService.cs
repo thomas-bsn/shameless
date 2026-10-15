@@ -1,0 +1,306 @@
+using Shameless.Application.DTOs.Match;
+using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
+using Shameless.Application.Picker;
+
+namespace Shameless.Application.Services;
+
+/// <summary>
+/// Les commandes d'une Série : la créer dans la Soirée ouverte, lancer sa prochaine game avec le
+/// Side de chaque Équipe, saisir le résultat d'une game jusqu'à l'issue de la Série.
+/// </summary>
+public sealed class SeriesService
+{
+    private const string ModifieeEntreTemps =
+        "Cette Série vient d'être modifiée par une autre commande : rechargez-la et réessayez.";
+
+    private readonly IBestOfSeriesRepository _series;
+    private readonly ICustomGameRepository _games;
+    private readonly ISoireeRepository _soirees;
+    private readonly IPlayerRepository _players;
+    private readonly CostCalculationService _costs;
+    private readonly TimeProvider _clock;
+
+    public SeriesService(
+        IBestOfSeriesRepository series,
+        ICustomGameRepository games,
+        ISoireeRepository soirees,
+        IPlayerRepository players,
+        CostCalculationService costs,
+        TimeProvider clock)
+    {
+        _series = series;
+        _games = games;
+        _soirees = soirees;
+        _players = players;
+        _costs = costs;
+        _clock = clock;
+    }
+
+    /// <summary>
+    /// Crée une Série en cours dans la Soirée ouverte, entre deux Équipes de cinq joueurs distincts.
+    /// Sert aussi à la Revanche.
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> CreateAsync(
+        IReadOnlyCollection<int> teamA,
+        IReadOnlyCollection<int> teamB,
+        int format,
+        bool fearless,
+        bool alternateSides)
+    {
+        var prepared = await PrepareAsync(teamA, teamB, format, fearless, alternateSides);
+        if (!prepared.IsOk) return prepared;
+
+        return await _series.TrySaveChangesAsync()
+            ? prepared
+            : CommandResult<BestOfSeries>.Conflict("La Série n'a pas pu être créée : réessayez.");
+    }
+
+    /// <summary>
+    /// Prépare la création d'une Série (voir <see cref="CreateAsync"/>) sans l'enregistrer : l'appelant
+    /// l'enregistre avec ses propres changements, en une transaction (validation du Picker).
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> PrepareAsync(
+        IReadOnlyCollection<int> teamA,
+        IReadOnlyCollection<int> teamB,
+        int format,
+        bool fearless,
+        bool alternateSides,
+        IReadOnlyDictionary<int, Role>? roles = null)
+    {
+        if (!BestOfSeries.IsValidFormat(format))
+            return CommandResult<BestOfSeries>.Invalid("Le format d'une Série est BO1, BO2, BO3 ou BO5.");
+        if (teamA.Count != Equipes.PlayersPerTeam || teamB.Count != Equipes.PlayersPerTeam)
+            return CommandResult<BestOfSeries>.Invalid("Chaque Équipe compte exactement cinq joueurs.");
+
+        var ids = teamA.Concat(teamB).ToList();
+        if (ids.Distinct().Count() != ids.Count)
+            return CommandResult<BestOfSeries>.Invalid("Les dix joueurs d'une Série sont tous distincts.");
+        if ((await _players.GetByIdsAsync(ids)).Count != ids.Count)
+            return CommandResult<BestOfSeries>.Invalid("Un des joueurs n'existe pas.");
+
+        var soiree = await _soirees.GetOpenAsync();
+        if (soiree == null)
+            return CommandResult<BestOfSeries>.Conflict("Aucune Soirée n'est ouverte : ouvrez-en une pour créer une Série.");
+
+        var series = new BestOfSeries
+        {
+            PlayedAt = _clock.GetUtcNow().UtcDateTime,
+            Format = format,
+            Fearless = fearless,
+            AlternateSides = alternateSides,
+            Outcome = SeriesOutcome.EnCours,
+            SoireeId = soiree.Id,
+            Players = teamA.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.A, Role = RoleOf(id) })
+                .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B, Role = RoleOf(id) }))
+                .ToList()
+        };
+        _series.Add(series);
+        return CommandResult<BestOfSeries>.Ok(series);
+
+        Role? RoleOf(int playerId) => roles != null && roles.TryGetValue(playerId, out var role) ? role : null;
+    }
+
+    /// <summary>
+    /// Lance la prochaine game d'une Série en cours, avec sa composition courante. Le Side de
+    /// l'Équipe A est celui demandé ; à défaut, avec l'alternance automatique, l'inverse de la
+    /// game précédente (blue pour la première).
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> PlayNextGameAsync(int seriesId, string? teamASide)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : elle n'accepte plus de game.");
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
+            return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
+
+        if (teamASide != null && teamASide is not (Sides.Blue or Sides.Red))
+            return CommandResult<CustomGame>.Invalid("Le Side d'une Équipe est « blue » ou « red ».");
+
+        var previous = series.Games.LastOrDefault();
+        var side = teamASide ?? (series.AlternateSides
+            ? previous == null ? Sides.Blue : Sides.Other(previous.TeamASide)
+            : null);
+        if (side == null)
+            return CommandResult<CustomGame>.Invalid("Choisissez le Side de l'Équipe A, ou activez l'alternance automatique.");
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        var game = new CustomGame
+        {
+            PlayedAt = now,
+            CreatedAt = now,
+            SeriesId = series.Id,
+            TeamASide = side,
+            Status = GameStatuses.Pending,
+            Participants = series.Players
+                .Select(p => new CustomGameParticipant
+                {
+                    PlayerId = p.PlayerId,
+                    Side = p.Equipe == Equipes.A ? side : Sides.Other(side)
+                })
+                .ToList()
+        };
+        _games.Add(game);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+    }
+
+    /// <summary>
+    /// Saisit l'Équipe gagnante d'une game en attente, met à jour le score et l'issue de sa Série,
+    /// puis recalcule le cost des joueurs.
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> RecordResultAsync(int gameId, string winningTeam)
+    {
+        if (!Equipes.IsValid(winningTeam))
+            return CommandResult<CustomGame>.Invalid("Le vainqueur d'une game est une Équipe : « A » ou « B ».");
+
+        var game = await _games.GetByIdWithParticipantsAsync(gameId);
+        if (game == null)
+            return CommandResult<CustomGame>.NotFound("Cette game n'existe pas.");
+        if (game.Status == GameStatuses.Completed)
+            return CommandResult<CustomGame>.Conflict("Le résultat de cette game est déjà saisi.");
+
+        var series = game.SeriesId == null ? null : await _series.GetWithGamesAsync(game.SeriesId.Value);
+        if (series is { IsEnCours: false })
+            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : son score ne change plus.");
+
+        game.WinningTeam = winningTeam;
+        game.Status = GameStatuses.Completed;
+        game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
+        series?.ApplyResults(series.Games);
+        series?.Touch();
+        if (!await _games.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
+
+        await _costs.RecalculateCosts(gameId);
+
+        return CommandResult<CustomGame>.Ok(game);
+    }
+
+    /// <summary>
+    /// Arrête une Série en cours (ADR 0009). Sans game terminée, elle est annulée : effacée avec ses
+    /// games en attente. Sinon elle est interrompue : elle se termine sans vainqueur, ses games en
+    /// attente sont supprimées et ses games terminées restent et comptent. Aucun cost n'est recalculé :
+    /// aucune game terminée n'est effacée.
+    /// </summary>
+    public async Task<CommandResult<ArretSerie>> StopAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<ArretSerie>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
+
+        var pending = series.Games.Where(g => g.Status != GameStatuses.Completed).ToList();
+        foreach (var game in pending)
+            _games.Remove(game);
+
+        var arret = series.Games.Count == pending.Count ? ArretSerie.Annulee : ArretSerie.Interrompue;
+        if (arret == ArretSerie.Annulee)
+            _series.Remove(series);
+        else
+            series.Outcome = SeriesOutcome.Interrompue;
+
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<ArretSerie>.Conflict(ModifieeEntreTemps);
+        return CommandResult<ArretSerie>.Ok(arret);
+    }
+
+    /// <summary>
+    /// Remplace, entre deux games d'une Série en cours, un joueur d'une Équipe par un joueur qui
+    /// n'est pas dans la Série. Seule la composition courante change : elle s'applique à la
+    /// prochaine game, les games déjà lancées gardent leurs participants et le score ne bouge pas.
+    /// Refusé tant qu'une game attend son résultat : on n'est alors pas « entre deux games ».
+    /// </summary>
+    public async Task<CommandResult<SeriesResponse>> ReplacePlayerAsync(int seriesId, int replacedPlayerId, int replacementPlayerId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<SeriesResponse>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : sa composition ne change plus.");
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
+            return CommandResult<SeriesResponse>.Conflict(
+                "Une game de cette Série attend son résultat : le remplacement se fait entre deux games.");
+
+        var replaced = series.Players.SingleOrDefault(p => p.PlayerId == replacedPlayerId);
+        if (replaced == null)
+            return CommandResult<SeriesResponse>.Invalid("Le joueur remplacé n'est pas dans cette Série.");
+        if (series.Players.Any(p => p.PlayerId == replacementPlayerId))
+            return CommandResult<SeriesResponse>.Conflict("Le remplaçant est déjà dans cette Série.");
+        var replacement = await _players.GetByIdAsync(replacementPlayerId);
+        if (replacement == null)
+            return CommandResult<SeriesResponse>.Invalid("Le remplaçant n'existe pas.");
+
+        replaced.Player = replacement;
+        replaced.PlayerId = replacement.Id;
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<SeriesResponse>.Ok(ToResponse(series));
+    }
+
+    /// <summary>
+    /// Lance la Revanche d'une Série : une nouvelle Série dans la même Soirée, entre les mêmes
+    /// Équipes dans leur dernière composition (Remplacements compris), sans repasser par le Picker.
+    /// Le format, l'option Fearless et l'alternance des Sides sont choisis pour la Revanche.
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> CreateRevancheAsync(
+        int seriesId,
+        int format,
+        bool fearless,
+        bool alternateSides)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<BestOfSeries>.NotFound("Cette Série n'existe pas.");
+        if (series.IsEnCours)
+            return CommandResult<BestOfSeries>.Conflict("Cette Série est en cours : la Revanche se lance une fois la Série terminée.");
+
+        var soiree = await _soirees.GetOpenAsync();
+        if (soiree == null || soiree.Id != series.SoireeId)
+            return CommandResult<BestOfSeries>.Conflict("La Soirée de cette Série est fermée : la Revanche n'est plus possible.");
+
+        return await CreateAsync(
+            series.PlayersOf(Equipes.A).Select(p => p.PlayerId).ToList(),
+            series.PlayersOf(Equipes.B).Select(p => p.PlayerId).ToList(),
+            format,
+            fearless,
+            alternateSides);
+    }
+
+    public async Task<SeriesResponse?> GetAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        return series == null ? null : ToResponse(series);
+    }
+
+    /// <summary>Les Séries en cours, de la plus ancienne à la plus récente.</summary>
+    public async Task<List<SeriesResponse>> GetEnCoursAsync() =>
+        (await _series.GetEnCoursWithGamesAsync()).Select(ToResponse).ToList();
+
+    /// <summary>Les Séries d'une Soirée avec leur issue, de la plus ancienne à la plus récente.</summary>
+    public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
+        (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
+
+    private static SeriesResponse ToResponse(BestOfSeries series) => new(
+        SeriesId: series.Id,
+        SoireeId: series.SoireeId,
+        Format: series.Format,
+        Fearless: series.Fearless,
+        AlternateSides: series.AlternateSides,
+        Outcome: series.Outcome,
+        WinningTeam: series.WinningTeam,
+        TeamAWins: series.TeamAWins,
+        TeamBWins: series.TeamBWins,
+        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        Games: series.Games.Select(SeriesGameResponse.From).ToList());
+}

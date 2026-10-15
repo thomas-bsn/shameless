@@ -1,4 +1,12 @@
-import { COST_TIERS, costTier, groupByCostTier } from "./cost";
+import { COST_TIERS, costTier, groupByCostTier, points } from "./cost";
+
+describe("points", () => {
+  it("shows a cost in points, with at most two decimals", () => {
+    expect(points(3)).toBe("3 pts");
+    expect(points(2.5)).toBe("2.5 pts");
+    expect(points(1.3333)).toBe("1.33 pts");
+  });
+});
 
 describe("costTier", () => {
   it("maps each cost from 1 to 6 to its tier", () => {

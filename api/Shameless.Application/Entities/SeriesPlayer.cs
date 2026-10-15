@@ -1,0 +1,18 @@
+using Shameless.Application.Picker;
+
+namespace Shameless.Application.Entities;
+
+/// <summary>Un joueur de la composition courante d'une Équipe dans une Série.</summary>
+public class SeriesPlayer
+{
+    public int Id { get; set; }
+    public int SeriesId { get; set; }
+    public int PlayerId { get; set; }
+    public string Equipe { get; set; } = Equipes.A; // "A" | "B"
+
+    /// <summary>Le rôle attribué par l'Autorole du Picker, null sans Autorole.</summary>
+    public Role? Role { get; set; }
+
+    public BestOfSeries Series { get; set; } = null!;
+    public Player Player { get; set; } = null!;
+}

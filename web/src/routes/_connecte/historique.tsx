@@ -4,7 +4,8 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RankBadge } from "@/components/rank";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { gameWinner, isTeamAOnBlue, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
+import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
+import { outcomeLabel } from "@/lib/series";
 import { cn } from "@/lib/utils";
 
 const currentMonth = (): Month => {
@@ -82,7 +83,7 @@ const dateLabel = (iso: string) =>
 function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
   // seriesId 0 : games enregistrées sans Série.
   const title = series.seriesId === 0 ? "Games hors série" : `Série BO${series.format}`;
-  const score = seriesScore(series.games, series.teamAReference);
+  const score = seriesScore(series.games);
 
   return (
     <article aria-label={title}>
@@ -92,15 +93,18 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
             {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateLabel(series.playedAt)}</span>
           </CardTitle>
           {series.seriesId !== 0 && (
-            <span className="font-semibold">
-              Équipe A {score.a} – {score.b} Équipe B
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold">
+                Équipe A {score.a} – {score.b} Équipe B
+              </span>
+              {series.outcome && <Badge variant="secondary">{outcomeLabel(series)}</Badge>}
+            </div>
           )}
         </CardHeader>
         <CardContent>
           <ol className="flex flex-col gap-4">
             {series.games.map((g, index) => (
-              <GameRow key={g.id} game={g} index={index + 1} teamAReference={series.teamAReference} />
+              <GameRow key={g.id} game={g} index={index + 1} />
             ))}
           </ol>
         </CardContent>
@@ -109,17 +113,9 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
   );
 }
 
-function GameRow({
-  game,
-  index,
-  teamAReference,
-}: {
-  game: Schemas["GameHistoryResponse"];
-  index: number;
-  teamAReference: string[] | null;
-}) {
-  const aOnBlue = isTeamAOnBlue(game, teamAReference);
-  const winner = gameWinner(game, teamAReference);
+function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index: number }) {
+  const aOnBlue = game.teamASide !== "red";
+  const winner = gameWinner(game);
 
   return (
     <li className="overflow-hidden rounded-lg border">
@@ -134,8 +130,18 @@ function GameRow({
         )}
       </div>
       <div className="grid grid-cols-2 divide-x">
-        <TeamColumn team={aOnBlue ? "A" : "B"} side="blue" players={game.blueTeam} won={game.winner === "blue"} />
-        <TeamColumn team={aOnBlue ? "B" : "A"} side="red" players={game.redTeam} won={game.winner === "red"} />
+        <TeamColumn
+          team={aOnBlue ? "A" : "B"}
+          side="blue"
+          players={aOnBlue ? game.teamA : game.teamB}
+          won={winner === (aOnBlue ? "A" : "B")}
+        />
+        <TeamColumn
+          team={aOnBlue ? "B" : "A"}
+          side="red"
+          players={aOnBlue ? game.teamB : game.teamA}
+          won={winner === (aOnBlue ? "B" : "A")}
+        />
       </div>
     </li>
   );

@@ -4,8 +4,26 @@ namespace Shameless.Application.Interfaces;
 
 public interface IBestOfSeriesRepository
 {
-    Task<BestOfSeries> AddAsync(BestOfSeries series);
+    /// <summary>Ajoute la Série (avec sa composition) ; effectif au prochain enregistrement.</summary>
+    void Add(BestOfSeries series);
+
     Task<BestOfSeries?> GetByIdAsync(int id);
-    Task DeleteAsync(int seriesId);
-    Task SaveChangesAsync();
+
+    /// <summary>La Série avec sa composition courante et ses games (participants et joueurs), games triées par id.</summary>
+    Task<BestOfSeries?> GetWithGamesAsync(int id);
+
+    /// <summary>Les Séries en cours avec leurs games, de la plus ancienne à la plus récente.</summary>
+    Task<List<BestOfSeries>> GetEnCoursWithGamesAsync();
+
+    /// <summary>Les Séries d'une Soirée avec leurs games, de la plus ancienne à la plus récente.</summary>
+    Task<List<BestOfSeries>> GetBySoireeWithGamesAsync(int soireeId);
+
+    /// <summary>Marque la Série pour suppression, avec sa composition ; effectif au prochain enregistrement.</summary>
+    void Remove(BestOfSeries series);
+
+    /// <summary>
+    /// Enregistre les changements en une transaction. Renvoie false si une commande simultanée a
+    /// modifié une Série entre-temps (voir <see cref="BestOfSeries.Version"/>) : rien n'est enregistré.
+    /// </summary>
+    Task<bool> TrySaveChangesAsync();
 }

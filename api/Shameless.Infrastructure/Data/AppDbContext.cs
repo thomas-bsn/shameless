@@ -1,5 +1,6 @@
 ﻿using Shameless.Application.Entities;
 using Microsoft.EntityFrameworkCore;
+using Shameless.Infrastructure.Data.Configurations;
 
 namespace Shameless.Infrastructure.Data;
 
@@ -25,6 +26,9 @@ public class AppDbContext : DbContext
     public DbSet<CustomGame> CustomGames => Set<CustomGame>();
     public DbSet<CustomGameParticipant> CustomGameParticipants => Set<CustomGameParticipant>();
     public DbSet<PlayerMonthlyCost> PlayerMonthlyCosts => Set<PlayerMonthlyCost>();
+    public DbSet<Soiree> Soirees => Set<Soiree>();
+    public DbSet<SeriesPlayer> SeriesPlayers => Set<SeriesPlayer>();
+    public DbSet<PickerSession> PickerSessions => Set<PickerSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,7 +82,6 @@ public class AppDbContext : DbContext
             entity.Property(e => e.PlayedAt).HasColumnType(Timestamp);
             entity.Property(e => e.TeamAWins).HasDefaultValue(0);
             entity.Property(e => e.TeamBWins).HasDefaultValue(0);
-            entity.Property(e => e.TeamAReference).HasColumnType("text");
         });
 
         modelBuilder.Entity<CustomGame>(entity =>
@@ -88,14 +91,19 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
 
             entity.Property(e => e.PlayedAt).HasColumnType(Timestamp);
-            entity.Property(e => e.Winner).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.TeamASide).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.WinningTeam).HasMaxLength(1);
+            entity.Ignore(e => e.TeamBSide);
             entity.Property(e => e.RiotMatchId).HasMaxLength(100);
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
-            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("");
+            // Jeton de concurrence : le résultat d'une game ne se saisit qu'une fois, même simultanément.
+            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("").IsConcurrencyToken();
 
             entity.Property(e => e.CreatedAt)
                   .HasColumnType(Timestamp)
                   .HasDefaultValueSql("now()");
+
+            entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
 
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)
@@ -111,7 +119,8 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).UseIdentityByDefaultColumn();
 
-            entity.Property(e => e.Team).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Side).HasColumnName("team").HasMaxLength(10).IsRequired();
+            entity.Ignore(e => e.HasWon);
             entity.Property(e => e.RiotParticipantData).HasColumnType("jsonb");
 
             entity.HasOne(e => e.CustomGame)
@@ -144,5 +153,11 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.PlayerId, e.Month }).IsUnique();
         });
+
+        modelBuilder.ApplyConfiguration(new SoireeConfiguration());
+        modelBuilder.ApplyConfiguration(new SeriesConfiguration());
+        modelBuilder.ApplyConfiguration(new SeriesPlayerConfiguration());
+        modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
     }
 }

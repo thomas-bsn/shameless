@@ -137,65 +137,6 @@
         }
       }
     },
-    "/games": {
-      "post": {
-        "tags": [
-          "Games"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateGameRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateGameRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateGameRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateGameResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateGameResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateGameResponse"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Erreur",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/games/{id}/result": {
       "put": {
         "tags": [
@@ -249,6 +190,36 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SetGameResultResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -356,6 +327,480 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GameHistoryListResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/selection": {
+      "put": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectPlayersRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectPlayersRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectPlayersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/roulette": {
+      "post": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TirerRouletteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TirerRouletteRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TirerRouletteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/draft": {
+      "post": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LancerDraftRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LancerDraftRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LancerDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/draft/picks": {
+      "post": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/autorole": {
+      "post": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoroleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoroleRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoroleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/validate": {
+      "post": {
+        "tags": [
+          "Picker"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatePickerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatePickerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidatePickerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -921,6 +1366,385 @@
         }
       }
     },
+    "/series": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeriesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeriesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeriesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/games": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesGameResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/replacements": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePlayerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePlayerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePlayerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/rematch": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RematchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RematchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RematchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/active": {
       "get": {
         "tags": [
@@ -928,7 +1752,24 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveSeriesResponse"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -961,7 +1802,44 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -976,8 +1854,8 @@
         }
       }
     },
-    "/series/{id}/abandon": {
-      "put": {
+    "/series/{id}/stop": {
+      "post": {
         "tags": [
           "Series"
         ],
@@ -994,7 +1872,262 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopSeriesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open": {
+      "get": {
+        "tags": [
+          "Soirees"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenSoireeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenSoireeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenSoireeResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/{id}/series": {
+      "get": {
+        "tags": [
+          "Soirees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeSeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeSeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeSeriesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees": {
+      "post": {
+        "tags": [
+          "Soirees"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/{id}/close": {
+      "post": {
+        "tags": [
+          "Soirees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoireeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -1012,6 +2145,26 @@
   },
   "components": {
     "schemas": {
+      "ActiveSeriesResponse": {
+        "required": [
+          "series"
+        ],
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesResponse"
+            }
+          }
+        }
+      },
+      "ArretSerie": {
+        "enum": [
+          "Annulee",
+          "Interrompue"
+        ]
+      },
       "AuthUserResponse": {
         "required": [
           "valid",
@@ -1048,73 +2201,22 @@
           }
         }
       },
-      "CreateGameRequest": {
+      "AutoroleRequest": {
         "required": [
-          "blueTeam",
-          "redTeam",
-          "seriesId",
-          "boFormat"
+          "variante"
         ],
         "type": "object",
         "properties": {
-          "blueTeam": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          "redTeam": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          "seriesId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
-          },
-          "boFormat": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
+          "variante": {
+            "$ref": "#/components/schemas/AutoroleVariante"
           }
         }
       },
-      "CreateGameResponse": {
-        "required": [
-          "gameId",
-          "playedAt",
-          "seriesId",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "gameId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "playedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seriesId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
+      "AutoroleVariante": {
+        "enum": [
+          "HorsRole",
+          "Aleatoire"
+        ]
       },
       "CreatePlayerRequest": {
         "required": [
@@ -1127,6 +2229,79 @@
             "type": "string"
           },
           "riotId": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSeriesRequest": {
+        "required": [
+          "teamA",
+          "teamB",
+          "format",
+          "fearless",
+          "alternateSides"
+        ],
+        "type": "object",
+        "properties": {
+          "teamA": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "format": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean",
+            "default": false
+          },
+          "alternateSides": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "CreateSeriesResponse": {
+        "required": [
+          "seriesId"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "DesignationCapitaines": {
+        "enum": [
+          "Manuels",
+          "AuHasard",
+          "PlusGrosCosts"
+        ]
+      },
+      "DraftPickResponse": {
+        "required": [
+          "playerId",
+          "equipe"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "equipe": {
             "type": "string"
           }
         }
@@ -1150,9 +2325,11 @@
           "id",
           "seriesId",
           "playedAt",
+          "teamASide",
+          "teamBSide",
           "winner",
-          "blueTeam",
-          "redTeam"
+          "teamA",
+          "teamB"
         ],
         "type": "object",
         "properties": {
@@ -1171,19 +2348,25 @@
             "type": "string",
             "format": "date-time"
           },
+          "teamASide": {
+            "type": "string"
+          },
+          "teamBSide": {
+            "type": "string"
+          },
           "winner": {
             "type": [
               "null",
               "string"
             ]
           },
-          "blueTeam": {
+          "teamA": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameParticipantDto"
             }
           },
-          "redTeam": {
+          "teamB": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameParticipantDto"
@@ -1197,7 +2380,9 @@
           "riotId",
           "rankTier",
           "rankDivision",
-          "cost"
+          "cost",
+          "playerId",
+          "role"
         ],
         "type": "object",
         "properties": {
@@ -1226,6 +2411,54 @@
               "number"
             ],
             "format": "double"
+          },
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        }
+      },
+      "LancerDraftRequest": {
+        "required": [
+          "capitaines",
+          "capitaineA",
+          "capitaineB",
+          "premierPick"
+        ],
+        "type": "object",
+        "properties": {
+          "capitaines": {
+            "$ref": "#/components/schemas/DesignationCapitaines"
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "premierPick": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -1241,10 +2474,29 @@
           }
         }
       },
+      "OpenSoireeResponse": {
+        "required": [
+          "soiree"
+        ],
+        "type": "object",
+        "properties": {
+          "soiree": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SoireeResponse"
+              }
+            ]
+          }
+        }
+      },
       "PendingGameParticipant": {
         "required": [
           "playerId",
-          "team",
+          "side",
+          "equipe",
           "prenom"
         ],
         "type": "object",
@@ -1253,7 +2505,10 @@
             "type": "integer",
             "format": "int32"
           },
-          "team": {
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
             "type": "string"
           },
           "prenom": {
@@ -1294,6 +2549,135 @@
             "items": {
               "$ref": "#/components/schemas/PendingGameParticipant"
             }
+          }
+        }
+      },
+      "PickerMethode": {
+        "enum": [
+          "Roulette",
+          "Draft",
+          null
+        ]
+      },
+      "PickerResponse": {
+        "required": [
+          "players",
+          "methode",
+          "variante",
+          "teamA",
+          "teamB",
+          "teamACost",
+          "teamBCost",
+          "ecartCost",
+          "canValidate",
+          "capitaineA",
+          "capitaineB",
+          "premierPick",
+          "picks",
+          "equipeAuTrait"
+        ],
+        "type": "object",
+        "properties": {
+          "players": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "methode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PickerMethode"
+              }
+            ]
+          },
+          "variante": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RouletteVariante"
+              }
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamACost": {
+            "type": "number",
+            "format": "double"
+          },
+          "teamBCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "ecartCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "canValidate": {
+            "type": "boolean"
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "premierPick": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "picks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DraftPickResponse"
+            }
+          },
+          "equipeAuTrait": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PickRequest": {
+        "required": [
+          "equipe",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "equipe": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -1480,6 +2864,20 @@
           }
         }
       },
+      "PlayGameRequest": {
+        "required": [
+          "teamASide"
+        ],
+        "type": "object",
+        "properties": {
+          "teamASide": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -1513,6 +2911,45 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "RematchRequest": {
+        "required": [
+          "format",
+          "fearless",
+          "alternateSides"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean",
+            "default": false
+          },
+          "alternateSides": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ReplacePlayerRequest": {
+        "required": [
+          "replacedPlayerId",
+          "replacementPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "replacedPlayerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "replacementPlayerId": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -1561,12 +2998,90 @@
           }
         }
       },
+      "Role": {
+        "enum": [
+          "Top",
+          "Jungle",
+          "Mid",
+          "Adc",
+          "Support",
+          null
+        ]
+      },
+      "RouletteVariante": {
+        "enum": [
+          "Aleatoire",
+          "Equilibree",
+          null
+        ]
+      },
+      "SelectPlayersRequest": {
+        "required": [
+          "playerIds"
+        ],
+        "type": "object",
+        "properties": {
+          "playerIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "SeriesGameResponse": {
+        "required": [
+          "id",
+          "status",
+          "teamASide",
+          "teamBSide",
+          "winner",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "teamASide": {
+            "type": "string"
+          },
+          "teamBSide": {
+            "type": "string"
+          },
+          "winner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          }
+        }
+      },
       "SeriesHistoryResponse": {
         "required": [
           "seriesId",
           "format",
           "playedAt",
-          "teamAReference",
+          "outcome",
+          "winningTeam",
           "games"
         ],
         "type": "object",
@@ -1583,19 +3098,110 @@
             "type": "string",
             "format": "date-time"
           },
-          "teamAReference": {
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeriesOutcome"
+              }
+            ]
+          },
+          "winningTeam": {
             "type": [
               "null",
-              "array"
-            ],
-            "items": {
-              "type": "string"
-            }
+              "string"
+            ]
           },
           "games": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryResponse"
+            }
+          }
+        }
+      },
+      "SeriesOutcome": {
+        "enum": [
+          "EnCours",
+          "Gagnee",
+          "Nulle",
+          "Interrompue",
+          null
+        ]
+      },
+      "SeriesResponse": {
+        "required": [
+          "seriesId",
+          "soireeId",
+          "format",
+          "fearless",
+          "alternateSides",
+          "outcome",
+          "winningTeam",
+          "teamAWins",
+          "teamBWins",
+          "teamA",
+          "teamB",
+          "games"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "soireeId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "format": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean"
+          },
+          "alternateSides": {
+            "type": "boolean"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/SeriesOutcome"
+          },
+          "winningTeam": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamAWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamBWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesGameResponse"
             }
           }
         }
@@ -1629,6 +3235,8 @@
         "required": [
           "gameId",
           "winner",
+          "teamASide",
+          "teamBSide",
           "status"
         ],
         "type": "object",
@@ -1643,8 +3251,101 @@
               "string"
             ]
           },
+          "teamASide": {
+            "type": "string"
+          },
+          "teamBSide": {
+            "type": "string"
+          },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "SoireeResponse": {
+        "required": [
+          "id",
+          "status",
+          "openedAt",
+          "closedAt",
+          "picker"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SoireeStatus"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "picker": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PickerResponse"
+              }
+            ]
+          }
+        }
+      },
+      "SoireeSeriesResponse": {
+        "required": [
+          "series"
+        ],
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesResponse"
+            }
+          }
+        }
+      },
+      "SoireeStatus": {
+        "enum": [
+          "Open",
+          "Closed"
+        ]
+      },
+      "StopSeriesResponse": {
+        "required": [
+          "seriesId",
+          "arret"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "arret": {
+            "$ref": "#/components/schemas/ArretSerie"
+          }
+        }
+      },
+      "TirerRouletteRequest": {
+        "required": [
+          "variante"
+        ],
+        "type": "object",
+        "properties": {
+          "variante": {
+            "$ref": "#/components/schemas/RouletteVariante"
           }
         }
       },
@@ -1681,6 +3382,28 @@
             "format": "int32"
           }
         }
+      },
+      "ValidatePickerRequest": {
+        "required": [
+          "format",
+          "fearless",
+          "alternateSides"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean",
+            "default": false
+          },
+          "alternateSides": {
+            "type": "boolean",
+            "default": false
+          }
+        }
       }
     }
   },
@@ -1695,10 +3418,16 @@
       "name": "Games"
     },
     {
+      "name": "Picker"
+    },
+    {
       "name": "Players"
     },
     {
       "name": "Series"
+    },
+    {
+      "name": "Soirees"
     }
   ]
 }

@@ -46,6 +46,7 @@ services:
       Auth__AdminDiscordIds: ${ADMIN_DISCORD_IDS:-}
       Auth__SessionLifetimeDays: ${SESSION_LIFETIME_DAYS:-14}
       Auth__Riot__ApiKey: ${RIOT_API_KEY:-}
+      Soiree__AutoCloseAfter: ${SOIREE_AUTO_CLOSE_AFTER:-03:00:00}
       DataProtection__KeysPath: /keys
     volumes:
       - api-keys:/keys

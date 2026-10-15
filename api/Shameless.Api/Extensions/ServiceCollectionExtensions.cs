@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
     {
         // Background jobs
         services.AddHostedService<RefreshRanksJob>();
+        services.AddHostedService<FermetureAutomatiqueSoireeJob>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -23,14 +24,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICustomGameParticipantRepository, CustomGameParticipantRepository>();
         services.AddScoped<IPlayerMonthlyCostRepository, PlayerMonthlyCostRepository>();
         services.AddScoped<IBestOfSeriesRepository, BestOfSeriesRepository>();
+        services.AddScoped<ISoireeRepository, SoireeRepository>();
+        services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
         services.AddScoped<CustomGameService>();
         services.AddScoped<CostCalculationService>();
+        services.AddScoped<SoireeService>();
+        services.AddScoped<SeriesService>();
+        services.AddScoped<PickerService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IRandomSource, SharedRandomSource>();
 
         return services;
     }
@@ -45,8 +53,13 @@ public static class ServiceCollectionExtensions
                 o.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
             });
 
-        // Lues par le générateur OpenAPI pour décrire les schémas.
-        services.ConfigureHttpJsonOptions(o => o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+        // Lues par le générateur OpenAPI pour décrire les schémas : mêmes réglages que les contrôleurs,
+        // sinon les enums (écrites en texte) seraient décrites comme des entiers.
+        services.ConfigureHttpJsonOptions(o =>
+        {
+            o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+        });
         services.AddOpenApi(options => options.AddShamelessContract());
         services.AddProblemDetails();
 

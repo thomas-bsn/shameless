@@ -9,9 +9,12 @@ public sealed class OAuthStateStore : IOAuthStateStore
 {
     private readonly ConcurrentDictionary<string, StateEntry> _states = new();
     private readonly TimeSpan _ttl;
+    private readonly TimeProvider _clock;
 
-    public OAuthStateStore(IConfiguration config)
+    public OAuthStateStore(IConfiguration config, TimeProvider clock)
     {
+        _clock = clock;
+
         // configurable, default 5 minutes
         var minutes = config.GetValue<int?>("Auth:Discord:StateTtlMinutes") ?? 5;
         _ttl = TimeSpan.FromMinutes(Math.Clamp(minutes, 1, 60));
@@ -22,7 +25,7 @@ public sealed class OAuthStateStore : IOAuthStateStore
         CleanupExpiredIfNeeded();
 
         var state = GenerateSecureTokenUrlSafe(32);
-        var entry = new StateEntry(returnUrl, DateTime.UtcNow.Add(_ttl));
+        var entry = new StateEntry(returnUrl, _clock.GetUtcNow().UtcDateTime.Add(_ttl));
 
         _states[state] = entry;
         return state;
@@ -35,7 +38,7 @@ public sealed class OAuthStateStore : IOAuthStateStore
         if (!_states.TryRemove(state, out var entry))
             return null;
 
-        if (entry.ExpiresAtUtc <= DateTime.UtcNow)
+        if (entry.ExpiresAtUtc <= _clock.GetUtcNow().UtcDateTime)
             return null;
 
         return new OAuthStateData(entry.ReturnUrl);
@@ -49,7 +52,7 @@ public sealed class OAuthStateStore : IOAuthStateStore
         if (Interlocked.Increment(ref _cleanupCounter) % 100 != 0)
             return;
 
-        var now = DateTime.UtcNow;
+        var now = _clock.GetUtcNow().UtcDateTime;
         foreach (var (key, entry) in _states)
         {
             if (entry.ExpiresAtUtc <= now)

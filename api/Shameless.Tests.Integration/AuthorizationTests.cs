@@ -18,8 +18,6 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     public static TheoryData<string> AdminActions() =>
     [
-        "PUT games/{0}/result",
-        "PUT series/{1}/abandon",
         "PUT players/{2}/cost",
         "POST players/{2}/peak",
         "DELETE players/{2}/peak"
@@ -139,16 +137,57 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     private async Task<(string Method, string Url)> PrepareAdminActionAsync(string action)
     {
         var admin = Factory.CreateAdminClient();
-        var ids = await CreatePlayersAsync(admin, "P1", "P2");
-        var game = await ReadJsonAsync(await admin.PostAsJsonAsync("/games",
-            new { blueTeam = new[] { ids[0] }, redTeam = new[] { ids[1] }, boFormat = 3 }, Ct));
+        var serie = await CreateSerieAsync(admin, format: 3);
+        var gameId = await PlayGameAsync(admin, serie.SeriesId);
 
         var parts = action.Split(' ');
-        var url = "/" + string.Format(parts[1],
-            game.GetProperty("gameId").GetInt32(),
-            game.GetProperty("seriesId").GetInt32(),
-            ids[0]);
+        var url = "/" + string.Format(parts[1], gameId, serie.SeriesId, serie.TeamA[0]);
         return (parts[0], url);
+    }
+
+    [Fact]
+    public async Task Un_utilisateur_connecte_non_admin_organise_une_serie_et_saisit_les_resultats()
+    {
+        var client = Factory.CreateSignedInClient("7005");
+        var serie = await CreateSerieAsync(client, format: 1);
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+
+        var response = await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "B" }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Un_visiteur_non_connecte_ne_cree_pas_de_serie_ni_de_game_ni_de_resultat()
+    {
+        var organisateur = Factory.CreateSignedInClient("7006");
+        var serie = await CreateSerieAsync(organisateur, format: 3);
+        var gameId = await PlayGameAsync(organisateur, serie.SeriesId);
+        var anonymous = Factory.CreateAnonymousClient();
+
+        var create = await anonymous.PostAsJsonAsync("/series",
+            new { teamA = serie.TeamA, teamB = serie.TeamB, format = 3 }, Ct);
+        var result = await anonymous.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct);
+        var next = await anonymous.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, create.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, next.StatusCode);
+        var lue = await ReadJsonAsync(await organisateur.GetAsync($"/series/{serie.SeriesId}", Ct));
+        Assert.Equal("pending", Assert.Single(lue.GetProperty("games").EnumerateArray()).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Un_utilisateur_connecte_non_admin_arrete_une_serie()
+    {
+        var organisateur = Factory.CreateSignedInClient("7007");
+        var serie = await CreateSerieAsync(organisateur, format: 3);
+        await PlayAndWinAsync(organisateur, serie.SeriesId, "A");
+        var autre = Factory.CreateSignedInClient("7008");
+
+        var response = await autre.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     private static HttpRequestMessage AdminRequest(string method, string url) =>
@@ -157,7 +196,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             Content = method switch
             {
                 "DELETE" => null,
-                _ when url.EndsWith("/result") => JsonContent.Create(new { winner = "blue" }),
+                _ when url.EndsWith("/result") => JsonContent.Create(new { winner = "A" }),
                 _ when url.EndsWith("/cost") => JsonContent.Create(new { cost = 3 }),
                 _ when url.EndsWith("/peak") => JsonContent.Create(new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S2025", peakLp = 10 }),
                 _ => null
