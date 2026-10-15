@@ -96,7 +96,8 @@ public class AppDbContext : DbContext
             entity.Ignore(e => e.TeamBSide);
             entity.Property(e => e.RiotMatchId).HasMaxLength(100);
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
-            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("");
+            // Jeton de concurrence : le résultat d'une game ne se saisit qu'une fois, même simultanément.
+            entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("").IsConcurrencyToken();
 
             entity.Property(e => e.CreatedAt)
                   .HasColumnType(Timestamp)

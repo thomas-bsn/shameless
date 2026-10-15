@@ -27,6 +27,15 @@ public class PickerSession
     /// <summary>L'Équipe qui choisit en premier dans la Draft ("A" | "B").</summary>
     public string? PremierPick { get; set; }
 
+    /// <summary>
+    /// Jeton de concurrence : chaque commande sur la session l'incrémente (<see cref="Touch"/>) ; son
+    /// enregistrement est refusé si une commande simultanée l'a incrémenté entre-temps.
+    /// </summary>
+    public int Version { get; set; }
+
+    /// <summary>Marque la session comme modifiée par la commande en cours (voir <see cref="Version"/>).</summary>
+    public void Touch() => Version++;
+
     /// <summary>Les dix joueurs cochés, dans l'ordre de la sélection.</summary>
     public List<PickerSessionPlayer> Players { get; set; } = [];
 

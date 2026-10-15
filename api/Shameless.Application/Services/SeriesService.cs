@@ -13,6 +13,9 @@ public sealed class SeriesService
 {
     public const int PlayersPerTeam = 5;
 
+    private const string ModifieeEntreTemps =
+        "Cette Série vient d'être modifiée par une autre commande : rechargez-la et réessayez.";
+
     private readonly IBestOfSeriesRepository _series;
     private readonly ICustomGameRepository _games;
     private readonly ISoireeRepository _soirees;
@@ -38,9 +41,28 @@ public sealed class SeriesService
 
     /// <summary>
     /// Crée une Série en cours dans la Soirée ouverte, entre deux Équipes de cinq joueurs distincts.
-    /// Sert aussi au Picker (validation du tirage) et à la Revanche.
+    /// Sert aussi à la Revanche.
     /// </summary>
     public async Task<CommandResult<BestOfSeries>> CreateAsync(
+        IReadOnlyCollection<int> teamA,
+        IReadOnlyCollection<int> teamB,
+        int format,
+        bool fearless,
+        bool alternateSides)
+    {
+        var prepared = await PrepareAsync(teamA, teamB, format, fearless, alternateSides);
+        if (!prepared.IsOk) return prepared;
+
+        return await _series.TrySaveChangesAsync()
+            ? prepared
+            : CommandResult<BestOfSeries>.Conflict("La Série n'a pas pu être créée : réessayez.");
+    }
+
+    /// <summary>
+    /// Prépare la création d'une Série (voir <see cref="CreateAsync"/>) sans l'enregistrer : l'appelant
+    /// l'enregistre avec ses propres changements, en une transaction (validation du Picker).
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> PrepareAsync(
         IReadOnlyCollection<int> teamA,
         IReadOnlyCollection<int> teamB,
         int format,
@@ -75,7 +97,8 @@ public sealed class SeriesService
                 .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B, Role = RoleOf(id) }))
                 .ToList()
         };
-        return CommandResult<BestOfSeries>.Ok(await _series.AddAsync(series));
+        _series.Add(series);
+        return CommandResult<BestOfSeries>.Ok(series);
 
         Role? RoleOf(int playerId) => roles != null && roles.TryGetValue(playerId, out var role) ? role : null;
     }
@@ -121,7 +144,11 @@ public sealed class SeriesService
                 })
                 .ToList()
         };
-        await _games.AddAsync(game);
+        _games.Add(game);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
         return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
     }
 
@@ -147,7 +174,9 @@ public sealed class SeriesService
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
         series?.ApplyResults(series.Games);
-        await _games.SaveChangesAsync();
+        series?.Touch();
+        if (!await _games.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
 
         await _costs.RecalculateCosts(gameId);
 
@@ -178,7 +207,9 @@ public sealed class SeriesService
         else
             series.Outcome = SeriesOutcome.Interrompue;
 
-        await _series.SaveChangesAsync();
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<ArretSerie>.Conflict(ModifieeEntreTemps);
         return CommandResult<ArretSerie>.Ok(arret);
     }
 
@@ -210,7 +241,9 @@ public sealed class SeriesService
 
         replaced.Player = replacement;
         replaced.PlayerId = replacement.Id;
-        await _series.SaveChangesAsync();
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
 
         return CommandResult<SeriesResponse>.Ok(ToResponse(series));
     }

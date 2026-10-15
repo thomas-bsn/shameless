@@ -10,17 +10,9 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
 
     public BestOfSeriesRepository(AppDbContext db) => _db = db;
 
-    public async Task<BestOfSeries> AddAsync(BestOfSeries series)
-    {
-        _db.BestOfSeries.Add(series);
-        await _db.SaveChangesAsync();
-        return series;
-    }
+    public void Add(BestOfSeries series) => _db.BestOfSeries.Add(series);
 
-    public async Task SaveChangesAsync()
-    {
-        await _db.SaveChangesAsync();
-    }
+    public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 
     public void Remove(BestOfSeries series) => _db.BestOfSeries.Remove(series);
 

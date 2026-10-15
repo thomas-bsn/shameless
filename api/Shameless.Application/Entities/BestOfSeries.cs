@@ -30,6 +30,12 @@ public class BestOfSeries
     public int? SoireeId { get; set; }
     public Soiree? Soiree { get; set; }
 
+    /// <summary>
+    /// Jeton de concurrence : chaque commande sur la Série l'incrémente (<see cref="Touch"/>) ; son
+    /// enregistrement est refusé si une commande simultanée l'a incrémenté entre-temps.
+    /// </summary>
+    public int Version { get; set; }
+
     public ICollection<CustomGame> Games { get; set; } = new List<CustomGame>();
     public ICollection<SeriesPlayer> Players { get; set; } = new List<SeriesPlayer>();
 
@@ -39,6 +45,9 @@ public class BestOfSeries
     public int WinsNeeded => Format / 2 + 1;
 
     public static bool IsValidFormat(int format) => Formats.Contains(format);
+
+    /// <summary>Marque la Série comme modifiée par la commande en cours (voir <see cref="Version"/>).</summary>
+    public void Touch() => Version++;
 
     /// <summary>
     /// Recompte le score à partir des games terminées et en déduit l'issue : gagnée quand une

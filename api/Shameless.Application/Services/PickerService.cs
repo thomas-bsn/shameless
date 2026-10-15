@@ -62,7 +62,8 @@ public sealed class PickerService
         else
         {
             session.Select(playerIds);
-            await _sessions.SaveChangesAsync();
+            if (!await SaveAsync(session))
+                return ModifieeEntreTemps();
         }
 
         return CommandResult<PickerSession>.Ok((await _sessions.GetBySoireeAsync(soiree.Id))!);
@@ -80,7 +81,8 @@ public sealed class PickerService
             : Roulette.Aleatoire(joueurs, _random);
 
         session.ApplyRoulette(variante, composition);
-        await _sessions.SaveChangesAsync();
+        if (!await SaveAsync(session))
+            return ModifieeEntreTemps();
         return CommandResult<PickerSession>.Ok(session);
     }
 
@@ -120,7 +122,8 @@ public sealed class PickerService
         }
 
         session.StartDraft(capitaines, premierPick ?? Draft.PileOuFace(_random));
-        await _sessions.SaveChangesAsync();
+        if (!await SaveAsync(session))
+            return ModifieeEntreTemps();
         return CommandResult<PickerSession>.Ok(session);
     }
 
@@ -146,7 +149,8 @@ public sealed class PickerService
             return CommandResult<PickerSession>.Conflict("Ce joueur est déjà pris.");
 
         session.Pick(playerId);
-        await _sessions.SaveChangesAsync();
+        if (!await SaveAsync(session))
+            return ModifieeEntreTemps();
         return CommandResult<PickerSession>.Ok(session);
     }
 
@@ -163,7 +167,8 @@ public sealed class PickerService
 
         var rolesPrincipaux = session.Players.ToDictionary(p => p.PlayerId, p => Autorole.RolePrincipal(p.Player.MainRole));
         session.ApplyAutorole(Autorole.Attribuer(variante, session.Composition, rolesPrincipaux, _random));
-        await _sessions.SaveChangesAsync();
+        if (!await SaveAsync(session))
+            return ModifieeEntreTemps();
         return CommandResult<PickerSession>.Ok(session);
     }
 
@@ -175,14 +180,28 @@ public sealed class PickerService
         if (!session.CanValidate)
             return CommandResult<BestOfSeries>.Conflict("Les deux Équipes ne sont pas encore formées : tirez-les avant de valider.");
 
-        var created = await _series.CreateAsync(
+        var created = await _series.PrepareAsync(
             session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless, alternateSides,
             session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value));
         if (!created.IsOk) return created;
 
-        await _sessions.RemoveAsync(session);
+        // La Série et la fin de la session s'enregistrent ensemble, ou pas du tout.
+        _sessions.Remove(session);
+        if (!await _sessions.TrySaveChangesAsync())
+            return ModifieeEntreTemps().As<BestOfSeries>();
         return created;
     }
+
+    /// <summary>Enregistre une commande sur la session ; false si une commande simultanée l'a modifiée entre-temps.</summary>
+    private Task<bool> SaveAsync(PickerSession session)
+    {
+        session.Touch();
+        return _sessions.TrySaveChangesAsync();
+    }
+
+    private static CommandResult<PickerSession> ModifieeEntreTemps() =>
+        CommandResult<PickerSession>.Conflict(
+            "Le Picker vient d'être modifié par une autre commande : rechargez-le et réessayez.");
 
     private async Task<(PickerSession? Session, CommandResult<PickerSession>? Refus)> GetSessionOfOpenSoireeAsync()
     {

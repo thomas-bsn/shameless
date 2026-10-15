@@ -14,12 +14,7 @@ public class CustomGameRepository : ICustomGameRepository
         _db = db;
     }
 
-    public async Task<CustomGame> AddAsync(CustomGame game)
-    {
-        _db.CustomGames.Add(game);
-        await _db.SaveChangesAsync();
-        return game;
-    }
+    public void Add(CustomGame game) => _db.CustomGames.Add(game);
 
     public async Task<CustomGame?> GetByIdAsync(int id)
     {
@@ -95,8 +90,5 @@ public class CustomGameRepository : ICustomGameRepository
     
     public void Remove(CustomGame game) => _db.CustomGames.Remove(game);
 
-    public async Task SaveChangesAsync()
-    {
-        await _db.SaveChangesAsync();
-    }
+    public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }
