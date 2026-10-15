@@ -9,6 +9,9 @@ public class BestOfSeries
     public int TeamAWins { get; set; } = 0;
     public int TeamBWins { get; set; } = 0;
     public string? TeamAReference { get; set; } // JSON array de RiotIds
-    
+
+    public int? SoireeId { get; set; }
+    public Soiree? Soiree { get; set; }
+
     public ICollection<CustomGame> Games { get; set; } = new List<CustomGame>();
 }
