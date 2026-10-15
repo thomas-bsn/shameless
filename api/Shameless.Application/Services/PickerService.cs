@@ -5,8 +5,9 @@ using Shameless.Application.Picker;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Les commandes du Picker de la Soirée ouverte : cocher les dix joueurs, tirer (ou relancer) la
-/// Roulette, valider le tirage pour créer la Série. Les algorithmes sont dans <see cref="Roulette"/>.
+/// Les commandes du Picker de la Soirée ouverte : cocher les dix joueurs, mener une Draft (capitaines,
+/// premier pick, picks alternés) ou tirer (et relancer) la Roulette, puis valider pour créer la Série.
+/// Les algorithmes sont dans <see cref="Draft"/> et <see cref="Roulette"/>.
 /// </summary>
 public sealed class PickerService
 {
@@ -79,6 +80,72 @@ public sealed class PickerService
             : Roulette.Aleatoire(joueurs, _random);
 
         session.ApplyRoulette(variante, composition);
+        await _sessions.SaveChangesAsync();
+        return CommandResult<PickerSession>.Ok(session);
+    }
+
+    /// <summary>
+    /// Lance (ou relance) une Draft : désigne les deux capitaines parmi les dix (à la main, au hasard
+    /// ou par plus gros cost) et le premier pick (à la main, sinon à pile ou face).
+    /// </summary>
+    public async Task<CommandResult<PickerSession>> LancerDraftAsync(
+        DesignationCapitaines designation, int? capitaineA, int? capitaineB, string? premierPick)
+    {
+        if (premierPick != null && !Equipes.IsValid(premierPick))
+            return CommandResult<PickerSession>.Invalid("Le premier pick revient à l'Équipe A ou à l'Équipe B.");
+
+        var (session, refus) = await GetSessionOfOpenSoireeAsync();
+        if (session == null) return refus!;
+
+        var joueurs = session.Players.OrderBy(p => p.Position).ToList();
+        Capitaines capitaines;
+        switch (designation)
+        {
+            case DesignationCapitaines.Manuels:
+                if (joueurs.All(p => p.PlayerId != capitaineA) || joueurs.All(p => p.PlayerId != capitaineB))
+                    return CommandResult<PickerSession>.Invalid("Les deux capitaines font partie des dix joueurs.");
+                if (capitaineA == capitaineB)
+                    return CommandResult<PickerSession>.Invalid("Les deux capitaines sont deux joueurs distincts.");
+                capitaines = new Capitaines(capitaineA!.Value, capitaineB!.Value);
+                break;
+            case DesignationCapitaines.AuHasard:
+                capitaines = Draft.CapitainesAuHasard(joueurs.Select(p => p.PlayerId).ToList(), _random);
+                break;
+            case DesignationCapitaines.PlusGrosCosts:
+                capitaines = Draft.CapitainesParPlusGrosCost(
+                    joueurs.Select(p => new PickerPlayer(p.PlayerId, p.Player.CurrentCost)).ToList());
+                break;
+            default:
+                return CommandResult<PickerSession>.Invalid("Désignation des capitaines inconnue.");
+        }
+
+        session.StartDraft(capitaines, premierPick ?? Draft.PileOuFace(_random));
+        await _sessions.SaveChangesAsync();
+        return CommandResult<PickerSession>.Ok(session);
+    }
+
+    /// <summary>Le capitaine de l'Équipe au trait prend un des dix joueurs encore libre.</summary>
+    public async Task<CommandResult<PickerSession>> PickAsync(string equipe, int playerId)
+    {
+        if (!Equipes.IsValid(equipe))
+            return CommandResult<PickerSession>.Invalid("Le pick est fait pour l'Équipe A ou l'Équipe B.");
+
+        var (session, refus) = await GetSessionOfOpenSoireeAsync();
+        if (session == null) return refus!;
+        if (session.Methode != PickerMethode.Draft)
+            return CommandResult<PickerSession>.Conflict("Aucune Draft en cours : lancez-la avant de choisir.");
+        var joueur = session.Players.SingleOrDefault(p => p.PlayerId == playerId);
+        if (joueur == null)
+            return CommandResult<PickerSession>.Invalid("Ce joueur ne fait pas partie des dix.");
+        if (session.EquipeAuTrait == null)
+            return CommandResult<PickerSession>.Conflict("La Draft est complète : validez-la ou relancez-la.");
+        if (session.EquipeAuTrait != equipe)
+            return CommandResult<PickerSession>.Conflict(
+                $"Ce n'est pas le tour de l'Équipe {equipe} : l'Équipe {session.EquipeAuTrait} choisit.");
+        if (joueur.Equipe != null)
+            return CommandResult<PickerSession>.Conflict("Ce joueur est déjà pris.");
+
+        session.Pick(playerId);
         await _sessions.SaveChangesAsync();
         return CommandResult<PickerSession>.Ok(session);
     }

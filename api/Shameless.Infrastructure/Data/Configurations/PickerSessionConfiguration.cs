@@ -15,7 +15,10 @@ public sealed class PickerSessionConfiguration : IEntityTypeConfiguration<Picker
 
         entity.Property(e => e.Methode).HasColumnType("text").HasConversion(LowercaseText<PickerMethode>());
         entity.Property(e => e.Variante).HasColumnType("text").HasConversion(LowercaseText<RouletteVariante>());
+        entity.Property(e => e.PremierPick).HasMaxLength(1);
         entity.Ignore(e => e.CanValidate);
+        entity.Ignore(e => e.Picks);
+        entity.Ignore(e => e.EquipeAuTrait);
 
         // Au plus une session de Picker par Soirée.
         entity.HasOne(e => e.Soiree)

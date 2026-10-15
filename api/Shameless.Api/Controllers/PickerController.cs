@@ -40,6 +40,31 @@ public sealed class PickerController : ControllerBase
         return PickerResponse.From(result.Value!);
     }
 
+    /// <summary>Lance une Draft : capitaines et premier pick. La lancer à nouveau la recommence.</summary>
+    [HttpPost("draft")]
+    [ProducesResponseType<PickerResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<PickerResponse>> LancerDraft([FromBody] LancerDraftRequest request)
+    {
+        var result = await _pickerService.LancerDraftAsync(
+            request.Capitaines, request.CapitaineA, request.CapitaineB, request.PremierPick);
+        if (!result.IsOk) return this.Refusal(result);
+        return PickerResponse.From(result.Value!);
+    }
+
+    /// <summary>Un pick de la Draft, par le capitaine de l'Équipe au trait.</summary>
+    [HttpPost("draft/picks")]
+    [ProducesResponseType<PickerResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<PickerResponse>> Pick([FromBody] PickRequest request)
+    {
+        var result = await _pickerService.PickAsync(request.Equipe, request.PlayerId);
+        if (!result.IsOk) return this.Refusal(result);
+        return PickerResponse.From(result.Value!);
+    }
+
     /// <summary>
     /// Attribue un rôle à chaque joueur des deux Équipes formées, Hors rôle ou Aléatoire, sans
     /// changer les Équipes. Lancer à nouveau relance.

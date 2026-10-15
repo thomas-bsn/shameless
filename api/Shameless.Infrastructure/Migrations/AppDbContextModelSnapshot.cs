@@ -196,6 +196,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("methode");
 
+                    b.Property<string>("PremierPick")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("premier_pick");
+
                     b.Property<int>("SoireeId")
                         .HasColumnType("integer")
                         .HasColumnName("soiree_id");
@@ -223,10 +228,18 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Capitaine")
+                        .HasColumnType("boolean")
+                        .HasColumnName("capitaine");
+
                     b.Property<string>("Equipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
                         .HasColumnName("equipe");
+
+                    b.Property<int?>("PickOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("pick_order");
 
                     b.Property<int>("PickerSessionId")
                         .HasColumnType("integer")
