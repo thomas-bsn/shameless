@@ -40,6 +40,21 @@ public sealed class PickerController : ControllerBase
         return PickerResponse.From(result.Value!);
     }
 
+    /// <summary>
+    /// Attribue un rôle à chaque joueur des deux Équipes formées, Hors rôle ou Aléatoire, sans
+    /// changer les Équipes. Lancer à nouveau relance.
+    /// </summary>
+    [HttpPost("autorole")]
+    [ProducesResponseType<PickerResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<PickerResponse>> Autorole([FromBody] AutoroleRequest request)
+    {
+        var result = await _pickerService.AutoroleAsync(request.Variante);
+        if (!result.IsOk) return this.Refusal(result);
+        return PickerResponse.From(result.Value!);
+    }
+
     /// <summary>Valide le tirage : crée la Série entre les deux Équipes et clôt la session de Picker.</summary>
     [HttpPost("validate")]
     [ProducesResponseType<CreateSeriesResponse>(StatusCodes.Status201Created)]

@@ -1,6 +1,7 @@
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Picker;
 
 namespace Shameless.Application.Services;
 
@@ -44,7 +45,8 @@ public sealed class SeriesService
         IReadOnlyCollection<int> teamB,
         int format,
         bool fearless,
-        bool alternateSides)
+        bool alternateSides,
+        IReadOnlyDictionary<int, Role>? roles = null)
     {
         if (!BestOfSeries.IsValidFormat(format))
             return CommandResult<BestOfSeries>.Invalid("Le format d'une Série est BO1, BO2, BO3 ou BO5.");
@@ -69,11 +71,13 @@ public sealed class SeriesService
             AlternateSides = alternateSides,
             Outcome = SeriesOutcome.EnCours,
             SoireeId = soiree.Id,
-            Players = teamA.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.A })
-                .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B }))
+            Players = teamA.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.A, Role = RoleOf(id) })
+                .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B, Role = RoleOf(id) }))
                 .ToList()
         };
         return CommandResult<BestOfSeries>.Ok(await _series.AddAsync(series));
+
+        Role? RoleOf(int playerId) => roles != null && roles.TryGetValue(playerId, out var role) ? role : null;
     }
 
     /// <summary>
@@ -266,7 +270,7 @@ public sealed class SeriesService
         WinningTeam: series.WinningTeam,
         TeamAWins: series.TeamAWins,
         TeamBWins: series.TeamBWins,
-        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player)).ToList(),
-        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList(),
+        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
         Games: series.Games.Select(SeriesGameResponse.From).ToList());
 }
