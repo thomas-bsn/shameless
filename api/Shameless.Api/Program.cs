@@ -17,3 +17,4 @@ var app = builder.Build();
 app.ConfigureApplication();
 
 app.Run();
+public partial class Program;
