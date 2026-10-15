@@ -19,6 +19,8 @@ public record SeriesResponse(
     int TeamBWins,
     List<GameParticipantDto> TeamA,
     List<GameParticipantDto> TeamB,
+    int? CapitaineA, // le Capitaine de l'Équipe A, null tant qu'aucun n'est désigné
+    int? CapitaineB,
     List<SeriesGameResponse> Games
 );
 

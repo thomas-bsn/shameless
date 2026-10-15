@@ -18,6 +18,12 @@ public interface IBestOfSeriesRepository
     /// <summary>Les Séries d'une Soirée avec leurs games, de la plus ancienne à la plus récente.</summary>
     Task<List<BestOfSeries>> GetBySoireeWithGamesAsync(int soireeId);
 
+    /// <summary>La Série avec ses liens d'accès.</summary>
+    Task<BestOfSeries?> GetWithLiensAsync(int id);
+
+    /// <summary>Le lien d'accès de ce secret, avec sa Série, ou null.</summary>
+    Task<LienAcces?> GetLienAsync(string secret);
+
     /// <summary>Marque la Série pour suppression, avec sa composition ; effectif au prochain enregistrement.</summary>
     void Remove(BestOfSeries series);
 

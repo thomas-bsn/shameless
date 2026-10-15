@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();
         services.AddScoped<PickerService>();
+        services.AddScoped<LiensAccesService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();

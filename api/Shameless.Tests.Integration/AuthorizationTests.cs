@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Shameless.Api.Auth;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -23,30 +24,52 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         "DELETE players/{2}/peak"
     ];
 
-    [Fact]
-    public async Task Every_endpoint_outside_login_callback_and_health_requires_a_session()
-    {
-        var client = Factory.CreateAnonymousClient();
-        var endpoints = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+    /// <summary>Les routes de l'API ; <paramref name="parLien"/> : celles ouvertes à un lien d'accès (ADR 0010), ou les autres.</summary>
+    private List<(string Method, string Route)> Endpoints(bool parLien) =>
+        Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
+            .Where(e => (e.Metadata.GetMetadata<AccesParLienAttribute>() != null) == parLien)
             .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
                 .Select(method => (Method: method, Route: e.RoutePattern.RawText!.TrimStart('/'))))
             .Where(e => !AnonymousEndpoints.Contains($"{e.Method} {e.Route}"))
             .ToList();
 
+    private static HttpRequestMessage AnyRequest(string method, string route) =>
+        new(new HttpMethod(method), "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1"))
+        {
+            Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
+        };
+
+    [Fact]
+    public async Task Every_endpoint_outside_login_callback_health_and_access_links_requires_a_session()
+    {
+        var client = Factory.CreateAnonymousClient();
+        var endpoints = Endpoints(parLien: false);
+
         Assert.NotEmpty(endpoints);
         foreach (var (method, route) in endpoints)
         {
-            var url = "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1");
-            var request = new HttpRequestMessage(new HttpMethod(method), url)
-            {
-                Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
-            };
-
-            var response = await client.SendAsync(request, Ct);
+            var response = await client.SendAsync(AnyRequest(method, route), Ct);
 
             Assert.True(response.StatusCode == HttpStatusCode.Unauthorized,
-                $"{method} {url} returned {(int)response.StatusCode} without a session");
+                $"{method} {route} returned {(int)response.StatusCode} without a session");
+        }
+    }
+
+    [Fact]
+    public async Task Sans_session_une_route_ouverte_aux_liens_refuse_un_lien_inconnu()
+    {
+        var client = Factory.CreateAnonymousClient();
+        var endpoints = Endpoints(parLien: true);
+
+        Assert.NotEmpty(endpoints);
+        foreach (var (method, route) in endpoints)
+        {
+            Assert.Contains($"{{{AccesParLienAttribute.RouteParameter}}}", route);
+            var response = await client.SendAsync(AnyRequest(method, route), Ct);
+
+            Assert.True(response.StatusCode == HttpStatusCode.NotFound,
+                $"{method} {route} returned {(int)response.StatusCode} with an unknown link");
         }
     }
 
