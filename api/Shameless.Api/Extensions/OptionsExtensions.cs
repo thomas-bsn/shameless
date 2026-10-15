@@ -16,10 +16,8 @@ public static class OptionsExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        services.AddOptions<JwtOptions>()
-            .Bind(configuration.GetSection("Auth:Jwt"))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        services.AddOptions<AuthOptions>()
+            .Bind(configuration.GetSection("Auth"));
 
         services.AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection("Database"))

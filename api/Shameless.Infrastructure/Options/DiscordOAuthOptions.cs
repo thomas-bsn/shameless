@@ -15,9 +15,7 @@ public sealed class DiscordOAuthOptions
     public required string RedirectUri { get; init; }
     
     public string BaseUrl { get; init; } = "https://discord.com/api/";
-    public string? AllowedGuildId { get; init; }
-    
-    [Required]
-    [Url]
-    public required string FrontendUrl { get; init; }
+
+    [Required(ErrorMessage = "Auth:Discord:AllowedGuildId missing")]
+    public required string AllowedGuildId { get; init; }
 }

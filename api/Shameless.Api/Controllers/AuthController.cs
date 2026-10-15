@@ -1,9 +1,10 @@
-﻿using System.Security.Claims;
-using Shameless.Api.Contracts.Matches;
+using System.Security.Claims;
+using Shameless.Api.Auth;
 using Shameless.Api.Interfaces;
 using Shameless.Api.Models.Responses.Auth;
-using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Options;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -14,27 +15,32 @@ namespace Shameless.Api.Controllers;
 [Route("auth")]
 public sealed class AuthController : ControllerBase
 {
+    private const string AvatarClaim = "avatar_url";
+
     private readonly DiscordOAuthOptions _discordOptions;
+    private readonly AuthOptions _authOptions;
     private readonly IOAuthStateStore _stateStore;
     private readonly IDiscordOAuthClient _discord;
-    private readonly IJwtIssuer _jwt;
 
     public AuthController(
         IOptions<DiscordOAuthOptions> discordOptions,
+        IOptions<AuthOptions> authOptions,
         IOAuthStateStore stateStore,
-        IDiscordOAuthClient discord,
-        IJwtIssuer jwt)
+        IDiscordOAuthClient discord)
     {
         _discordOptions = discordOptions.Value;
+        _authOptions = authOptions.Value;
         _stateStore = stateStore;
         _discord = discord;
-        _jwt = jwt;
     }
 
     [HttpGet("discord/login")]
     [AllowAnonymous]
     public IActionResult DiscordLogin([FromQuery] string? returnUrl = null)
     {
+        if (returnUrl is not null && !ReturnUrlPolicy.IsAllowed(returnUrl, _authOptions.ReturnOrigins))
+            return BadRequest(new { error = "invalid_return_url" });
+
         var state = _stateStore.CreateState(returnUrl);
         var scope = "identify guilds";
 
@@ -66,11 +72,8 @@ public sealed class AuthController : ControllerBase
         if (stateData is null)
             return Unauthorized(new { error = "invalid_state" });
 
-        if (string.IsNullOrWhiteSpace(_discordOptions.AllowedGuildId))
-            throw new InvalidOperationException("Missing Auth:Discord:AllowedGuildId configuration.");
-
         var token = await _discord.ExchangeCodeAsync(code, ct);
-        
+
         var isMember = await _discord.IsMemberOfGuildAsync(token.AccessToken, _discordOptions.AllowedGuildId, ct);
         if (!isMember)
             return StatusCode(403, new { error = "not_in_guild" });
@@ -81,41 +84,43 @@ public sealed class AuthController : ControllerBase
             ? $"https://cdn.discordapp.com/avatars/{me.Id}/{me.Avatar}.png"
             : $"https://cdn.discordapp.com/embed/avatars/{long.Parse(me.Id) % 5}.png";
 
-        var jwt = _jwt.Issue(new JwtUser(
-            DiscordUserId: me.Id,
-            Username: me.Username,
-            Discriminator: me.Discriminator,
-            AvatarUrl: avatarUrl
-        ));
+        var identity = new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, me.Id),
+            new Claim(ClaimTypes.Name, me.Username),
+            new Claim(AvatarClaim, avatarUrl)
+        ], CookieAuthenticationDefaults.AuthenticationScheme);
 
-        var redirectUrl = $"{_discordOptions.FrontendUrl}/account/callback" +
-                          $"?token={Uri.EscapeDataString(jwt.AccessToken)}" +
-                          $"&username={Uri.EscapeDataString(me.Username ?? "")}" +
-                          $"&avatarUrl={Uri.EscapeDataString(avatarUrl)}";
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = true });
 
-        return Redirect(redirectUrl);
+        // Validée au login, revérifiée ici au cas où la liste blanche aurait changé entre-temps.
+        var returnUrl = stateData.ReturnUrl is { } url && ReturnUrlPolicy.IsAllowed(url, _authOptions.ReturnOrigins)
+            ? url
+            : "/";
+
+        return Redirect(returnUrl);
     }
 
     [HttpGet("me")]
     [Authorize]
     public IActionResult GetCurrentUser()
     {
-        var discordUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        var username = User.FindFirstValue(ClaimTypes.Name);
-        var avatarUrl = User.FindFirstValue("avatar_url");
-
         return Ok(new AuthUserResponse(
             Valid: true,
-            DiscordUserId: discordUserId,
-            Username: username,
-            AvatarUrl: avatarUrl
+            DiscordUserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
+            Username: User.FindFirstValue(ClaimTypes.Name),
+            AvatarUrl: User.FindFirstValue(AvatarClaim)
         ));
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
-        return Ok(new { ok = true });
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return NoContent();
     }
 }

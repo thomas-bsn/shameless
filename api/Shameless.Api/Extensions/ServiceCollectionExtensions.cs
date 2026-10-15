@@ -32,7 +32,6 @@ public static class ServiceCollectionExtensions
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
-        services.AddSingleton<IJwtIssuer, JwtIssuer>();
 
         return services;
     }

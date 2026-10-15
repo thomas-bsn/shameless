@@ -10,7 +10,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 
   <ItemGroup>

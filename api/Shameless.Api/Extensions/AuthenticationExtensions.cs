@@ -1,8 +1,6 @@
-using System.Text;
 using Shameless.Api.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Options;
 using Shameless.Infrastructure.Integrations.Riot;
@@ -14,25 +12,39 @@ namespace Shameless.Api.Extensions;
 
 public static class AuthenticationExtensions
 {
-    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
-    {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
+    public const string DefaultScheme = "Shameless";
 
-        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+    /// <summary>
+    /// Session par cookie posé à la fin du login Discord. Le scheme par défaut est un
+    /// sélecteur : un futur jeton révocable (Companion, bot) s'y branchera sans refonte.
+    /// </summary>
+    public static IServiceCollection AddSessionAuthentication(this IServiceCollection services)
+    {
+        services.AddAuthentication(DefaultScheme)
+            .AddPolicyScheme(DefaultScheme, DefaultScheme, options =>
             {
-                var jwt = jwtOptions.Value;
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.ForwardDefaultSelector = _ => CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie();
+
+        services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            .Configure<IOptions<AuthOptions>>((options, auth) =>
+            {
+                options.Cookie.Name = "shameless_session";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.ExpireTimeSpan = TimeSpan.FromDays(auth.Value.SessionLifetimeDays);
+                options.SlidingExpiration = true;
+                options.Events.OnRedirectToLogin = context =>
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwt.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwt.Audience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromSeconds(30)
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
                 };
             });
 

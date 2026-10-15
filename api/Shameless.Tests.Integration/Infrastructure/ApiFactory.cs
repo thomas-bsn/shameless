@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
+using Shameless.Api.Interfaces;
 using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Data;
@@ -25,6 +26,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeRiotService Riot { get; } = new();
 
+    public FakeDiscord Discord { get; } = new();
+
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
@@ -42,6 +45,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public async Task ResetAsync()
     {
         Riot.Reset();
+        Discord.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
             "TRUNCATE custom_game_participants, custom_games, best_of_series, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
@@ -61,14 +65,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:Discord:ClientSecret", "test-secret");
         builder.UseSetting("Auth:Discord:RedirectUri", "http://localhost/api/auth/discord/callback");
         builder.UseSetting("Auth:Discord:AllowedGuildId", TestSession.GuildId);
-        builder.UseSetting("Auth:Discord:FrontendUrl", "http://localhost");
-        builder.UseSetting("Auth:Jwt:SigningKey", "test-signing-key-at-least-32-characters-long");
+        builder.UseSetting("Auth:AllowedReturnOrigins", TestSession.AllowedOrigin);
+        builder.UseSetting("Auth:AdminDiscordIds", TestSession.AdminDiscordId);
         builder.UseSetting("Auth:Riot:ApiKey", "test-riot-key");
 
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IRiotService>();
             services.AddSingleton<IRiotService>(Riot);
+            services.RemoveAll<IDiscordOAuthClient>();
+            services.AddSingleton<IDiscordOAuthClient>(Discord);
 
             var job = services.Single(d => d.ImplementationType == typeof(RefreshRanksJob));
             services.Remove(job);
