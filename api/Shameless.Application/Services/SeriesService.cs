@@ -151,6 +151,34 @@ public sealed class SeriesService
     }
 
     /// <summary>
+    /// Arrête une Série en cours (ADR 0009). Sans game terminée, elle est annulée : effacée avec ses
+    /// games en attente. Sinon elle est interrompue : elle se termine sans vainqueur, ses games en
+    /// attente sont supprimées et ses games terminées restent et comptent. Aucun cost n'est recalculé :
+    /// aucune game terminée n'est effacée.
+    /// </summary>
+    public async Task<CommandResult<ArretSerie>> StopAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<ArretSerie>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<ArretSerie>.Conflict("Cette Série est terminée : elle ne peut plus être arrêtée.");
+
+        var pending = series.Games.Where(g => g.Status != "completed").ToList();
+        foreach (var game in pending)
+            _games.Remove(game);
+
+        var arret = series.Games.Count == pending.Count ? ArretSerie.Annulee : ArretSerie.Interrompue;
+        if (arret == ArretSerie.Annulee)
+            _series.Remove(series);
+        else
+            series.Outcome = SeriesOutcome.Interrompue;
+
+        await _series.SaveChangesAsync();
+        return CommandResult<ArretSerie>.Ok(arret);
+    }
+
+    /// <summary>
     /// Remplace, entre deux games d'une Série en cours, un joueur d'une Équipe par un joueur qui
     /// n'est pas dans la Série. Seule la composition courante change : elle s'applique à la
     /// prochaine game, les games déjà lancées gardent leurs participants et le score ne bouge pas.

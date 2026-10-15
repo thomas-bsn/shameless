@@ -18,7 +18,6 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     public static TheoryData<string> AdminActions() =>
     [
-        "PUT series/{1}/abandon",
         "PUT players/{2}/cost",
         "POST players/{2}/peak",
         "DELETE players/{2}/peak"
@@ -176,6 +175,19 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Unauthorized, next.StatusCode);
         var lue = await ReadJsonAsync(await organisateur.GetAsync($"/series/{serie.SeriesId}", Ct));
         Assert.Equal("pending", Assert.Single(lue.GetProperty("games").EnumerateArray()).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Un_utilisateur_connecte_non_admin_arrete_une_serie()
+    {
+        var organisateur = Factory.CreateSignedInClient("7007");
+        var serie = await CreateSerieAsync(organisateur, format: 3);
+        await PlayAndWinAsync(organisateur, serie.SeriesId, "A");
+        var autre = Factory.CreateSignedInClient("7008");
+
+        var response = await autre.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     private static HttpRequestMessage AdminRequest(string method, string url) =>

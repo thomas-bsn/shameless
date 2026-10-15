@@ -93,12 +93,7 @@ public class CustomGameRepository : ICustomGameRepository
             .ToListAsync();
     }
     
-    public async Task DeleteBySeriesIdAsync(int seriesId)
-    {
-        var games = await _db.CustomGames.Where(g => g.SeriesId == seriesId).ToListAsync();
-        _db.CustomGames.RemoveRange(games);
-        await _db.SaveChangesAsync();
-    }
+    public void Remove(CustomGame game) => _db.CustomGames.Remove(game);
 
     public async Task SaveChangesAsync()
     {
