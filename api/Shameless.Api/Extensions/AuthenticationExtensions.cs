@@ -8,6 +8,7 @@ using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Options;
 using Shameless.Infrastructure.Integrations.Riot;
 using Shameless.Infrastructure.Integrations.Discord;
+using Shameless.Infrastructure.Integrations.DataDragon;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -85,6 +86,12 @@ public static class AuthenticationExtensions
                 client.BaseAddress = new Uri(discord.BaseUrl);
             })
             .AddPolicyHandler(GetRetryPolicy());
+
+        // Data Dragon : données statiques publiques, sans clé Riot. Le catalogue est gardé en mémoire (singleton).
+        services.AddHttpClient(DataDragonChampionCatalog.HttpClientName,
+                client => client.BaseAddress = DataDragonChampionCatalog.BaseAddress)
+            .AddPolicyHandler(GetRetryPolicy());
+        services.AddSingleton<IChampionCatalog, DataDragonChampionCatalog>();
 
         return services;
     }

@@ -14,7 +14,8 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     [
         "GET auth/discord/login",
         "GET auth/discord/callback",
-        "GET health"
+        "GET health",
+        "GET champions"
     ];
 
     public static TheoryData<string> AdminActions() =>
