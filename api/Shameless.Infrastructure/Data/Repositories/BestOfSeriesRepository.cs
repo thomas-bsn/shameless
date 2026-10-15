@@ -40,4 +40,11 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
             .OrderBy(s => s.Id)
             .Select(s => s.Id)
             .ToListAsync();
+
+    public Task<List<int>> GetIdsBySoireeAsync(int soireeId) =>
+        _db.BestOfSeries
+            .Where(s => s.SoireeId == soireeId)
+            .OrderBy(s => s.Id)
+            .Select(s => s.Id)
+            .ToListAsync();
 }

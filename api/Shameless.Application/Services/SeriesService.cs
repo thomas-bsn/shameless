@@ -251,10 +251,16 @@ public sealed class SeriesService
     }
 
     /// <summary>Les Séries en cours, de la plus ancienne à la plus récente.</summary>
-    public async Task<List<SeriesResponse>> GetEnCoursAsync()
+    public async Task<List<SeriesResponse>> GetEnCoursAsync() => await GetAllAsync(await _series.GetEnCoursIdsAsync());
+
+    /// <summary>Les Séries d'une Soirée avec leur issue, de la plus ancienne à la plus récente.</summary>
+    public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
+        await GetAllAsync(await _series.GetIdsBySoireeAsync(soireeId));
+
+    private async Task<List<SeriesResponse>> GetAllAsync(IEnumerable<int> ids)
     {
         var result = new List<SeriesResponse>();
-        foreach (var id in await _series.GetEnCoursIdsAsync())
+        foreach (var id in ids)
             if (await GetAsync(id) is { } series)
                 result.Add(series);
         return result;

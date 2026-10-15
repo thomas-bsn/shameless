@@ -1788,6 +1788,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/soirees/{id}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SoireeSeriesResponse"];
+                        "application/json": components["schemas"]["SoireeSeriesResponse"];
+                        "text/json": components["schemas"]["SoireeSeriesResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/soirees": {
         parameters: {
             query?: never;
@@ -2198,6 +2255,9 @@ export interface components {
             /** Format: date-time */
             closedAt: null | string;
             picker: null | components["schemas"]["PickerResponse"];
+        };
+        SoireeSeriesResponse: {
+            series: components["schemas"]["SeriesResponse"][];
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
