@@ -3,6 +3,7 @@ using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.ChampionDraft;
 using Shameless.Api.Models.Responses.ChampionDraft;
+using Shameless.Application.Entities;
 using Shameless.Application.Services;
 
 namespace Shameless.Api.Controllers;
@@ -10,6 +11,7 @@ namespace Shameless.Api.Controllers;
 /// <summary>
 /// La Draft de champions d'une game. L'organisateur connecté l'ouvre et la lit ; les capitaines la
 /// jouent et la lisent par leur Lien capitaine, le spectateur la lit par le Lien spectateur (ADR 0010).
+/// Passé l'échéance d'un tour (60 secondes), l'organisateur peut le jouer à la place de l'Équipe attendue.
 /// </summary>
 [ApiController]
 public sealed class DraftChampionsController : ControllerBase
@@ -47,6 +49,20 @@ public sealed class DraftChampionsController : ControllerBase
         return DraftChampionsResponse.From(result.Value!);
     }
 
+    /// <summary>
+    /// L'organisateur connecté joue le tour attendu (ban ou pick) à la place de l'Équipe attendue, une
+    /// fois l'échéance du tour atteinte. Avant l'échéance, tour déjà joué ou hors tour, champion déjà
+    /// banni ou pick, Draft terminée : 409 ; champion inconnu : 400.
+    /// </summary>
+    [HttpPost("games/{gameId:int}/draft-champions/actions")]
+    [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
+    public async Task<ActionResult<DraftChampionsResponse>> JouerALaPlace(int gameId, [FromBody] JouerDraftChampionsRequest request) =>
+        await AvecCatalogueAsync(() => _drafts.JouerALaPlaceAsync(gameId, request.Tour, request.ChampionId));
+
     /// <summary>Sans connexion, par un Lien capitaine ou le Lien spectateur : la dernière Draft de champions de la Série.</summary>
     [HttpGet("liens/{lien}/draft-champions")]
     [AccesParLien]
@@ -73,11 +89,16 @@ public sealed class DraftChampionsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
-    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request)
+    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request) =>
+        await AvecCatalogueAsync(() => _drafts.JouerParLienAsync(this.AccesParLien(), request.Tour, request.ChampionId));
+
+    /// <summary>Joue une action de la Draft ; 503 quand le catalogue des champions (Data Dragon) est indisponible.</summary>
+    private async Task<ActionResult<DraftChampionsResponse>> AvecCatalogueAsync(
+        Func<Task<CommandResult<DraftChampions>>> jouer)
     {
         try
         {
-            var result = await _drafts.JouerParLienAsync(this.AccesParLien(), request.Tour, request.ChampionId);
+            var result = await jouer();
             if (!result.IsOk) return this.Refusal(result);
 
             return DraftChampionsResponse.From(result.Value!);
