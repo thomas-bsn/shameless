@@ -14,6 +14,6 @@ builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
 
-await app.ConfigureApplicationAsync();
+app.ConfigureApplication();
 
 app.Run();
