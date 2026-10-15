@@ -14,3 +14,6 @@ public sealed record CreateSeriesRequest(
 /// automatique, qui inverse alors le Side de la game précédente.
 /// </summary>
 public sealed record PlayGameRequest(string? TeamASide);
+
+/// <summary>Remplacement : le joueur remplacé quitte son Équipe, le remplaçant prend sa place pour la prochaine game.</summary>
+public sealed record ReplacePlayerRequest(int ReplacedPlayerId, int ReplacementPlayerId);
