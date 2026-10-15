@@ -173,6 +173,7 @@ public sealed class SeriesService
 
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
+        game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
         series?.ApplyResults(series.Games);
         series?.Touch();
         if (!await _games.TrySaveChangesAsync())

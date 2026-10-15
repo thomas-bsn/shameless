@@ -103,6 +103,8 @@ public class AppDbContext : DbContext
                   .HasColumnType(Timestamp)
                   .HasDefaultValueSql("now()");
 
+            entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
+
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)
                   .HasForeignKey(e => e.SeriesId)

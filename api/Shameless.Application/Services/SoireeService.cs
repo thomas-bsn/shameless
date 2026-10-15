@@ -47,7 +47,7 @@ public sealed class SoireeService
     }
 
     /// <summary>
-    /// Ferme la Soirée ouverte si sa dernière activité (dernière game terminée, sinon l'ouverture)
+    /// Ferme la Soirée ouverte si sa dernière activité (saisie du résultat de la dernière game, sinon l'ouverture)
     /// date de plus que <paramref name="delai"/>. Renvoie la Soirée fermée, ou null.
     /// </summary>
     public async Task<Soiree?> CloseIfIdleAsync(TimeSpan delai)
@@ -59,7 +59,8 @@ public sealed class SoireeService
         var derniereGameTerminee = soiree.Series
             .SelectMany(s => s.Games)
             .Where(g => g.Status == GameStatuses.Completed)
-            .Select(g => (DateTime?)g.PlayedAt)
+            .Select(g => g.CompletedAt ?? g.PlayedAt)
+            .Cast<DateTime?>()
             .Max();
         var derniereActivite = derniereGameTerminee ?? soiree.OpenedAt;
 

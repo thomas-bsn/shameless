@@ -10,6 +10,9 @@ public class CustomGame
     public string? RiotMatchData { get; set; }
     public string Status { get; set; } = GameStatuses.Pending; // voir GameStatuses
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>Quand le résultat a été saisi, null tant que la game n'est pas terminée.</summary>
+    public DateTime? CompletedAt { get; set; }
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }
 

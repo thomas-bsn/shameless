@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +48,25 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
         Assert.Equal(id, await LireSoireeOuverteAsync(client));
 
         Factory.Clock.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMinutes(1));
+        await TickAsync(Factory.Services);
+        Assert.Null(await LireSoireeOuverteAsync(client));
+    }
+
+    [Fact]
+    public async Task Le_delai_court_depuis_la_fin_de_la_derniere_game_et_non_depuis_son_lancement()
+    {
+        var client = Factory.CreateSignedInClient();
+        var id = await OuvrirSoireeAsync(client);
+        var serie = await CreateSerieAsync(client, format: 1);
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        Factory.Clock.Advance(TimeSpan.FromHours(4));
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+
+        Factory.Clock.Advance(TimeSpan.FromHours(1));
+        await TickAsync(Factory.Services);
+        Assert.Equal(id, await LireSoireeOuverteAsync(client));
+
+        Factory.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(1));
         await TickAsync(Factory.Services);
         Assert.Null(await LireSoireeOuverteAsync(client));
     }
