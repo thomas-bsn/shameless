@@ -8,8 +8,13 @@ namespace Shameless.Infrastructure.Data.Repositories;
 public class PlayerRepository : IPlayerRepository
 {
     private readonly AppDbContext _db;
+    private readonly TimeProvider _clock;
 
-    public PlayerRepository(AppDbContext db) => _db = db;
+    public PlayerRepository(AppDbContext db, TimeProvider clock)
+    {
+        _db = db;
+        _clock = clock;
+    }
 
     public async Task<List<PlayerDto>> GetAllAsync()
     {
@@ -47,7 +52,7 @@ public class PlayerRepository : IPlayerRepository
             PUUID = dto.Puuid ?? throw new ArgumentException("Puuid is required"),
             RankTier = dto.RankTier,
             RankDivision = dto.RankDivision,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = _clock.GetUtcNow().UtcDateTime,
             LP = dto.Lp,
         };
 
