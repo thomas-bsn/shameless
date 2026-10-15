@@ -23,6 +23,8 @@ public sealed class SoireeService
 
     public Task<Soiree?> GetOpenAsync() => _soirees.GetOpenAsync();
 
+    public Task<Soiree?> GetAsync(int id) => _soirees.GetByIdAsync(id);
+
     /// <summary>Ouvre une Soirée. Renvoie null si une Soirée est déjà ouverte.</summary>
     public async Task<Soiree?> OpenAsync()
     {

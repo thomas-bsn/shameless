@@ -10,11 +10,13 @@ public sealed class SoireesController : ControllerBase
 {
     private readonly SoireeService _soireeService;
     private readonly PickerService _pickerService;
+    private readonly SeriesService _seriesService;
 
-    public SoireesController(SoireeService soireeService, PickerService pickerService)
+    public SoireesController(SoireeService soireeService, PickerService pickerService, SeriesService seriesService)
     {
         _soireeService = soireeService;
         _pickerService = pickerService;
+        _seriesService = seriesService;
     }
 
     [HttpGet("open")]
@@ -25,6 +27,18 @@ public sealed class SoireesController : ControllerBase
         if (soiree == null) return new OpenSoireeResponse(null);
 
         return new OpenSoireeResponse(SoireeResponse.From(soiree, await _pickerService.GetAsync(soiree.Id)));
+    }
+
+    /// <summary>Les Séries d'une Soirée et leur issue, de la plus ancienne à la plus récente.</summary>
+    [HttpGet("{id:int}/series")]
+    [ProducesResponseType<SoireeSeriesResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<SoireeSeriesResponse>> GetSeries(int id)
+    {
+        if (await _soireeService.GetAsync(id) == null)
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "Cette Soirée n'existe pas.");
+
+        return new SoireeSeriesResponse(await _seriesService.GetOfSoireeAsync(id));
     }
 
     [HttpPost]

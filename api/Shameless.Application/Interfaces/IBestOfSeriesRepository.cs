@@ -13,6 +13,9 @@ public interface IBestOfSeriesRepository
     /// <summary>Ids des Séries en cours, de la plus ancienne à la plus récente.</summary>
     Task<List<int>> GetEnCoursIdsAsync();
 
+    /// <summary>Ids des Séries d'une Soirée, de la plus ancienne à la plus récente.</summary>
+    Task<List<int>> GetIdsBySoireeAsync(int soireeId);
+
     /// <summary>Marque la Série pour suppression, avec sa composition ; effectif au prochain SaveChangesAsync.</summary>
     void Remove(BestOfSeries series);
 

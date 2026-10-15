@@ -63,7 +63,7 @@ function PickerPage() {
           <CardContent className="flex flex-col items-start gap-3">
             <p className="text-muted-foreground">Aucune Soirée n'est ouverte : ouvre-en une pour lancer le Picker.</p>
             <Button asChild variant="outline">
-              <Link to="/">Retour à l'accueil</Link>
+              <Link to="/soiree">Aller à la Soirée</Link>
             </Button>
           </CardContent>
         </Card>

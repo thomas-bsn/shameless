@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Shameless.Tests.Integration.Infrastructure;
@@ -113,10 +114,55 @@ public class SoireeTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 
+    [Fact]
+    public async Task Les_series_d_une_soiree_se_lisent_avec_leur_issue_de_la_plus_ancienne_a_la_plus_recente()
+    {
+        var client = Factory.CreateSignedInClient();
+        var gagnee = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, gagnee.SeriesId, "B");
+        var revanche = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{gagnee.SeriesId}/rematch", new { format = 3 }, Ct));
+        var soireeId = (await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct))).GetProperty("soiree").GetProperty("id").GetInt32();
+
+        var lues = await ReadJsonAsync(await client.GetAsync($"/soirees/{soireeId}/series", Ct));
+
+        var series = lues.GetProperty("series").EnumerateArray().ToList();
+        Assert.Equal([gagnee.SeriesId, revanche.GetProperty("seriesId").GetInt32()],
+            series.Select(s => s.GetProperty("seriesId").GetInt32()));
+        Assert.Equal("Gagnee", series[0].GetProperty("outcome").GetString());
+        Assert.Equal("B", series[0].GetProperty("winningTeam").GetString());
+        Assert.Equal((0, 1), (series[0].GetProperty("teamAWins").GetInt32(), series[0].GetProperty("teamBWins").GetInt32()));
+        Assert.Equal("EnCours", series[1].GetProperty("outcome").GetString());
+    }
+
+    [Fact]
+    public async Task Les_series_d_une_autre_soiree_ne_sont_pas_listees()
+    {
+        var client = Factory.CreateSignedInClient();
+        var ancienne = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, ancienne.SeriesId, "A");
+        var ancienneId = (await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct))).GetProperty("soiree").GetProperty("id").GetInt32();
+        await ReadJsonAsync(await client.PostAsync($"/soirees/{ancienneId}/close", null, Ct));
+        var nouvelleId = await OpenSoireeAsync(client);
+
+        var lues = await ReadJsonAsync(await client.GetAsync($"/soirees/{nouvelleId}/series", Ct));
+
+        Assert.Empty(lues.GetProperty("series").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Les_series_d_une_soiree_inexistante_repondent_404()
+    {
+        var response = await Factory.CreateSignedInClient().GetAsync("/soirees/999/series", Ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
     [Theory]
     [InlineData("POST", "/soirees")]
     [InlineData("GET", "/soirees/open")]
     [InlineData("POST", "/soirees/1/close")]
+    [InlineData("GET", "/soirees/1/series")]
     public async Task Un_visiteur_non_connecte_est_refuse(string method, string url)
     {
         var response = await Factory.CreateAnonymousClient().SendAsync(new HttpRequestMessage(new HttpMethod(method), url), Ct);
