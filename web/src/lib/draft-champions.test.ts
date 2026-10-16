@@ -27,22 +27,17 @@ const at = (iso: string) => new Date(iso).getTime();
 
 describe("secondesRestantes", () => {
   it("compte jusqu'à l'échéance du tour quand l'API la donne", () => {
-    const tour = { commenceLe: "2026-10-16T20:00:00Z", echeance: "2026-10-16T20:00:45Z" };
+    const tour = { echeance: "2026-10-16T20:00:45Z" };
     expect(secondesRestantes(tour, at("2026-10-16T20:00:30Z"))).toBe(15);
   });
 
-  it("sans échéance, compte 60 secondes depuis le début du tour", () => {
-    const tour = { commenceLe: "2026-10-16T20:00:00Z" };
-    expect(secondesRestantes(tour, at("2026-10-16T20:00:12Z"))).toBe(48);
-  });
-
   it("lit une date sans fuseau comme de l'UTC (timestamp sans fuseau de l'API)", () => {
-    const tour = { commenceLe: "2026-10-16T20:00:00" };
+    const tour = { echeance: "2026-10-16T20:01:00" };
     expect(secondesRestantes(tour, at("2026-10-16T20:00:50Z"))).toBe(10);
   });
 
   it("arrondit à la seconde supérieure et ne descend pas sous zéro", () => {
-    const tour = { commenceLe: "2026-10-16T20:00:00Z" };
+    const tour = { echeance: "2026-10-16T20:01:00Z" };
     expect(secondesRestantes(tour, at("2026-10-16T20:00:10.400Z"))).toBe(50);
     expect(secondesRestantes(tour, at("2026-10-16T20:02:00Z"))).toBe(0);
   });
@@ -66,7 +61,7 @@ type Draft = Pick<Schemas["DraftChampionsResponse"], "equipeBlue" | "terminee" |
 const enCours = (tour: number, equipe: string, actions: Schemas["ActionDraftResponse"][] = []): Draft => ({
   equipeBlue: "B",
   terminee: false,
-  tourCourant: { numero: tour, action: "ban", side: "blue", equipe, commenceLe: "2026-10-16T20:00:00Z" },
+  tourCourant: { numero: tour, action: "ban", side: "blue", equipe, commenceLe: "2026-10-16T20:00:00Z", echeance: "2026-10-16T20:01:00Z" },
   actions,
 });
 

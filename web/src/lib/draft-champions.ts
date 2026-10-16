@@ -79,22 +79,15 @@ export function filtrerChampions<C extends Pick<Schemas["ChampionResponse"], "id
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
 
-/** Le délai d'un tour de la Draft de champions, tant que l'API ne donne pas son échéance. */
-const DELAI_TOUR_MS = 60_000;
-
 /** Une date de l'API ; sans fuseau (timestamp sans fuseau en base), c'est de l'UTC. */
 function instantUtc(iso: string): number {
   return Date.parse(/(Z|[+-]\d{2}:?\d{2})$/i.test(iso) ? iso : `${iso}Z`);
 }
 
-/**
- * Les secondes qui restent pour jouer le tour courant. L'échéance vient de l'API (#41) ; à défaut,
- * le tour dure 60 secondes depuis son début.
- */
+/** Les secondes qui restent pour jouer le tour courant, jusqu'à son échéance donnée par l'API. */
 export function secondesRestantes(
-  tour: { commenceLe: string; echeance?: string | null },
+  tour: Pick<Schemas["TourCourantResponse"], "echeance">,
   maintenant: number = Date.now(),
 ): number {
-  const echeance = tour.echeance ? instantUtc(tour.echeance) : instantUtc(tour.commenceLe) + DELAI_TOUR_MS;
-  return Math.max(0, Math.ceil((echeance - maintenant) / 1000));
+  return Math.max(0, Math.ceil((instantUtc(tour.echeance) - maintenant) / 1000));
 }
