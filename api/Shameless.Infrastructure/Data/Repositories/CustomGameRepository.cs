@@ -65,6 +65,7 @@ public class CustomGameRepository : ICustomGameRepository
         return await _db.CustomGameParticipants
             .Include(p => p.CustomGame)
             .Where(p => p.PlayerId == playerId
+                        && p.CustomGame.Status == GameStatuses.Completed
                         && p.CustomGame.PlayedAt.Year == month.Year
                         && p.CustomGame.PlayedAt.Month == month.Month)
             .ToListAsync();

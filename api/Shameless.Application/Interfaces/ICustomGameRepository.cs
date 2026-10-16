@@ -25,6 +25,7 @@ public interface ICustomGameRepository
     /// </summary>
     Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId);
     Task<List<CustomGame>> GetByMonthAsync(DateTime month);
+    /// <summary>Les participations du joueur aux games terminées du mois (selon la date de lancement).</summary>
     Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month);
 
     /// <summary>

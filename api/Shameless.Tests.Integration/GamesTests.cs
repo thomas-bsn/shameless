@@ -92,6 +92,20 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Une_game_lancee_mais_pas_terminee_ne_compte_pas_dans_les_games_du_mois()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 5);
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await PlayGameAsync(client, serie.SeriesId);
+
+        // Deux games terminées seulement : pas d'ajustement de winrate avant trois games.
+        var cost = await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamA[0]}/cost", Ct));
+        Assert.Equal(0, cost.GetProperty("winrateAdjustment").GetInt32());
+    }
+
+    [Fact]
     public async Task Le_cost_est_recalcule_apres_chaque_game_et_compte_les_victoires_de_l_equipe_quel_que_soit_son_side()
     {
         var client = Factory.CreateSignedInClient();
