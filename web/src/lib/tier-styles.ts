@@ -29,3 +29,8 @@ export const costTierClasses: Record<CostTier, string> = {
 export function sideTextClass(side: string): string {
   return side === "red" ? "text-red-400" : "text-sky-400";
 }
+
+/** Couleur de la bordure d'un Side, assortie à son texte. */
+export function sideBorderClass(side: string): string {
+  return side === "red" ? "border-red-400" : "border-sky-400";
+}

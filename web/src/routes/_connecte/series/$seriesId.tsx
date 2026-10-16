@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { pendingGame, outcomeLabel, replacementCandidates } from "@/lib/series";
+import { pendingGame, outcomeLabel, replacementCandidates, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,6 @@ export const Route = createFileRoute("/_connecte/series/$seriesId")({
 
 type Series = Schemas["SeriesResponse"];
 
-const sideLabel = (side: string) => (side === "red" ? "Red side" : "Blue side");
 
 /** Après une action, relit la Série et la liste des séries de la Soirée. */
 function useRefreshSeries() {

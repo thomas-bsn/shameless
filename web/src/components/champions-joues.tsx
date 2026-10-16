@@ -1,6 +1,6 @@
 import type { Schemas } from "@/api/client";
 import { useChampions } from "@/lib/draft-champions-queries";
-import { sideTextClass } from "@/lib/tier-styles";
+import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 type Game = Schemas["SeriesGameResponse"];
@@ -26,7 +26,7 @@ export function ChampionsJoues({ game }: { game: Game }) {
           <ul
             key={equipe}
             aria-label={`Champions joués par l'Équipe ${equipe}`}
-            className={cn("flex flex-col gap-1 border-l-2 pl-2", side === "blue" ? "border-blue-500" : "border-red-500")}
+            className={cn("flex flex-col gap-1 border-l-2 pl-2", sideBorderClass(side))}
           >
             <li className={cn("text-xs font-medium", sideTextClass(side))}>Équipe {equipe}</li>
             {joueurs.map((j) => {

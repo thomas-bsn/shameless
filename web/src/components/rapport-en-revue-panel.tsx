@@ -6,11 +6,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useChampions } from "@/lib/draft-champions-queries";
+import { sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 
 type Revue = Schemas["RapportEnRevueResponse"];
 
-const sideLabel = (side: string) => (side === "red" ? "Red side" : "Blue side");
 
 /**
  * Le rapport du Companion en revue pour la game en attente : ses joueurs détectés ne sont pas la

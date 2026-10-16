@@ -20,6 +20,7 @@ import {
 } from "@/lib/draft-champions";
 import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
 import { problemStatus } from "@/lib/problem";
+import { sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -269,7 +270,7 @@ function CoteDraft({
     <Card role="group" aria-label={`Équipe ${equipe}, ${side} side`}>
       <CardHeader>
         <CardTitle className={sideTextClass(side)}>
-          Équipe {equipe} · {side === "blue" ? "Blue side" : "Red side"}
+          Équipe {equipe} · {sideLabel(side)}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
