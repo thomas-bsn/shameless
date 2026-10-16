@@ -440,6 +440,18 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDefaultValue(0m)
                         .HasColumnName("current_cost");
 
+                    b.Property<int?>("FlexLp")
+                        .HasColumnType("integer")
+                        .HasColumnName("flex_lp");
+
+                    b.Property<int?>("FlexRankDivision")
+                        .HasColumnType("integer")
+                        .HasColumnName("flex_rank_division");
+
+                    b.Property<string>("FlexRankTier")
+                        .HasColumnType("text")
+                        .HasColumnName("flex_rank_tier");
+
                     b.Property<bool>("IsPlacement")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

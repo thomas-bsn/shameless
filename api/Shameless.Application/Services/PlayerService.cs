@@ -37,7 +37,7 @@ public class PlayerService : IPlayerService
         var puuid = await _riot.GetPuuidFromRiotIdAsync(riotId);
         if (puuid == null) return null;
 
-        var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var rank = (await _riot.GetRanksFromPuuidAsync(puuid)).Solo;
         var (tier, division) = NormalizeRank(rank);
 
         return new RiotAccountPreview(
@@ -59,9 +59,11 @@ public class PlayerService : IPlayerService
         if (await _players.ExistsByPuuidAsync(puuid))
             throw new InvalidOperationException("Player already exists");
 
-        var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var ranks = await _riot.GetRanksFromPuuidAsync(puuid);
+        var rank = ranks.Solo;
         var mainRole = await _riot.GetMainRoleFromPuuidAsync(puuid);
         var (tier, division) = NormalizeRank(rank);
+        var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
 
         var player = new PlayerDto
         {
@@ -71,7 +73,10 @@ public class PlayerService : IPlayerService
             MainRole = mainRole,
             RankTier = tier,
             RankDivision = division,
-            Lp = rank?.LP
+            Lp = rank?.LP,
+            FlexRankTier = flexTier,
+            FlexRankDivision = flexDivision,
+            FlexLp = ranks.Flex?.LP
         };
 
         var created = await _players.AddAsync(player);
@@ -174,15 +179,18 @@ public class PlayerService : IPlayerService
 
             try
             {
-                var rank = await _riot.GetRankFromPuuidAsync(player.Puuid);
+                var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid);
 
-                if (rank != null)
+                // Une file absente de la réponse garde le dernier rang connu.
+                if (ranks.Solo is { } solo)
                 {
-                    var tier = rank.Tier?.ToUpper();
-                    var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
-                        ? null
-                        : (int?)ParseDivision(rank.Division);
-                    await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
+                    var (tier, division) = NormalizeRank(solo);
+                    await _players.UpdateRankAsync(player.Id, tier, division, solo.LP);
+                }
+                if (ranks.Flex is { } flex)
+                {
+                    var (tier, division) = NormalizeRank(flex);
+                    await _players.UpdateFlexRankAsync(player.Id, tier, division, flex.LP);
                 }
             }
             catch (Exception ex)

@@ -24,14 +24,6 @@ public sealed class RiotService : IRiotService
         _logger = logger;
     }
 
-    public async Task<RiotRankDto?> GetRankAsync(string riotId)
-    {
-        var puuid = await GetPuuidFromRiotIdAsync(riotId);
-        if (puuid == null) return null;
-
-        return await GetRankFromPuuidAsync(puuid);
-    }
-
     public async Task<string?> GetPuuidFromRiotIdAsync(string riotId)
     {
         var (gameName, tagLine) = SplitRiotId(riotId);
@@ -122,7 +114,7 @@ public sealed class RiotService : IRiotService
         }
     }
 
-    public async Task<RiotRankDto?> GetRankFromPuuidAsync(string puuid)
+    public async Task<RiotRanksDto> GetRanksFromPuuidAsync(string puuid)
     {
         try
         {
@@ -136,20 +128,12 @@ public sealed class RiotService : IRiotService
             var leagues = await res.Content.ReadFromJsonAsync<List<LeagueResponse>>();
             await Task.Delay(_options.RateLimitDelayMs);
 
-            var soloQueue = leagues?.FirstOrDefault(x => x.QueueType == "RANKED_SOLO_5x5");
-            if (soloQueue == null) return null;
-
-            return new RiotRankDto 
-            { 
-                Tier = soloQueue.Tier, 
-                Division = soloQueue.Rank, 
-                LP = soloQueue.LeaguePoints 
-            };
+            return new RiotRanksDto(Solo: Rank(leagues, "RANKED_SOLO_5x5"), Flex: Rank(leagues, "RANKED_FLEX_SR"));
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             _logger.LogWarning("No ranked data found for PUUID: {PUUID}", puuid);
-            return null;
+            return new RiotRanksDto(null, null);
         }
         catch (HttpRequestException ex)
         {
@@ -157,6 +141,11 @@ public sealed class RiotService : IRiotService
             throw;
         }
     }
+
+    private static RiotRankDto? Rank(List<LeagueResponse>? leagues, string queueType) =>
+        leagues?.FirstOrDefault(x => x.QueueType == queueType) is { } league
+            ? new RiotRankDto { Tier = league.Tier, Division = league.Rank, LP = league.LeaguePoints }
+            : null;
 
     private static (string GameName, string TagLine) SplitRiotId(string riotId)
     {

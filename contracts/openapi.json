@@ -195,6 +195,84 @@
         }
       }
     },
+    "/classements/5v5": {
+      "get": {
+        "tags": [
+          "Classements"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement5v5"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement5v5"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement5v5"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/classements/soloq": {
+      "get": {
+        "tags": [
+          "Classements"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassementSoloQ"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassementSoloQ"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassementSoloQ"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/code-companion": {
       "get": {
         "tags": [
@@ -3597,6 +3675,41 @@
           }
         }
       },
+      "Classement5v5": {
+        "required": [
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneClassement5v5"
+            }
+          }
+        }
+      },
+      "ClassementSoloQ": {
+        "required": [
+          "solo",
+          "flex"
+        ],
+        "type": "object",
+        "properties": {
+          "solo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneClassementSoloQ"
+            }
+          },
+          "flex": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneClassementSoloQ"
+            }
+          }
+        }
+      },
       "CodeCompanionResponse": {
         "required": [
           "seriesId",
@@ -4248,6 +4361,92 @@
           }
         }
       },
+      "LigneClassement5v5": {
+        "required": [
+          "playerId",
+          "prenom",
+          "riotId",
+          "gamesJouees",
+          "victoires",
+          "defaites",
+          "winrate"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "gamesJouees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "LigneClassementSoloQ": {
+        "required": [
+          "playerId",
+          "prenom",
+          "riotId",
+          "tier",
+          "division",
+          "lp"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "tier": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "division": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "lp": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "LinkPlayerRequest": {
         "required": [
           "playerId"
@@ -4551,6 +4750,9 @@
           "rankDivision",
           "mainRole",
           "lp",
+          "flexRankTier",
+          "flexRankDivision",
+          "flexLp",
           "peakTier",
           "peakDivision",
           "peakSeason",
@@ -4595,6 +4797,26 @@
             ]
           },
           "lp": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "flexRankTier": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "flexRankDivision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "flexLp": {
             "type": [
               "null",
               "integer"
@@ -5664,6 +5886,9 @@
     },
     {
       "name": "Champions"
+    },
+    {
+      "name": "Classements"
     },
     {
       "name": "Companion"

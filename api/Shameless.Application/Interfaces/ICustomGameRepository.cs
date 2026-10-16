@@ -28,6 +28,9 @@ public interface ICustomGameRepository
     /// <summary>Les participations du joueur aux games terminées du mois (selon la date de lancement).</summary>
     Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month);
 
+    /// <summary>Toutes les participations aux games terminées, avec leur game (y compris les Séries interrompues).</summary>
+    Task<List<CustomGameParticipant>> GetCompletedParticipationsAsync();
+
     /// <summary>
     /// Enregistre les changements en une transaction. Renvoie false si une commande simultanée a
     /// modifié une game ou sa Série entre-temps : rien n'est enregistré.

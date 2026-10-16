@@ -207,6 +207,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/classements/5v5": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Classement5v5"];
+                        "application/json": components["schemas"]["Classement5v5"];
+                        "text/json": components["schemas"]["Classement5v5"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/classements/soloq": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClassementSoloQ"];
+                        "application/json": components["schemas"]["ClassementSoloQ"];
+                        "text/json": components["schemas"]["ClassementSoloQ"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/code-companion": {
         parameters: {
             query?: never;
@@ -3167,6 +3259,13 @@ export interface components {
             name: string;
             imageUrl: string;
         };
+        Classement5v5: {
+            joueurs: components["schemas"]["LigneClassement5v5"][];
+        };
+        ClassementSoloQ: {
+            solo: components["schemas"]["LigneClassementSoloQ"][];
+            flex: components["schemas"]["LigneClassementSoloQ"][];
+        };
         CodeCompanionResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -3321,6 +3420,31 @@ export interface components {
             liensCapitaineEnvoyes: boolean;
             lienSpectateur: null | string;
         };
+        LigneClassement5v5: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            /** Format: int32 */
+            gamesJouees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+        };
+        LigneClassementSoloQ: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            tier: null | string;
+            /** Format: int32 */
+            division: null | number;
+            /** Format: int32 */
+            lp: null | number;
+        };
         LinkPlayerRequest: {
             /** Format: int32 */
             playerId: number;
@@ -3406,6 +3530,11 @@ export interface components {
             mainRole: null | string;
             /** Format: int32 */
             lp: null | number;
+            flexRankTier: null | string;
+            /** Format: int32 */
+            flexRankDivision: null | number;
+            /** Format: int32 */
+            flexLp: null | number;
             peakTier: null | string;
             /** Format: int32 */
             peakDivision: null | number;

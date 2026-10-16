@@ -56,6 +56,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Prenom).HasColumnType("text");
             entity.Property(e => e.RiotId).HasColumnType("text");
             entity.Property(e => e.RankTier).HasColumnType("text");
+            entity.Property(e => e.FlexRankTier).HasColumnType("text");
             entity.Property(e => e.MainRole).HasColumnType("text");
             entity.Property(e => e.PeakTier).HasColumnType("text");
             entity.Property(e => e.PeakSeason).HasMaxLength(10);
