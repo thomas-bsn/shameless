@@ -88,11 +88,26 @@ public sealed class DraftChampionsService
     }
 
     /// <summary>
+    /// L'organisateur connecté joue le tour <paramref name="tour"/> à la place de l'Équipe attendue, une
+    /// fois l'échéance du tour atteinte. Avant, le tour reste au capitaine.
+    /// </summary>
+    public async Task<CommandResult<DraftChampions>> JouerALaPlaceAsync(int gameId, int tour, string? championId)
+    {
+        var draft = await _drafts.GetByGameAsync(gameId);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.");
+
+        return await JouerAsync(draft, tour, championId, _ => draft.EcheanceAtteinte(Maintenant()),
+            equipe => $"Le capitaine de l'Équipe {equipe} a jusqu'à l'échéance du tour pour jouer : vous pourrez jouer à sa place ensuite.");
+    }
+
+    /// <summary>
     /// Joue le tour courant si c'est bien le tour <paramref name="tour"/>, que l'appelant peut jouer pour
     /// l'Équipe attendue, et que le champion existe et n'est ni banni ni pick dans la game.
     /// </summary>
     private async Task<CommandResult<DraftChampions>> JouerAsync(
-        DraftChampions draft, int tour, string? championId, Func<string, bool> peutJouerPour)
+        DraftChampions draft, int tour, string? championId, Func<string, bool> peutJouerPour,
+        Func<string, string>? refus = null)
     {
         var courant = draft.TourCourant;
         if (courant == null || draft.Game.Status != GameStatuses.Pending)
@@ -104,7 +119,7 @@ public sealed class DraftChampionsService
 
         var equipe = draft.EquipeDuTour(courant.Numero);
         if (!peutJouerPour(equipe))
-            return CommandResult<DraftChampions>.Conflict($"Le tour {courant.Numero} revient à l'Équipe {equipe}.");
+            return CommandResult<DraftChampions>.Conflict(refus?.Invoke(equipe) ?? $"Le tour {courant.Numero} revient à l'Équipe {equipe}.");
 
         var catalogue = await _catalog.GetAllAsync();
         if (string.IsNullOrEmpty(championId) || catalogue.All(c => c.Id != championId))

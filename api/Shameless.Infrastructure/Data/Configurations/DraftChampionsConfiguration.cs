@@ -17,6 +17,7 @@ public sealed class DraftChampionsConfiguration : IEntityTypeConfiguration<Draft
         entity.Ignore(e => e.EquipeBlue);
         entity.Ignore(e => e.EstTerminee);
         entity.Ignore(e => e.TourCourant);
+        entity.Ignore(e => e.Echeance);
 
         // Une seule Draft de champions par game ; elle disparaît avec sa game (Série annulée).
         entity.HasOne(e => e.Game)

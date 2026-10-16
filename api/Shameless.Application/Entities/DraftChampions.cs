@@ -17,6 +17,15 @@ public class DraftChampions
     /// <summary>Quand le tour courant a commencé : à l'ouverture, puis à chaque action jouée.</summary>
     public DateTime TourCommenceLe { get; set; }
 
+    /// <summary>Le délai de chaque action de capitaine ; passé l'échéance, l'organisateur peut jouer à sa place.</summary>
+    public static readonly TimeSpan DelaiParTour = TimeSpan.FromSeconds(60);
+
+    /// <summary>L'échéance du tour courant : <see cref="DelaiParTour"/> après son début.</summary>
+    public DateTime Echeance => TourCommenceLe + DelaiParTour;
+
+    /// <summary>L'échéance du tour courant est atteinte à <paramref name="maintenant"/>.</summary>
+    public bool EcheanceAtteinte(DateTime maintenant) => maintenant >= Echeance;
+
     /// <summary>
     /// Jeton de concurrence : chaque action l'incrémente ; de deux actions simultanées sur le même
     /// tour, une seule est enregistrée.
