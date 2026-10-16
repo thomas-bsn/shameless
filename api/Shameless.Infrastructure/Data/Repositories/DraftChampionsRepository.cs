@@ -25,5 +25,6 @@ public class DraftChampionsRepository : IDraftChampionsRepository
             .Include(d => d.Actions.OrderBy(a => a.Numero))
             .Include(d => d.Game).ThenInclude(g => g.Participants).ThenInclude(p => p.Player)
             .Include(d => d.Game).ThenInclude(g => g.Series).ThenInclude(s => s!.Players)
+            .Include(d => d.Game).ThenInclude(g => g.Series).ThenInclude(s => s!.Games).ThenInclude(g => g.Participants)
             .AsSplitQuery();
 }
