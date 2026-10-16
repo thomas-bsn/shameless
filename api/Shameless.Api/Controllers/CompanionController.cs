@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
+using Shameless.Api.Models.Requests.Companion;
 using Shameless.Api.Models.Responses.Companion;
 using Shameless.Application.Services;
 
@@ -14,8 +15,13 @@ namespace Shameless.Api.Controllers;
 public sealed class CompanionController : ControllerBase
 {
     private readonly CodeCompanionService _codes;
+    private readonly RapportsCompanionService _rapports;
 
-    public CompanionController(CodeCompanionService codes) => _codes = codes;
+    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports)
+    {
+        _codes = codes;
+        _rapports = rapports;
+    }
 
     /// <summary>Le code Companion de la Série, à saisir dans le Companion.</summary>
     [HttpGet("series/{id:int}/code-companion")]
@@ -52,4 +58,25 @@ public sealed class CompanionController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     public ActionResult<SerieDuCompanionResponse> Resoudre(string code) =>
         SerieDuCompanionResponse.From(this.SerieDuCodeCompanion());
+
+    /// <summary>
+    /// Sans connexion : le rapport de fin de game du Companion. Si les joueurs détectés sont les
+    /// participants de la game en attente de la Série du code (Remplacements compris), chacun sur son
+    /// Side, la game est terminée avec le vainqueur du rapport, comme une saisie manuelle, et garde ses
+    /// données Riot et les champions joués. Rapport mal formé : 400 ; aucune game en attente ou
+    /// composition différente : 409.
+    /// </summary>
+    [HttpPost("companion/{code}/rapports")]
+    [AccesParCodeCompanion]
+    [ProducesResponseType<RapportRecuResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<RapportRecuResponse>> Rapporter(string code, RapportCompanionRequest request)
+    {
+        var result = await _rapports.RecevoirAsync(this.SerieDuCodeCompanion().Id, request.ToRapport());
+        if (!result.IsOk) return this.Refusal(result);
+
+        return RapportRecuResponse.From(result.Value!);
+    }
 }

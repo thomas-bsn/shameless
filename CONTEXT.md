@@ -123,6 +123,13 @@ Companion pour lui associer cette Série, sans connexion. Il ne sert qu'à envoy
 rapports de sa Série, tant qu'elle est en cours : il ne vaut ni Lien capitaine, ni Lien  
 spectateur, ni commande d'organisateur. L'organisateur le lit et le renouvelle sur la  
 page de la Série ; l'ancien est alors refusé. Porté par la Série (`BestOfSeries.CodeCompanion`).
+- **Rapport** : ce que le Companion envoie avec le Code Companion à la fin d'une game :  
+l'identifiant Riot stable de la partie et, pour les dix joueurs, leur PUUID, Side,  
+champion joué, victoire et stats brutes. La Série vient du code, jamais du rapport. Un  
+rapport **conforme** (joueurs détectés = participants de la game en attente, chacun sur  
+son Side, Remplacements compris) termine cette game comme une saisie manuelle, qui reste  
+le secours ; la game garde alors ses données Riot et le champion joué de chaque joueur.  
+Sans game en attente, le rapport est refusé (`RapportDeGame`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips.
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.

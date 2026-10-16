@@ -387,6 +387,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/companion/{code}/rapports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    code: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RapportCompanionRequest"];
+                    "text/json": components["schemas"]["RapportCompanionRequest"];
+                    "application/*+json": components["schemas"]["RapportCompanionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportRecuResponse"];
+                        "application/json": components["schemas"]["RapportRecuResponse"];
+                        "text/json": components["schemas"]["RapportRecuResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/draft-champions": {
         parameters: {
             query?: never;
@@ -2943,6 +3024,11 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        ChampionJoueResponse: {
+            /** Format: int32 */
+            playerId: number;
+            championId: string;
+        };
         ChampionResponse: {
             id: string;
             key: string;
@@ -3038,6 +3124,14 @@ export interface components {
             tour: number;
             championId: string;
         };
+        JoueurDuRapportRequest: {
+            puuid: string;
+            side: string;
+            championId: string;
+            victoire: boolean;
+            stats: components["schemas"]["JsonElement"];
+        };
+        JsonElement: unknown;
         LancerDraftRequest: {
             capitaines: components["schemas"]["DesignationCapitaines"];
             /** Format: int32 */
@@ -3168,6 +3262,23 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
+        RapportCompanionRequest: {
+            riotMatchId: string;
+            donnees: components["schemas"]["JsonElement"];
+            joueurs: components["schemas"]["JoueurDuRapportRequest"][];
+        };
+        RapportRecuResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            gameId: number;
+            winner: string;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            outcome: components["schemas"]["SeriesOutcome"];
+        };
         RematchRequest: {
             /** Format: int32 */
             format: number;
@@ -3221,6 +3332,8 @@ export interface components {
             winner: null | string;
             teamA: components["schemas"]["GameParticipantDto"][];
             teamB: components["schemas"]["GameParticipantDto"][];
+            riotMatchId: null | string;
+            championsJoues: components["schemas"]["ChampionJoueResponse"][];
         };
         SeriesHistoryResponse: {
             /** Format: int32 */
@@ -3234,7 +3347,7 @@ export interface components {
             games: components["schemas"]["GameHistoryResponse"][];
         };
         /** @enum {unknown} */
-        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue" | null;
+        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue";
         SeriesResponse: {
             /** Format: int32 */
             seriesId: number;

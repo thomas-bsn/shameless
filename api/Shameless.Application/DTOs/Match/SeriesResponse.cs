@@ -31,7 +31,9 @@ public record SeriesGameResponse(
     string TeamBSide,
     string? Winner,
     List<GameParticipantDto> TeamA,
-    List<GameParticipantDto> TeamB
+    List<GameParticipantDto> TeamB,
+    string? RiotMatchId, // l'identifiant Riot de la partie, donné par le rapport du Companion ; null sans rapport
+    List<ChampionJoueResponse> ChampionsJoues // vide sans rapport du Companion
 )
 {
     public static SeriesGameResponse From(CustomGame game) => new(
@@ -41,5 +43,14 @@ public record SeriesGameResponse(
         TeamBSide: game.TeamBSide,
         Winner: game.WinningTeam,
         TeamA: game.ParticipantsOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player)).ToList(),
-        TeamB: game.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList());
+        TeamB: game.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList(),
+        RiotMatchId: game.RiotMatchId,
+        ChampionsJoues: game.Participants
+            .Where(p => p.ChampionId != null)
+            .OrderBy(p => p.PlayerId)
+            .Select(p => new ChampionJoueResponse(p.PlayerId, p.ChampionId!))
+            .ToList());
 }
+
+/// <summary>Le champion réellement joué par un participant de la game (id Data Dragon, ex. "LeeSin").</summary>
+public record ChampionJoueResponse(int PlayerId, string ChampionId);

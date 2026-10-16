@@ -212,6 +212,11 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ChampionId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("champion_id");
+
                     b.Property<int>("CustomGameId")
                         .HasColumnType("integer")
                         .HasColumnName("custom_game_id");

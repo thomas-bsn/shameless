@@ -181,6 +181,16 @@ public sealed class SeriesService
         if (series is { IsEnCours: false })
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : son score ne change plus.");
 
+        return await TerminerAsync(game, series, winningTeam);
+    }
+
+    /// <summary>
+    /// Termine une game en attente avec son Équipe gagnante, que le résultat vienne d'une saisie
+    /// manuelle ou d'un rapport du Companion : score et issue de la Série recalculés, puis cost des
+    /// joueurs. Les vérifications (game en attente, Série en cours) sont faites par l'appelant.
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> TerminerAsync(CustomGame game, BestOfSeries? series, string winningTeam)
+    {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
         game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
@@ -189,7 +199,7 @@ public sealed class SeriesService
         if (!await _games.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
 
-        await _costs.RecalculateCosts(gameId);
+        await _costs.RecalculateCosts(game.Id);
 
         return CommandResult<CustomGame>.Ok(game);
     }

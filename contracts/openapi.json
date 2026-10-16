@@ -384,6 +384,105 @@
         }
       }
     },
+    "/companion/{code}/rapports": {
+      "post": {
+        "tags": [
+          "Companion"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RapportCompanionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RapportCompanionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RapportCompanionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RapportRecuResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RapportRecuResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RapportRecuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/draft-champions": {
       "post": {
         "tags": [
@@ -3319,6 +3418,22 @@
           "Aleatoire"
         ]
       },
+      "ChampionJoueResponse": {
+        "required": [
+          "playerId",
+          "championId"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "championId": {
+            "type": "string"
+          }
+        }
+      },
       "ChampionResponse": {
         "required": [
           "id",
@@ -3698,6 +3813,34 @@
           }
         }
       },
+      "JoueurDuRapportRequest": {
+        "required": [
+          "puuid",
+          "side",
+          "championId",
+          "victoire",
+          "stats"
+        ],
+        "type": "object",
+        "properties": {
+          "puuid": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "championId": {
+            "type": "string"
+          },
+          "victoire": {
+            "type": "boolean"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "JsonElement": { },
       "LancerDraftRequest": {
         "required": [
           "capitaines",
@@ -4221,6 +4364,63 @@
           }
         }
       },
+      "RapportCompanionRequest": {
+        "required": [
+          "riotMatchId",
+          "donnees",
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "riotMatchId": {
+            "type": "string"
+          },
+          "donnees": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuRapportRequest"
+            }
+          }
+        }
+      },
+      "RapportRecuResponse": {
+        "required": [
+          "seriesId",
+          "gameId",
+          "winner",
+          "teamAWins",
+          "teamBWins",
+          "outcome"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winner": {
+            "type": "string"
+          },
+          "teamAWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamBWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/SeriesOutcome"
+          }
+        }
+      },
       "RematchRequest": {
         "required": [
           "format",
@@ -4390,7 +4590,9 @@
           "teamBSide",
           "winner",
           "teamA",
-          "teamB"
+          "teamB",
+          "riotMatchId",
+          "championsJoues"
         ],
         "type": "object",
         "properties": {
@@ -4423,6 +4625,18 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "riotMatchId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "championsJoues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChampionJoueResponse"
             }
           }
         }
@@ -4479,8 +4693,7 @@
           "EnCours",
           "Gagnee",
           "Nulle",
-          "Interrompue",
-          null
+          "Interrompue"
         ]
       },
       "SeriesResponse": {

@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
+import { ChampionsJoues } from "@/components/champions-joues";
 import { CodeCompanionPanel } from "@/components/code-companion-panel";
 import { DraftChampionsOrganisateur, DraftChampionsTerminee } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -356,6 +357,7 @@ function GamesList({ series }: { series: Series }) {
                 <Badge variant="outline">En attente</Badge>
               )}
             </div>
+            <ChampionsJoues game={g} />
             {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
           </li>
         ))}

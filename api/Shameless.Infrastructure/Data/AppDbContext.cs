@@ -1,4 +1,5 @@
-﻿using Shameless.Application.Entities;
+﻿using Shameless.Application.Companion;
+using Shameless.Application.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shameless.Infrastructure.Data.Configurations;
 
@@ -134,6 +135,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Side).HasColumnName("team").HasMaxLength(10).IsRequired();
             entity.Ignore(e => e.HasWon);
             entity.Property(e => e.RiotParticipantData).HasColumnType("jsonb");
+            entity.Property(e => e.ChampionId).HasMaxLength(RapportDeGame.LongueurMaxChampionId);
 
             entity.HasOne(e => e.CustomGame)
                   .WithMany(g => g.Participants)
