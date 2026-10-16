@@ -1,4 +1,5 @@
 using Shameless.Application.ChampionDraft;
+using Shameless.Application.Picker;
 
 namespace Shameless.Application.Entities;
 
@@ -48,6 +49,12 @@ public class DraftChampions
 
     /// <summary>L'Équipe qui joue le tour <paramref name="numero"/>.</summary>
     public string EquipeDuTour(int numero) => OrdreTournament.EquipeAttendue(numero, EquipeBlue);
+
+    /// <summary>
+    /// Le rôle de l'Autorole du joueur dans la Série, révélé une fois la Draft de champions terminée ;
+    /// null avant, ou sans Autorole.
+    /// </summary>
+    public Role? RoleRevele(int playerId) => EstTerminee ? Game.Series?.RoleOf(playerId) : null;
 
     /// <summary>Le champion est déjà banni ou pick dans cette game.</summary>
     public bool AUtilise(string championId) => Actions.Any(a => a.ChampionId == championId);

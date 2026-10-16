@@ -55,9 +55,7 @@ public sealed record DraftChampionsResponse(
 
         List<GameParticipantDto> Joueurs(string equipe) =>
             game.ParticipantsOf(equipe)
-                .Select(p => GameParticipantDto.From(p.Player, draft.EstTerminee
-                    ? series.Players.FirstOrDefault(s => s.PlayerId == p.PlayerId)?.Role
-                    : null))
+                .Select(p => GameParticipantDto.From(p.Player, draft.RoleRevele(p.PlayerId)))
                 .ToList();
     }
 }
