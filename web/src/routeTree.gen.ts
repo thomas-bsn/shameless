@@ -21,6 +21,8 @@ import { Route as ConnecteJoueursNouveauRouteImport } from './routes/_connecte/j
 import { Route as ConnecteSeriesSeriesIdRouteImport } from './routes/_connecte/series/$seriesId'
 import { Route as ConnecteSoireeIndexRouteImport } from './routes/_connecte/soiree/index'
 import { Route as ConnecteSoireePickerRouteImport } from './routes/_connecte/soiree_.picker'
+import { Route as DraftCapitaineLienRouteImport } from './routes/draft/capitaine.$lien'
+import { Route as DraftSpectateurLienRouteImport } from './routes/draft/spectateur.$lien'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -81,6 +83,16 @@ const ConnecteSoireePickerRoute = ConnecteSoireePickerRouteImport.update({
   path: '/soiree/picker',
   getParentRoute: () => ConnecteRoute,
 } as any)
+const DraftCapitaineLienRoute = DraftCapitaineLienRouteImport.update({
+  id: '/draft/capitaine/$lien',
+  path: '/draft/capitaine/$lien',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DraftSpectateurLienRoute = DraftSpectateurLienRouteImport.update({
+  id: '/draft/spectateur/$lien',
+  path: '/draft/spectateur/$lien',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,6 +104,8 @@ export interface FileRoutesByFullPath {
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/soiree/picker': typeof ConnecteSoireePickerRoute
+  '/draft/capitaine/$lien': typeof DraftCapitaineLienRoute
+  '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/joueurs/': typeof ConnecteJoueursIndexRoute
   '/soiree/': typeof ConnecteSoireeIndexRoute
 }
@@ -105,6 +119,8 @@ export interface FileRoutesByTo {
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/soiree/picker': typeof ConnecteSoireePickerRoute
+  '/draft/capitaine/$lien': typeof DraftCapitaineLienRoute
+  '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/joueurs': typeof ConnecteJoueursIndexRoute
   '/soiree': typeof ConnecteSoireeIndexRoute
 }
@@ -120,6 +136,8 @@ export interface FileRoutesById {
   '/_connecte/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
   '/_connecte/series/$seriesId': typeof ConnecteSeriesSeriesIdRoute
   '/_connecte/soiree_/picker': typeof ConnecteSoireePickerRoute
+  '/draft/capitaine/$lien': typeof DraftCapitaineLienRoute
+  '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/_connecte/joueurs/': typeof ConnecteJoueursIndexRoute
   '/_connecte/soiree/': typeof ConnecteSoireeIndexRoute
 }
@@ -135,6 +153,8 @@ export interface FileRouteTypes {
     | '/joueurs/nouveau'
     | '/series/$seriesId'
     | '/soiree/picker'
+    | '/draft/capitaine/$lien'
+    | '/draft/spectateur/$lien'
     | '/joueurs/'
     | '/soiree/'
   fileRoutesByTo: FileRoutesByTo
@@ -148,6 +168,8 @@ export interface FileRouteTypes {
     | '/joueurs/nouveau'
     | '/series/$seriesId'
     | '/soiree/picker'
+    | '/draft/capitaine/$lien'
+    | '/draft/spectateur/$lien'
     | '/joueurs'
     | '/soiree'
   id:
@@ -162,6 +184,8 @@ export interface FileRouteTypes {
     | '/_connecte/joueurs/nouveau'
     | '/_connecte/series/$seriesId'
     | '/_connecte/soiree_/picker'
+    | '/draft/capitaine/$lien'
+    | '/draft/spectateur/$lien'
     | '/_connecte/joueurs/'
     | '/_connecte/soiree/'
   fileRoutesById: FileRoutesById
@@ -170,6 +194,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConnecteRoute: typeof ConnecteRouteWithChildren
   ConnexionRoute: typeof ConnexionRoute
+  DraftCapitaineLienRoute: typeof DraftCapitaineLienRoute
+  DraftSpectateurLienRoute: typeof DraftSpectateurLienRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -258,6 +284,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnecteSoireePickerRouteImport
       parentRoute: typeof ConnecteRoute
     }
+    '/draft/capitaine/$lien': {
+      id: '/draft/capitaine/$lien'
+      path: '/draft/capitaine/$lien'
+      fullPath: '/draft/capitaine/$lien'
+      preLoaderRoute: typeof DraftCapitaineLienRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/draft/spectateur/$lien': {
+      id: '/draft/spectateur/$lien'
+      path: '/draft/spectateur/$lien'
+      fullPath: '/draft/spectateur/$lien'
+      preLoaderRoute: typeof DraftSpectateurLienRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -293,6 +333,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConnecteRoute: ConnecteRouteWithChildren,
   ConnexionRoute: ConnexionRoute,
+  DraftCapitaineLienRoute: DraftCapitaineLienRoute,
+  DraftSpectateurLienRoute: DraftSpectateurLienRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
