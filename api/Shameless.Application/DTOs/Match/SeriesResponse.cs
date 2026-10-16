@@ -38,7 +38,7 @@ public record SeriesGameResponse(
 )
 {
     /// <param name="joueursConnus">Les joueurs enregistrés, par PUUID, pour reconnaître les joueurs inattendus d'un rapport en revue.</param>
-    public static SeriesGameResponse From(CustomGame game, IReadOnlyDictionary<string, Player>? joueursConnus = null) => new(
+    public static SeriesGameResponse From(CustomGame game, IReadOnlyDictionary<string, Player> joueursConnus) => new(
         Id: game.Id,
         Status: game.Status,
         TeamASide: game.TeamASide,
@@ -53,7 +53,7 @@ public record SeriesGameResponse(
             .Select(p => new ChampionJoueResponse(p.PlayerId, p.ChampionId!))
             .ToList(),
         RapportEnRevue: game.RapportEnRevue is { } revue
-            ? RapportEnRevueResponse.From(revue, game, joueursConnus ?? new Dictionary<string, Player>())
+            ? RapportEnRevueResponse.From(revue, game, joueursConnus)
             : null);
 }
 

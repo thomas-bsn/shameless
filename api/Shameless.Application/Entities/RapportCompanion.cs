@@ -45,8 +45,18 @@ public class RapportCompanion
         RecuLe = recuLe
     };
 
+    // Le rapport lu, et le contenu dont il vient : relu seulement si le contenu change.
+    private (string Contenu, RapportDeGame Rapport)? _lu;
+
     /// <summary>Le rapport tel que reçu.</summary>
     public RapportDeGame Rapport()
+    {
+        if (_lu is not { } lu || !ReferenceEquals(lu.Contenu, Contenu))
+            _lu = lu = (Contenu, Lire());
+        return lu.Rapport;
+    }
+
+    private RapportDeGame Lire()
     {
         var contenu = JsonNode.Parse(Contenu)!;
         return new RapportDeGame(
