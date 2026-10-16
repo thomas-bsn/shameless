@@ -1,3 +1,4 @@
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
@@ -69,22 +70,24 @@ public sealed class DraftChampionsService
     public async Task<CommandResult<DraftChampions>> GetParLienAsync(AccesParLien acces)
     {
         var draft = await _drafts.GetDerniereOfSeriesAsync(acces.SeriesId);
-        return draft == null || !acces.PermetDeLire(draft.Game.SeriesId!.Value)
+        return draft == null
             ? CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.")
             : CommandResult<DraftChampions>.Ok(draft);
     }
 
     /// <summary>
-    /// Par un Lien capitaine : joue le tour <paramref name="tour"/> de la Draft de champions en cours de
-    /// sa Série, pour son Équipe, avec ce champion (ban ou pick selon le tour).
+    /// Par un Lien capitaine : joue le tour <paramref name="tour"/> de la dernière Draft de champions de
+    /// la Série <paramref name="seriesId"/>, pour le capitaine de son Équipe, avec ce champion (ban ou
+    /// pick selon le tour).
     /// </summary>
-    public async Task<CommandResult<DraftChampions>> JouerParLienAsync(AccesParLien acces, int tour, string? championId)
+    public async Task<CommandResult<DraftChampions>> JouerParLienAsync(
+        int seriesId, JoueurDraft.Capitaine capitaine, int tour, string? championId)
     {
-        var draft = await _drafts.GetDerniereOfSeriesAsync(acces.SeriesId);
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
         if (draft == null)
             return CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.");
 
-        return await JouerAsync(draft, tour, championId, equipe => acces.PermetDeJouer(draft.Game.SeriesId!.Value, equipe));
+        return await JouerAsync(draft, tour, championId, capitaine);
     }
 
     /// <summary>
@@ -97,17 +100,16 @@ public sealed class DraftChampionsService
         if (draft == null)
             return CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.");
 
-        return await JouerAsync(draft, tour, championId, _ => draft.EcheanceAtteinte(Maintenant()),
-            equipe => $"Le capitaine de l'Équipe {equipe} a jusqu'à l'échéance du tour pour jouer : vous pourrez jouer à sa place ensuite.");
+        return await JouerAsync(draft, tour, championId, new JoueurDraft.Organisateur());
     }
 
     /// <summary>
-    /// Joue le tour courant si c'est bien le tour <paramref name="tour"/>, que l'appelant peut jouer pour
-    /// l'Équipe attendue, et que le champion existe et n'est ni banni ni pick dans la game.
+    /// Joue le tour courant si c'est bien le tour <paramref name="tour"/>, que le
+    /// <paramref name="joueur"/> peut le jouer (le capitaine de l'Équipe attendue, ou l'organisateur
+    /// passé l'échéance), et que le champion existe et n'est ni banni ni pick dans la game.
     /// </summary>
     private async Task<CommandResult<DraftChampions>> JouerAsync(
-        DraftChampions draft, int tour, string? championId, Func<string, bool> peutJouerPour,
-        Func<string, string>? refus = null)
+        DraftChampions draft, int tour, string? championId, JoueurDraft joueur)
     {
         var courant = draft.TourCourant;
         if (courant == null)
@@ -118,8 +120,16 @@ public sealed class DraftChampionsService
             return CommandResult<DraftChampions>.Conflict($"Ce n'est pas encore le tour {tour} : c'est au tour {courant.Numero}.");
 
         var equipe = draft.EquipeDuTour(courant.Numero);
-        if (!peutJouerPour(equipe))
-            return CommandResult<DraftChampions>.Conflict(refus?.Invoke(equipe) ?? $"Le tour {courant.Numero} revient à l'Équipe {equipe}.");
+        var refus = joueur switch
+        {
+            JoueurDraft.Capitaine capitaine when capitaine.Equipe != equipe =>
+                $"Le tour {courant.Numero} revient à l'Équipe {equipe}.",
+            JoueurDraft.Organisateur when !draft.EcheanceAtteinte(Maintenant()) =>
+                $"Le capitaine de l'Équipe {equipe} a jusqu'à l'échéance du tour pour jouer : vous pourrez jouer à sa place ensuite.",
+            _ => null
+        };
+        if (refus != null)
+            return CommandResult<DraftChampions>.Conflict(refus);
 
         var catalogue = await _catalog.GetAllAsync();
         if (string.IsNullOrEmpty(championId) || catalogue.All(c => c.Id != championId))

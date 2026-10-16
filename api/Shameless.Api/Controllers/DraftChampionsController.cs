@@ -3,6 +3,7 @@ using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.ChampionDraft;
 using Shameless.Api.Models.Responses.ChampionDraft;
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.Entities;
 using Shameless.Application.Services;
 
@@ -89,8 +90,13 @@ public sealed class DraftChampionsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
-    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request) =>
-        await JoueAsync(_drafts.JouerParLienAsync(this.AccesParLien(), request.Tour, request.ChampionId));
+    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request)
+    {
+        // CapitaineRequis : le lien est un Lien capitaine, il porte son Équipe.
+        var acces = this.AccesParLien();
+        return await JoueAsync(_drafts.JouerParLienAsync(
+            acces.SeriesId, new JoueurDraft.Capitaine(acces.Equipe!), request.Tour, request.ChampionId));
+    }
 
     /// <summary>
     /// L'état de la Draft après une action jouée, ou le refus. Catalogue des champions indisponible :
