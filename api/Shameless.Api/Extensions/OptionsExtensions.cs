@@ -30,6 +30,9 @@ public static class OptionsExtensions
         services.AddOptions<BotOptions>()
             .Bind(configuration.GetSection(BotOptions.Section));
 
+        services.AddOptions<PublicationWebhooksBotOptions>()
+            .Bind(configuration.GetSection(PublicationWebhooksBotOptions.Section));
+
         return services;
     }
 }

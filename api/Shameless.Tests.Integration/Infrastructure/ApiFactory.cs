@@ -64,7 +64,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE evenements_bot, rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -85,7 +85,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Bot:WebhookSecret", FakeBot.WebhookSecret);
         builder.UseSetting("Bot:WebUrl", TestSession.AllowedOrigin);
         // Les tests publient eux-mêmes les webhooks (PublierAsync) : le job ne tourne pas seul.
-        builder.UseSetting("Bot:Publication:Interval", "3650.00:00:00");
+        builder.UseSetting("Bot:Publication:Interval", "40.00:00:00");
 
         builder.ConfigureTestServices(services =>
         {

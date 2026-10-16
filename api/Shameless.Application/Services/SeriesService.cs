@@ -1,3 +1,4 @@
+using Shameless.Application.Bot;
 using Shameless.Application.ChampionDraft;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
@@ -22,6 +23,7 @@ public sealed class SeriesService
     private readonly CostCalculationService _costs;
     private readonly TimeProvider _clock;
     private readonly IRandomSource _random;
+    private readonly EvenementsBot _evenements;
 
     public SeriesService(
         IBestOfSeriesRepository series,
@@ -30,9 +32,11 @@ public sealed class SeriesService
         IPlayerRepository players,
         CostCalculationService costs,
         TimeProvider clock,
-        IRandomSource random)
+        IRandomSource random,
+        EvenementsBot evenements)
     {
         _random = random;
+        _evenements = evenements;
         _series = series;
         _games = games;
         _soirees = soirees;
@@ -102,6 +106,7 @@ public sealed class SeriesService
             Liens = [LienAcces.Capitaine(Equipes.A), LienAcces.Capitaine(Equipes.B), LienAcces.Spectateur()]
         };
         _series.Add(series);
+        _evenements.TeamsFormed(series);
         return CommandResult<BestOfSeries>.Ok(series);
 
         SeriesPlayer NewPlayer(int playerId, string equipe, int? capitaine) => new()
@@ -155,6 +160,8 @@ public sealed class SeriesService
                 .ToList()
         };
         _games.Add(game);
+        // Le lancement est le début de la Game (ADR 0013) : pronostics clos, présences ouvertes côté bot.
+        _evenements.GameStarted(game);
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
@@ -199,6 +206,7 @@ public sealed class SeriesService
         game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
         series?.ApplyResults(series.Games);
         series?.Touch();
+        _evenements.GameCompleted(game);
         if (!await _games.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
 

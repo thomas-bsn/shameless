@@ -33,6 +33,7 @@ public class AppDbContext : DbContext
     public DbSet<LienAcces> LiensAcces => Set<LienAcces>();
     public DbSet<DraftChampions> DraftsChampions => Set<DraftChampions>();
     public DbSet<RapportCompanion> RapportsCompanion => Set<RapportCompanion>();
+    public DbSet<EvenementBot> EvenementsBot => Set<EvenementBot>();
 
     /// <summary>
     /// Les dates sont stockées en heure UTC sans fuseau : relues, elles repartent en
@@ -185,5 +186,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new RapportCompanionConfiguration());
+        modelBuilder.ApplyConfiguration(new EvenementBotConfiguration());
     }
 }
