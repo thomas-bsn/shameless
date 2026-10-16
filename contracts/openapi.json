@@ -2275,6 +2275,16 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "default": {
             "description": "Erreur",
             "content": {
@@ -2325,6 +2335,66 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/{playerId}/cost/historique": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "parameters": [
+          {
+            "name": "playerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerCostHistoryResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerCostHistoryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerCostHistoryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -3752,6 +3822,49 @@
           }
         }
       },
+      "CostMensuelHistorique": {
+        "required": [
+          "mois",
+          "cost",
+          "costDeDepart",
+          "gamesTerminees",
+          "victoires",
+          "noteMoyenne"
+        ],
+        "type": "object",
+        "properties": {
+          "mois": {
+            "type": "string",
+            "format": "date"
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          },
+          "costDeDepart": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "gamesTerminees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "CreatePlayerRequest": {
         "required": [
           "prenom",
@@ -4700,15 +4813,43 @@
           }
         }
       },
+      "PlayerCostHistoryResponse": {
+        "required": [
+          "playerId",
+          "mois"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mois": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostMensuelHistorique"
+            }
+          }
+        }
+      },
       "PlayerCostResponse": {
         "required": [
           "playerId",
           "name",
+          "mois",
           "cost",
           "tier",
-          "mmr",
-          "baseMMR",
-          "winrateAdjustment"
+          "costDeDepart",
+          "sourceDuCostDeDepart",
+          "gamesTerminees",
+          "victoires",
+          "winrate",
+          "gamesNotees",
+          "noteMoyenne",
+          "evolue",
+          "gamesMinimum",
+          "ajustementPerformance",
+          "ajustementResultats"
         ],
         "type": "object",
         "properties": {
@@ -4719,6 +4860,10 @@
           "name": {
             "type": "string"
           },
+          "mois": {
+            "type": "string",
+            "format": "date"
+          },
           "cost": {
             "type": "number",
             "format": "double"
@@ -4726,15 +4871,51 @@
           "tier": {
             "type": "string"
           },
-          "mmr": {
+          "costDeDepart": {
+            "type": "number",
+            "format": "double"
+          },
+          "sourceDuCostDeDepart": {
+            "$ref": "#/components/schemas/SourceDuCostDeDepart"
+          },
+          "gamesTerminees": {
             "type": "integer",
             "format": "int32"
           },
-          "baseMMR": {
+          "victoires": {
             "type": "integer",
             "format": "int32"
           },
-          "winrateAdjustment": {
+          "winrate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "gamesNotees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "evolue": {
+            "type": "boolean"
+          },
+          "gamesMinimum": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ajustementPerformance": {
+            "type": "number",
+            "format": "double"
+          },
+          "ajustementResultats": {
             "type": "number",
             "format": "double"
           }
@@ -5563,6 +5744,12 @@
         "enum": [
           "Open",
           "Closed"
+        ]
+      },
+      "SourceDuCostDeDepart": {
+        "enum": [
+          "MoisPrecedent",
+          "RangSoloQ"
         ]
       },
       "SourceDuRole": {

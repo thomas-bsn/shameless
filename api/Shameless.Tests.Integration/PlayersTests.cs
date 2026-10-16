@@ -66,21 +66,22 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task The_cost_preview_is_computed_from_the_peak_rank()
+    public async Task The_cost_starts_from_the_current_soloq_rank_not_the_peak()
     {
         var client = Factory.CreateSignedInClient(discordId: "2003");
-        var playerId = await CreatePlayerAsync(client, "Chloe");
+        var playerId = await CreatePlayerAsync(client, "Chloe"); // GOLD II
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/peak",
-            new { peakTier = "GOLD", peakDivision = 2, peakSeason = "S2024", peakLp = 0 }, Ct));
+            new { peakTier = "DIAMOND", peakDivision = 2, peakSeason = "S2024", peakLp = 0 }, Ct));
 
         var cost = await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/cost", Ct));
 
         Assert.Equal("Chloe", cost.GetProperty("name").GetString());
-        Assert.Equal(1500, cost.GetProperty("baseMMR").GetInt32());
-        Assert.Equal(1500, cost.GetProperty("mmr").GetInt32());
         Assert.Equal(2m, cost.GetProperty("cost").GetDecimal());
         Assert.Equal("C", cost.GetProperty("tier").GetString());
+        Assert.Equal("RangSoloQ", cost.GetProperty("sourceDuCostDeDepart").GetString());
+        Assert.Equal(0, cost.GetProperty("gamesTerminees").GetInt32());
+        Assert.Equal(5, cost.GetProperty("gamesMinimum").GetInt32());
     }
 
     [Fact]

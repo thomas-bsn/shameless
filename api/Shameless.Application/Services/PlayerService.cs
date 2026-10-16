@@ -1,4 +1,5 @@
 ﻿using Shameless.Application.DTOs.Players;
+using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -76,7 +77,9 @@ public class PlayerService : IPlayerService
             Lp = rank?.LP,
             FlexRankTier = flexTier,
             FlexRankDivision = flexDivision,
-            FlexLp = ranks.Flex?.LP
+            FlexLp = ranks.Flex?.LP,
+            // Sans historique de cost, le Rang SoloQ donne le cost initial (ADR 0012).
+            CurrentCost = CostDeDepart.DuRangSoloQ(tier, division).Cost
         };
 
         var created = await _players.AddAsync(player);

@@ -2086,6 +2086,15 @@ export interface paths {
                         "text/json": components["schemas"]["PlayerCostResponse"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Erreur */
                 default: {
                     headers: {
@@ -2132,6 +2141,63 @@ export interface paths {
                 };
             };
         };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/{playerId}/cost/historique": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlayerCostHistoryResponse"];
+                        "application/json": components["schemas"]["PlayerCostHistoryResponse"];
+                        "text/json": components["schemas"]["PlayerCostHistoryResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -3280,6 +3346,20 @@ export interface components {
             /** Format: double */
             poids: number;
         };
+        CostMensuelHistorique: {
+            /** Format: date */
+            mois: string;
+            /** Format: double */
+            cost: number;
+            /** Format: double */
+            costDeDepart: null | number;
+            /** Format: int32 */
+            gamesTerminees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: double */
+            noteMoyenne: null | number;
+        };
         CreatePlayerRequest: {
             prenom: string;
             riotId: string;
@@ -3504,19 +3584,40 @@ export interface components {
             /** Format: int32 */
             playerId: number;
         };
+        PlayerCostHistoryResponse: {
+            /** Format: int32 */
+            playerId: number;
+            mois: components["schemas"]["CostMensuelHistorique"][];
+        };
         PlayerCostResponse: {
             /** Format: int32 */
             playerId: number;
             name: string;
+            /** Format: date */
+            mois: string;
             /** Format: double */
             cost: number;
             tier: string;
-            /** Format: int32 */
-            mmr: number;
-            /** Format: int32 */
-            baseMMR: number;
             /** Format: double */
-            winrateAdjustment: number;
+            costDeDepart: number;
+            sourceDuCostDeDepart: components["schemas"]["SourceDuCostDeDepart"];
+            /** Format: int32 */
+            gamesTerminees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: double */
+            winrate: null | number;
+            /** Format: int32 */
+            gamesNotees: number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            evolue: boolean;
+            /** Format: int32 */
+            gamesMinimum: number;
+            /** Format: double */
+            ajustementPerformance: number;
+            /** Format: double */
+            ajustementResultats: number;
         };
         PlayerDto: {
             /** Format: int32 */
@@ -3723,6 +3824,8 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        /** @enum {unknown} */
+        SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ";
         /** @enum {unknown} */
         SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
         StatsDuParticipant: {

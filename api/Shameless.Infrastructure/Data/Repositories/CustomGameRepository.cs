@@ -57,20 +57,21 @@ public class CustomGameRepository : ICustomGameRepository
             .ToListAsync();
     }
 
-    public async Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month)
+    public async Task<List<CustomGame>> GetCompletedGamesOfPlayerForMonthAsync(int playerId, DateTime month)
     {
-        var startOfMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var startOfNextMonth = startOfMonth.AddMonths(1);
-        
-        return await _db.CustomGameParticipants
-            .Include(p => p.CustomGame)
-            .Where(p => p.PlayerId == playerId
-                        && p.CustomGame.Status == GameStatuses.Completed
-                        && p.CustomGame.PlayedAt.Year == month.Year
-                        && p.CustomGame.PlayedAt.Month == month.Month)
+        return await _db.CustomGames
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Include(g => g.Series)
+            .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
+            .Where(g => g.Status == GameStatuses.Completed
+                        && g.PlayedAt.Year == month.Year
+                        && g.PlayedAt.Month == month.Month
+                        && g.Participants.Any(p => p.PlayerId == playerId))
+            .OrderBy(g => g.PlayedAt)
             .ToListAsync();
     }
-    
+
     public async Task<List<CustomGame>> GetPendingAsync()
     {
         return await _db.CustomGames

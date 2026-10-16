@@ -76,6 +76,7 @@ public class PlayerRepository : IPlayerRepository
             FlexRankTier = dto.FlexRankTier,
             FlexRankDivision = dto.FlexRankDivision,
             FlexLp = dto.FlexLp,
+            CurrentCost = dto.CurrentCost,
         };
 
         _db.Players.Add(player);

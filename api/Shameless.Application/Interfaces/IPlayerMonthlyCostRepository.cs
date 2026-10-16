@@ -4,8 +4,9 @@ namespace Shameless.Infrastructure.Repositories;
 
 public interface IPlayerMonthlyCostRepository
 {
-    Task<List<PlayerMonthlyCost>> GetByMonthAsync(DateTime month);
-    Task<PlayerMonthlyCost?> GetByPlayerAndMonthAsync(int playerId, DateTime month);
-    Task AddAsync(PlayerMonthlyCost monthlyCost);
-    Task AddRangeAsync(List<PlayerMonthlyCost> monthlyCosts);
+    /// <summary>L'historique de cost d'un Joueur, du plus ancien mois au plus récent.</summary>
+    Task<List<PlayerMonthlyCost>> GetByPlayerAsync(int playerId);
+
+    /// <summary>Enregistre un mois nouveau ou modifié (suivi par le contexte).</summary>
+    Task SaveAsync(PlayerMonthlyCost monthlyCost);
 }

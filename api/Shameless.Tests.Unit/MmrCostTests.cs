@@ -48,35 +48,6 @@ public class MmrCostTests
     }
 
     [Theory]
-    [InlineData(0, 0, 0)]
-    [InlineData(2, 2, 0)]
-    [InlineData(2, 0, 0)]
-    public void Fewer_than_3_games_give_no_winrate_adjustment(int games, int wins, int expected)
-    {
-        Assert.Equal(expected, MMRCalculationService.CalculateWinrateAdjustment(games, wins));
-    }
-
-    [Theory]
-    [InlineData(3, 3, 11)]     // 100 % × 150 × 3/20 confiance = +11,25
-    [InlineData(10, 0, -37)]   // -50 % × 150 × 10/20 = -37,5, tronqué vers zéro
-    [InlineData(20, 15, 37)]   // +25 % × 150 × 1 = +37,5
-    [InlineData(20, 10, 0)]    // 50 % de winrate : neutre
-    [InlineData(20, 20, 75)]   // plafond à +75
-    [InlineData(40, 40, 75)]   // la confiance plafonne à 20 games
-    [InlineData(40, 0, -75)]
-    public void Monthly_winrate_adjusts_mmr_with_confidence_capped_at_20_games(int games, int wins, int expected)
-    {
-        Assert.Equal(expected, MMRCalculationService.CalculateWinrateAdjustment(games, wins));
-    }
-
-    [Fact]
-    public void Final_mmr_is_peak_mmr_plus_winrate_adjustment()
-    {
-        // GOLD II = 1500, 15 victoires sur 20 = +37
-        Assert.Equal(1537, MMRCalculationService.CalculateFinalMMR("GOLD", 2, 20, 15));
-    }
-
-    [Theory]
     [InlineData(-100, 1)]
     [InlineData(0, 1)]
     [InlineData(1199, 1)]

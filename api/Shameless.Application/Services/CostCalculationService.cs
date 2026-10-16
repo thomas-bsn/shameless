@@ -1,8 +1,18 @@
+using Shameless.Application.Cost;
+using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Stats;
 using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Application.Services;
 
+/// <summary>Le cost d'un Joueur pour un mois, avec le détail du calcul.</summary>
+public sealed record CostDuMois(Player Player, DateOnly Mois, CostMensuel Calcul);
+
+/// <summary>
+/// Le cost mensuel des Joueurs (ADR 0012) : recalculé après chaque Game terminée et conservé, mois
+/// par mois, dans <see cref="PlayerMonthlyCost"/>. Le calcul lui-même est <see cref="CostMensuel"/>.
+/// </summary>
 public class CostCalculationService
 {
     private readonly ICustomGameRepository _gameRepo;
@@ -22,86 +32,91 @@ public class CostCalculationService
         _clock = clock;
     }
 
+    /// <summary>Recalcule le cost du mois de la game (sa date de lancement) pour chacun de ses participants.</summary>
     public async Task RecalculateCosts(int gameId)
     {
         var game = await _gameRepo.GetByIdWithParticipantsAsync(gameId);
         if (game == null) return;
 
-        var currentMonth = new DateTime(game.PlayedAt.Year, game.PlayedAt.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        foreach (var participant in game.Participants)
-        {
-            await RecalculatePlayerCost(participant.PlayerId, currentMonth);
-        }
+        var mois = DateOnly.FromDateTime(game.PlayedAt);
+        foreach (var playerId in game.Participants.Select(p => p.PlayerId).ToList())
+            await RecalculatePlayerCost(playerId, mois);
     }
 
-    public async Task RecalculatePlayerCost(int playerId, DateTime month)
+    /// <summary>
+    /// Recalcule et enregistre le cost du Joueur pour ce mois. S'il s'agit de son mois le plus récent,
+    /// c'est aussi son cost actuel.
+    /// </summary>
+    public async Task RecalculatePlayerCost(int playerId, DateOnly month)
     {
         var player = await _playerRepo.GetByIdAsync(playerId);
         if (player == null) return;
 
-        var utcMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, utcMonth);
+        var historique = await _monthlyCostRepo.GetByPlayerAsync(playerId);
+        var mois = PremierJour(month);
+        var cost = await CalculerAsync(player, historique, mois);
 
-        var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(participant => participant.HasWon);
+        var enregistre = historique.FirstOrDefault(m => DateOnly.FromDateTime(m.Month) == mois)
+                         ?? new PlayerMonthlyCost { PlayerId = playerId, Month = mois.ToDateTime(TimeOnly.MinValue) };
+        enregistre.FinalCost = cost.Cost;
+        enregistre.CostDeDepart = cost.Depart.Cost;
+        enregistre.NoteMoyenne = cost.NoteMoyenne;
+        enregistre.GamesPlayed = cost.GamesTerminees;
+        enregistre.Wins = cost.Victoires;
+        await _monthlyCostRepo.SaveAsync(enregistre);
 
-        var finalMMR = MMRCalculationService.CalculateFinalMMR(
-            player.PeakTier,
-            player.PeakDivision,
-            gamesPlayed,
-            wins
-        );
-
-        player.CurrentCost = MMRCalculationService.MMRToCost(finalMMR);
-
-        if (gamesPlayed >= 3)
-            player.IsPlacement = false;
-
-        await _playerRepo.UpdateAsync(player);
-    }
-
-    public async Task InitializeNewMonth()
-    {
-        var lastMonth = _clock.GetUtcNow().UtcDateTime.AddMonths(-1);
-        var lastMonthStart = new DateTime(lastMonth.Year, lastMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        var lastMonthlyCosts = await _monthlyCostRepo.GetByMonthAsync(lastMonthStart);
-        var players = await _playerRepo.GetAllEntitiesAsync();
-
-        foreach (var player in players)
+        if (historique.All(m => DateOnly.FromDateTime(m.Month) <= mois))
         {
-            var lastCost = lastMonthlyCosts.FirstOrDefault(c => c.PlayerId == player.Id);
-
-            player.CurrentCost = lastCost != null
-                ? lastCost.FinalCost
-                : MMRCalculationService.MMRToCost(MMRCalculationService.GetPeakRankMMR(player.PeakTier, player.PeakDivision));
-
-            player.IsPlacement = true;
+            player.CurrentCost = cost.Cost;
+            player.IsPlacement = !cost.Evolue;
+            await _playerRepo.UpdateAsync(player);
         }
-
-        await _playerRepo.UpdateRangeAsync(players);
     }
 
-    public async Task<(string name, decimal cost, int mmr, int baseMMR, int winrateAdjustment)> CalculatePlayerCostPreview(
-        int playerId,
-        DateTime? month = null)
+    /// <summary>
+    /// Le cost du Joueur pour le mois (par défaut le mois en cours), calculé depuis ses games terminées ;
+    /// null si le Joueur n'existe pas.
+    /// </summary>
+    public async Task<CostDuMois?> CalculatePlayerCostPreview(int playerId, DateOnly? month = null)
     {
         var player = await _playerRepo.GetByIdAsync(playerId);
-        if (player == null)
-            throw new ArgumentException($"Player {playerId} not found");
+        if (player == null) return null;
 
-        var targetMonth = month ?? _clock.GetUtcNow().UtcDateTime;
-        var monthGames = await _gameRepo.GetPlayerGamesForMonthAsync(playerId, targetMonth);
-
-        var gamesPlayed = monthGames.Count;
-        var wins = monthGames.Count(participant => participant.HasWon);
-
-        var baseMMR = MMRCalculationService.GetPeakRankMMR(player.PeakTier, player.PeakDivision);
-        var winrateAdjustment = MMRCalculationService.CalculateWinrateAdjustment(gamesPlayed, wins);
-        var finalMMR = baseMMR + winrateAdjustment;
-        var cost = MMRCalculationService.MMRToCost(finalMMR);
-
-        return (player.Prenom, cost, finalMMR, baseMMR, winrateAdjustment);
+        var mois = PremierJour(month ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime));
+        var historique = await _monthlyCostRepo.GetByPlayerAsync(playerId);
+        return new CostDuMois(player, mois, await CalculerAsync(player, historique, mois));
     }
+
+    /// <summary>L'historique de cost du Joueur, du plus ancien mois au plus récent ; null si le Joueur n'existe pas.</summary>
+    public async Task<List<PlayerMonthlyCost>?> HistoriqueAsync(int playerId) =>
+        await _playerRepo.GetByIdAsync(playerId) == null ? null : await _monthlyCostRepo.GetByPlayerAsync(playerId);
+
+    private async Task<CostMensuel> CalculerAsync(Player player, List<PlayerMonthlyCost> historique, DateOnly mois)
+    {
+        var games = await _gameRepo.GetCompletedGamesOfPlayerForMonthAsync(player.Id, mois.ToDateTime(TimeOnly.MinValue));
+        var gamesDuMois = games
+            .Select(g => new GameDuMois(
+                g.Participants.Single(p => p.PlayerId == player.Id).HasWon,
+                NotesDeLaGame.DuJoueur(g, player.Id)?.Note))
+            .ToList();
+        return CostMensuel.Calculer(Depart(player, historique, mois), gamesDuMois);
+    }
+
+    /// <summary>
+    /// Le cost final du dernier mois enregistré avant celui-ci ; sans historique, le Rang SoloQ, figé
+    /// au premier calcul du mois.
+    /// </summary>
+    private static CostDeDepart Depart(Player player, List<PlayerMonthlyCost> historique, DateOnly mois)
+    {
+        var precedent = historique.Where(m => DateOnly.FromDateTime(m.Month) < mois).MaxBy(m => m.Month);
+        if (precedent is not null)
+            return CostDeDepart.DuMoisPrecedent(precedent.FinalCost);
+
+        var dejaCalcule = historique.FirstOrDefault(m => DateOnly.FromDateTime(m.Month) == mois)?.CostDeDepart;
+        return dejaCalcule is { } cost
+            ? new CostDeDepart(cost, SourceDuCostDeDepart.RangSoloQ)
+            : CostDeDepart.DuRangSoloQ(player.RankTier, player.RankDivision);
+    }
+
+    private static DateOnly PremierJour(DateOnly date) => new(date.Year, date.Month, 1);
 }

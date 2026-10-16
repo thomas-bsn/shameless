@@ -84,22 +84,30 @@ public sealed class PlayersController : ControllerBase
         };
     }
 
+    /// <summary>Le cost du Joueur pour le mois en cours, avec le détail de son calcul (ADR 0012).</summary>
     [HttpGet("{playerId}/cost")]
     [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> GetPlayerCost(int playerId)
     {
-        var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);
-
-        return Ok(new PlayerCostResponse(
-            PlayerId: playerId,
-            Name: name,
-            Cost: cost,
-            Tier: MMRCalculationService.GetTierLabel(cost),
-            Mmr: mmr,
-            BaseMMR: baseMMR,
-            WinrateAdjustment: winrateAdj
-        ));
+        var cost = await _costService.CalculatePlayerCostPreview(playerId);
+        return cost == null ? JoueurIntrouvable() : Ok(PlayerCostResponse.From(cost));
     }
+
+    /// <summary>Le cost de chaque mois du Joueur conservé dans l'historique, du plus ancien au plus récent.</summary>
+    [HttpGet("{playerId}/cost/historique")]
+    [ProducesResponseType<PlayerCostHistoryResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> GetPlayerCostHistory(int playerId)
+    {
+        var historique = await _costService.HistoriqueAsync(playerId);
+        return historique == null
+            ? JoueurIntrouvable()
+            : Ok(new PlayerCostHistoryResponse(playerId, historique.Select(CostMensuelHistorique.From).ToList()));
+    }
+
+    private ObjectResult JoueurIntrouvable() =>
+        Problem(statusCode: StatusCodes.Status404NotFound, detail: "Ce joueur n'existe pas.");
 
     [HttpPut("{playerId}/cost")]
     [Authorize(Policy = Policies.Admin)]

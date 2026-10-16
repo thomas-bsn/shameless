@@ -163,6 +163,8 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.Month).HasColumnType("date");
             entity.Property(e => e.FinalCost).HasColumnType("numeric(3,1)");
+            entity.Property(e => e.CostDeDepart).HasColumnType("numeric(3,1)");
+            entity.Property(e => e.NoteMoyenne).HasColumnType("numeric(4,1)");
             entity.Property(e => e.BaseMMR).HasColumnName("base_mmr");
 
             entity.HasOne(e => e.Player)

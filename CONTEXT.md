@@ -84,11 +84,17 @@ champions d'une Série.
 - **Rang SoloQ** : le rang classé d'un joueur en solo, lu via l'API Riot.
 - **Peak** : le meilleur rang qu'un joueur déclare avoir atteint (tier, division,  
 saison).
-- **MMR** : score interne calculé à partir du peak, puis ajusté par le winrate du mois  
-en customs. Ce n'est pas un Elo.
-- **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6, affichée en  
-tiers D, C, B, A, S, SS. Dérivé du MMR, recalculé après chaque game, remis à zéro  
-chaque mois (`PlayerMonthlyCost`).
+- **MMR** : barème interne qui convertit un rang SoloQ en cost de départ. Ce n'est pas  
+un Elo.
+- **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6 au dixième,  
+affichée en tiers D, C, B, A, S, SS. Recalculé après chaque game terminée du mois  
+depuis le cost de départ du mois, la note de performance moyenne et le winrate, la  
+performance pesant plus que le winrate ; il ne bouge qu'à partir de cinq games  
+terminées dans le mois (ADR 0012).
+- **Cost de départ** : le cost final du mois précédent ; sans historique de cost, celui  
+du Rang SoloQ actuel (pas du Peak). Le cost n'est jamais remis à zéro.
+- **Cost mensuel** : le cost d'un joueur pour un mois, conservé mois par mois dans  
+`PlayerMonthlyCost` ; un nouveau mois n'efface pas l'historique.
 - **Note de performance** : la note de 0 à 100 d'un joueur pour une game, calculée depuis  
 ses stats envoyées par le Companion. Chaque critère (KDA, KP, CS, dégâts, vision,  
 objectifs) est noté par rapport aux références du rôle joué, puis pondéré selon ce rôle  

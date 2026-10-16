@@ -13,32 +13,16 @@ public class PlayerMonthlyCostRepository : IPlayerMonthlyCostRepository
         _db = db;
     }
 
-    public async Task<List<PlayerMonthlyCost>> GetByMonthAsync(DateTime month)
-    {
-        var startOfMonth = new DateTime(month.Year, month.Month, 1);
-        
-        return await _db.PlayerMonthlyCosts
-            .Where(c => c.Month == startOfMonth)
+    public async Task<List<PlayerMonthlyCost>> GetByPlayerAsync(int playerId) =>
+        await _db.PlayerMonthlyCosts
+            .Where(c => c.PlayerId == playerId)
+            .OrderBy(c => c.Month)
             .ToListAsync();
-    }
 
-    public async Task<PlayerMonthlyCost?> GetByPlayerAndMonthAsync(int playerId, DateTime month)
+    public async Task SaveAsync(PlayerMonthlyCost monthlyCost)
     {
-        var startOfMonth = new DateTime(month.Year, month.Month, 1);
-        
-        return await _db.PlayerMonthlyCosts
-            .FirstOrDefaultAsync(c => c.PlayerId == playerId && c.Month == startOfMonth);
-    }
-
-    public async Task AddAsync(PlayerMonthlyCost monthlyCost)
-    {
-        _db.PlayerMonthlyCosts.Add(monthlyCost);
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task AddRangeAsync(List<PlayerMonthlyCost> monthlyCosts)
-    {
-        _db.PlayerMonthlyCosts.AddRange(monthlyCosts);
+        if (monthlyCost.Id == 0)
+            _db.PlayerMonthlyCosts.Add(monthlyCost);
         await _db.SaveChangesAsync();
     }
 }

@@ -535,6 +535,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("base_mmr");
 
+                    b.Property<decimal?>("CostDeDepart")
+                        .HasColumnType("numeric(3,1)")
+                        .HasColumnName("cost_de_depart");
+
                     b.Property<decimal>("FinalCost")
                         .HasColumnType("numeric(3,1)")
                         .HasColumnName("final_cost");
@@ -546,6 +550,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<DateTime>("Month")
                         .HasColumnType("date")
                         .HasColumnName("month");
+
+                    b.Property<decimal?>("NoteMoyenne")
+                        .HasColumnType("numeric(4,1)")
+                        .HasColumnName("note_moyenne");
 
                     b.Property<int>("PlayerId")
                         .HasColumnType("integer")
