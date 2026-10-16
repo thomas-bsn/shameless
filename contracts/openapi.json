@@ -137,6 +137,76 @@
         }
       }
     },
+    "/bot/games/{id}": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/champions": {
       "get": {
         "tags": [
@@ -1079,6 +1149,66 @@
         }
       }
     },
+    "/games/{id}": {
+      "get": {
+        "tags": [
+          "Games"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/games/pending": {
       "get": {
         "tags": [
@@ -1442,6 +1572,55 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/candidats-vocaux": {
+      "get": {
+        "tags": [
+          "Picker"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3776,6 +3955,52 @@
           "Aleatoire"
         ]
       },
+      "CandidatsVocaux": {
+        "required": [
+          "channelId",
+          "joueurs",
+          "membresNonLies"
+        ],
+        "type": "object",
+        "properties": {
+          "channelId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidatVocal"
+            }
+          },
+          "membresNonLies": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CandidatVocal": {
+        "required": [
+          "playerId",
+          "prenom",
+          "discordId"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "discordId": {
+            "type": "string"
+          }
+        }
+      },
       "ChampionJoueResponse": {
         "required": [
           "playerId",
@@ -4382,6 +4607,74 @@
           }
         }
       },
+      "GameDuBot": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "status",
+          "startedAt",
+          "completedAt",
+          "winner",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "winner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          }
+        }
+      },
       "GameHistoryListResponse": {
         "required": [
           "games"
@@ -4594,6 +4887,121 @@
           }
         }
       },
+      "GameRecapResponse": {
+        "required": [
+          "id",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "status",
+          "playedAt",
+          "completedAt",
+          "teamASide",
+          "teamBSide",
+          "winner",
+          "teamAWins",
+          "teamBWins",
+          "seriesOutcome",
+          "riotMatchId",
+          "match",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "playedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "teamASide": {
+            "type": "string"
+          },
+          "teamBSide": {
+            "type": "string"
+          },
+          "winner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamAWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamBWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesOutcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeriesOutcome"
+              }
+            ]
+          },
+          "riotMatchId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "match": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DonneesDuMatch"
+              }
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          }
+        }
+      },
       "JouerDraftChampionsRequest": {
         "required": [
           "tour",
@@ -4607,6 +5015,29 @@
           },
           "championId": {
             "type": "string"
+          }
+        }
+      },
+      "JoueurDuBot": {
+        "required": [
+          "playerId",
+          "prenom",
+          "discordId"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "discordId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6491,6 +6922,9 @@
     },
     {
       "name": "Auth"
+    },
+    {
+      "name": "Bot"
     },
     {
       "name": "Champions"
