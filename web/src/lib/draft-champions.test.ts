@@ -32,11 +32,6 @@ describe("secondesRestantes", () => {
     expect(secondesRestantes(tour, at("2026-10-16T20:00:30Z"))).toBe(15);
   });
 
-  it("lit une date sans fuseau comme de l'UTC (timestamp sans fuseau de l'API)", () => {
-    const tour = { echeance: "2026-10-16T20:01:00" };
-    expect(secondesRestantes(tour, at("2026-10-16T20:00:50Z"))).toBe(10);
-  });
-
   it("arrondit à la seconde supérieure et ne descend pas sous zéro", () => {
     const tour = { echeance: "2026-10-16T20:01:00Z" };
     expect(secondesRestantes(tour, at("2026-10-16T20:00:10.400Z"))).toBe(50);

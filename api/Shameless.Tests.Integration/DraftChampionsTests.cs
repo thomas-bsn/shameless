@@ -546,6 +546,23 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Les_dates_lues_en_base_sont_restituees_en_utc()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        var ouverte = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+
+        var lue = await LireAsync(client, preparee.GameId);
+        var parLien = await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur));
+
+        var envoyee = ouverte.GetProperty("tourCourant").GetProperty("echeance").GetString();
+        Assert.EndsWith("Z", envoyee);
+        Assert.Equal(envoyee, lue.GetProperty("tourCourant").GetProperty("echeance").GetString());
+        Assert.Equal(envoyee, parLien.GetProperty("tourCourant").GetProperty("echeance").GetString());
+        Assert.EndsWith("Z", parLien.GetProperty("tourCourant").GetProperty("commenceLe").GetString());
+    }
+
+    [Fact]
     public async Task Avant_l_echeance_l_organisateur_ne_joue_pas_a_la_place_d_un_capitaine()
     {
         var client = Factory.CreateSignedInClient();

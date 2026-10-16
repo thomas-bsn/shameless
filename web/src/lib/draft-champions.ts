@@ -79,17 +79,12 @@ export function filtrerChampions<C extends Pick<Schemas["ChampionResponse"], "id
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
 
-/** Une date de l'API ; sans fuseau (timestamp sans fuseau en base), c'est de l'UTC. */
-function instantUtc(iso: string): number {
-  return Date.parse(/(Z|[+-]\d{2}:?\d{2})$/i.test(iso) ? iso : `${iso}Z`);
-}
-
 /** Les secondes qui restent pour jouer le tour courant, jusqu'à son échéance donnée par l'API. */
 export function secondesRestantes(
   tour: Pick<Schemas["TourCourantResponse"], "echeance">,
   maintenant: number = Date.now(),
 ): number {
-  return Math.max(0, Math.ceil((instantUtc(tour.echeance) - maintenant) / 1000));
+  return Math.max(0, Math.ceil((Date.parse(tour.echeance) - maintenant) / 1000));
 }
 
 /**
@@ -100,5 +95,5 @@ export function mainALOrganisateur(
   draft: Pick<Draft, "terminee" | "tourCourant">,
   maintenant: number = Date.now(),
 ): boolean {
-  return !draft.terminee && draft.tourCourant !== null && instantUtc(draft.tourCourant.echeance) <= maintenant;
+  return !draft.terminee && draft.tourCourant !== null && Date.parse(draft.tourCourant.echeance) <= maintenant;
 }
