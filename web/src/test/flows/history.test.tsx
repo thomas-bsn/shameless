@@ -71,6 +71,7 @@ describe("Historique", () => {
     expect(within(games[1]!).getByText("Équipe B gagne")).toBeInTheDocument();
     expect(within(games[2]!).getByText("Équipe A gagne")).toBeInTheDocument();
     expect(within(games[1]!).getByRole("group", { name: "Équipe A · Red side" })).toHaveTextContent("Alice");
+    expect(within(games[1]!).getByRole("link", { name: "Game 2" })).toHaveAttribute("href", "/games/12");
   });
 
   it("navigates from month to month", async () => {

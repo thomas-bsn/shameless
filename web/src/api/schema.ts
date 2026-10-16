@@ -152,6 +152,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bot/games/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameDuBot"];
+                        "application/json": components["schemas"]["GameDuBot"];
+                        "text/json": components["schemas"]["GameDuBot"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/champions": {
         parameters: {
             query?: never;
@@ -1010,6 +1076,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/pending": {
         parameters: {
             query?: never;
@@ -1335,6 +1458,61 @@ export interface paths {
                 };
                 /** @description Not Found */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/soirees/open/picker/candidats-vocaux": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CandidatsVocaux"];
+                        "application/json": components["schemas"]["CandidatsVocaux"];
+                        "text/json": components["schemas"]["CandidatsVocaux"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3380,6 +3558,18 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        CandidatsVocaux: {
+            channelId: null | string;
+            joueurs: components["schemas"]["CandidatVocal"][];
+            /** Format: int32 */
+            membresNonLies: number;
+        };
+        CandidatVocal: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            discordId: string;
+        };
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;
@@ -3523,6 +3713,24 @@ export interface components {
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
         };
+        GameDuBot: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: int32 */
+            gameNumber: number;
+            /** Format: int32 */
+            bestOf: number;
+            status: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            winner: null | string;
+            teamA: components["schemas"]["JoueurDuBot"][];
+            teamB: components["schemas"]["JoueurDuBot"][];
+        };
         GameHistoryListResponse: {
             games: components["schemas"]["SeriesHistoryResponse"][];
         };
@@ -3567,10 +3775,43 @@ export interface components {
             playerId: number;
             role: null | components["schemas"]["Role"];
         };
+        GameRecapResponse: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: int32 */
+            gameNumber: number;
+            /** Format: int32 */
+            bestOf: number;
+            status: string;
+            /** Format: date-time */
+            playedAt: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            teamASide: string;
+            teamBSide: string;
+            winner: null | string;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            seriesOutcome: null | components["schemas"]["SeriesOutcome"];
+            riotMatchId: null | string;
+            match: null | components["schemas"]["DonneesDuMatch"];
+            teamA: components["schemas"]["GameHistoryParticipantDto"][];
+            teamB: components["schemas"]["GameHistoryParticipantDto"][];
+        };
         JouerDraftChampionsRequest: {
             /** Format: int32 */
             tour: number;
             championId: string;
+        };
+        JoueurDuBot: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            discordId: null | string;
         };
         JoueurDuRapportRequest: {
             puuid: string;

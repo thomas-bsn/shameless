@@ -38,6 +38,14 @@ public class CustomGameRepository : ICustomGameRepository
             .FirstOrDefaultAsync(g => g.Id == id);
     }
 
+    public Task<CustomGame?> GetRecitAsync(int id) =>
+        _db.CustomGames
+            .Include(g => g.Participants).ThenInclude(p => p.Player).ThenInclude(p => p.User)
+            .Include(g => g.Series).ThenInclude(s => s!.Games)
+            .Include(g => g.Series).ThenInclude(s => s!.Players).ThenInclude(p => p.Player).ThenInclude(p => p.User)
+            .AsSplitQuery()
+            .SingleOrDefaultAsync(g => g.Id == id);
+
     public Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId) =>
         _db.CustomGames
             .AsNoTracking()

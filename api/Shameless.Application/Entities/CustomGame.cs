@@ -36,6 +36,12 @@ public class CustomGame
 
     public string TeamBSide => Sides.Other(TeamASide);
 
+    /// <summary>
+    /// Le rang de la game enregistrée dans sa Série, à partir de 1, dans l'ordre de lancement ; 1 pour
+    /// une game legacy hors Série. Demande <c>Series.Games</c> chargé.
+    /// </summary>
+    public int NumeroDansLaSerie => Series == null ? 1 : Series.Games.Count(g => g.Id <= Id);
+
     /// <summary>L'Équipe qui joue le Side donné dans cette game.</summary>
     public string EquipeOn(string side) => side == TeamASide ? Equipes.A : Equipes.B;
 

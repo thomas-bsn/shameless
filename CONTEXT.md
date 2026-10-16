@@ -166,7 +166,13 @@ saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien cr�
 saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
 la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
-séries, poste les récaps, gère les votes et rattache les clips.
+séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
+par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
+webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les routes  
+`/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
+- **Début de la Game** : son lancement dans la Série (`POST /series/{id}/games`), avant  
+sa Draft de champions. C'est là que part `game_started` et que les pronostics se closent  
+(ADR 0013).
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
 - **Clip** : une vidéo d'un moment de game, postée par un joueur dans le salon `#clips`  
 de Discord, puis rattachée à la game par le bot.

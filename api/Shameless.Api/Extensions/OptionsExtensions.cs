@@ -1,4 +1,5 @@
 using Shameless.Application.BackgroundJobs;
+using Shameless.Application.Bot;
 using Shameless.Infrastructure.Options;
 
 namespace Shameless.Api.Extensions;
@@ -25,6 +26,12 @@ public static class OptionsExtensions
 
         services.AddOptions<FermetureAutomatiqueSoireeOptions>()
             .Bind(configuration.GetSection(FermetureAutomatiqueSoireeOptions.Section));
+
+        services.AddOptions<BotOptions>()
+            .Bind(configuration.GetSection(BotOptions.Section));
+
+        services.AddOptions<PublicationWebhooksBotOptions>()
+            .Bind(configuration.GetSection(PublicationWebhooksBotOptions.Section));
 
         return services;
     }

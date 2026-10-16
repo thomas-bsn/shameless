@@ -126,7 +126,10 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
     <li className="overflow-hidden rounded-lg border">
       <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <span>
-          Game {index} · #{game.id} · {dateLabel(game.playedAt)}
+          <Link to="/games/$gameId" params={{ gameId: String(game.id) }} className="hover:text-foreground">
+            Game {index}
+          </Link>{" "}
+          · #{game.id} · {dateLabel(game.playedAt)}
         </span>
         {winner ? (
           <Badge variant="secondary">Équipe {winner} gagne</Badge>

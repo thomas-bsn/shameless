@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Shameless.Api.Interfaces;
 using Shameless.Api.Services;
 using Shameless.Application.BackgroundJobs;
+using Shameless.Application.Bot;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
@@ -16,6 +17,7 @@ public static class ServiceCollectionExtensions
         // Background jobs
         services.AddHostedService<RefreshRanksJob>();
         services.AddHostedService<FermetureAutomatiqueSoireeJob>();
+        services.AddHostedService<PublicationWebhooksBotJob>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -27,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISoireeRepository, SoireeRepository>();
         services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
         services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
+        services.AddScoped<IEvenementBotRepository, EvenementBotRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -41,6 +44,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CodeCompanionService>();
         services.AddScoped<RapportsCompanionService>();
         services.AddScoped<DraftChampionsService>();
+        services.AddScoped<CandidatsVocauxService>();
+        services.AddScoped<EvenementsBot>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
@@ -52,7 +57,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers(o => o.Filters.Add<CatalogueIndisponibleFilter>())
+        services.AddControllers(o =>
+            {
+                o.Filters.Add<CatalogueIndisponibleFilter>();
+                o.Filters.Add<BotIndisponibleFilter>();
+            })
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

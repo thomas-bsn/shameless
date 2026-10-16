@@ -42,11 +42,11 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Classements SoloQ et 5v5, cost mensuel conservé mois par mois (PlayerMonthlyCost)
 
 ### 1d. Bot Discord (repo séparé, Python)
-- [ ] Réécriture : un cog par projet, config env, base de données, Docker
-- [ ] Cog Shameless : détecte joueurs/specs en vocal, annonce la série, poste le récap en embed
-- [ ] Pré-remplit le Picker avec les joueurs en vocal (utilisateur lié à un joueur)
-- [ ] Déplace les équipes formées dans team-1 / team-2 ; les autres restent spectateurs
-- [ ] Communication par API HTTP authentifiée + webhooks
+- [x] Réécriture : un cog par projet, config env, base de données, Docker
+- [x] Cog Shameless : détecte joueurs/specs en vocal, annonce la série, poste le récap en embed
+- [x] Pré-remplit le Picker avec les joueurs en vocal (utilisateur lié à un joueur)
+- [x] Déplace les équipes formées dans team-1 / team-2 ; les autres restent spectateurs
+- [x] Communication par API HTTP authentifiée + webhooks
 
 ## Phase 2 — V2 : votes, spectateurs, clips
 - [ ] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
