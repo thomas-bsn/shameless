@@ -3172,6 +3172,15 @@ export interface components {
             seriesId: number;
             code: string;
         };
+        ComposanteDeNote: {
+            critere: components["schemas"]["CritereDeNote"];
+            /** Format: double */
+            valeur: number;
+            /** Format: int32 */
+            score: number;
+            /** Format: double */
+            poids: number;
+        };
         CreatePlayerRequest: {
             prenom: string;
             riotId: string;
@@ -3190,6 +3199,8 @@ export interface components {
             /** Format: int32 */
             seriesId: number;
         };
+        /** @enum {unknown} */
+        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
         /** @enum {unknown} */
         DesignationCapitaine: "Manuel" | "AuHasard" | "PlusGrosCost";
         /** @enum {unknown} */
@@ -3246,6 +3257,7 @@ export interface components {
             cost: null | number;
             championId: null | string;
             stats: null | components["schemas"]["StatsDuParticipant"];
+            performance: null | components["schemas"]["NoteDePerformance"];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -3312,6 +3324,13 @@ export interface components {
         LinkPlayerRequest: {
             /** Format: int32 */
             playerId: number;
+        };
+        NoteDePerformance: {
+            /** Format: int32 */
+            note: number;
+            role: null | components["schemas"]["Role"];
+            sourceDuRole: components["schemas"]["SourceDuRole"];
+            composantes: components["schemas"]["ComposanteDeNote"][];
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
@@ -3575,6 +3594,8 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        /** @enum {unknown} */
+        SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
         StatsDuParticipant: {
             /** Format: int32 */
             kills: null | number;

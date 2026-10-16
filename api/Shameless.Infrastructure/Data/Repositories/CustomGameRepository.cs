@@ -97,6 +97,7 @@ public class CustomGameRepository : ICustomGameRepository
             .Include(g => g.Participants)
             .ThenInclude(p => p.Player)
             .Include(g => g.Series)
+            .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
             .Where(g => g.PlayedAt.Year == year
                         && g.PlayedAt.Month == month
                         && g.Status == GameStatuses.Completed)

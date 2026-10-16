@@ -18,6 +18,7 @@ public record GameHistoryResponse(
 /// <summary>Un participant d'une game de l'historique, avec son champion joué et ses stats envoyées par le Companion.</summary>
 /// <param name="ChampionId">Le champion joué (id Data Dragon), null sans rapport du Companion pour ce participant.</param>
 /// <param name="Stats">Ses stats pour la game, null sans rapport du Companion pour ce participant.</param>
+/// <param name="Performance">Sa note de performance sur 100 et ses composantes, null sans stats suffisantes.</param>
 public record GameHistoryParticipantDto(
     int PlayerId,
     string Prenom,
@@ -26,13 +27,14 @@ public record GameHistoryParticipantDto(
     int? RankDivision,
     decimal? Cost,
     string? ChampionId,
-    StatsDuParticipant? Stats
+    StatsDuParticipant? Stats,
+    NoteDePerformance? Performance
 )
 {
-    public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant) =>
+    public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant, NoteDePerformance? performance) =>
         new(participant.PlayerId, participant.Player.Prenom, participant.Player.RiotId, participant.Player.RankTier,
             participant.Player.RankDivision, participant.Player.CurrentCost, participant.ChampionId,
-            StatsDuParticipant.Lire(participant.RiotParticipantData));
+            StatsDuParticipant.Lire(participant.RiotParticipantData), performance);
 }
 
 public record GameParticipantDto(

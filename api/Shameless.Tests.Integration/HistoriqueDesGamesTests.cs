@@ -171,4 +171,72 @@ public class HistoriqueDesGamesTests(ApiFactory factory) : IntegrationTest(facto
         Assert.Equal("Darius", b1.GetProperty("championId").GetString());
         Assert.Equal(12005, b1.GetProperty("stats").GetProperty("damageToChampions").GetInt32());
     }
+
+    [Fact]
+    public async Task Chaque_participant_a_sa_note_de_performance_sur_100_et_ses_composantes_selon_le_role_joue()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        // A3 joue mid, pile à la référence moyenne du rôle : KDA 3, KP 12/24, 7 CS/min, 700 dégâts/min,
+        // 0,8 vision/min, 300 dégâts aux objectifs/min sur 30 minutes. L'Équipe A fait 24 kills.
+        object StatsDe(int i) => i == 2
+            ? new
+            {
+                kills = 5, deaths = 4, assists = 7, totalMinionsKilled = 190, neutralMinionsKilled = 20,
+                totalDamageDealtToChampions = 21000, visionScore = 24, damageDealtToObjectives = 9000,
+                teamPosition = "MIDDLE"
+            }
+            : new { kills = i < 5 ? (i == 4 ? 4 : 5) : 2, deaths = 3, assists = 6 };
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9000000005", "blue", "A", statsDe: StatsDe,
+            donnees: new { gameDuration = 1800, gameMode = "CLASSIC", gameType = "CUSTOM_GAME" })));
+
+        var participants = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)));
+        var a3 = participants[serie.TeamA[2]].GetProperty("performance");
+        Assert.Equal(50, a3.GetProperty("note").GetInt32());
+        Assert.Equal("Mid", a3.GetProperty("role").GetString());
+        Assert.Equal("Partie", a3.GetProperty("sourceDuRole").GetString());
+        var composantes = a3.GetProperty("composantes").EnumerateArray().ToList();
+        Assert.Equal(
+            ["Kda", "ParticipationAuxKills", "CsParMinute", "DegatsParMinute", "VisionParMinute", "ObjectifsParMinute"],
+            composantes.Select(c => c.GetProperty("critere").GetString()));
+        Assert.All(composantes, c => Assert.Equal(50, c.GetProperty("score").GetInt32()));
+        var cs = composantes[2];
+        Assert.Equal(7, cs.GetProperty("valeur").GetDouble());
+        Assert.Equal(0.2, cs.GetProperty("poids").GetDouble());
+    }
+
+    [Fact]
+    public async Task Sans_position_dans_la_partie_le_joueur_est_note_selon_son_role_principal_avec_les_seules_stats_transmises()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        // Le rapport par défaut ne donne que kills, morts, assists et dégâts ; A1 : 0/2/7, l'Équipe A fait 10 kills.
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9000000006", "blue", "A",
+            donnees: new { gameMode = "CLASSIC" })));
+
+        var a1 = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)))[serie.TeamA[0]].GetProperty("performance");
+        Assert.Equal("Mid", a1.GetProperty("role").GetString()); // rôle principal SoloQ (MIDDLE)
+        Assert.Equal("RolePrincipal", a1.GetProperty("sourceDuRole").GetString());
+        // Sans durée de game, seuls le KDA (3,5 : 58) et la KP (70 % : 100) sont notés, à poids égaux.
+        Assert.Equal(["Kda", "ParticipationAuxKills"],
+            a1.GetProperty("composantes").EnumerateArray().Select(c => c.GetProperty("critere").GetString()));
+        Assert.Equal(79, a1.GetProperty("note").GetInt32());
+    }
+
+    [Fact]
+    public async Task Une_game_saisie_a_la_main_n_a_pas_de_note_de_performance()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 1);
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
+
+        var a1 = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)))[serie.TeamA[0]];
+        Assert.Equal(JsonValueKind.Null, a1.GetProperty("performance").ValueKind);
+    }
 }

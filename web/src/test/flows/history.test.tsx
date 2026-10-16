@@ -15,6 +15,7 @@ const team = (...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
     playerId: i + 1,
     championId: null,
     stats: null,
+    performance: null,
   }));
 
 const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({

@@ -3613,6 +3613,32 @@
           }
         }
       },
+      "ComposanteDeNote": {
+        "required": [
+          "critere",
+          "valeur",
+          "score",
+          "poids"
+        ],
+        "type": "object",
+        "properties": {
+          "critere": {
+            "$ref": "#/components/schemas/CritereDeNote"
+          },
+          "valeur": {
+            "type": "number",
+            "format": "double"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "poids": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "CreatePlayerRequest": {
         "required": [
           "prenom",
@@ -3677,6 +3703,16 @@
             "format": "int32"
           }
         }
+      },
+      "CritereDeNote": {
+        "enum": [
+          "Kda",
+          "ParticipationAuxKills",
+          "CsParMinute",
+          "DegatsParMinute",
+          "VisionParMinute",
+          "ObjectifsParMinute"
+        ]
       },
       "DesignationCapitaine": {
         "enum": [
@@ -3884,7 +3920,8 @@
           "rankDivision",
           "cost",
           "championId",
-          "stats"
+          "stats",
+          "performance"
         ],
         "type": "object",
         "properties": {
@@ -3931,6 +3968,16 @@
               },
               {
                 "$ref": "#/components/schemas/StatsDuParticipant"
+              }
+            ]
+          },
+          "performance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NoteDePerformance"
               }
             ]
           }
@@ -4210,6 +4257,40 @@
           "playerId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "NoteDePerformance": {
+        "required": [
+          "note",
+          "role",
+          "sourceDuRole",
+          "composantes"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "sourceDuRole": {
+            "$ref": "#/components/schemas/SourceDuRole"
+          },
+          "composantes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComposanteDeNote"
+            }
           }
         }
       },
@@ -5260,6 +5341,14 @@
         "enum": [
           "Open",
           "Closed"
+        ]
+      },
+      "SourceDuRole": {
+        "enum": [
+          "Partie",
+          "Autorole",
+          "RolePrincipal",
+          "Inconnue"
         ]
       },
       "StatsDuParticipant": {

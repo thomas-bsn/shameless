@@ -89,6 +89,10 @@ en customs. Ce n'est pas un Elo.
 - **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6, affichée en  
 tiers D, C, B, A, S, SS. Dérivé du MMR, recalculé après chaque game, remis à zéro  
 chaque mois (`PlayerMonthlyCost`).
+- **Note de performance** : la note de 0 à 100 d'un joueur pour une game, calculée depuis  
+ses stats envoyées par le Companion. Chaque critère (KDA, KP, CS, dégâts, vision,  
+objectifs) est noté par rapport aux références du rôle joué, puis pondéré selon ce rôle  
+(ADR 0011). Elle ne tient pas compte du résultat de la game.
 
 ## Votes et titres
 
