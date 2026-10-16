@@ -42,7 +42,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         };
 
     [Fact]
-    public async Task Every_endpoint_outside_login_callback_health_and_access_links_requires_a_session()
+    public async Task Toute_route_hors_connexion_callback_sante_et_liens_d_acces_demande_une_session()
     {
         var client = Factory.CreateAnonymousClient();
         var endpoints = Endpoints(parLien: false);
@@ -102,7 +102,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     [Theory]
     [MemberData(nameof(AdminActions))]
-    public async Task A_non_admin_player_is_refused_admin_actions(string action)
+    public async Task Un_joueur_non_admin_est_refuse_sur_les_actions_admin(string action)
     {
         var (method, url) = await PrepareAdminActionAsync(action);
         var client = Factory.CreateSignedInClient("7001");
@@ -114,7 +114,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     [Theory]
     [MemberData(nameof(AdminActions))]
-    public async Task An_admin_can_perform_admin_actions(string action)
+    public async Task Un_admin_peut_faire_les_actions_admin(string action)
     {
         var (method, url) = await PrepareAdminActionAsync(action);
         var client = Factory.CreateAdminClient();
@@ -125,7 +125,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Me_tells_whether_the_signed_in_user_is_an_admin()
+    public async Task Me_indique_si_l_utilisateur_connecte_est_admin()
     {
         var player = await Factory.CreateSignedInClient("7002").GetFromJsonAsync<JsonElement>("/auth/me", Ct);
         var admin = await Factory.CreateAdminClient().GetFromJsonAsync<JsonElement>("/auth/me", Ct);
@@ -135,7 +135,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task An_admin_sets_a_players_cost_and_peak()
+    public async Task Un_admin_fixe_le_cost_et_le_peak_d_un_joueur()
     {
         var admin = Factory.CreateAdminClient();
         var playerId = await CreatePlayerAsync(admin, "Cible");
@@ -158,7 +158,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     [Theory]
     [InlineData(0)]
     [InlineData(7)]
-    public async Task A_cost_outside_1_to_6_is_rejected(int cost)
+    public async Task Un_cost_hors_de_1_a_6_est_refuse(int cost)
     {
         var admin = Factory.CreateAdminClient();
         var playerId = await CreatePlayerAsync(admin, "Cible");
@@ -169,7 +169,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Linking_a_player_already_linked_to_someone_else_is_refused_unless_admin()
+    public async Task Lier_un_joueur_deja_lie_a_quelqu_un_d_autre_est_refuse_sauf_admin()
     {
         var owner = Factory.CreateSignedInClient("7003");
         var playerId = await CreatePlayerAsync(owner, "Pris");

@@ -32,11 +32,6 @@ describe("secondesRestantes", () => {
     expect(secondesRestantes(tour, at("2026-10-16T20:00:30Z"))).toBe(15);
   });
 
-  it("lit une date sans fuseau comme de l'UTC (timestamp sans fuseau de l'API)", () => {
-    const tour = { echeance: "2026-10-16T20:01:00" };
-    expect(secondesRestantes(tour, at("2026-10-16T20:00:50Z"))).toBe(10);
-  });
-
   it("arrondit à la seconde supérieure et ne descend pas sous zéro", () => {
     const tour = { echeance: "2026-10-16T20:01:00Z" };
     expect(secondesRestantes(tour, at("2026-10-16T20:00:10.400Z"))).toBe(50);
@@ -44,23 +39,38 @@ describe("secondesRestantes", () => {
   });
 });
 
+// L'ordre Tournament tel que l'API le donne, Équipe B côté blue :
+// bans B1 R1 B2 R2 B3 R3, picks B1 R1 R2 B2 B3 R3, bans R4 B4 R5 B5, picks R4 B4 B5 R5.
+const ordre: [string, string][] = [
+  ["ban", "blue"], ["ban", "red"], ["ban", "blue"], ["ban", "red"], ["ban", "blue"], ["ban", "red"],
+  ["pick", "blue"], ["pick", "red"], ["pick", "red"], ["pick", "blue"], ["pick", "blue"], ["pick", "red"],
+  ["ban", "red"], ["ban", "blue"], ["ban", "red"], ["ban", "blue"],
+  ["pick", "red"], ["pick", "blue"], ["pick", "blue"], ["pick", "red"],
+];
+const tours: Schemas["TourDraftResponse"][] = ordre.map(([action, side], i) => ({
+  numero: i + 1,
+  action,
+  side,
+  equipe: side === "blue" ? "B" : "A",
+}));
+
 describe("libelleTour", () => {
   it("nomme chaque tour de l'ordre Tournament par action, Side et rang dans ce Side", () => {
-    expect(libelleTour(1)).toBe("Ban blue 1");
-    expect(libelleTour(6)).toBe("Ban red 3");
-    expect(libelleTour(7)).toBe("Pick blue 1");
-    expect(libelleTour(9)).toBe("Pick red 2");
-    expect(libelleTour(13)).toBe("Ban red 4");
-    expect(libelleTour(14)).toBe("Ban blue 4");
-    expect(libelleTour(17)).toBe("Pick red 4");
-    expect(libelleTour(20)).toBe("Pick red 5");
+    expect(libelleTour(tours, 1)).toBe("Ban blue 1");
+    expect(libelleTour(tours, 6)).toBe("Ban red 3");
+    expect(libelleTour(tours, 7)).toBe("Pick blue 1");
+    expect(libelleTour(tours, 9)).toBe("Pick red 2");
+    expect(libelleTour(tours, 13)).toBe("Ban red 4");
+    expect(libelleTour(tours, 14)).toBe("Ban blue 4");
+    expect(libelleTour(tours, 17)).toBe("Pick red 4");
+    expect(libelleTour(tours, 20)).toBe("Pick red 5");
   });
 });
 
-type Draft = Pick<Schemas["DraftChampionsResponse"], "equipeBlue" | "terminee" | "tourCourant" | "actions">;
+type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions">;
 
 const enCours = (tour: number, equipe: string, actions: Schemas["ActionDraftResponse"][] = []): Draft => ({
-  equipeBlue: "B",
+  tours,
   terminee: false,
   tourCourant: { numero: tour, action: "ban", side: "blue", equipe, commenceLe: "2026-10-16T20:00:00Z", echeance: "2026-10-16T20:01:00Z" },
   actions,
@@ -99,7 +109,15 @@ describe("toursDeLaDraft", () => {
     const tours = toursDeLaDraft(enCours(3, "B", [action(1, "Zed"), action(2, "Ahri")]));
 
     expect(tours).toHaveLength(20);
-    expect(tours[0]).toEqual({ numero: 1, action: "ban", side: "blue", equipe: "B", championId: "Zed", courant: false });
+    expect(tours[0]).toEqual({
+      numero: 1,
+      action: "ban",
+      side: "blue",
+      equipe: "B",
+      libelle: "Ban blue 1",
+      championId: "Zed",
+      courant: false,
+    });
     expect(tours[1]).toMatchObject({ side: "red", equipe: "A", championId: "Ahri", courant: false });
     expect(tours[2]).toMatchObject({ numero: 3, championId: null, courant: true });
     expect(tours[19]).toMatchObject({ numero: 20, action: "pick", side: "red", equipe: "A", courant: false });

@@ -158,6 +158,22 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task L_etat_donne_les_vingt_tours_de_l_ordre_tournament_et_l_equipe_attendue_a_chacun()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client, teamASide: "red");
+
+        var draft = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+
+        var tours = draft.GetProperty("tours").EnumerateArray().ToList();
+        Assert.Equal(Enumerable.Range(1, 20), tours.Select(t => t.GetProperty("numero").GetInt32()));
+        Assert.Equal(SideDesTours, tours.Select(t => t.GetProperty("side").GetString()));
+        Assert.Equal(SideDesTours.Select(s => s == "red" ? "A" : "B"), tours.Select(t => t.GetProperty("equipe").GetString()));
+        Assert.Equal(Enumerable.Range(1, 20).Select(t => ToursDeBan.Contains(t) ? "ban" : "pick"),
+            tours.Select(t => t.GetProperty("action").GetString()));
+    }
+
+    [Fact]
     public async Task Les_capitaines_jouent_les_vingt_tours_dans_l_ordre_tournament_selon_le_side()
     {
         var client = Factory.CreateSignedInClient();
@@ -334,10 +350,12 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         });
     }
 
-    [Fact]
-    public async Task Les_roles_autorole_sont_caches_pendant_la_draft_puis_reveles_a_la_fin()
+    /// <summary>
+    /// Une Série validée par le Picker avec l'Autorole, ses deux capitaines, sa game en attente côté
+    /// blue pour l'Équipe A, ses liens envoyés et sa Draft de champions ouverte.
+    /// </summary>
+    private async Task<Preparee> PreparerAvecAutoroleAsync(HttpClient client)
     {
-        var client = Factory.CreateSignedInClient();
         await OpenSoireeAsync(client);
         var dix = await CreatePlayersAsync(client, "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10");
         await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds = dix }, Ct));
@@ -355,32 +373,70 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         var preparee = new Preparee(serie, gameId, liens.GetProperty("lienCapitaineA").GetString()!,
             liens.GetProperty("lienCapitaineB").GetString()!, liens.GetProperty("lienSpectateur").GetString()!);
         await ReadJsonAsync(await OuvrirAsync(client, seriesId));
+        return preparee;
+    }
+
+    [Fact]
+    public async Task Les_roles_autorole_sont_caches_pendant_la_draft_puis_reveles_a_la_fin()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAvecAutoroleAsync(client);
+        var (seriesId, gameId) = (preparee.Serie.SeriesId, preparee.GameId);
+        var serieLue = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
         await JouerToursAsync(preparee, "blue", 1, 19);
 
-        var lectures = new[]
-        {
-            await LireAsync(client, gameId),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienA)),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur))
-        };
+        var lectures = await LecturesAsync(preparee.LienA);
         Assert.All(lectures, draft => Assert.All(Joueurs(draft), j => Assert.Equal(JsonValueKind.Null, j.GetProperty("role").ValueKind)));
 
         await JouerToursAsync(preparee, "blue", 20, 20);
 
-        lectures =
-        [
-            await LireAsync(client, gameId),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienB)),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur))
-        ];
+        lectures = await LecturesAsync(preparee.LienB);
         Assert.All(lectures, draft =>
         {
             Assert.Equal(["Adc", "Jungle", "Mid", "Support", "Top"], draft.GetProperty("teamA").EnumerateArray().Select(j => j.GetProperty("role").GetString()).Order());
             Assert.Equal(["Adc", "Jungle", "Mid", "Support", "Top"], draft.GetProperty("teamB").EnumerateArray().Select(j => j.GetProperty("role").GetString()).Order());
         });
 
+        // La Draft de champions, par l'organisateur et par les liens, et la Série elle-même (seule, en
+        // cours, dans sa Soirée) : toutes les lectures qui portent les rôles de l'Autorole.
+        async Task<JsonElement[]> LecturesAsync(string lienCapitaine)
+        {
+            var soireeId = serieLue.GetProperty("soireeId").GetInt32();
+            return
+            [
+                await LireAsync(client, gameId),
+                await ReadJsonAsync(await LireParLienAsync(lienCapitaine)),
+                await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur)),
+                await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct)),
+                (await ReadJsonAsync(await client.GetAsync("/series/active", Ct))).GetProperty("series")[0],
+                (await ReadJsonAsync(await client.GetAsync($"/soirees/{soireeId}/series", Ct))).GetProperty("series")[0]
+            ];
+        }
+
         static IEnumerable<JsonElement> Joueurs(JsonElement draft) =>
             draft.GetProperty("teamA").EnumerateArray().Concat(draft.GetProperty("teamB").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Saisir_le_resultat_pendant_la_draft_la_termine_et_revele_les_roles()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAvecAutoroleAsync(client);
+        await JouerToursAsync(preparee, "blue", 1, 5);
+
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{preparee.GameId}/result", new { winner = "A" }, Ct));
+
+        var draft = await LireAsync(client, preparee.GameId);
+        Assert.True(draft.GetProperty("terminee").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, draft.GetProperty("tourCourant").ValueKind);
+        Assert.Equal(5, draft.GetProperty("actions").GetArrayLength());
+        Assert.All(draft.GetProperty("teamA").EnumerateArray(), j => Assert.NotEqual(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+        var serie = await ReadJsonAsync(await client.GetAsync($"/series/{preparee.Serie.SeriesId}", Ct));
+        Assert.All(serie.GetProperty("teamB").EnumerateArray(), j => Assert.NotEqual(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+
+        await AssertRefusAsync(await JouerAsync(preparee.LienB, 6, "Annie"), HttpStatusCode.Conflict);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 6, "Annie"), HttpStatusCode.Conflict);
     }
 
     [Fact]
@@ -506,6 +562,23 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Les_dates_lues_en_base_sont_restituees_en_utc()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        var ouverte = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+
+        var lue = await LireAsync(client, preparee.GameId);
+        var parLien = await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur));
+
+        var envoyee = ouverte.GetProperty("tourCourant").GetProperty("echeance").GetString();
+        Assert.EndsWith("Z", envoyee);
+        Assert.Equal(envoyee, lue.GetProperty("tourCourant").GetProperty("echeance").GetString());
+        Assert.Equal(envoyee, parLien.GetProperty("tourCourant").GetProperty("echeance").GetString());
+        Assert.EndsWith("Z", parLien.GetProperty("tourCourant").GetProperty("commenceLe").GetString());
+    }
+
+    [Fact]
     public async Task Avant_l_echeance_l_organisateur_ne_joue_pas_a_la_place_d_un_capitaine()
     {
         var client = Factory.CreateSignedInClient();
@@ -598,6 +671,19 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         await JouerToursAsync(preparee, "blue", 2, 20);
         Factory.Clock.Advance(TimeSpan.FromSeconds(61));
         await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 20, "Zed"), HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Sans_catalogue_des_champions_les_actions_de_la_draft_repondent_503()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Champions.Indisponible = true;
+
+        await AssertRefusAsync(await JouerAsync(preparee.LienA, 1, "Ahri"), HttpStatusCode.ServiceUnavailable);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"), HttpStatusCode.ServiceUnavailable);
     }
 
     [Fact]

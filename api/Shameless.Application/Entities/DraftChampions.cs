@@ -1,4 +1,5 @@
 using Shameless.Application.ChampionDraft;
+using Shameless.Application.Picker;
 
 namespace Shameless.Application.Entities;
 
@@ -37,13 +38,23 @@ public class DraftChampions
     /// <summary>L'Équipe côté blue pour la game.</summary>
     public string EquipeBlue => Game.EquipeOn(Sides.Blue);
 
-    public bool EstTerminee => Actions.Count >= OrdreTournament.ToursCount;
+    /// <summary>
+    /// La Draft de champions est terminée : ses vingt tours sont joués, ou le résultat de sa game est
+    /// saisi avant (plus aucune action possible).
+    /// </summary>
+    public bool EstTerminee => Actions.Count >= OrdreTournament.ToursCount || Game.Status == GameStatuses.Completed;
 
     /// <summary>Le tour à jouer, null quand la Draft de champions est terminée.</summary>
-    public TourDraft? TourCourant => OrdreTournament.TourCourant(Actions.Count);
+    public TourDraft? TourCourant => EstTerminee ? null : OrdreTournament.TourCourant(Actions.Count);
 
     /// <summary>L'Équipe qui joue le tour <paramref name="numero"/>.</summary>
     public string EquipeDuTour(int numero) => OrdreTournament.EquipeAttendue(numero, EquipeBlue);
+
+    /// <summary>
+    /// Le rôle de l'Autorole du joueur dans la Série, révélé une fois la Draft de champions terminée ;
+    /// null avant, ou sans Autorole.
+    /// </summary>
+    public Role? RoleRevele(int playerId) => EstTerminee ? Game.Series?.RoleOf(playerId) : null;
 
     /// <summary>Le champion est déjà banni ou pick dans cette game.</summary>
     public bool AUtilise(string championId) => Actions.Any(a => a.ChampionId == championId);

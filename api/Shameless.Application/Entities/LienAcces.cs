@@ -47,12 +47,4 @@ public enum PorteeLien
 /// L'accès que donne un lien valable : sa Série, sa portée et, pour un Lien capitaine, son Équipe.
 /// C'est la seule chose qu'une commande ou une lecture par lien connaît de l'appelant.
 /// </summary>
-public sealed record AccesParLien(int SeriesId, PorteeLien Portee, string? Equipe)
-{
-    /// <summary>Le lien permet d'agir pour cette Équipe de cette Série : c'est son Lien capitaine.</summary>
-    public bool PermetDeJouer(int seriesId, string equipe) =>
-        Portee == PorteeLien.Capitaine && SeriesId == seriesId && Equipe == equipe;
-
-    /// <summary>Le lien permet de lire cette Série (Lien capitaine ou Lien spectateur).</summary>
-    public bool PermetDeLire(int seriesId) => SeriesId == seriesId;
-}
+public sealed record AccesParLien(int SeriesId, PorteeLien Portee, string? Equipe);

@@ -1,3 +1,4 @@
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -249,10 +250,7 @@ public sealed class SeriesService
         if (replacement == null)
             return CommandResult<SeriesResponse>.Invalid("Le remplaçant n'existe pas.");
 
-        replaced.Player = replacement;
-        replaced.PlayerId = replacement.Id;
-        // Le remplaçant ne reprend pas le rôle de capitaine : l'organisateur en désigne un nouveau.
-        replaced.Capitaine = false;
+        series.Remplacer(replaced, replacement);
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
@@ -277,26 +275,16 @@ public sealed class SeriesService
         if (!series.IsEnCours)
             return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : ses capitaines ne changent plus.");
 
-        var joueurs = series.PlayersOf(equipe).OrderBy(p => p.Id).ToList();
-        SeriesPlayer? capitaine;
-        switch (designation)
-        {
-            case DesignationCapitaine.Manuel:
-                capitaine = joueurs.SingleOrDefault(p => p.PlayerId == playerId);
-                if (capitaine == null)
-                    return CommandResult<SeriesResponse>.Invalid($"Le capitaine fait partie de l'Équipe {equipe}.");
-                break;
-            case DesignationCapitaine.AuHasard:
-                capitaine = joueurs[_random.Next(joueurs.Count)];
-                break;
-            case DesignationCapitaine.PlusGrosCost:
-                capitaine = joueurs.OrderByDescending(p => p.Player.CurrentCost).First();
-                break;
-            default:
-                return CommandResult<SeriesResponse>.Invalid("Désignation du capitaine inconnue.");
-        }
+        if (!Enum.IsDefined(designation))
+            return CommandResult<SeriesResponse>.Invalid("Désignation du capitaine inconnue.");
 
-        series.DesignerCapitaine(capitaine);
+        var joueurs = series.PlayersOf(equipe).OrderBy(p => p.Id).ToList();
+        var designe = DesignationDesCapitaines.Designer(
+            designation, joueurs.Select(p => new PickerPlayer(p.PlayerId, p.Player.CurrentCost)).ToList(), playerId, _random);
+        if (designe == null)
+            return CommandResult<SeriesResponse>.Invalid($"Le capitaine fait partie de l'Équipe {equipe}.");
+
+        series.DesignerCapitaine(joueurs.Single(p => p.PlayerId == designe));
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
@@ -347,6 +335,7 @@ public sealed class SeriesService
     public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
         (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
 
+    /// <summary>La Série lue ; les rôles de l'Autorole n'y figurent pas pendant une Draft de champions.</summary>
     private static SeriesResponse ToResponse(BestOfSeries series) => new(
         SeriesId: series.Id,
         SoireeId: series.SoireeId,
@@ -357,8 +346,8 @@ public sealed class SeriesService
         WinningTeam: series.WinningTeam,
         TeamAWins: series.TeamAWins,
         TeamBWins: series.TeamBWins,
-        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
-        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
+        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
         CapitaineA: series.CapitaineOf(Equipes.A),
         CapitaineB: series.CapitaineOf(Equipes.B),
         Games: series.Games.Select(SeriesGameResponse.From).ToList());

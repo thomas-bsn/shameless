@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { SessionMenu } from "@/components/session-menu";
+import { pageParLien } from "@/lib/liens";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -19,6 +20,9 @@ const navigation = [
 ] as const;
 
 function RootLayout() {
+  // Les pages ouvertes par un lien d'accès (ADR 0010) n'ont pas de session : pas de « Se connecter ».
+  const parLien = useRouterState({ select: (state) => pageParLien(state.location.pathname) });
+
   return (
     <div className="min-h-screen">
       <header className="border-b">
@@ -39,9 +43,11 @@ function RootLayout() {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto">
-            <SessionMenu />
-          </div>
+          {!parLien && (
+            <div className="ml-auto">
+              <SessionMenu />
+            </div>
+          )}
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">

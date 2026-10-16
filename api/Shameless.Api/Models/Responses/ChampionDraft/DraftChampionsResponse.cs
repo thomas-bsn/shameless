@@ -5,7 +5,8 @@ using Shameless.Application.Entities;
 namespace Shameless.Api.Models.Responses.ChampionDraft;
 
 /// <summary>
-/// L'état d'une Draft de champions : les tours joués, le tour courant et l'Équipe attendue, les deux
+/// L'état d'une Draft de champions : les vingt tours de l'ordre Tournament avec l'Équipe attendue à
+/// chacun, les tours joués, le tour courant et l'Équipe attendue, les deux
 /// Équipes de la game et leurs capitaines. Les rôles de l'Autorole n'apparaissent qu'une fois la Draft
 /// terminée. Aucun lien d'accès n'y figure.
 /// </summary>
@@ -17,6 +18,7 @@ public sealed record DraftChampionsResponse(
     string EquipeRed,
     bool Terminee,
     TourCourantResponse? TourCourant, // null une fois la Draft terminée
+    List<TourDraftResponse> Tours,
     List<ActionDraftResponse> Actions,
     List<GameParticipantDto> TeamA,
     List<GameParticipantDto> TeamB,
@@ -38,6 +40,9 @@ public sealed record DraftChampionsResponse(
             TourCourant: tour == null
                 ? null
                 : new TourCourantResponse(tour.Numero, tour.Action, tour.Side, draft.EquipeDuTour(tour.Numero), draft.TourCommenceLe, draft.Echeance),
+            Tours: OrdreTournament.Tours
+                .Select(t => new TourDraftResponse(t.Numero, t.Action, t.Side, draft.EquipeDuTour(t.Numero)))
+                .ToList(),
             Actions: draft.Actions.OrderBy(a => a.Numero).Select(a =>
             {
                 var joue = OrdreTournament.Tour(a.Numero);
@@ -50,9 +55,7 @@ public sealed record DraftChampionsResponse(
 
         List<GameParticipantDto> Joueurs(string equipe) =>
             game.ParticipantsOf(equipe)
-                .Select(p => GameParticipantDto.From(p.Player, draft.EstTerminee
-                    ? series.Players.FirstOrDefault(s => s.PlayerId == p.PlayerId)?.Role
-                    : null))
+                .Select(p => GameParticipantDto.From(p.Player, draft.RoleRevele(p.PlayerId)))
                 .ToList();
     }
 }
@@ -61,6 +64,9 @@ public sealed record DraftChampionsResponse(
 /// échéance (60 secondes plus tard), après laquelle l'organisateur connecté peut jouer à la place de l'Équipe attendue.
 /// </summary>
 public sealed record TourCourantResponse(int Numero, string Action, string Side, string Equipe, DateTime CommenceLe, DateTime Echeance);
+
+/// <summary>Un tour de l'ordre Tournament pour cette game : numéro (1 à 20), "ban" | "pick", le Side et l'Équipe qui le joue.</summary>
+public sealed record TourDraftResponse(int Numero, string Action, string Side, string Equipe);
 
 /// <summary>Un tour joué : le champion banni ou pick pour l'Équipe, sans joueur associé.</summary>
 public sealed record ActionDraftResponse(int Numero, string Action, string Side, string Equipe, string ChampionId);

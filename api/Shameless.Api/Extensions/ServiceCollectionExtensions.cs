@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers()
+        services.AddControllers(o => o.Filters.Add<CatalogueIndisponibleFilter>())
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

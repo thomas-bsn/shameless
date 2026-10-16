@@ -24,6 +24,17 @@ public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_catalogue_indisponible_repond_503()
+    {
+        Factory.Champions.Indisponible = true;
+
+        var response = await Factory.CreateAnonymousClient().GetAsync("/champions", Ct);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task Le_catalogue_des_champions_se_lit_sans_session()
     {
         var anonymous = Factory.CreateAnonymousClient();

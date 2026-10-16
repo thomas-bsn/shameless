@@ -1,3 +1,5 @@
+using Shameless.Application.Picker;
+
 namespace Shameless.Application.Entities;
 
 /// <summary>
@@ -94,12 +96,36 @@ public class BestOfSeries
 
     public IEnumerable<SeriesPlayer> PlayersOf(string equipe) => Players.Where(p => p.Equipe == equipe);
 
+    /// <summary>
+    /// Remplace un joueur de la composition courante. Le remplaçant ne reprend pas le rôle de capitaine :
+    /// l'organisateur en désigne un nouveau. Un capitaine remplacé perd son accès : le Lien capitaine de
+    /// son Équipe est renouvelé. Demande les liens chargés.
+    /// </summary>
+    public void Remplacer(SeriesPlayer remplace, Player remplacant)
+    {
+        if (remplace.Capitaine)
+            LienCapitaine(remplace.Equipe).Renouveler();
+
+        remplace.Player = remplacant;
+        remplace.PlayerId = remplacant.Id;
+        remplace.Capitaine = false;
+    }
+
     /// <summary>Fait du joueur le Capitaine de son Équipe, à la place du précédent.</summary>
     public void DesignerCapitaine(SeriesPlayer capitaine)
     {
         foreach (var player in PlayersOf(capitaine.Equipe))
             player.Capitaine = player == capitaine;
     }
+
+    /// <summary>
+    /// Une Draft de champions est en cours sur une game de la Série : les rôles de l'Autorole restent
+    /// cachés jusqu'à sa fin. Demande les games et leur Draft de champions chargées.
+    /// </summary>
+    public bool RolesCaches => Games.Any(g => g.DraftChampions is { EstTerminee: false });
+
+    /// <summary>Le rôle attribué par l'Autorole au joueur de la composition courante, null sans Autorole.</summary>
+    public Role? RoleOf(int playerId) => Players.FirstOrDefault(p => p.PlayerId == playerId)?.Role;
 
     /// <summary>Le Capitaine de l'Équipe, ou null tant qu'aucun n'est désigné.</summary>
     public int? CapitaineOf(string equipe) => PlayersOf(equipe).SingleOrDefault(p => p.Capitaine)?.PlayerId;

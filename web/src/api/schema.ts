@@ -2806,6 +2806,7 @@ export interface components {
             equipeRed: string;
             terminee: boolean;
             tourCourant: null | components["schemas"]["TourCourantResponse"];
+            tours: components["schemas"]["TourDraftResponse"][];
             actions: components["schemas"]["ActionDraftResponse"][];
             teamA: components["schemas"]["GameParticipantDto"][];
             teamB: components["schemas"]["GameParticipantDto"][];
@@ -3107,6 +3108,13 @@ export interface components {
             commenceLe: string;
             /** Format: date-time */
             echeance: string;
+        };
+        TourDraftResponse: {
+            /** Format: int32 */
+            numero: number;
+            action: string;
+            side: string;
+            equipe: string;
         };
         UpdatePeakRequest: {
             peakTier: null | string;

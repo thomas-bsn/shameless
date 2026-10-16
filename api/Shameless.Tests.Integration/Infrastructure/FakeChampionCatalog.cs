@@ -2,7 +2,10 @@ using Shameless.Application.Interfaces;
 
 namespace Shameless.Tests.Integration.Infrastructure;
 
-/// <summary>Faux catalogue des champions : vingt-cinq champions fixes, assez pour une Draft de champions complète, sans appel à Data Dragon.</summary>
+/// <summary>
+/// Faux catalogue des champions : vingt-cinq champions fixes, assez pour une Draft de champions complète,
+/// sans appel à Data Dragon. <see cref="Indisponible"/> le rend indisponible, comme Data Dragon en panne.
+/// </summary>
 public sealed class FakeChampionCatalog : IChampionCatalog
 {
     public static readonly IReadOnlyList<Champion> Champions =
@@ -34,6 +37,13 @@ public sealed class FakeChampionCatalog : IChampionCatalog
         new("Zed", "238", "Zed", "https://ddragon.test/img/champion/Zed.png")
     ];
 
+    /// <summary>Le catalogue est indisponible ; remis à disposition avant chaque test.</summary>
+    public bool Indisponible { get; set; }
+
+    public void Reset() => Indisponible = false;
+
     public Task<IReadOnlyList<Champion>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult(Champions);
+        Indisponible
+            ? throw new CatalogueIndisponibleException("Data Dragon ne répond pas.")
+            : Task.FromResult(Champions);
 }

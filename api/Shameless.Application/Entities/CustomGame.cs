@@ -16,6 +16,9 @@ public class CustomGame
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }
 
+    /// <summary>La Draft de champions de la game, null tant qu'elle n'est pas ouverte.</summary>
+    public DraftChampions? DraftChampions { get; set; }
+
 
     // Navigation properties
     public ICollection<CustomGameParticipant> Participants { get; set; } = new List<CustomGameParticipant>();

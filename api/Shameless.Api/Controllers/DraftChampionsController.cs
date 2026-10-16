@@ -3,6 +3,7 @@ using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.ChampionDraft;
 using Shameless.Api.Models.Responses.ChampionDraft;
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.Entities;
 using Shameless.Application.Services;
 
@@ -61,7 +62,7 @@ public sealed class DraftChampionsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
     public async Task<ActionResult<DraftChampionsResponse>> JouerALaPlace(int gameId, [FromBody] JouerDraftChampionsRequest request) =>
-        await AvecCatalogueAsync(() => _drafts.JouerALaPlaceAsync(gameId, request.Tour, request.ChampionId));
+        await JoueAsync(_drafts.JouerALaPlaceAsync(gameId, request.Tour, request.ChampionId));
 
     /// <summary>Sans connexion, par un Lien capitaine ou le Lien spectateur : la dernière Draft de champions de la Série.</summary>
     [HttpGet("liens/{lien}/draft-champions")]
@@ -89,24 +90,23 @@ public sealed class DraftChampionsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
-    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request) =>
-        await AvecCatalogueAsync(() => _drafts.JouerParLienAsync(this.AccesParLien(), request.Tour, request.ChampionId));
-
-    /// <summary>Joue une action de la Draft ; 503 quand le catalogue des champions (Data Dragon) est indisponible.</summary>
-    private async Task<ActionResult<DraftChampionsResponse>> AvecCatalogueAsync(
-        Func<Task<CommandResult<DraftChampions>>> jouer)
+    public async Task<ActionResult<DraftChampionsResponse>> Jouer(string lien, [FromBody] JouerDraftChampionsRequest request)
     {
-        try
-        {
-            var result = await jouer();
-            if (!result.IsOk) return this.Refusal(result);
+        // CapitaineRequis : le lien est un Lien capitaine, il porte son Équipe.
+        var acces = this.AccesParLien();
+        return await JoueAsync(_drafts.JouerParLienAsync(
+            acces.SeriesId, new JoueurDraft.Capitaine(acces.Equipe!), request.Tour, request.ChampionId));
+    }
 
-            return DraftChampionsResponse.From(result.Value!);
-        }
-        catch (Exception e) when (e is HttpRequestException or System.Text.Json.JsonException)
-        {
-            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
-                detail: "Le catalogue des champions est indisponible pour le moment (Data Dragon).");
-        }
+    /// <summary>
+    /// L'état de la Draft après une action jouée, ou le refus. Catalogue des champions indisponible :
+    /// 503 (<see cref="CatalogueIndisponibleFilter"/>).
+    /// </summary>
+    private async Task<ActionResult<DraftChampionsResponse>> JoueAsync(Task<CommandResult<DraftChampions>> jouer)
+    {
+        var result = await jouer;
+        if (!result.IsOk) return this.Refusal(result);
+
+        return DraftChampionsResponse.From(result.Value!);
     }
 }
