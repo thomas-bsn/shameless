@@ -10,6 +10,12 @@ public interface ICustomGameRepository
     Task<CustomGame?> GetByIdAsync(int id);
     Task<CustomGame?> GetByIdWithParticipantsAsync(int id);
 
+    /// <summary>
+    /// La game, de quoi la raconter : ses participants avec leur joueur et leur compte
+    /// Discord lié, sa Série avec ses games et sa composition (rôles de l'Autorole) ; null si inconnue.
+    /// </summary>
+    Task<CustomGame?> GetRecitAsync(int id);
+
     /// <summary>Un rapport du Companion mis en revue, avec sa game ; null s'il n'existe pas.</summary>
     Task<RapportCompanion?> GetRapportAsync(int id);
 

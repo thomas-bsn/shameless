@@ -33,6 +33,10 @@ public class CustomGameService
         return await _gameRepo.GetPendingAsync();
     }
 
+    /// <summary>La page d'une game, en attente ou terminée, ou null si elle n'existe pas.</summary>
+    public async Task<GameRecapResponse?> GetRecapAsync(int gameId) =>
+        await _gameRepo.GetRecitAsync(gameId) is { } game ? GameRecapResponse.From(game) : null;
+
     public async Task<List<SeriesHistoryResponse>> GetHistoryAsync(int year, int month)
     {
         var games = await _gameRepo.GetByYearMonthAsync(year, month);
