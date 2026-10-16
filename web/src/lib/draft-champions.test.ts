@@ -3,6 +3,7 @@ import {
   championsPris,
   filtrerChampions,
   libelleTour,
+  mainALOrganisateur,
   peutJouer,
   secondesRestantes,
   toursDeLaDraft,
@@ -74,6 +75,22 @@ describe("peutJouer", () => {
     expect(peutJouer(enCours(1, "B"), "A")).toBe(false);
     expect(peutJouer(enCours(1, "B"), null)).toBe(false);
     expect(peutJouer({ ...enCours(1, "B"), terminee: true, tourCourant: null }, "B")).toBe(false);
+  });
+});
+
+describe("mainALOrganisateur", () => {
+  it("laisse le tour au capitaine jusqu'à l'échéance", () => {
+    expect(mainALOrganisateur(enCours(1, "B"), at("2026-10-16T20:00:59.900Z"))).toBe(false);
+  });
+
+  it("donne la main à l'organisateur dès l'échéance atteinte", () => {
+    expect(mainALOrganisateur(enCours(1, "B"), at("2026-10-16T20:01:00Z"))).toBe(true);
+    expect(mainALOrganisateur(enCours(1, "B"), at("2026-10-16T20:03:00Z"))).toBe(true);
+  });
+
+  it("ne donne rien à jouer quand la Draft est terminée", () => {
+    const terminee = { ...enCours(1, "B"), terminee: true, tourCourant: null };
+    expect(mainALOrganisateur(terminee, at("2026-10-16T20:03:00Z"))).toBe(false);
   });
 });
 

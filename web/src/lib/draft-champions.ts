@@ -91,3 +91,14 @@ export function secondesRestantes(
 ): number {
   return Math.max(0, Math.ceil((instantUtc(tour.echeance) - maintenant) / 1000));
 }
+
+/**
+ * L'organisateur peut jouer le tour courant à la place de l'Équipe attendue : la Draft est en cours
+ * et l'échéance du tour est atteinte (avant, l'API refuse en 409).
+ */
+export function mainALOrganisateur(
+  draft: Pick<Draft, "terminee" | "tourCourant">,
+  maintenant: number = Date.now(),
+): boolean {
+  return !draft.terminee && draft.tourCourant !== null && instantUtc(draft.tourCourant.echeance) <= maintenant;
+}

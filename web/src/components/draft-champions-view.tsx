@@ -46,6 +46,11 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
     enabled: acces.isSuccess,
   });
   const champions = $api.useQuery("get", "/champions", {}, { staleTime: Infinity });
+  const queryClient = useQueryClient();
+  const jouer = $api.useMutation("post", "/liens/{lien}/draft-champions/actions", {
+    onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}/draft-champions"] }),
+  });
 
   const titre = portee === "Capitaine" ? "Draft de champions — capitaine" : "Draft de champions — spectateur";
 
@@ -83,8 +88,16 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
         <DraftChampionsView
           draft={draft.data!}
           champions={champions.data ?? []}
-          lien={lien}
           equipe={equipe}
+          jeu={
+            equipe && peutJouer(draft.data!, equipe)
+              ? {
+                  pending: jouer.isPending,
+                  error: jouer.isError ? jouer.error : null,
+                  onJouer: (tour, championId) => jouer.mutate({ ...path, body: { tour, championId } }),
+                }
+              : null
+          }
         />
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
@@ -116,17 +129,47 @@ function LienInvalide() {
   );
 }
 
-function DraftChampionsView({
+/** Jouer le tour courant : le capitaine par son lien, ou l'organisateur à sa place une fois l'échéance atteinte. */
+export interface JeuDuTour {
+  /** Titre du choix ; par défaut « Bannir un champion » ou « Choisir un champion ». */
+  titre?: string;
+  pending: boolean;
+  error: unknown;
+  onJouer: (tour: number, championId: string) => void;
+}
+
+/** L'instant courant, rafraîchi régulièrement : temps restant et échéance du tour. */
+export function useMaintenant(intervalleMs = 250): number {
+  const [maintenant, setMaintenant] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setMaintenant(Date.now()), intervalleMs);
+    return () => clearInterval(id);
+  }, [intervalleMs]);
+  return maintenant;
+}
+
+/**
+ * La Draft de champions d'une game : tour courant et temps restant, bans et picks de chaque Side,
+ * ordre Tournament. Avec un `jeu`, le choix du champion du tour courant.
+ */
+export function DraftChampionsView({
   draft,
   champions,
-  lien,
   equipe,
+  jeu,
+  consigne,
+  avecEquipes = true,
 }: {
   draft: Draft;
   champions: Champion[];
-  lien: string;
-  /** L'Équipe du Lien capitaine ; null en lecture seule. */
+  /** L'Équipe du Lien capitaine ; null pour le spectateur et l'organisateur. */
   equipe: string | null;
+  /** Le tour courant peut être joué ici ; null en lecture seule. */
+  jeu: JeuDuTour | null;
+  /** Remplace la consigne du tour courant (« Au tour de l'Équipe A »). */
+  consigne?: string;
+  /** Affiche les Équipes et leurs rôles sous la Draft. */
+  avecEquipes?: boolean;
 }) {
   const parId = useMemo(() => new Map(champions.map((c) => [c.id, c])), [champions]);
   const tours = toursDeLaDraft(draft);
@@ -135,31 +178,35 @@ function DraftChampionsView({
 
   return (
     <div className="flex flex-col gap-6">
-      <EtatDuTour draft={draft} equipe={equipe} />
+      <EtatDuTour draft={draft} equipe={equipe} consigne={consigne} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <CoteDraft side="blue" equipe={blue} tours={tours} parId={parId} />
         <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
       </div>
 
-      {equipe && peutJouer(draft, equipe) && (
-        <ChoixChampion key={draft.tourCourant!.numero} draft={draft} champions={champions} lien={lien} />
+      {jeu && draft.tourCourant && (
+        <ChoixChampion key={draft.tourCourant.numero} draft={draft} champions={champions} jeu={jeu} />
       )}
 
       <OrdreTournament tours={tours} parId={parId} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <TeamCard equipe="A" players={draft.teamA} capitaine={draft.capitaineA} highlighted={equipe === "A"} />
-        <TeamCard equipe="B" players={draft.teamB} capitaine={draft.capitaineB} highlighted={equipe === "B"} />
-      </div>
-      {!draft.terminee && (
-        <p className="text-sm text-muted-foreground">Les rôles de l'Autorole s'afficheront à la fin de la Draft.</p>
+      {avecEquipes && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <TeamCard equipe="A" players={draft.teamA} capitaine={draft.capitaineA} highlighted={equipe === "A"} />
+            <TeamCard equipe="B" players={draft.teamB} capitaine={draft.capitaineB} highlighted={equipe === "B"} />
+          </div>
+          {!draft.terminee && (
+            <p className="text-sm text-muted-foreground">Les rôles de l'Autorole s'afficheront à la fin de la Draft.</p>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-function EtatDuTour({ draft, equipe }: { draft: Draft; equipe: string | null }) {
+function EtatDuTour({ draft, equipe, consigne }: { draft: Draft; equipe: string | null; consigne?: string }) {
   const tour = draft.tourCourant;
   if (draft.terminee || !tour) {
     return (
@@ -179,9 +226,10 @@ function EtatDuTour({ draft, equipe }: { draft: Draft; equipe: string | null }) 
             Tour {tour.numero}/20 · <span className={sideClass(tour.side)}>{libelleTour(tour.numero)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            {aToi
-              ? `À toi de ${tour.action === "ban" ? "bannir" : "choisir"} pour l'Équipe ${tour.equipe}`
-              : `Au tour de l'Équipe ${tour.equipe}`}
+            {consigne ??
+              (aToi
+                ? `À toi de ${tour.action === "ban" ? "bannir" : "choisir"} pour l'Équipe ${tour.equipe}`
+                : `Au tour de l'Équipe ${tour.equipe}`)}
           </p>
         </div>
         <TempsRestant tour={tour} />
@@ -191,12 +239,7 @@ function EtatDuTour({ draft, equipe }: { draft: Draft; equipe: string | null }) 
 }
 
 function TempsRestant({ tour }: { tour: Schemas["TourCourantResponse"] }) {
-  const [maintenant, setMaintenant] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setMaintenant(Date.now()), 250);
-    return () => clearInterval(id);
-  }, []);
-  const secondes = secondesRestantes(tour, maintenant);
+  const secondes = secondesRestantes(tour, useMaintenant());
 
   return (
     <span
@@ -309,34 +352,28 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
   );
 }
 
-/** Le capitaine choisit le champion du tour courant parmi ceux encore disponibles. */
-function ChoixChampion({ draft, champions, lien }: { draft: Draft; champions: Champion[]; lien: string }) {
+/** Le champion du tour courant, choisi parmi ceux encore disponibles. */
+function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour }) {
   const tour = draft.tourCourant!;
-  const queryClient = useQueryClient();
   const [recherche, setRecherche] = useState("");
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
-  const jouer = $api.useMutation("post", "/liens/{lien}/draft-champions/actions", {
-    onSuccess: (data) =>
-      queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", { params: { path: { lien } } }], data),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}/draft-champions"] }),
-  });
   const verbe = tour.action === "ban" ? "Bannir" : "Choisir";
   const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
 
   return (
     <Card className="border-primary">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
-        <CardTitle>{tour.action === "ban" ? "Bannir un champion" : "Choisir un champion"}</CardTitle>
+        <CardTitle>{jeu.titre ?? (tour.action === "ban" ? "Bannir un champion" : "Choisir un champion")}</CardTitle>
         <Button
-          disabled={!choisi || pris.has(choisi) || jouer.isPending}
-          onClick={() => choisi && jouer.mutate({ params: { path: { lien } }, body: { tour: tour.numero, championId: choisi } })}
+          disabled={!choisi || pris.has(choisi) || jeu.pending}
+          onClick={() => choisi && jeu.onJouer(tour.numero, choisi)}
         >
           {nomChoisi ? `${verbe} ${nomChoisi}` : verbe}
         </Button>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {jouer.isError && <ErrorAlert error={jouer.error} />}
+        {jeu.error != null && <ErrorAlert error={jeu.error} />}
         <Input
           type="search"
           aria-label="Rechercher un champion"
