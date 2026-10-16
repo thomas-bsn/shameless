@@ -3085,6 +3085,7 @@ export interface components {
             capitaineA: null | number;
             /** Format: int32 */
             capitaineB: null | number;
+            championsDejaJoues: null | string[];
         };
         DraftPickResponse: {
             /** Format: int32 */
