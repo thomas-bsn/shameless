@@ -7,6 +7,8 @@ namespace Shameless.Infrastructure.Integrations.DataDragon;
 /// <summary>
 /// Le catalogue des champions lu sur Data Dragon (données statiques publiques, sans clé Riot) :
 /// la dernière version de versions.json, puis son champion.json. Gardé en mémoire quelques heures.
+/// Toute panne de Data Dragon (erreur HTTP, délai dépassé, réponse illisible ou vide) devient une
+/// <see cref="CatalogueIndisponibleException"/>.
 /// </summary>
 public sealed class DataDragonChampionCatalog : IChampionCatalog
 {
@@ -36,7 +38,7 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
         {
             if (_champions is { } dejaCharges && _clock.GetUtcNow() < _expiration) return dejaCharges;
 
-            _champions = await LoadAsync(cancellationToken);
+            _champions = await LoadOrThrowIndisponibleAsync(cancellationToken);
             _expiration = _clock.GetUtcNow() + DureeDuCache;
             return _champions;
         }
@@ -46,18 +48,31 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
         }
     }
 
+    private async Task<IReadOnlyList<Champion>> LoadOrThrowIndisponibleAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await LoadAsync(cancellationToken);
+        }
+        catch (Exception e) when (e is HttpRequestException or System.Text.Json.JsonException
+                                      || (e is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            throw new CatalogueIndisponibleException("Data Dragon est injoignable ou sa réponse est illisible.", e);
+        }
+    }
+
     private async Task<IReadOnlyList<Champion>> LoadAsync(CancellationToken cancellationToken)
     {
         var http = _httpClientFactory.CreateClient(HttpClientName);
 
         var versions = await http.GetFromJsonAsync<List<string>>("api/versions.json", cancellationToken);
         var version = versions?.FirstOrDefault()
-            ?? throw new InvalidOperationException("Data Dragon n'a renvoyé aucune version.");
+            ?? throw new CatalogueIndisponibleException("Data Dragon n'a renvoyé aucune version.");
 
         var catalogue = await http.GetFromJsonAsync<ChampionFile>(
             $"cdn/{version}/data/{Langue}/champion.json", cancellationToken);
         if (catalogue?.Data is not { Count: > 0 } data)
-            throw new InvalidOperationException($"Data Dragon n'a renvoyé aucun champion pour la version {version}.");
+            throw new CatalogueIndisponibleException($"Data Dragon n'a renvoyé aucun champion pour la version {version}.");
 
         return data.Values
             .Select(c => new Champion(

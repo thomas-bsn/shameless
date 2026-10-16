@@ -641,6 +641,19 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Sans_catalogue_des_champions_les_actions_de_la_draft_repondent_503()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client);
+        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+        Factory.Champions.Indisponible = true;
+
+        await AssertRefusAsync(await JouerAsync(preparee.LienA, 1, "Ahri"), HttpStatusCode.ServiceUnavailable);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"), HttpStatusCode.ServiceUnavailable);
+    }
+
+    [Fact]
     public async Task Jouer_a_la_place_sur_une_game_sans_draft_repond_404()
     {
         var client = Factory.CreateSignedInClient();

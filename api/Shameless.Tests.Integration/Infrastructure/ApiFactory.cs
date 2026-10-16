@@ -28,6 +28,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeDiscord Discord { get; } = new();
 
+    public FakeChampionCatalog Champions { get; } = new();
+
     /// <summary>Horloge de l'API : réglable (<c>SetUtcNow</c>) et avançable (<c>Advance</c>). Remise à l'heure réelle avant chaque test.</summary>
     public FakeClock Clock { get; } = new();
 
@@ -52,6 +54,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         Riot.Reset();
         Discord.Reset();
+        Champions.Reset();
         Clock.Reset();
         Random.Reset();
         await using var db = CreateDbContext();
@@ -83,7 +86,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.RemoveAll<IRandomSource>();
             services.AddSingleton<IRandomSource>(Random);
             services.RemoveAll<IChampionCatalog>();
-            services.AddSingleton<IChampionCatalog, FakeChampionCatalog>();
+            services.AddSingleton<IChampionCatalog>(Champions);
             services.AddFakeLogging();
         });
     }

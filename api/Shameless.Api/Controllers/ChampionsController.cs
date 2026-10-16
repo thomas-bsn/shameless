@@ -27,15 +27,7 @@ public sealed class ChampionsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
     public async Task<ActionResult<List<ChampionResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        try
-        {
-            var champions = await _catalog.GetAllAsync(cancellationToken);
-            return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl)).ToList();
-        }
-        catch (Exception e) when (e is HttpRequestException or InvalidOperationException or System.Text.Json.JsonException)
-        {
-            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
-                detail: "Le catalogue des champions est indisponible pour le moment (Data Dragon).");
-        }
+        var champions = await _catalog.GetAllAsync(cancellationToken);
+        return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl)).ToList();
     }
 }
