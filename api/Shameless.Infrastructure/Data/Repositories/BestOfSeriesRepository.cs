@@ -34,6 +34,10 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
     public Task<LienAcces?> GetLienAsync(string secret) =>
         _db.LiensAcces.Include(l => l.Series).SingleOrDefaultAsync(l => l.Secret == secret);
 
+    public Task<BestOfSeries?> GetByCodeCompanionAsync(string code) =>
+        _db.BestOfSeries.Include(s => s.Players).ThenInclude(p => p.Player)
+            .SingleOrDefaultAsync(s => s.CodeCompanion == code);
+
     /// <summary>
     /// Les Séries avec leur composition courante, leurs liens et leurs games (participants et joueurs,
     /// Draft de champions), games triées par id.

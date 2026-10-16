@@ -118,6 +118,11 @@ la fin, chaque équipe vote pour désigner son traître.
 - **API** : le backend Shameless (.NET). Source de vérité des données.
 - **Companion** : l'app PC qui lit les stats de fin de game dans le client LoL et les  
 envoie à l'API. Un seul joueur équipé par game suffit.
+- **Code Companion** : le secret long, propre à une Série, que le joueur saisit dans le  
+Companion pour lui associer cette Série, sans connexion. Il ne sert qu'à envoyer les  
+rapports de sa Série, tant qu'elle est en cours : il ne vaut ni Lien capitaine, ni Lien  
+spectateur, ni commande d'organisateur. L'organisateur le lit et le renouvelle sur la  
+page de la Série ; l'ancien est alors refusé. Porté par la Série (`BestOfSeries.CodeCompanion`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips.
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.

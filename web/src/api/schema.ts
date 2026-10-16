@@ -207,6 +207,186 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/series/{id}/code-companion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CodeCompanionResponse"];
+                        "application/json": components["schemas"]["CodeCompanionResponse"];
+                        "text/json": components["schemas"]["CodeCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/code-companion/renouveler": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CodeCompanionResponse"];
+                        "application/json": components["schemas"]["CodeCompanionResponse"];
+                        "text/json": components["schemas"]["CodeCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companion/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    code: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SerieDuCompanionResponse"];
+                        "application/json": components["schemas"]["SerieDuCompanionResponse"];
+                        "text/json": components["schemas"]["SerieDuCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/draft-champions": {
         parameters: {
             query?: never;
@@ -2769,6 +2949,11 @@ export interface components {
             name: string;
             imageUrl: string;
         };
+        CodeCompanionResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            code: string;
+        };
         CreatePlayerRequest: {
             prenom: string;
             riotId: string;
@@ -3013,6 +3198,19 @@ export interface components {
         RouletteVariante: "Aleatoire" | "Equilibree" | null;
         SelectPlayersRequest: {
             playerIds: number[];
+        };
+        SerieDuCompanionResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            format: number;
+            fearless: boolean;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            equipeA: string[];
+            equipeB: string[];
         };
         SeriesGameResponse: {
             /** Format: int32 */

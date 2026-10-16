@@ -71,6 +71,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("alternate_sides");
 
+                    b.Property<string>("CodeCompanion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code_companion");
+
                     b.Property<bool>("Fearless")
                         .HasColumnType("boolean")
                         .HasColumnName("fearless");
@@ -120,6 +125,10 @@ namespace Shameless.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("best_of_series_pkey");
+
+                    b.HasIndex("CodeCompanion")
+                        .IsUnique()
+                        .HasDatabaseName("ix_best_of_series_code_companion");
 
                     b.HasIndex("SoireeId")
                         .HasDatabaseName("ix_best_of_series_soiree_id");
@@ -698,7 +707,7 @@ namespace Shameless.Infrastructure.Migrations
             modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
-                        .WithOne()
+                        .WithOne("DraftChampions")
                         .HasForeignKey("Shameless.Application.Entities.DraftChampions", "GameId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -804,6 +813,8 @@ namespace Shameless.Infrastructure.Migrations
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
+                    b.Navigation("DraftChampions");
+
                     b.Navigation("Participants");
                 });
 

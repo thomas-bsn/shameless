@@ -36,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SeriesService>();
         services.AddScoped<PickerService>();
         services.AddScoped<LiensAccesService>();
+        services.AddScoped<CodeCompanionService>();
         services.AddScoped<DraftChampionsService>();
 
         // Singletons
