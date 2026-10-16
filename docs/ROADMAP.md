@@ -26,7 +26,7 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Picker : Draft, Roulette, Autorole (nouveau)
 - [x] Séries BO1, BO2, BO3, BO5 + option Fearless
 - [x] État de la soirée sauvegardé côté API (plus de perte au refresh)
-- [ ] Draft de champions en ligne (capitaines et spectateurs, sans connexion)
+- [x] Draft de champions en ligne (capitaines et spectateurs, sans connexion)
 
 ### 1b. Companion (récupération des stats)
 - [ ] App .NET 10 Avalonia, icône barre des tâches, login Discord
