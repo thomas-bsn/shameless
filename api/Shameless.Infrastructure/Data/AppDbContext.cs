@@ -1,4 +1,5 @@
-﻿using Shameless.Application.Entities;
+﻿using Shameless.Application.Companion;
+using Shameless.Application.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shameless.Infrastructure.Data.Configurations;
 
@@ -31,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<PickerSession> PickerSessions => Set<PickerSession>();
     public DbSet<LienAcces> LiensAcces => Set<LienAcces>();
     public DbSet<DraftChampions> DraftsChampions => Set<DraftChampions>();
+    public DbSet<RapportCompanion> RapportsCompanion => Set<RapportCompanion>();
 
     /// <summary>
     /// Les dates sont stockées en heure UTC sans fuseau : relues, elles repartent en
@@ -106,7 +108,10 @@ public class AppDbContext : DbContext
             entity.Property(e => e.TeamASide).HasMaxLength(10).IsRequired();
             entity.Property(e => e.WinningTeam).HasMaxLength(1);
             entity.Ignore(e => e.TeamBSide);
+            entity.Ignore(e => e.RapportEnRevue);
             entity.Property(e => e.RiotMatchId).HasMaxLength(100);
+            // Une partie Riot n'est rattachée qu'à une game (ADR 0004), même sous rapports simultanés.
+            entity.HasIndex(e => e.RiotMatchId).IsUnique();
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
             // Jeton de concurrence : le résultat d'une game ne se saisit qu'une fois, même simultanément.
             entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("").IsConcurrencyToken();
@@ -134,6 +139,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Side).HasColumnName("team").HasMaxLength(10).IsRequired();
             entity.Ignore(e => e.HasWon);
             entity.Property(e => e.RiotParticipantData).HasColumnType("jsonb");
+            entity.Property(e => e.ChampionId).HasMaxLength(RapportDeGame.LongueurMaxChampionId);
 
             entity.HasOne(e => e.CustomGame)
                   .WithMany(g => g.Participants)
@@ -174,5 +180,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new LienAccesConfiguration());
         modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
+        modelBuilder.ApplyConfiguration(new RapportCompanionConfiguration());
     }
 }

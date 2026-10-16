@@ -98,7 +98,11 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
               <span className="font-semibold">
                 Équipe A {score.a} – {score.b} Équipe B
               </span>
-              {series.outcome && <Badge variant="secondary">{outcomeLabel(series)}</Badge>}
+              {series.outcome && (
+                <Badge variant="secondary">
+                  {outcomeLabel({ outcome: series.outcome, winningTeam: series.winningTeam })}
+                </Badge>
+              )}
             </div>
           )}
         </CardHeader>

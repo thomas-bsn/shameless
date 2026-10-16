@@ -3,8 +3,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
+import { ChampionsJoues } from "@/components/champions-joues";
+import { CodeCompanionPanel } from "@/components/code-companion-panel";
 import { DraftChampionsOrganisateur, DraftChampionsTerminee } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
+import { RapportEnRevuePanel } from "@/components/rapport-en-revue-panel";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { pendingGame, outcomeLabel, replacementCandidates } from "@/lib/series";
+import { pendingGame, outcomeLabel, replacementCandidates, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +33,6 @@ export const Route = createFileRoute("/_connecte/series/$seriesId")({
 
 type Series = Schemas["SeriesResponse"];
 
-const sideLabel = (side: string) => (side === "red" ? "Red side" : "Blue side");
 
 /** Après une action, relit la Série et la liste des séries de la Soirée. */
 function useRefreshSeries() {
@@ -94,7 +96,16 @@ function SerieView({ series }: { series: Series }) {
       {enCours ? (
         <>
           <CapitainesLiensPanel series={series} onSeriesChanged={refresh} />
+          <CodeCompanionPanel seriesId={series.seriesId} />
           <GamePanel series={series} />
+          {pending?.rapportEnRevue && (
+            <RapportEnRevuePanel
+              key={pending.rapportEnRevue.id}
+              revue={pending.rapportEnRevue}
+              numero={series.games.length}
+              onDecided={refresh}
+            />
+          )}
           {pending && <DraftChampionsOrganisateur key={pending.id} series={series} gameId={pending.id} />}
           <ReplacementPanel series={series} />
           <StopPanel series={series} />
@@ -138,11 +149,16 @@ function GamePanel({ series }: { series: Series }) {
                 Équipe A <span className={sideTextClass(pending.teamASide)}>{sideLabel(pending.teamASide)}</span> · Équipe B{" "}
                 <span className={sideTextClass(pending.teamBSide)}>{sideLabel(pending.teamBSide)}</span>
               </p>
+              {pending.rapportEnRevue && (
+                <p className="text-sm text-muted-foreground">
+                  Un rapport du Companion est en revue : accepte-le ou rejette-le avant de saisir le résultat.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {(["A", "B"] as const).map((winner) => (
                   <Button
                     key={winner}
-                    disabled={result.isPending}
+                    disabled={result.isPending || pending.rapportEnRevue !== null}
                     onClick={() => result.mutate({ params: { path: { id: pending.id } }, body: { winner } })}
                   >
                     Victoire Équipe {winner}
@@ -354,6 +370,7 @@ function GamesList({ series }: { series: Series }) {
                 <Badge variant="outline">En attente</Badge>
               )}
             </div>
+            <ChampionsJoues game={g} />
             {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
           </li>
         ))}

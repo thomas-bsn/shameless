@@ -16,6 +16,8 @@ public sealed class SeriesConfiguration : IEntityTypeConfiguration<BestOfSeries>
                   value => FromText(value));
         entity.Property(e => e.WinningTeam).HasMaxLength(1);
         entity.Property(e => e.Version).IsConcurrencyToken();
+        entity.Property(e => e.CodeCompanion).HasColumnType("text").IsRequired();
+        entity.HasIndex(e => e.CodeCompanion).IsUnique();
         entity.Ignore(e => e.IsEnCours);
         entity.Ignore(e => e.WinsNeeded);
     }

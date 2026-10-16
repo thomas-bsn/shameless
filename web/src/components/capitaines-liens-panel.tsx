@@ -1,12 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Crown, RefreshCw } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { Crown, RefreshCw } from "lucide-react";
+import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { CopyField } from "@/components/copy-field";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { lienCapitaineUrl, lienSpectateurUrl } from "@/lib/liens";
@@ -56,11 +56,11 @@ export function CapitainesLiensPanel({ series, onSeriesChanged }: { series: Seri
           ) : (
             <div className="flex flex-col gap-4">
               {(["A", "B"] as const).map((equipe) => (
-                <LienField
+                <CopyField
                   key={equipe}
                   id={`lien-capitaine-${equipe}`}
                   label={`Lien capitaine de l'Équipe ${equipe}`}
-                  url={lienCapitaineUrl(equipe === "A" ? liens.data.lienCapitaineA : liens.data.lienCapitaineB)}
+                  value={lienCapitaineUrl(equipe === "A" ? liens.data.lienCapitaineA : liens.data.lienCapitaineB)}
                 >
                   <Button
                     variant="outline"
@@ -73,7 +73,7 @@ export function CapitainesLiensPanel({ series, onSeriesChanged }: { series: Seri
                     <RefreshCw />
                     Renouveler
                   </Button>
-                </LienField>
+                </CopyField>
               ))}
 
               {liens.data.lienSpectateur ? (
@@ -81,10 +81,10 @@ export function CapitainesLiensPanel({ series, onSeriesChanged }: { series: Seri
                   <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Badge variant="secondary">Liens capitaine envoyés</Badge>
                   </p>
-                  <LienField
+                  <CopyField
                     id="lien-spectateur"
                     label="Lien spectateur"
-                    url={lienSpectateurUrl(liens.data.lienSpectateur)}
+                    value={lienSpectateurUrl(liens.data.lienSpectateur)}
                   />
                 </>
               ) : (
@@ -178,30 +178,5 @@ function CapitaineForm({ series, equipe, onDesigne }: { series: Series; equipe: 
       </Button>
       {designer.isError && <ErrorAlert error={designer.error} />}
     </form>
-  );
-}
-
-/** Un lien en lecture seule, avec un bouton pour le copier et des actions en plus. */
-function LienField({ id, label, url, children }: { id: string; label: string; url: string; children?: ReactNode }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex flex-wrap gap-2">
-        <Input id={id} readOnly value={url} className="min-w-64 flex-1 font-mono text-xs" onFocus={(e) => e.target.select()} />
-        <Button variant="outline" onClick={() => void copy()}>
-          {copied ? <Check /> : <Copy />}
-          {copied ? "Copié" : "Copier"}
-        </Button>
-        {children}
-      </div>
-    </div>
   );
 }

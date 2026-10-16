@@ -20,17 +20,21 @@ public class LienAcces
     /// <summary>L'Équipe d'un Lien capitaine ("A" | "B") ; null pour le Lien spectateur.</summary>
     public string? Equipe { get; set; }
 
-    public string Secret { get; set; } = NouveauSecret();
+    public string Secret { get; set; } = SecretAleatoire.Nouveau();
 
     public static LienAcces Capitaine(string equipe) => new() { Portee = PorteeLien.Capitaine, Equipe = equipe };
 
     public static LienAcces Spectateur() => new() { Portee = PorteeLien.Spectateur };
 
     /// <summary>Remplace le secret : l'ancien lien ne donne plus accès à rien.</summary>
-    public void Renouveler() => Secret = NouveauSecret();
+    public void Renouveler() => Secret = SecretAleatoire.Nouveau();
+}
 
+/// <summary>Le secret d'un lien d'accès ou d'un code Companion.</summary>
+public static class SecretAleatoire
+{
     /// <summary>256 bits d'aléa cryptographique, en base64url (43 caractères).</summary>
-    private static string NouveauSecret() => Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
+    public static string Nouveau() => Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
 }
 
 /// <summary>Ce qu'un lien permet dans sa Série.</summary>

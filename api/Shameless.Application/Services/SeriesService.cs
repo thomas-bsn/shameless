@@ -180,7 +180,20 @@ public sealed class SeriesService
         var series = game.SeriesId == null ? null : await _series.GetWithGamesAsync(game.SeriesId.Value);
         if (series is { IsEnCours: false })
             return CommandResult<CustomGame>.Conflict("Cette Série est terminée : son score ne change plus.");
+        if (game.RapportEnRevue != null)
+            return CommandResult<CustomGame>.Conflict(
+                "Un rapport du Companion de cette game est en revue : acceptez-le ou rejetez-le avant de saisir le résultat.");
 
+        return await TerminerAsync(game, series, winningTeam);
+    }
+
+    /// <summary>
+    /// Termine une game en attente avec son Équipe gagnante, que le résultat vienne d'une saisie
+    /// manuelle ou d'un rapport du Companion : score et issue de la Série recalculés, puis cost des
+    /// joueurs. Les vérifications (game en attente, Série en cours) sont faites par l'appelant.
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> TerminerAsync(CustomGame game, BestOfSeries? series, string winningTeam)
+    {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
         game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
@@ -189,7 +202,7 @@ public sealed class SeriesService
         if (!await _games.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict("Le résultat de cette game vient d'être saisi par une autre commande.");
 
-        await _costs.RecalculateCosts(gameId);
+        await _costs.RecalculateCosts(game.Id);
 
         return CommandResult<CustomGame>.Ok(game);
     }
@@ -255,7 +268,7 @@ public sealed class SeriesService
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
 
-        return CommandResult<SeriesResponse>.Ok(ToResponse(series));
+        return CommandResult<SeriesResponse>.Ok(await ToResponseAsync(series));
     }
 
     /// <summary>
@@ -289,7 +302,7 @@ public sealed class SeriesService
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
 
-        return CommandResult<SeriesResponse>.Ok(ToResponse(series));
+        return CommandResult<SeriesResponse>.Ok(await ToResponseAsync(series));
     }
 
     /// <summary>
@@ -324,19 +337,40 @@ public sealed class SeriesService
     public async Task<SeriesResponse?> GetAsync(int seriesId)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
-        return series == null ? null : ToResponse(series);
+        return series == null ? null : await ToResponseAsync(series);
     }
 
     /// <summary>Les Séries en cours, de la plus ancienne à la plus récente.</summary>
     public async Task<List<SeriesResponse>> GetEnCoursAsync() =>
-        (await _series.GetEnCoursWithGamesAsync()).Select(ToResponse).ToList();
+        await ToResponsesAsync(await _series.GetEnCoursWithGamesAsync());
 
     /// <summary>Les Séries d'une Soirée avec leur issue, de la plus ancienne à la plus récente.</summary>
     public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
-        (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
+        await ToResponsesAsync(await _series.GetBySoireeWithGamesAsync(soireeId));
+
+    private async Task<SeriesResponse> ToResponseAsync(BestOfSeries series) =>
+        (await ToResponsesAsync([series])).Single();
+
+    /// <summary>
+    /// Les Séries lues ; les joueurs détectés inattendus de leurs rapports en revue sont reconnus par
+    /// leur PUUID quand ils sont enregistrés dans Shameless.
+    /// </summary>
+    private async Task<List<SeriesResponse>> ToResponsesAsync(IReadOnlyCollection<BestOfSeries> series)
+    {
+        var puuids = series.SelectMany(s => s.Games)
+            .Select(g => g.RapportEnRevue)
+            .OfType<RapportCompanion>()
+            .SelectMany(r => r.Rapport().Joueurs.Select(j => j.Puuid))
+            .Distinct()
+            .ToList();
+        var joueursConnus = puuids.Count == 0
+            ? new Dictionary<string, Player>()
+            : (await _players.GetByPuuidsAsync(puuids)).GroupBy(p => p.PUUID).ToDictionary(g => g.Key, g => g.First());
+        return series.Select(s => ToResponse(s, joueursConnus)).ToList();
+    }
 
     /// <summary>La Série lue ; les rôles de l'Autorole n'y figurent pas pendant une Draft de champions.</summary>
-    private static SeriesResponse ToResponse(BestOfSeries series) => new(
+    private static SeriesResponse ToResponse(BestOfSeries series, IReadOnlyDictionary<string, Player> joueursConnus) => new(
         SeriesId: series.Id,
         SoireeId: series.SoireeId,
         Format: series.Format,
@@ -350,5 +384,5 @@ public sealed class SeriesService
         TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
         CapitaineA: series.CapitaineOf(Equipes.A),
         CapitaineB: series.CapitaineOf(Equipes.B),
-        Games: series.Games.Select(SeriesGameResponse.From).ToList());
+        Games: series.Games.Select(g => SeriesGameResponse.From(g, joueursConnus)).ToList());
 }

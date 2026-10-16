@@ -9,6 +9,10 @@ public class CustomGameParticipant
     /// <summary>Le Side joué par le participant dans cette game : "blue" | "red".</summary>
     public string Side { get; set; } = string.Empty;
 
+    /// <summary>Le champion réellement joué (id Data Dragon, ex. « LeeSin »), donné par le rapport du Companion.</summary>
+    public string? ChampionId { get; set; }
+
+    /// <summary>Les stats brutes du joueur pour la partie (JSON), données par le rapport du Companion.</summary>
     public string? RiotParticipantData { get; set; }
 
     // Navigation properties

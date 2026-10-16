@@ -24,6 +24,9 @@ public interface IBestOfSeriesRepository
     /// <summary>Le lien d'accès de ce secret, avec sa Série, ou null.</summary>
     Task<LienAcces?> GetLienAsync(string secret);
 
+    /// <summary>La Série de ce code Companion, avec sa composition courante et ses joueurs, ou null.</summary>
+    Task<BestOfSeries?> GetByCodeCompanionAsync(string code);
+
     /// <summary>Marque la Série pour suppression, avec sa composition ; effectif au prochain enregistrement.</summary>
     void Remove(BestOfSeries series);
 

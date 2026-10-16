@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -75,6 +76,25 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     {
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<JsonElement>(Ct);
+    }
+
+    /// <summary>Le code Companion de la Série, lu par l'organisateur connecté.</summary>
+    protected async Task<string> CodeCompanionAsync(HttpClient client, int seriesId) =>
+        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
+            .GetProperty("code").GetString()!;
+
+    /// <summary>Le Companion, sans connexion, envoie un rapport de fin de game avec ce code.</summary>
+    protected async Task<HttpResponseMessage> EnvoyerRapportAsync(string code, object rapport) =>
+        await Factory.CreateAnonymousClient().PostAsJsonAsync(
+            $"/companion/{Uri.EscapeDataString(code)}/rapports", rapport, Ct);
+
+    /// <summary>Un refus de l'API : ce statut, en problem+json avec un détail lisible.</summary>
+    protected static async Task AssertRefusAsync(HttpResponseMessage response, HttpStatusCode status)
+    {
+        Assert.Equal(status, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var detail = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("detail").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(detail));
     }
 }
 

@@ -1,3 +1,5 @@
+using Shameless.Application.Companion;
+
 namespace Shameless.Application.Entities;
 
 public class CustomGame
@@ -6,7 +8,10 @@ public class CustomGame
     public DateTime PlayedAt { get; set; }
     public string TeamASide { get; set; } = Sides.Blue; // Side joué par l'Équipe A : "blue" | "red"
     public string? WinningTeam { get; set; } // Équipe gagnante : "A" | "B", null tant que la game n'est pas terminée
-    public string? RiotMatchId { get; set; } // NULL pour maintenant, rempli plus tard
+    /// <summary>L'identifiant Riot stable de la partie, donné par le rapport du Companion ; null sans rapport.</summary>
+    public string? RiotMatchId { get; set; }
+
+    /// <summary>Les données Riot brutes de la partie (JSON), données par le rapport du Companion.</summary>
     public string? RiotMatchData { get; set; }
     public string Status { get; set; } = GameStatuses.Pending; // voir GameStatuses
     public DateTime CreatedAt { get; set; }
@@ -20,13 +25,37 @@ public class CustomGame
     public DraftChampions? DraftChampions { get; set; }
 
 
+    /// <summary>Les rapports du Companion mis en revue pour cette game, décidés ou non.</summary>
+    public ICollection<RapportCompanion> Rapports { get; set; } = new List<RapportCompanion>();
+
     // Navigation properties
     public ICollection<CustomGameParticipant> Participants { get; set; } = new List<CustomGameParticipant>();
+
+    /// <summary>Le rapport qui attend la décision de l'organisateur, null s'il n'y en a pas.</summary>
+    public RapportCompanion? RapportEnRevue => Rapports.SingleOrDefault(r => r.Statut == StatutRapport.EnRevue);
 
     public string TeamBSide => Sides.Other(TeamASide);
 
     /// <summary>L'Équipe qui joue le Side donné dans cette game.</summary>
     public string EquipeOn(string side) => side == TeamASide ? Equipes.A : Equipes.B;
+
+    /// <summary>
+    /// Garde sur la game et ses participants ce que dit un rapport du Companion (conforme, ou accepté
+    /// après revue) : identifiant et données Riot de la partie, champion joué et stats de chaque
+    /// participant détecté. Un participant absent du rapport n'a ni champion ni stats.
+    /// </summary>
+    public void AppliquerRapport(RapportDeGame rapport)
+    {
+        RiotMatchId = rapport.RiotMatchId;
+        RiotMatchData = rapport.Donnees;
+        var joueurs = rapport.Joueurs.ToDictionary(j => j.Puuid);
+        foreach (var participant in Participants)
+        {
+            if (!joueurs.TryGetValue(participant.Player.PUUID, out var joueur)) continue;
+            participant.ChampionId = joueur.ChampionId;
+            participant.RiotParticipantData = joueur.Stats;
+        }
+    }
 
     /// <summary>La composition d'une Équipe pour cette game.</summary>
     public IEnumerable<CustomGameParticipant> ParticipantsOf(string equipe) =>

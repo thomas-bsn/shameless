@@ -25,11 +25,22 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         "DELETE players/{2}/peak"
     ];
 
-    /// <summary>Les routes de l'API ; <paramref name="parLien"/> : celles ouvertes à un lien d'accès (ADR 0010), ou les autres.</summary>
-    private List<(string Method, string Route)> Endpoints(bool parLien) =>
+    /// <summary>Comment une route s'ouvre sans session.</summary>
+    private enum Ouverture { Session, Lien, CodeCompanion }
+
+    private static Ouverture OuvertureDe(RouteEndpoint e) =>
+        e.Metadata.GetMetadata<AccesParLienAttribute>() != null ? Ouverture.Lien
+        : e.Metadata.GetMetadata<AccesParCodeCompanionAttribute>() != null ? Ouverture.CodeCompanion
+        : Ouverture.Session;
+
+    /// <summary>
+    /// Les routes de l'API ouvertes de cette façon : par session, par lien d'accès (ADR 0010) ou par
+    /// code Companion.
+    /// </summary>
+    private List<(string Method, string Route)> Endpoints(Ouverture ouverture) =>
         Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
-            .Where(e => (e.Metadata.GetMetadata<AccesParLienAttribute>() != null) == parLien)
+            .Where(e => OuvertureDe(e) == ouverture)
             .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
                 .Select(method => (Method: method, Route: e.RoutePattern.RawText!.TrimStart('/'))))
             .Where(e => !AnonymousEndpoints.Contains($"{e.Method} {e.Route}"))
@@ -42,10 +53,10 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         };
 
     [Fact]
-    public async Task Toute_route_hors_connexion_callback_sante_et_liens_d_acces_demande_une_session()
+    public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_et_code_companion_demande_une_session()
     {
         var client = Factory.CreateAnonymousClient();
-        var endpoints = Endpoints(parLien: false);
+        var endpoints = Endpoints(Ouverture.Session);
 
         Assert.NotEmpty(endpoints);
         foreach (var (method, route) in endpoints)
@@ -61,7 +72,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task Sans_session_une_route_ouverte_aux_liens_refuse_un_lien_inconnu()
     {
         var client = Factory.CreateAnonymousClient();
-        var endpoints = Endpoints(parLien: true);
+        var endpoints = Endpoints(Ouverture.Lien);
 
         Assert.NotEmpty(endpoints);
         foreach (var (method, route) in endpoints)
@@ -71,6 +82,23 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
             Assert.True(response.StatusCode == HttpStatusCode.NotFound,
                 $"{method} {route} returned {(int)response.StatusCode} with an unknown link");
+        }
+    }
+
+    [Fact]
+    public async Task Sans_session_une_route_ouverte_au_companion_refuse_un_code_inconnu()
+    {
+        var client = Factory.CreateAnonymousClient();
+        var endpoints = Endpoints(Ouverture.CodeCompanion);
+
+        Assert.NotEmpty(endpoints);
+        foreach (var (method, route) in endpoints)
+        {
+            Assert.Contains($"{{{AccesParCodeCompanionAttribute.RouteParameter}}}", route);
+            var response = await client.SendAsync(AnyRequest(method, route), Ct);
+
+            Assert.True(response.StatusCode == HttpStatusCode.NotFound,
+                $"{method} {route} returned {(int)response.StatusCode} with an unknown code");
         }
     }
 

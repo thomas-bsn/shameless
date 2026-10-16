@@ -2,6 +2,11 @@ import type { Schemas } from "@/api/client";
 
 type Outcome = Pick<Schemas["SeriesResponse"], "outcome" | "winningTeam">;
 
+/** Libellé d'un Side ("blue" | "red") : Blue side ou Red side. */
+export function sideLabel(side: string): string {
+  return side === "red" ? "Red side" : "Blue side";
+}
+
 /** Libellé de l'issue d'une Série, tel que l'API la renvoie. */
 export function outcomeLabel({ outcome, winningTeam }: Outcome): string {
   switch (outcome) {

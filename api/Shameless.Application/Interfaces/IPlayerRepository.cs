@@ -17,6 +17,9 @@ public interface IPlayerRepository
     Task UpdateMainRoleAsync(int id, string? mainRole);
     Task<Player?> GetByIdAsync(int id);
     Task<List<Player>> GetByIdsAsync(List<int> ids);
+
+    /// <summary>Les joueurs enregistrés parmi ces PUUID.</summary>
+    Task<List<Player>> GetByPuuidsAsync(IReadOnlyCollection<string> puuids);
     Task<List<Player>> GetAllEntitiesAsync(); 
     Task UpdateAsync(Player player);
     Task UpdateRangeAsync(List<Player> players);

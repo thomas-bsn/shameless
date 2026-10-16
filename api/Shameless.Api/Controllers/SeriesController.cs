@@ -2,6 +2,7 @@ using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Series;
 using Shameless.Api.Models.Responses.Series;
 using Shameless.Application.DTOs.Match;
+using Shameless.Application.Entities;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,7 +45,8 @@ public sealed class SeriesController : ControllerBase
         var result = await _seriesService.PlayNextGameAsync(id, request.TeamASide);
         if (!result.IsOk) return this.Refusal(result);
 
-        return Created($"/series/{id}", SeriesGameResponse.From(result.Value!));
+        // Une game qui vient d'être lancée n'a pas de rapport en revue : aucun joueur à reconnaître.
+        return Created($"/series/{id}", SeriesGameResponse.From(result.Value!, new Dictionary<string, Player>()));
     }
 
     /// <summary>

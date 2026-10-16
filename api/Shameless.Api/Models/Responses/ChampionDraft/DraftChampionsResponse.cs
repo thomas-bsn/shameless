@@ -8,7 +8,9 @@ namespace Shameless.Api.Models.Responses.ChampionDraft;
 /// L'état d'une Draft de champions : les vingt tours de l'ordre Tournament avec l'Équipe attendue à
 /// chacun, les tours joués, le tour courant et l'Équipe attendue, les deux
 /// Équipes de la game et leurs capitaines. Les rôles de l'Autorole n'apparaissent qu'une fois la Draft
-/// terminée. Aucun lien d'accès n'y figure.
+/// terminée. En Fearless, les champions réellement joués dans les games précédentes de la Série
+/// (d'après les rapports) : ils restent bannissables et pickables ; null sans Fearless. Aucun lien
+/// d'accès n'y figure.
 /// </summary>
 public sealed record DraftChampionsResponse(
     int GameId,
@@ -23,7 +25,8 @@ public sealed record DraftChampionsResponse(
     List<GameParticipantDto> TeamA,
     List<GameParticipantDto> TeamB,
     int? CapitaineA,
-    int? CapitaineB)
+    int? CapitaineB,
+    List<string>? ChampionsDejaJoues) // null sans Fearless
 {
     public static DraftChampionsResponse From(DraftChampions draft)
     {
@@ -51,7 +54,8 @@ public sealed record DraftChampionsResponse(
             TeamA: Joueurs(Equipes.A),
             TeamB: Joueurs(Equipes.B),
             CapitaineA: series.CapitaineOf(Equipes.A),
-            CapitaineB: series.CapitaineOf(Equipes.B));
+            CapitaineB: series.CapitaineOf(Equipes.B),
+            ChampionsDejaJoues: draft.ChampionsDejaJoues?.ToList());
 
         List<GameParticipantDto> Joueurs(string equipe) =>
             game.ParticipantsOf(equipe)

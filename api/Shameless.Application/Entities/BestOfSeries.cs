@@ -49,6 +49,15 @@ public class BestOfSeries
     /// </summary>
     public bool LiensCapitaineEnvoyes { get; set; }
 
+    /// <summary>
+    /// Le code Companion : un secret long, distinct des liens d'accès, qui ne permet que de téléverser
+    /// des rapports pour cette Série, et seulement tant qu'elle est en cours.
+    /// </summary>
+    public string CodeCompanion { get; set; } = SecretAleatoire.Nouveau();
+
+    /// <summary>Remplace le code Companion : l'ancien est refusé.</summary>
+    public void RenouvelerCodeCompanion() => CodeCompanion = SecretAleatoire.Nouveau();
+
     public LienAcces LienCapitaine(string equipe) =>
         Liens.Single(l => l.Portee == PorteeLien.Capitaine && l.Equipe == equipe);
 

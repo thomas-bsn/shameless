@@ -118,6 +118,28 @@ la fin, chaque équipe vote pour désigner son traître.
 - **API** : le backend Shameless (.NET). Source de vérité des données.
 - **Companion** : l'app PC qui lit les stats de fin de game dans le client LoL et les  
 envoie à l'API. Un seul joueur équipé par game suffit.
+- **Code Companion** : le secret long, propre à une Série, que le joueur saisit dans le  
+Companion pour lui associer cette Série, sans connexion. Il ne sert qu'à envoyer les  
+rapports de sa Série, tant qu'elle est en cours : il ne vaut ni Lien capitaine, ni Lien  
+spectateur, ni commande d'organisateur. L'organisateur le lit et le renouvelle sur la  
+page de la Série ; l'ancien est alors refusé. Porté par la Série (`BestOfSeries.CodeCompanion`).
+- **Rapport** : ce que le Companion envoie avec le Code Companion à la fin d'une game :  
+l'identifiant Riot stable de la partie et, pour les dix joueurs, leur PUUID, Side,  
+champion joué, victoire et stats brutes. La Série vient du code, jamais du rapport. Un  
+rapport **conforme** (joueurs détectés = participants de la game en attente, chacun sur  
+son Side, Remplacements compris) termine cette game comme une saisie manuelle, qui reste  
+le secours ; la game garde alors ses données Riot et le champion joué de chaque joueur.  
+Un rapport qui n'est pas conforme est **en revue**. Sans game en attente, le rapport est  
+refusé (`RapportDeGame`).
+- **Rapport en revue** : un rapport dont les joueurs détectés ne sont pas la composition  
+de la game en attente (participants absents, joueurs inattendus, participants sur l'autre  
+Side). Il n'est ni accepté ni rejeté en silence : la game reste en attente et la page de  
+la Série montre l'écart. L'organisateur connecté (pas le Code Companion) l'**accepte**  
+(la game est terminée avec ce rapport ; l'Équipe gagnante est celle des participants  
+détectés sur le Side gagnant) ou le **rejette** (la game attend un autre rapport ou une  
+saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien créer). Tant qu'il est en revue, ni game suivante, ni Draft de champions, ni  
+saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
+la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips.
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.

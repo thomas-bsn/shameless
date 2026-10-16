@@ -87,13 +87,6 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
             await ReadJsonAsync(await JouerAsync(preparee.LienDe(EquipeDuTour(tour, teamASide)), tour, (champions ?? Vingt)[tour - 1]));
     }
 
-    private static async Task AssertRefusAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        await Task.CompletedTask;
-    }
-
     [Fact]
     public async Task L_organisateur_ouvre_la_draft_de_champions_de_la_game_en_attente()
     {

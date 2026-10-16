@@ -207,6 +207,267 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/series/{id}/code-companion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CodeCompanionResponse"];
+                        "application/json": components["schemas"]["CodeCompanionResponse"];
+                        "text/json": components["schemas"]["CodeCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/code-companion/renouveler": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CodeCompanionResponse"];
+                        "application/json": components["schemas"]["CodeCompanionResponse"];
+                        "text/json": components["schemas"]["CodeCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companion/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    code: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SerieDuCompanionResponse"];
+                        "application/json": components["schemas"]["SerieDuCompanionResponse"];
+                        "text/json": components["schemas"]["SerieDuCompanionResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/companion/{code}/rapports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    code: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RapportDeGameRequest"];
+                    "text/json": components["schemas"]["RapportDeGameRequest"];
+                    "application/*+json": components["schemas"]["RapportDeGameRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/draft-champions": {
         parameters: {
             query?: never;
@@ -1938,6 +2199,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rapports/{id}/accepter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rapports/{id}/rejeter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series": {
         parameters: {
             query?: never;
@@ -2763,11 +3156,21 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        ChampionJoueResponse: {
+            /** Format: int32 */
+            playerId: number;
+            championId: string;
+        };
         ChampionResponse: {
             id: string;
             key: string;
             name: string;
             imageUrl: string;
+        };
+        CodeCompanionResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            code: string;
         };
         CreatePlayerRequest: {
             prenom: string;
@@ -2814,6 +3217,7 @@ export interface components {
             capitaineA: null | number;
             /** Format: int32 */
             capitaineB: null | number;
+            championsDejaJoues: null | string[];
         };
         DraftPickResponse: {
             /** Format: int32 */
@@ -2853,6 +3257,20 @@ export interface components {
             tour: number;
             championId: string;
         };
+        JoueurDuRapportRequest: {
+            puuid: string;
+            side: string;
+            championId: string;
+            victoire: boolean;
+            stats: components["schemas"]["JsonElement"];
+        };
+        JoueurInattenduResponse: {
+            puuid: string;
+            side: string;
+            championId: string;
+            joueur: null | components["schemas"]["GameParticipantDto"];
+        };
+        JsonElement: unknown;
         LancerDraftRequest: {
             capitaines: components["schemas"]["DesignationCapitaines"];
             /** Format: int32 */
@@ -2983,6 +3401,35 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
+        RapportDeGameRequest: {
+            riotMatchId: string;
+            donnees: components["schemas"]["JsonElement"];
+            joueurs: components["schemas"]["JoueurDuRapportRequest"][];
+        };
+        RapportEnRevueResponse: {
+            /** Format: int32 */
+            id: number;
+            riotMatchId: string;
+            /** Format: date-time */
+            recuLe: string;
+            equipeGagnante: string;
+            absents: components["schemas"]["GameParticipantDto"][];
+            inattendus: components["schemas"]["JoueurInattenduResponse"][];
+            mauvaisSide: components["schemas"]["GameParticipantDto"][];
+        };
+        RapportTraiteResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            gameId: number;
+            statut: components["schemas"]["StatutRapport"];
+            winner: null | string;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            outcome: components["schemas"]["SeriesOutcome"];
+        };
         RematchRequest: {
             /** Format: int32 */
             format: number;
@@ -3014,6 +3461,19 @@ export interface components {
         SelectPlayersRequest: {
             playerIds: number[];
         };
+        SerieDuCompanionResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            format: number;
+            fearless: boolean;
+            /** Format: int32 */
+            teamAWins: number;
+            /** Format: int32 */
+            teamBWins: number;
+            equipeA: string[];
+            equipeB: string[];
+        };
         SeriesGameResponse: {
             /** Format: int32 */
             id: number;
@@ -3023,6 +3483,9 @@ export interface components {
             winner: null | string;
             teamA: components["schemas"]["GameParticipantDto"][];
             teamB: components["schemas"]["GameParticipantDto"][];
+            riotMatchId: null | string;
+            championsJoues: components["schemas"]["ChampionJoueResponse"][];
+            rapportEnRevue: null | components["schemas"]["RapportEnRevueResponse"];
         };
         SeriesHistoryResponse: {
             /** Format: int32 */
@@ -3036,7 +3499,7 @@ export interface components {
             games: components["schemas"]["GameHistoryResponse"][];
         };
         /** @enum {unknown} */
-        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue" | null;
+        SeriesOutcome: "EnCours" | "Gagnee" | "Nulle" | "Interrompue";
         SeriesResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -3090,6 +3553,8 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        /** @enum {unknown} */
+        StatutRapport: "Accepte" | "EnRevue" | "Rejete";
         StopSeriesResponse: {
             /** Format: int32 */
             seriesId: number;
