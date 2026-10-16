@@ -74,6 +74,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:AdminDiscordIds", TestSession.AdminDiscordId);
         // Pas de clé Riot : l'instance doit démarrer, job de rangs désactivé. Riot est simulé.
         builder.UseSetting("Auth:Riot:ApiKey", "");
+        builder.UseSetting("Bot:ApiKey", TestSession.BotKey);
 
         builder.ConfigureTestServices(services =>
         {

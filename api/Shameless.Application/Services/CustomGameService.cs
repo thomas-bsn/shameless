@@ -1,3 +1,4 @@
+using Shameless.Application.Bot;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -36,6 +37,10 @@ public class CustomGameService
     /// <summary>La page d'une game, en attente ou terminée, ou null si elle n'existe pas.</summary>
     public async Task<GameRecapResponse?> GetRecapAsync(int gameId) =>
         await _gameRepo.GetRecitAsync(gameId) is { } game ? GameRecapResponse.From(game) : null;
+
+    /// <summary>La game telle que le bot la lit, ou null si elle n'existe pas.</summary>
+    public async Task<GameDuBot?> GetPourLeBotAsync(int gameId) =>
+        await _gameRepo.GetRecitAsync(gameId) is { } game ? GameDuBot.From(game) : null;
 
     public async Task<List<SeriesHistoryResponse>> GetHistoryAsync(int year, int month)
     {

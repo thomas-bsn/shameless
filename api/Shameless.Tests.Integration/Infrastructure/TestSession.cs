@@ -28,6 +28,17 @@ public static class TestSession
         return client;
     }
 
+    /// <summary>La clé que le bot Discord présente à l'API (identité machine bot → API, ADR 0013).</summary>
+    public const string BotKey = "cle-du-bot-vers-l-api";
+
+    /// <summary>Le bot Discord : sans session, avec sa clé en <c>Authorization: Bearer</c>.</summary>
+    public static HttpClient CreateBotClient(this ApiFactory factory)
+    {
+        var client = factory.CreateAnonymousClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", BotKey);
+        return client;
+    }
+
     public static HttpClient CreateAdminClient(this ApiFactory factory) =>
         factory.CreateSignedInClient(AdminDiscordId, "admin");
 

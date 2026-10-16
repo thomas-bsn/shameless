@@ -26,16 +26,17 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     ];
 
     /// <summary>Comment une route s'ouvre sans session.</summary>
-    private enum Ouverture { Session, Lien, CodeCompanion }
+    private enum Ouverture { Session, Lien, CodeCompanion, Bot }
 
     private static Ouverture OuvertureDe(RouteEndpoint e) =>
         e.Metadata.GetMetadata<AccesParLienAttribute>() != null ? Ouverture.Lien
         : e.Metadata.GetMetadata<AccesParCodeCompanionAttribute>() != null ? Ouverture.CodeCompanion
+        : e.Metadata.GetMetadata<AccesParBotAttribute>() != null ? Ouverture.Bot
         : Ouverture.Session;
 
     /// <summary>
-    /// Les routes de l'API ouvertes de cette façon : par session, par lien d'accès (ADR 0010) ou par
-    /// code Companion.
+    /// Les routes de l'API ouvertes de cette façon : par session, par lien d'accès (ADR 0010), par
+    /// code Companion ou par la clé du bot (ADR 0013).
     /// </summary>
     private List<(string Method, string Route)> Endpoints(Ouverture ouverture) =>
         Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
@@ -100,6 +101,39 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             Assert.True(response.StatusCode == HttpStatusCode.NotFound,
                 $"{method} {route} returned {(int)response.StatusCode} with an unknown code");
         }
+    }
+
+    [Fact]
+    public async Task Une_route_du_bot_est_sous_bot_et_refuse_sans_la_cle_du_bot_meme_avec_une_session()
+    {
+        var anonyme = Factory.CreateAnonymousClient();
+        var connecte = Factory.CreateSignedInClient();
+        var endpoints = Endpoints(Ouverture.Bot);
+
+        Assert.NotEmpty(endpoints);
+        foreach (var (method, route) in endpoints)
+        {
+            Assert.StartsWith("bot/", route);
+            foreach (var client in new[] { anonyme, connecte })
+            {
+                var response = await client.SendAsync(AnyRequest(method, route), Ct);
+
+                Assert.True(response.StatusCode == HttpStatusCode.Unauthorized,
+                    $"{method} {route} returned {(int)response.StatusCode} without the bot key");
+            }
+        }
+    }
+
+    [Fact]
+    public void Toute_route_sous_bot_est_ouverte_par_la_cle_du_bot()
+    {
+        var routes = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.RoutePattern.RawText!.TrimStart('/').StartsWith("bot/"))
+            .ToList();
+
+        Assert.NotEmpty(routes);
+        Assert.All(routes, e => Assert.Equal(Ouverture.Bot, OuvertureDe(e)));
     }
 
     [Fact]
