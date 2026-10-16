@@ -21,6 +21,13 @@ public sealed class AccesParCodeCompanionAttribute : Attribute, IAllowAnonymous,
 {
     public const string RouteParameter = "code";
 
+    /// <summary>
+    /// Laisse passer le code d'une Série terminée (mais pas un code inconnu ou renouvelé) : l'action
+    /// refuse elle-même ce qui est nouveau, mais répond encore à ce qui a déjà été reçu, comme le
+    /// renvoi d'un rapport déjà rattaché.
+    /// </summary>
+    public bool SerieTermineeAdmise { get; init; }
+
     /// <summary>Le code se vérifie avant la validation du corps : un code refusé répond 404 quel que soit le corps.</summary>
     public int Order => -3000;
 
@@ -29,7 +36,7 @@ public sealed class AccesParCodeCompanionAttribute : Attribute, IAllowAnonymous,
         var controller = (ControllerBase)context.Controller;
         var code = context.RouteData.Values[RouteParameter] as string;
         var codes = context.HttpContext.RequestServices.GetRequiredService<CodeCompanionService>();
-        var series = code == null ? null : await codes.ResoudreAsync(code);
+        var series = code == null ? null : await codes.ResoudreAsync(code, SerieTermineeAdmise);
 
         if (series == null)
         {
@@ -47,7 +54,8 @@ public sealed class AccesParCodeCompanionAttribute : Attribute, IAllowAnonymous,
 public static class AccesParCodeCompanionExtensions
 {
     /// <summary>
-    /// La Série (en cours, avec sa composition courante) du code Companion de la requête, dans une
+    /// La Série (en cours sauf <see cref="AccesParCodeCompanionAttribute.SerieTermineeAdmise"/>, avec sa
+    /// composition courante) du code Companion de la requête, dans une
     /// action marquée <see cref="AccesParCodeCompanionAttribute"/>.
     /// </summary>
     public static BestOfSeries SerieDuCodeCompanion(this ControllerBase controller) =>

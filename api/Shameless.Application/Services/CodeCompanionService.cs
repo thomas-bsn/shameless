@@ -43,12 +43,13 @@ public sealed class CodeCompanionService
 
     /// <summary>
     /// La Série de ce code, avec sa composition courante, ou null si le code ne vaut rien : inconnu,
-    /// renouvelé, ou Série terminée.
+    /// renouvelé, ou Série terminée (sauf <paramref name="serieTermineeAdmise"/>, pour répondre encore à
+    /// ce que le Companion a envoyé avant la clôture).
     /// </summary>
-    public async Task<BestOfSeries?> ResoudreAsync(string code)
+    public async Task<BestOfSeries?> ResoudreAsync(string code, bool serieTermineeAdmise = false)
     {
         if (string.IsNullOrEmpty(code)) return null;
         var series = await _series.GetByCodeCompanionAsync(code);
-        return series is { IsEnCours: true } ? series : null;
+        return series != null && (series.IsEnCours || serieTermineeAdmise) ? series : null;
     }
 }
