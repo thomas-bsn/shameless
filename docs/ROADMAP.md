@@ -31,9 +31,9 @@ Objectif : une soirée complète sans saisie manuelle.
 ### 1b. Companion (récupération des stats)
 - [ ] App .NET 10 Avalonia, icône barre des tâches, login Discord
 - [ ] Détection du client LoL via lockfile + écoute WebSocket locale
-- [ ] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
+- [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
 - [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit)
-- [ ] Dédoublonnage côté API ; saisie manuelle gardée en secours
+- [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
 
 ### 1c. Stats et historique
 - [ ] RiotMatchData / RiotParticipantData remplis
