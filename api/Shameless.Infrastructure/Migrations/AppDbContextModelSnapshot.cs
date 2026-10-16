@@ -197,6 +197,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.HasIndex("PlayedAt")
                         .HasDatabaseName("ix_custom_games_played_at");
 
+                    b.HasIndex("RiotMatchId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_custom_games_riot_match_id");
+
                     b.HasIndex("SeriesId")
                         .HasDatabaseName("ix_custom_games_series_id");
 

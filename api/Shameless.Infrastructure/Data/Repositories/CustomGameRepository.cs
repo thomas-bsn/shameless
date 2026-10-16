@@ -29,6 +29,12 @@ public class CustomGameRepository : ICustomGameRepository
             .FirstOrDefaultAsync(g => g.Id == id);
     }
 
+    public Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId) =>
+        _db.CustomGames
+            .AsNoTracking()
+            .Include(g => g.Series)
+            .SingleOrDefaultAsync(g => g.RiotMatchId == riotMatchId);
+
     public async Task<List<CustomGame>> GetByMonthAsync(DateTime month)
     {
         var startOfMonth = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
