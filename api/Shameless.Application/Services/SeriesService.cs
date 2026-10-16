@@ -1,3 +1,4 @@
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -274,26 +275,16 @@ public sealed class SeriesService
         if (!series.IsEnCours)
             return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : ses capitaines ne changent plus.");
 
-        var joueurs = series.PlayersOf(equipe).OrderBy(p => p.Id).ToList();
-        SeriesPlayer? capitaine;
-        switch (designation)
-        {
-            case DesignationCapitaine.Manuel:
-                capitaine = joueurs.SingleOrDefault(p => p.PlayerId == playerId);
-                if (capitaine == null)
-                    return CommandResult<SeriesResponse>.Invalid($"Le capitaine fait partie de l'Équipe {equipe}.");
-                break;
-            case DesignationCapitaine.AuHasard:
-                capitaine = joueurs[_random.Next(joueurs.Count)];
-                break;
-            case DesignationCapitaine.PlusGrosCost:
-                capitaine = joueurs.OrderByDescending(p => p.Player.CurrentCost).First();
-                break;
-            default:
-                return CommandResult<SeriesResponse>.Invalid("Désignation du capitaine inconnue.");
-        }
+        if (!Enum.IsDefined(designation))
+            return CommandResult<SeriesResponse>.Invalid("Désignation du capitaine inconnue.");
 
-        series.DesignerCapitaine(capitaine);
+        var joueurs = series.PlayersOf(equipe).OrderBy(p => p.Id).ToList();
+        var designe = DesignationDesCapitaines.Designer(
+            designation, joueurs.Select(p => new PickerPlayer(p.PlayerId, p.Player.CurrentCost)).ToList(), playerId, _random);
+        if (designe == null)
+            return CommandResult<SeriesResponse>.Invalid($"Le capitaine fait partie de l'Équipe {equipe}.");
+
+        series.DesignerCapitaine(joueurs.Single(p => p.PlayerId == designe));
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
