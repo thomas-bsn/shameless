@@ -19,11 +19,11 @@ public class CustomGameRepository : ICustomGameRepository
     public Task<RapportCompanion?> GetRapportAsync(int id) =>
         _db.RapportsCompanion.Include(r => r.Game).SingleOrDefaultAsync(r => r.Id == id);
 
-    public Task<string?> GetRiotMatchIdEnRevueAsync(int gameId) =>
-        _db.RapportsCompanion.AsNoTracking()
-            .Where(r => r.GameId == gameId && r.Statut == StatutRapport.EnRevue)
-            .Select(r => r.RiotMatchId)
-            .SingleOrDefaultAsync();
+    public Task<RapportCompanion?> GetRapportByRiotMatchIdAsync(string riotMatchId) =>
+        _db.RapportsCompanion
+            .AsNoTracking()
+            .Include(r => r.Game).ThenInclude(g => g.Series)
+            .SingleOrDefaultAsync(r => r.RiotMatchId == riotMatchId);
 
     public async Task<CustomGame?> GetByIdAsync(int id)
     {

@@ -268,6 +268,47 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Renvoyer_un_rapport_rejete_ne_cree_rien_et_repond_rejete()
+    {
+        var client = Factory.CreateSignedInClient();
+        var enRevue = await MettreEnRevueAsync(client);
+        await ReadJsonAsync(await client.PostAsync($"/rapports/{enRevue.RapportId}/rejeter", null, Ct));
+
+        var renvoi = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
+            equipeA: ["A1", "A2", "A3", "A4", "X1"]));
+
+        Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
+        var recu = await ReadJsonAsync(renvoi);
+        Assert.Equal("Rejete", recu.GetProperty("statut").GetString());
+        Assert.Equal(enRevue.GameId, recu.GetProperty("gameId").GetInt32());
+        Assert.Equal(JsonValueKind.Null, recu.GetProperty("winner").ValueKind);
+        var game = (await SerieAsync(client, enRevue.Serie.SeriesId)).GetProperty("games")[0];
+        Assert.Equal("pending", game.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, game.GetProperty("rapportEnRevue").ValueKind);
+        // La game n'est pas bloquée à nouveau : la saisie manuelle passe.
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{enRevue.GameId}/result", new { winner = "A" }, Ct));
+    }
+
+    [Fact]
+    public async Task Renvoyer_un_rapport_rejete_apres_la_cloture_de_la_serie_repond_rejete()
+    {
+        var client = Factory.CreateSignedInClient();
+        var enRevue = await MettreEnRevueAsync(client);
+        await ReadJsonAsync(await client.PostAsync($"/rapports/{enRevue.RapportId}/rejeter", null, Ct));
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{enRevue.GameId}/result", new { winner = "A" }, Ct));
+        await PlayAndWinAsync(client, enRevue.Serie.SeriesId, "A");
+
+        var renvoi = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
+            equipeA: ["A1", "A2", "A3", "A4", "X1"]));
+
+        Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
+        var recu = await ReadJsonAsync(renvoi);
+        Assert.Equal("Rejete", recu.GetProperty("statut").GetString());
+        Assert.Equal(enRevue.GameId, recu.GetProperty("gameId").GetInt32());
+        Assert.Equal("Gagnee", recu.GetProperty("outcome").GetString());
+    }
+
+    [Fact]
     public async Task Interrompre_la_serie_pendant_la_revue_fait_disparaitre_le_rapport_avec_la_game_en_attente()
     {
         var client = Factory.CreateSignedInClient();

@@ -66,8 +66,9 @@ public sealed class CompanionController : ControllerBase
     /// données Riot et les champions joués (statut Accepte). Sinon le rapport est en revue (statut
     /// EnRevue) : la game reste en attente de la décision de l'organisateur. Rapport mal formé : 400 ;
     /// aucune game en attente, ou un autre rapport de la game déjà en revue : 409. Série terminée : un
-    /// nouveau rapport est refusé (404, comme le code), mais le renvoi d'un rapport déjà rattaché
-    /// désigne encore sa game, sans rien modifier.
+    /// nouveau rapport est refusé (404, comme le code), mais le renvoi d'un rapport déjà reçu désigne
+    /// encore sa game, sans rien modifier. Un rapport déjà reçu (même identifiant Riot) n'est jamais
+    /// traité deux fois : son renvoi répond son statut (Accepte, EnRevue ou Rejete) sans rien créer.
     /// </summary>
     [HttpPost("companion/{code}/rapports")]
     [AccesParCodeCompanion(SerieTermineeAdmise = true)]

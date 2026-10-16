@@ -17,10 +17,8 @@ public sealed class RapportCompanionConfiguration : IEntityTypeConfiguration<Rap
         entity.Property(e => e.Statut)
               .HasColumnType("text")
               .HasConversion(
-                  statut => statut == StatutRapport.EnRevue ? "en_revue"
-                      : statut == StatutRapport.Accepte ? "accepte" : "rejete",
-                  value => value == "en_revue" ? StatutRapport.EnRevue
-                      : value == "accepte" ? StatutRapport.Accepte : StatutRapport.Rejete)
+                  statut => ToText(statut),
+                  value => FromText(value))
               .IsConcurrencyToken();
         entity.Property(e => e.RecuLe).HasColumnType("timestamp without time zone");
         entity.Property(e => e.DecideLe).HasColumnType("timestamp without time zone");
@@ -36,5 +34,23 @@ public sealed class RapportCompanionConfiguration : IEntityTypeConfiguration<Rap
               .IsUnique()
               .HasFilter("statut = 'en_revue'")
               .HasDatabaseName("ix_rapports_companion_game_id_en_revue");
+
+        // Un identifiant Riot n'est gardé qu'une fois : le même rapport renvoyé (reprise réseau,
+        // plusieurs Companions) ne crée jamais un second rapport, qu'il soit en revue ou rejeté.
+        entity.HasIndex(e => e.RiotMatchId).IsUnique();
     }
+
+    private static string ToText(StatutRapport statut) => statut switch
+    {
+        StatutRapport.Accepte => "accepte",
+        StatutRapport.Rejete => "rejete",
+        _ => "en_revue"
+    };
+
+    private static StatutRapport FromText(string value) => value switch
+    {
+        "accepte" => StatutRapport.Accepte,
+        "rejete" => StatutRapport.Rejete,
+        _ => StatutRapport.EnRevue
+    };
 }

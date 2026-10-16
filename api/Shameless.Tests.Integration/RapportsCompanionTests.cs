@@ -156,7 +156,7 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var avecLeRemplace = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B")));
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[1].GetProperty("rapportEnRevue");
         await ReadJsonAsync(await client.PostAsync($"/rapports/{revue.GetProperty("id").GetInt32()}/rejeter", null, Ct));
-        var avecLeRemplacant = await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B",
+        var avecLeRemplacant = await EnvoyerAsync(code, Rapport("EUW1_7000000022", teamASide: "blue", gagnante: "B",
             equipeA: ["A1", "A2", "A3", "A4", "C1"]));
 
         Assert.Equal("EnRevue", avecLeRemplace.GetProperty("statut").GetString());

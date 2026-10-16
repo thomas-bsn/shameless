@@ -603,6 +603,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDatabaseName("ix_rapports_companion_game_id_en_revue")
                         .HasFilter("statut = 'en_revue'");
 
+                    b.HasIndex("RiotMatchId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_rapports_companion_riot_match_id");
+
                     b.ToTable("rapports_companion", (string)null);
                 });
 
