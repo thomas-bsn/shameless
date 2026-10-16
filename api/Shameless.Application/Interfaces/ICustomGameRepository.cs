@@ -12,6 +12,15 @@ public interface ICustomGameRepository
 
     /// <summary>Un rapport du Companion mis en revue, avec sa game ; null s'il n'existe pas.</summary>
     Task<RapportCompanion?> GetRapportAsync(int id);
+
+    /// <summary>L'identifiant Riot du rapport en revue de la game, tel qu'enregistré en base, ou null.</summary>
+    Task<string?> GetRiotMatchIdEnRevueAsync(int gameId);
+
+    /// <summary>
+    /// La game rattachée à cet identifiant Riot, avec sa Série, telle qu'enregistrée en base (sans
+    /// les changements non enregistrés de la commande en cours), ou null.
+    /// </summary>
+    Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId);
     Task<List<CustomGame>> GetByMonthAsync(DateTime month);
     Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month);
 

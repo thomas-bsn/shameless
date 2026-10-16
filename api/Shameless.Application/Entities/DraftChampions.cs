@@ -56,6 +56,22 @@ public class DraftChampions
     /// </summary>
     public Role? RoleRevele(int playerId) => EstTerminee ? Game.Series?.RoleOf(playerId) : null;
 
+    /// <summary>
+    /// Fearless : les champions réellement joués dans les games précédentes de la Série, d'après leurs
+    /// rapports, sans doublon, dans l'ordre des games. Ils restent bannissables et pickables : l'app
+    /// les montre, elle n'empêche rien. Null quand la Série n'est pas Fearless.
+    /// </summary>
+    public IReadOnlyList<string>? ChampionsDejaJoues => Game.Series is { Fearless: true } series
+        ? series.Games
+            .Where(g => g.Id < GameId && g.Status == GameStatuses.Completed)
+            .OrderBy(g => g.Id)
+            .SelectMany(g => g.Participants.OrderBy(p => p.Id))
+            .Select(p => p.ChampionId)
+            .OfType<string>()
+            .Distinct()
+            .ToList()
+        : null;
+
     /// <summary>Le champion est déjà banni ou pick dans cette game.</summary>
     public bool AUtilise(string championId) => Actions.Any(a => a.ChampionId == championId);
 

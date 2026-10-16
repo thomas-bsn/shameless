@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Timer } from "lucide-react";
+import { Ban, History, Timer } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -184,6 +184,8 @@ export function DraftChampionsView({
         <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
       </div>
 
+      {draft.championsDejaJoues && <DejaJoues championIds={draft.championsDejaJoues} parId={parId} />}
+
       {jeu && draft.tourCourant && (
         <ChoixChampion key={draft.tourCourant.numero} draft={draft} champions={champions} jeu={jeu} />
       )}
@@ -325,6 +327,43 @@ function CaseChampion({ tour, champion }: { tour: TourDeLaDraft; champion?: Cham
   );
 }
 
+/**
+ * Fearless : les champions réellement joués dans les games précédentes de la Série. Simple rappel,
+ * ils restent bannissables et pickables.
+ */
+function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<string, Champion> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="size-5" />
+          Déjà joués dans la Série (Fearless)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          Champions joués dans les games précédentes : l'app les signale, elle ne les bloque pas.
+        </p>
+        {championIds.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucun champion joué pour l'instant.</p>
+        ) : (
+          <ul aria-label="Champions déjà joués (Fearless)" className="flex flex-wrap gap-2">
+            {championIds.map((id) => {
+              const champion = parId.get(id);
+              return (
+                <li key={id} className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm">
+                  {champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}
+                  <span>{champion?.name ?? id}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<string, Champion> }) {
   return (
     <Card>
@@ -357,6 +396,7 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
   const [recherche, setRecherche] = useState("");
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
+  const dejaJoues = new Set(draft.championsDejaJoues ?? []);
   const verbe = tour.action === "ban" ? "Bannir" : "Choisir";
   const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
 
@@ -383,6 +423,7 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
           {filtrerChampions(champions, recherche).map((c) => {
             const indisponible = pris.has(c.id);
+            const dejaJoue = dejaJoues.has(c.id);
             return (
               <li key={c.id}>
                 <button
@@ -392,11 +433,21 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                   onClick={() => setChoisi(c.id)}
                   className={cn(
                     "flex w-full flex-col items-center gap-1 rounded-md border p-1 text-xs hover:bg-accent disabled:cursor-not-allowed disabled:opacity-30 disabled:grayscale",
+                    dejaJoue && "border-amber-500/60",
                     choisi === c.id && "border-primary bg-accent",
                   )}
                 >
-                  <img src={c.imageUrl} alt="" className="size-12 rounded" />
+                  <span className="relative">
+                    <img src={c.imageUrl} alt="" className="size-12 rounded" />
+                    {dejaJoue && (
+                      <History
+                        aria-hidden
+                        className="absolute -top-1 -right-1 size-4 rounded-full bg-background text-amber-500"
+                      />
+                    )}
+                  </span>
                   <span className="w-full truncate text-center">{c.name}</span>
+                  {dejaJoue && <span className="sr-only">(déjà joué dans la Série)</span>}
                   {indisponible && <span className="sr-only">(indisponible)</span>}
                 </button>
               </li>

@@ -11,7 +11,9 @@ public sealed record RapportTraite(CustomGame Game, StatutRapport Statut);
 /// Les rapports de fin de game envoyés par le Companion avec le code de sa Série (ADR 0004). Un rapport
 /// conforme à la composition de la game en attente la termine comme une saisie manuelle, qui reste
 /// disponible en secours. Un rapport qui s'en écarte est en revue : l'organisateur l'accepte ou le
-/// rejette.
+/// rejette. Un identifiant Riot n'est rattaché qu'à une game, garanti par la base : le même rapport
+/// renvoyé (reprise réseau, plusieurs joueurs équipés) désigne la game déjà rattachée, ou le rapport
+/// déjà en revue.
 /// </summary>
 public sealed class RapportsCompanionService
 {
@@ -36,8 +38,9 @@ public sealed class RapportsCompanionService
     /// Rattache un rapport à la game en attente de la Série du code : si les joueurs détectés sont les
     /// participants de cette game (Remplacements compris), chacun sur son Side, la game est terminée
     /// avec le vainqueur du rapport et garde ses données Riot et les champions joués. Sinon le rapport
-    /// est en revue et la game reste en attente. Tant qu'un rapport est en revue, un autre rapport de
-    /// la game est refusé ; le même (même identifiant Riot) répond à nouveau « en revue ».
+    /// est en revue et la game reste en attente. Un identifiant Riot déjà reçu désigne sa game, sans
+    /// rien modifier, avant toute autre vérification. Tant qu'un rapport est en revue, un autre rapport
+    /// de la game est refusé ; le même (même identifiant Riot) répond à nouveau « en revue ».
     /// </summary>
     public async Task<CommandResult<RapportTraite>> RecevoirAsync(int seriesId, RapportDeGame rapport)
     {
@@ -45,7 +48,13 @@ public sealed class RapportsCompanionService
         if (invalidite != null)
             return CommandResult<RapportTraite>.Invalid(invalidite);
 
+        // La Série est lue avant de chercher l'identifiant Riot : un envoi simultané qui rattache le
+        // même rapport entre les deux lectures est vu comme déjà reçu, jamais comme une game manquante.
         var series = await _series.GetWithGamesAsync(seriesId);
+        var dejaRecu = await DejaRecuAsync(seriesId, rapport);
+        if (dejaRecu != null)
+            return dejaRecu;
+
         if (series is not { IsEnCours: true })
             return CommandResult<RapportTraite>.NotFound("Cette Série n'existe pas ou est terminée.");
 
@@ -56,21 +65,30 @@ public sealed class RapportsCompanionService
 
         if (game.RapportEnRevue is { } revue)
             return revue.RiotMatchId == rapport.RiotMatchId
-                ? CommandResult<RapportTraite>.Ok(new RapportTraite(game, StatutRapport.EnRevue))
+                ? EnRevue(game)
                 : CommandResult<RapportTraite>.Conflict(
                     "Un rapport de la game en attente est déjà en revue : l'organisateur doit l'accepter ou le rejeter.");
 
         if (!rapport.EcartAvec(game).EstVide)
         {
             game.Rapports.Add(RapportCompanion.EnRevue(rapport, Maintenant()));
-            if (!await _games.TrySaveChangesAsync())
-                return CommandResult<RapportTraite>.Conflict(
-                    "Un autre rapport de cette game vient d'être reçu : réessayez.");
-            return CommandResult<RapportTraite>.Ok(new RapportTraite(game, StatutRapport.EnRevue));
+            if (await _games.TrySaveChangesAsync())
+                return EnRevue(game);
+
+            // Refusé par la base : un envoi simultané a mis un rapport en revue entre-temps.
+            return await _games.GetRiotMatchIdEnRevueAsync(game.Id) == rapport.RiotMatchId
+                ? EnRevue(game)
+                : CommandResult<RapportTraite>.Conflict(
+                    "Un autre rapport de cette game vient d'être mis en revue : l'organisateur doit l'accepter ou le rejeter.");
         }
 
         game.AppliquerRapport(rapport);
-        return Accepte(await _seriesService.TerminerAsync(game, series, rapport.EquipeGagnanteDans(game)));
+        var terminee = Accepte(await _seriesService.TerminerAsync(game, series, rapport.EquipeGagnanteDans(game)));
+        if (terminee.IsOk)
+            return terminee;
+
+        // Refusé par la base : un envoi simultané du même rapport a pu le rattacher entre-temps.
+        return await DejaRecuAsync(seriesId, rapport) ?? terminee;
     }
 
     /// <summary>
@@ -122,6 +140,25 @@ public sealed class RapportsCompanionService
             return CommandResult<Revue>.Conflict("Cette Série est terminée : son score ne change plus.");
         return CommandResult<Revue>.Ok(new Revue(revue, series.Games.Single(g => g.Id == revue.GameId), series));
     }
+
+    /// <summary>
+    /// La game déjà rattachée à l'identifiant Riot du rapport, sans rien modifier, ou null s'il n'a
+    /// jamais été reçu. Rattaché à une game d'une autre Série : refusé, sans rien en dévoiler.
+    /// </summary>
+    private async Task<CommandResult<RapportTraite>?> DejaRecuAsync(int seriesId, RapportDeGame rapport)
+    {
+        var game = await _games.GetByRiotMatchIdAsync(rapport.RiotMatchId);
+        if (game == null)
+            return null;
+        if (game.SeriesId != seriesId)
+            return CommandResult<RapportTraite>.Conflict(
+                "Cette partie Riot est déjà rattachée à une game d'une autre Série.");
+
+        return CommandResult<RapportTraite>.Ok(new RapportTraite(game, StatutRapport.Accepte));
+    }
+
+    private static CommandResult<RapportTraite> EnRevue(CustomGame game) =>
+        CommandResult<RapportTraite>.Ok(new RapportTraite(game, StatutRapport.EnRevue));
 
     private static CommandResult<RapportTraite> Accepte(CommandResult<CustomGame> terminee) =>
         terminee.IsOk

@@ -19,6 +19,12 @@ public class CustomGameRepository : ICustomGameRepository
     public Task<RapportCompanion?> GetRapportAsync(int id) =>
         _db.RapportsCompanion.Include(r => r.Game).SingleOrDefaultAsync(r => r.Id == id);
 
+    public Task<string?> GetRiotMatchIdEnRevueAsync(int gameId) =>
+        _db.RapportsCompanion.AsNoTracking()
+            .Where(r => r.GameId == gameId && r.Statut == StatutRapport.EnRevue)
+            .Select(r => r.RiotMatchId)
+            .SingleOrDefaultAsync();
+
     public async Task<CustomGame?> GetByIdAsync(int id)
     {
         return await _db.CustomGames.FindAsync(id);
@@ -31,6 +37,12 @@ public class CustomGameRepository : ICustomGameRepository
                 .ThenInclude(p => p.Player)
             .FirstOrDefaultAsync(g => g.Id == id);
     }
+
+    public Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId) =>
+        _db.CustomGames
+            .AsNoTracking()
+            .Include(g => g.Series)
+            .SingleOrDefaultAsync(g => g.RiotMatchId == riotMatchId);
 
     public async Task<List<CustomGame>> GetByMonthAsync(DateTime month)
     {

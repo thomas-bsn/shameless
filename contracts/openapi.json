@@ -3725,7 +3725,8 @@
           "teamA",
           "teamB",
           "capitaineA",
-          "capitaineB"
+          "capitaineB",
+          "championsDejaJoues"
         ],
         "type": "object",
         "properties": {
@@ -3796,6 +3797,15 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "championsDejaJoues": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
