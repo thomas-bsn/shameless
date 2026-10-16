@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Shameless.Tests.Integration.Infrastructure;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -16,46 +17,8 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
 {
     private const int Simultanes = 8;
 
-    private async Task<string> CodeAsync(HttpClient client, int seriesId) =>
-        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
-
-    /// <summary>
-    /// Le rapport d'une game où l'Équipe A (A1..A5) joue <paramref name="teamASide"/> contre
-    /// l'Équipe B (B1..B5), vu par le joueur <paramref name="emetteur"/> : ses stats diffèrent d'un
-    /// émetteur à l'autre, comme deux Companions qui n'envoient pas exactement les mêmes données.
-    /// </summary>
-    private static object Rapport(string riotMatchId, string teamASide, string gagnante, string[] champions, int emetteur = 0)
-    {
-        var teamBSide = teamASide == "blue" ? "red" : "blue";
-        var joueurs = new[] { "A1", "A2", "A3", "A4", "A5" }.Select(p => (Prenom: p, Side: teamASide, Victoire: gagnante == "A"))
-            .Concat(new[] { "B1", "B2", "B3", "B4", "B5" }.Select(p => (Prenom: p, Side: teamBSide, Victoire: gagnante == "B")))
-            .Select((j, i) => new
-            {
-                puuid = $"puuid-{j.Prenom}#EUW",
-                side = j.Side,
-                championId = champions[i],
-                victoire = j.Victoire,
-                stats = new { kills = i + emetteur, deaths = 2, assists = 7 }
-            })
-            .ToArray();
-        return new
-        {
-            riotMatchId,
-            donnees = new { gameDuration = 1834 + emetteur, gameMode = "CLASSIC", gameType = "CUSTOM_GAME" },
-            joueurs
-        };
-    }
-
-    private static readonly string[] Dix =
-        ["Garen", "LeeSin", "Ahri", "Jinx", "Thresh", "Darius", "Zed", "Orianna", "Ezreal", "Nami"];
-
     private static readonly string[] DixAutres =
         ["Annie", "Ashe", "Braum", "Fiora", "Galio", "Irelia", "Janna", "Karma", "Lulu", "Malphite"];
-
-    private async Task<HttpResponseMessage> EnvoyerAsync(string code, object rapport) =>
-        await Factory.CreateAnonymousClient().PostAsJsonAsync(
-            $"/companion/{Uri.EscapeDataString(code)}/rapports", rapport, Ct);
 
     private async Task<JsonElement> SerieAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
@@ -70,12 +33,12 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
-        var premier = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000001", "blue", "A", Dix)));
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        var premier = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000001", "blue", "A")));
         var avant = await SerieAsync(client, serie.SeriesId);
         Factory.Clock.Advance(TimeSpan.FromMinutes(3));
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_8000000001", "blue", "A", Dix));
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_8000000001", "blue", "A"));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
         var renvoi = await ReadJsonAsync(reponse);
@@ -90,11 +53,11 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var game1 = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000002", "blue", "A", Dix)));
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000002", "blue", "A")));
         var game2 = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_8000000002", "red", "B", DixAutres, emetteur: 4));
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_8000000002", "red", "B", champions: DixAutres, emetteur: 4));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
         var renvoi = await ReadJsonAsync(reponse);
@@ -117,10 +80,10 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
         var reponses = await Task.WhenAll(Enumerable.Range(0, Simultanes).Select(i =>
-            EnvoyerAsync(code, Rapport("EUW1_8000000003", "blue", "B", Dix, emetteur: i))));
+            EnvoyerRapportAsync(code, Rapport("EUW1_8000000003", "blue", "B", emetteur: i))));
 
         Assert.All(reponses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
         foreach (var reponse in reponses)
@@ -138,15 +101,15 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
         var client = Factory.CreateSignedInClient();
         var serie1 = await CreateSerieAsync(client, format: 3);
         var game1 = await PlayGameAsync(client, serie1.SeriesId, teamASide: "blue");
-        var code1 = await CodeAsync(client, serie1.SeriesId);
+        var code1 = await CodeCompanionAsync(client, serie1.SeriesId);
         var serie2Id = (await ReadJsonAsync(await client.PostAsJsonAsync("/series",
             new { teamA = serie1.TeamA, teamB = serie1.TeamB, format = 3, fearless = false, alternateSides = false }, Ct)))
             .GetProperty("seriesId").GetInt32();
         var game2 = await PlayGameAsync(client, serie2Id, teamASide: "blue");
-        var code2 = await CodeAsync(client, serie2Id);
+        var code2 = await CodeCompanionAsync(client, serie2Id);
 
         var reponses = await Task.WhenAll(Enumerable.Range(0, Simultanes).Select(i =>
-            EnvoyerAsync(i % 2 == 0 ? code1 : code2, Rapport("EUW1_8000000004", "blue", "A", Dix, emetteur: i))));
+            EnvoyerRapportAsync(i % 2 == 0 ? code1 : code2, Rapport("EUW1_8000000004", "blue", "A", emetteur: i))));
 
         Assert.Equal(Simultanes / 2, reponses.Count(r => r.StatusCode == HttpStatusCode.OK));
         Assert.All(reponses.Where(r => r.StatusCode != HttpStatusCode.OK), r =>

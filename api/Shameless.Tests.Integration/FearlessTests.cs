@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shameless.Tests.Integration.Infrastructure;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -11,8 +12,6 @@ namespace Shameless.Tests.Integration;
 /// </summary>
 public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
 {
-    private static readonly string[] ChampionsA = ["Garen", "LeeSin", "Ahri", "Jinx", "Thresh"];
-    private static readonly string[] ChampionsB = ["Darius", "Zed", "Orianna", "Ezreal", "Nami"];
     private static readonly string[] Joues = [.. ChampionsA, .. ChampionsB];
 
     private sealed record Preparee(CreatedSerie Serie, string Code, string LienA, string LienB, string LienSpectateur);
@@ -26,8 +25,7 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/B",
             new { designation = "Manuel", playerId = serie.TeamB[0] }, Ct));
         var liens = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
-        var code = (await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         return new Preparee(serie, code,
             liens.GetProperty("lienCapitaineA").GetString()!,
             liens.GetProperty("lienCapitaineB").GetString()!,
@@ -38,13 +36,8 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
     private async Task<int> JouerAvecRapportAsync(HttpClient client, Preparee preparee, string riotMatchId, string[] championsA, string[] championsB)
     {
         var gameId = await PlayGameAsync(client, preparee.Serie.SeriesId, "blue");
-        var joueurs = championsA.Select((c, i) => (Puuid: $"puuid-A{i + 1}#EUW", Side: "blue", Champion: c, Victoire: true))
-            .Concat(championsB.Select((c, i) => (Puuid: $"puuid-B{i + 1}#EUW", Side: "red", Champion: c, Victoire: false)))
-            .Select(j => new { puuid = j.Puuid, side = j.Side, championId = j.Champion, victoire = j.Victoire, stats = new { kills = 1 } })
-            .ToArray();
-        var rapport = new { riotMatchId, donnees = new { gameMode = "CLASSIC" }, joueurs };
-        await ReadJsonAsync(await Factory.CreateAnonymousClient().PostAsJsonAsync(
-            $"/companion/{Uri.EscapeDataString(preparee.Code)}/rapports", rapport, Ct));
+        await ReadJsonAsync(await EnvoyerRapportAsync(preparee.Code,
+            Rapport(riotMatchId, teamASide: "blue", gagnante: "A", champions: [.. championsA, .. championsB])));
         return gameId;
     }
 
@@ -109,14 +102,8 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
         var premiere = await JouerAvecRapportAsync(client, preparee, "EUW1_8000000021", ChampionsA, ChampionsB);
         await PlayGameAsync(client, preparee.Serie.SeriesId, "blue");
         var deuxieme = (await OuvrirAsync(client, preparee.Serie.SeriesId)).GetProperty("gameId").GetInt32();
-        await Factory.CreateAnonymousClient().PostAsJsonAsync($"/companion/{Uri.EscapeDataString(preparee.Code)}/rapports", new
-        {
-            riotMatchId = "EUW1_8000000022",
-            donnees = new { gameMode = "CLASSIC" },
-            joueurs = autresA.Select((c, i) => new { puuid = $"puuid-A{i + 1}#EUW", side = "blue", championId = c, victoire = false, stats = new { kills = 1 } })
-                .Concat(autresB.Select((c, i) => new { puuid = $"puuid-B{i + 1}#EUW", side = "red", championId = c, victoire = true, stats = new { kills = 1 } }))
-                .ToArray()
-        }, Ct);
+        await EnvoyerRapportAsync(preparee.Code,
+            Rapport("EUW1_8000000022", teamASide: "blue", gagnante: "B", champions: [.. autresA, .. autresB]));
         var troisieme = await PlayGameAsync(client, preparee.Serie.SeriesId, "blue");
         await OuvrirAsync(client, preparee.Serie.SeriesId);
 

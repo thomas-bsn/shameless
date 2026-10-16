@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shameless.Tests.Integration.Infrastructure;
-using static Shameless.Tests.Integration.RapportsCompanionTests;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -13,14 +13,6 @@ namespace Shameless.Tests.Integration;
 /// </summary>
 public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
 {
-    private async Task<string> CodeAsync(HttpClient client, int seriesId) =>
-        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
-
-    private async Task<HttpResponseMessage> EnvoyerAsync(string code, object rapport) =>
-        await Factory.CreateAnonymousClient().PostAsJsonAsync(
-            $"/companion/{Uri.EscapeDataString(code)}/rapports", rapport, Ct);
-
     private async Task<JsonElement> SerieAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
 
@@ -35,19 +27,11 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 3);
         var etranger = await CreatePlayerAsync(client, "X1");
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante,
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante,
             equipeA: ["A1", "A2", "A3", "A4", "X1"])));
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("rapportEnRevue");
         return new EnRevue(serie, gameId, code, revue.GetProperty("id").GetInt32(), etranger);
-    }
-
-    private static async Task AssertRefusAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var detail = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("detail").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(detail));
     }
 
     [Fact]
@@ -57,9 +41,9 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 3);
         await CreatePlayerAsync(client, "X1");
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_8000000002", teamASide: "blue", gagnante: "A",
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_8000000002", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
@@ -92,9 +76,9 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000003", teamASide: "blue", gagnante: "B",
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000003", teamASide: "blue", gagnante: "B",
             equipeB: ["B1", "B2", "B3", "B4", "Inconnu"])));
 
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("rapportEnRevue");
@@ -110,10 +94,10 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
         // L'Équipe A a en fait joué red, et gagné.
-        var recu = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000004", teamASide: "red", gagnante: "A")));
+        var recu = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000004", teamASide: "red", gagnante: "A")));
 
         Assert.Equal("EnRevue", recu.GetProperty("statut").GetString());
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("rapportEnRevue");
@@ -169,7 +153,7 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("pending", game.GetProperty("status").GetString());
         Assert.Equal(JsonValueKind.Null, game.GetProperty("rapportEnRevue").ValueKind);
 
-        var conforme = await ReadJsonAsync(await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000010", teamASide: "blue", gagnante: "A")));
+        var conforme = await ReadJsonAsync(await EnvoyerRapportAsync(enRevue.Code, Rapport("EUW1_8000000010", teamASide: "blue", gagnante: "A")));
         Assert.Equal("Accepte", conforme.GetProperty("statut").GetString());
         Assert.Equal(enRevue.GameId, conforme.GetProperty("gameId").GetInt32());
     }
@@ -253,8 +237,8 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var enRevue = await MettreEnRevueAsync(client);
 
-        var autre = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000020", teamASide: "blue", gagnante: "A"));
-        var memeIdentifiant = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
+        var autre = await EnvoyerRapportAsync(enRevue.Code, Rapport("EUW1_8000000020", teamASide: "blue", gagnante: "A"));
+        var memeIdentifiant = await EnvoyerRapportAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
 
         await AssertRefusAsync(autre, HttpStatusCode.Conflict);
@@ -274,7 +258,7 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var enRevue = await MettreEnRevueAsync(client);
         await ReadJsonAsync(await client.PostAsync($"/rapports/{enRevue.RapportId}/rejeter", null, Ct));
 
-        var renvoi = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
+        var renvoi = await EnvoyerRapportAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
 
         Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
@@ -290,6 +274,28 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_meme_rapport_en_ecart_envoye_simultanement_n_est_mis_en_revue_qu_une_fois()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await CreatePlayerAsync(client, "X1");
+        var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        var reponses = await Task.WhenAll(Enumerable.Range(0, 8).Select(i => EnvoyerRapportAsync(code,
+            Rapport("EUW1_8000000040", teamASide: "blue", gagnante: "A", equipeA: ["A1", "A2", "A3", "A4", "X1"], emetteur: i))));
+
+        foreach (var reponse in reponses)
+        {
+            var recu = await ReadJsonAsync(reponse);
+            Assert.Equal("EnRevue", recu.GetProperty("statut").GetString());
+            Assert.Equal(gameId, recu.GetProperty("gameId").GetInt32());
+        }
+        var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
+        Assert.Equal("EUW1_8000000040", game.GetProperty("rapportEnRevue").GetProperty("riotMatchId").GetString());
+    }
+
+    [Fact]
     public async Task Renvoyer_un_rapport_rejete_apres_la_cloture_de_la_serie_repond_rejete()
     {
         var client = Factory.CreateSignedInClient();
@@ -298,7 +304,7 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{enRevue.GameId}/result", new { winner = "A" }, Ct));
         await PlayAndWinAsync(client, enRevue.Serie.SeriesId, "A");
 
-        var renvoi = await EnvoyerAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
+        var renvoi = await EnvoyerRapportAsync(enRevue.Code, Rapport("EUW1_8000000001", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
 
         Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
@@ -313,10 +319,10 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_8000000030", teamASide: "red", gagnante: "A")));
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000030", teamASide: "red", gagnante: "A")));
         var rapportId = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[1]
             .GetProperty("rapportEnRevue").GetProperty("id").GetInt32();
 

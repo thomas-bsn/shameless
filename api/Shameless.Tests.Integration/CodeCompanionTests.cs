@@ -11,10 +11,6 @@ namespace Shameless.Tests.Integration;
 /// </summary>
 public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
 {
-    private async Task<string> CodeAsync(HttpClient client, int seriesId) =>
-        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
-
     private async Task<HttpResponseMessage> ResoudreAsync(string code) =>
         await Factory.CreateAnonymousClient().GetAsync($"/companion/{Uri.EscapeDataString(code)}", Ct);
 
@@ -24,7 +20,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3, fearless: true);
 
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         var resolu = await ResoudreAsync(code);
 
         Assert.True(code.Length >= 40, $"Code trop court : {code}");
@@ -51,8 +47,8 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         var revanche = (await ReadJsonAsync(await client.PostAsJsonAsync(
             $"/series/{premiere.SeriesId}/rematch", new { format = 1 }, Ct))).GetProperty("seriesId").GetInt32();
 
-        var code1 = await CodeAsync(client, premiere.SeriesId);
-        var code2 = await CodeAsync(client, revanche);
+        var code1 = await CodeCompanionAsync(client, premiere.SeriesId);
+        var code2 = await CodeCompanionAsync(client, revanche);
         var liens = await ReadJsonAsync(await client.PostAsync($"/series/{revanche}/liens/envoyes", null, Ct));
 
         Assert.NotEqual(code1, code2);
@@ -65,22 +61,22 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
-        var ancien = await CodeAsync(client, serie.SeriesId);
+        var ancien = await CodeCompanionAsync(client, serie.SeriesId);
 
         var renouvele = await ReadJsonAsync(await client.PostAsync(
             $"/series/{serie.SeriesId}/code-companion/renouveler", null, Ct));
         var nouveau = renouvele.GetProperty("code").GetString()!;
 
         Assert.NotEqual(ancien, nouveau);
-        Assert.Equal(nouveau, await CodeAsync(client, serie.SeriesId));
-        await AssertRefusAsync(await ResoudreAsync(ancien));
+        Assert.Equal(nouveau, await CodeCompanionAsync(client, serie.SeriesId));
+        await AssertRefusAsync(await ResoudreAsync(ancien), HttpStatusCode.NotFound);
         Assert.Equal(HttpStatusCode.OK, (await ResoudreAsync(nouveau)).StatusCode);
     }
 
     [Fact]
     public async Task Un_code_inconnu_est_refuse()
     {
-        await AssertRefusAsync(await ResoudreAsync("pas-un-vrai-code-pas-un-vrai-code-pas-un-vrai"));
+        await AssertRefusAsync(await ResoudreAsync("pas-un-vrai-code-pas-un-vrai-code-pas-un-vrai"), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -88,11 +84,11 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
         await PlayAndWinAsync(client, serie.SeriesId, "A");
 
-        await AssertRefusAsync(await ResoudreAsync(code));
+        await AssertRefusAsync(await ResoudreAsync(code), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -100,12 +96,12 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
 
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
-        await AssertRefusAsync(await ResoudreAsync(code));
+        await AssertRefusAsync(await ResoudreAsync(code), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -113,11 +109,11 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
-        await AssertRefusAsync(await ResoudreAsync(code));
+        await AssertRefusAsync(await ResoudreAsync(code), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -125,7 +121,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         var liens = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
         var anonyme = Factory.CreateAnonymousClient();
 
@@ -134,11 +130,11 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         var jouerParCode = await anonyme.PostAsJsonAsync($"/liens/{Uri.EscapeDataString(code)}/draft-champions/actions",
             new { numero = 1, championId = "Ahri" }, Ct);
 
-        await AssertRefusAsync(commeLien);
-        await AssertRefusAsync(draftParCode);
-        await AssertRefusAsync(jouerParCode);
+        await AssertRefusAsync(commeLien, HttpStatusCode.NotFound);
+        await AssertRefusAsync(draftParCode, HttpStatusCode.NotFound);
+        await AssertRefusAsync(jouerParCode, HttpStatusCode.NotFound);
         foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB", "lienSpectateur" })
-            await AssertRefusAsync(await ResoudreAsync(liens.GetProperty(nom).GetString()!));
+            await AssertRefusAsync(await ResoudreAsync(liens.GetProperty(nom).GetString()!), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -146,7 +142,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         var companion = Factory.CreateAnonymousClient();
         companion.DefaultRequestHeaders.Authorization = new("Bearer", code);
 
@@ -174,10 +170,4 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Conflict, terminee.StatusCode);
     }
 
-    private static Task AssertRefusAsync(HttpResponseMessage response)
-    {
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        return Task.CompletedTask;
-    }
 }

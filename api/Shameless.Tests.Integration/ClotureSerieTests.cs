@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shameless.Tests.Integration.Infrastructure;
-using static Shameless.Tests.Integration.RapportsCompanionTests;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -13,33 +13,17 @@ namespace Shameless.Tests.Integration;
 /// </summary>
 public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
 {
-    private async Task<string> CodeAsync(HttpClient client, int seriesId) =>
-        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
-
-    private async Task<HttpResponseMessage> EnvoyerAsync(string code, object rapport) =>
-        await Factory.CreateAnonymousClient().PostAsJsonAsync(
-            $"/companion/{Uri.EscapeDataString(code)}/rapports", rapport, Ct);
-
     private async Task<HttpResponseMessage> ResoudreAsync(string code) =>
         await Factory.CreateAnonymousClient().GetAsync($"/companion/{Uri.EscapeDataString(code)}", Ct);
 
     private async Task<JsonElement> SerieAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
 
-    private static async Task AssertRefusAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var detail = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("detail").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(detail));
-    }
-
     /// <summary>Mène une Série à sa clôture par saisie manuelle ou arrêt, et renvoie son code.</summary>
     private async Task<string> CloturerAsync(HttpClient client, string cloture)
     {
         var serie = await CreateSerieAsync(client, format: cloture == "nulle" ? 2 : 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         switch (cloture)
         {
             case "gagnee":
@@ -74,7 +58,7 @@ public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
         var code = await CloturerAsync(client, cloture);
 
         await AssertRefusAsync(await ResoudreAsync(code), HttpStatusCode.NotFound);
-        await AssertRefusAsync(await EnvoyerAsync(code, Rapport("EUW1_9000000001", teamASide: "blue", gagnante: "A")),
+        await AssertRefusAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9000000001", teamASide: "blue", gagnante: "A")),
             HttpStatusCode.NotFound);
     }
 
@@ -84,12 +68,12 @@ public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
-        var premier = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_9000000002", teamASide: "blue", gagnante: "B")));
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        var premier = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9000000002", teamASide: "blue", gagnante: "B")));
         Assert.Equal("Gagnee", premier.GetProperty("outcome").GetString());
         var avant = await SerieAsync(client, serie.SeriesId);
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_9000000002", teamASide: "blue", gagnante: "B"));
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_9000000002", teamASide: "blue", gagnante: "B"));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
         Assert.Equal(premier.ToString(), (await ReadJsonAsync(reponse)).ToString());
@@ -102,13 +86,13 @@ public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_9000000003", teamASide: "blue", gagnante: "A")));
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9000000003", teamASide: "blue", gagnante: "A")));
         await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
         var avant = await SerieAsync(client, serie.SeriesId);
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_9000000003", teamASide: "blue", gagnante: "A"));
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_9000000003", teamASide: "blue", gagnante: "A"));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
         var renvoi = await ReadJsonAsync(reponse);
@@ -132,9 +116,9 @@ public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 1);
         await CreatePlayerAsync(client, "X1");
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         var ecart = Rapport("EUW1_9000000004", teamASide: "blue", gagnante: "A", equipeA: ["A1", "A2", "A3", "A4", "X1"]);
-        await ReadJsonAsync(await EnvoyerAsync(code, ecart));
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, ecart));
         var rapportId = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0]
             .GetProperty("rapportEnRevue").GetProperty("id").GetInt32();
 
@@ -144,7 +128,7 @@ public class ClotureSerieTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("Gagnee", accepte.GetProperty("outcome").GetString());
 
         await AssertRefusAsync(await client.PostAsync($"/rapports/{rapportId}/rejeter", null, Ct), HttpStatusCode.Conflict);
-        var renvoi = await EnvoyerAsync(code, ecart);
+        var renvoi = await EnvoyerRapportAsync(code, ecart);
         Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
         Assert.Equal(accepte.ToString(), (await ReadJsonAsync(renvoi)).ToString());
         await AssertRefusAsync(await ResoudreAsync(code), HttpStatusCode.NotFound);

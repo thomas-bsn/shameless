@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Shameless.Tests.Integration.Infrastructure;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -13,52 +14,6 @@ namespace Shameless.Tests.Integration;
 /// </summary>
 public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factory)
 {
-    private static readonly string[] ChampionsA = ["Garen", "LeeSin", "Ahri", "Jinx", "Thresh"];
-    private static readonly string[] ChampionsB = ["Darius", "Zed", "Orianna", "Ezreal", "Nami"];
-
-    private async Task<string> CodeAsync(HttpClient client, int seriesId) =>
-        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
-            .GetProperty("code").GetString()!;
-
-    private record Joueur(string Puuid, string Side, string ChampionId, bool Victoire);
-
-    /// <summary>
-    /// Le rapport d'une game où l'Équipe A (prénoms <paramref name="equipeA"/>) joue
-    /// <paramref name="teamASide"/> contre l'Équipe B (<paramref name="equipeB"/>).
-    /// </summary>
-    internal static object Rapport(
-        string riotMatchId,
-        string teamASide,
-        string gagnante,
-        string[]? equipeA = null,
-        string[]? equipeB = null)
-    {
-        equipeA ??= ["A1", "A2", "A3", "A4", "A5"];
-        equipeB ??= ["B1", "B2", "B3", "B4", "B5"];
-        var teamBSide = teamASide == "blue" ? "red" : "blue";
-        var joueurs = equipeA.Select((p, i) => new Joueur($"puuid-{p}#EUW", teamASide, ChampionsA[i], gagnante == "A"))
-            .Concat(equipeB.Select((p, i) => new Joueur($"puuid-{p}#EUW", teamBSide, ChampionsB[i], gagnante == "B")))
-            .Select((j, i) => new
-            {
-                puuid = j.Puuid,
-                side = j.Side,
-                championId = j.ChampionId,
-                victoire = j.Victoire,
-                stats = new { kills = i, deaths = 2, assists = 7, totalDamageDealtToChampions = 12000 + i }
-            })
-            .ToArray();
-        return new
-        {
-            riotMatchId,
-            donnees = new { gameDuration = 1834, gameMode = "CLASSIC", gameType = "CUSTOM_GAME" },
-            joueurs
-        };
-    }
-
-    private async Task<HttpResponseMessage> EnvoyerAsync(string code, object rapport) =>
-        await Factory.CreateAnonymousClient().PostAsJsonAsync(
-            $"/companion/{Uri.EscapeDataString(code)}/rapports", rapport, Ct);
-
     private async Task<JsonElement> SerieAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
 
@@ -68,9 +23,9 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        var reponse = await EnvoyerAsync(code, Rapport("EUW1_7000000001", teamASide: "red", gagnante: "B"));
+        var reponse = await EnvoyerRapportAsync(code, Rapport("EUW1_7000000001", teamASide: "red", gagnante: "B"));
 
         Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
         var recu = await ReadJsonAsync(reponse);
@@ -93,9 +48,9 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000002", teamASide: "blue", gagnante: "A")));
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000002", teamASide: "blue", gagnante: "A")));
 
         var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
         Assert.Equal("EUW1_7000000002", game.GetProperty("riotMatchId").GetString());
@@ -122,12 +77,12 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3, alternateSides: true);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
         var game1 = await PlayGameAsync(client, serie.SeriesId, teamASide: null);
-        var recu1 = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000010", teamASide: "blue", gagnante: "A")));
+        var recu1 = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000010", teamASide: "blue", gagnante: "A")));
         var game2 = await PlayGameAsync(client, serie.SeriesId, teamASide: null);
-        var recu2 = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000011", teamASide: "red", gagnante: "A")));
+        var recu2 = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000011", teamASide: "red", gagnante: "A")));
 
         Assert.Equal(game1, recu1.GetProperty("gameId").GetInt32());
         Assert.Equal(game2, recu2.GetProperty("gameId").GetInt32());
@@ -145,18 +100,18 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000020", teamASide: "blue", gagnante: "A")));
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000020", teamASide: "blue", gagnante: "A")));
         var remplacant = await CreatePlayerAsync(client, "C1");
         await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{serie.SeriesId}/replacements",
             new { replacedPlayerId = serie.TeamA[4], replacementPlayerId = remplacant }, Ct));
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
 
-        var avecLeRemplace = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B")));
+        var avecLeRemplace = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B")));
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[1].GetProperty("rapportEnRevue");
         await ReadJsonAsync(await client.PostAsync($"/rapports/{revue.GetProperty("id").GetInt32()}/rejeter", null, Ct));
-        var avecLeRemplacant = await EnvoyerAsync(code, Rapport("EUW1_7000000022", teamASide: "blue", gagnante: "B",
+        var avecLeRemplacant = await EnvoyerRapportAsync(code, Rapport("EUW1_7000000022", teamASide: "blue", gagnante: "B",
             equipeA: ["A1", "A2", "A3", "A4", "C1"]));
 
         Assert.Equal("EnRevue", avecLeRemplace.GetProperty("statut").GetString());
@@ -177,9 +132,9 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var serie = await CreateSerieAsync(client, format: 3);
         await CreatePlayerAsync(client, "X1");
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        var joueurEtranger = await EnvoyerAsync(code, Rapport("EUW1_7000000030", teamASide: "blue", gagnante: "A",
+        var joueurEtranger = await EnvoyerRapportAsync(code, Rapport("EUW1_7000000030", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
 
         Assert.Equal("EnRevue", (await ReadJsonAsync(joueurEtranger)).GetProperty("statut").GetString());
@@ -193,9 +148,9 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        var avantLaGame = await EnvoyerAsync(code, Rapport("EUW1_7000000040", teamASide: "blue", gagnante: "A"));
+        var avantLaGame = await EnvoyerRapportAsync(code, Rapport("EUW1_7000000040", teamASide: "blue", gagnante: "A"));
 
         await AssertRefusAsync(avantLaGame, HttpStatusCode.Conflict);
         Assert.Empty((await SerieAsync(client, serie.SeriesId)).GetProperty("games").EnumerateArray());
@@ -206,10 +161,10 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         await PlayAndWinAsync(client, serie.SeriesId, "A", "blue");
 
-        var apresLaSaisie = await EnvoyerAsync(code, Rapport("EUW1_7000000050", teamASide: "blue", gagnante: "B"));
+        var apresLaSaisie = await EnvoyerRapportAsync(code, Rapport("EUW1_7000000050", teamASide: "blue", gagnante: "B"));
 
         await AssertRefusAsync(apresLaSaisie, HttpStatusCode.Conflict);
         var lue = await SerieAsync(client, serie.SeriesId);
@@ -224,7 +179,7 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var code = await CodeAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
         var deuxVainqueurs = JsonSerializer.SerializeToNode(Rapport("EUW1_7000000060", "blue", "A"))!;
         deuxVainqueurs["joueurs"]![9]!["victoire"] = true;
         var neufJoueurs = JsonSerializer.SerializeToNode(Rapport("EUW1_7000000061", "blue", "A"))!;
@@ -232,7 +187,7 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var sansIdentifiant = JsonSerializer.SerializeToNode(Rapport("", "blue", "A"))!;
 
         foreach (var rapport in new[] { deuxVainqueurs, neufJoueurs, sansIdentifiant })
-            await AssertRefusAsync(await EnvoyerAsync(code, rapport), HttpStatusCode.BadRequest);
+            await AssertRefusAsync(await EnvoyerRapportAsync(code, rapport), HttpStatusCode.BadRequest);
 
         var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
         Assert.Equal("pending", game.GetProperty("status").GetString());
@@ -244,20 +199,12 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        var ancien = await CodeAsync(client, serie.SeriesId);
+        var ancien = await CodeCompanionAsync(client, serie.SeriesId);
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/code-companion/renouveler", null, Ct));
 
-        await AssertRefusAsync(await EnvoyerAsync(ancien, Rapport("EUW1_7000000070", "blue", "A")), HttpStatusCode.NotFound);
-        await AssertRefusAsync(await EnvoyerAsync("inconnu", Rapport("EUW1_7000000070", "blue", "A")), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await EnvoyerRapportAsync(ancien, Rapport("EUW1_7000000070", "blue", "A")), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await EnvoyerRapportAsync("inconnu", Rapport("EUW1_7000000070", "blue", "A")), HttpStatusCode.NotFound);
         Assert.Equal("pending", (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("status").GetString());
-    }
-
-    private static async Task AssertRefusAsync(HttpResponseMessage response, HttpStatusCode status)
-    {
-        Assert.Equal(status, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var detail = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("detail").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(detail));
     }
 
     [Fact]
