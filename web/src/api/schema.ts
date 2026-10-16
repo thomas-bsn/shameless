@@ -407,9 +407,9 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["RapportCompanionRequest"];
-                    "text/json": components["schemas"]["RapportCompanionRequest"];
-                    "application/*+json": components["schemas"]["RapportCompanionRequest"];
+                    "application/json": components["schemas"]["RapportDeGameRequest"];
+                    "text/json": components["schemas"]["RapportDeGameRequest"];
+                    "application/*+json": components["schemas"]["RapportDeGameRequest"];
                 };
             };
             responses: {
@@ -419,9 +419,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["RapportRecuResponse"];
-                        "application/json": components["schemas"]["RapportRecuResponse"];
-                        "text/json": components["schemas"]["RapportRecuResponse"];
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
                     };
                 };
                 /** @description Bad Request */
@@ -431,138 +431,6 @@ export interface paths {
                     };
                     content: {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/rapports/{id}/accepter": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["RapportRecuResponse"];
-                        "application/json": components["schemas"]["RapportRecuResponse"];
-                        "text/json": components["schemas"]["RapportRecuResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/rapports/{id}/rejeter": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["RapportRecuResponse"];
-                        "application/json": components["schemas"]["RapportRecuResponse"];
-                        "text/json": components["schemas"]["RapportRecuResponse"];
                     };
                 };
                 /** @description Not Found */
@@ -2331,6 +2199,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rapports/{id}/accepter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rapports/{id}/rejeter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RapportTraiteResponse"];
+                        "application/json": components["schemas"]["RapportTraiteResponse"];
+                        "text/json": components["schemas"]["RapportTraiteResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series": {
         parameters: {
             query?: never;
@@ -3401,7 +3401,7 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
-        RapportCompanionRequest: {
+        RapportDeGameRequest: {
             riotMatchId: string;
             donnees: components["schemas"]["JsonElement"];
             joueurs: components["schemas"]["JoueurDuRapportRequest"][];
@@ -3417,7 +3417,7 @@ export interface components {
             inattendus: components["schemas"]["JoueurInattenduResponse"][];
             mauvaisSide: components["schemas"]["GameParticipantDto"][];
         };
-        RapportRecuResponse: {
+        RapportTraiteResponse: {
             /** Format: int32 */
             seriesId: number;
             /** Format: int32 */

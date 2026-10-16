@@ -7,7 +7,7 @@ namespace Shameless.Api.Models.Requests.Companion;
 /// Le rapport de fin de game du Companion : l'identifiant Riot stable de la partie, ses données Riot
 /// brutes (objet JSON) et les dix joueurs détectés. La Série vient du code Companion, pas du rapport.
 /// </summary>
-public sealed record RapportCompanionRequest(string RiotMatchId, JsonElement Donnees, List<JoueurDuRapportRequest> Joueurs)
+public sealed record RapportDeGameRequest(string RiotMatchId, JsonElement Donnees, List<JoueurDuRapportRequest> Joueurs)
 {
     public RapportDeGame ToRapport() => new(
         RiotMatchId ?? "",

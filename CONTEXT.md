@@ -137,7 +137,7 @@ Side). Il n'est ni accepté ni rejeté en silence : la game reste en attente et 
 la Série montre l'écart. L'organisateur connecté (pas le Code Companion) l'**accepte**  
 (la game est terminée avec ce rapport ; l'Équipe gagnante est celle des participants  
 détectés sur le Side gagnant) ou le **rejette** (la game attend un autre rapport ou une  
-saisie manuelle). Tant qu'il est en revue, ni game suivante, ni Draft de champions, ni  
+saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien créer). Tant qu'il est en revue, ni game suivante, ni Draft de champions, ni  
 saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
 la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  

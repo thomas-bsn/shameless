@@ -13,7 +13,7 @@ public sealed record RapportTraite(CustomGame Game, StatutRapport Statut);
 /// disponible en secours. Un rapport qui s'en écarte est en revue : l'organisateur l'accepte ou le
 /// rejette. Un identifiant Riot n'est rattaché qu'à une game, garanti par la base : le même rapport
 /// renvoyé (reprise réseau, plusieurs joueurs équipés) désigne la game déjà rattachée, ou le rapport
-/// déjà en revue.
+/// déjà en revue ou rejeté, sans rien créer.
 /// </summary>
 public sealed class RapportsCompanionService
 {
@@ -40,7 +40,7 @@ public sealed class RapportsCompanionService
     /// avec le vainqueur du rapport et garde ses données Riot et les champions joués. Sinon le rapport
     /// est en revue et la game reste en attente. Un identifiant Riot déjà reçu désigne sa game, sans
     /// rien modifier, avant toute autre vérification. Tant qu'un rapport est en revue, un autre rapport
-    /// de la game est refusé ; le même (même identifiant Riot) répond à nouveau « en revue ».
+    /// de la game est refusé ; le même (même identifiant Riot) répond son statut, « en revue » ou « rejeté ».
     /// </summary>
     public async Task<CommandResult<RapportTraite>> RecevoirAsync(int seriesId, RapportDeGame rapport)
     {

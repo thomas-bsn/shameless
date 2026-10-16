@@ -4,10 +4,10 @@ using Shameless.Application.Services;
 namespace Shameless.Api.Models.Responses.Companion;
 
 /// <summary>
-/// Le rapport traité : accepté (la game est terminée, avec son vainqueur), en revue ou rejeté (la game
-/// attend toujours son résultat, winner null), et le score et l'issue de la Série.
+/// Le rapport traité : accepté (la game est terminée, avec son vainqueur), en revue ou rejeté, sa game
+/// (winner null tant qu'elle attend son résultat), et le score et l'issue de la Série.
 /// </summary>
-public sealed record RapportRecuResponse(
+public sealed record RapportTraiteResponse(
     int SeriesId,
     int GameId,
     StatutRapport Statut,
@@ -16,7 +16,7 @@ public sealed record RapportRecuResponse(
     int TeamBWins,
     SeriesOutcome Outcome)
 {
-    public static RapportRecuResponse From(RapportTraite traite) => new(
+    public static RapportTraiteResponse From(RapportTraite traite) => new(
         SeriesId: traite.Game.Series!.Id,
         GameId: traite.Game.Id,
         Statut: traite.Statut,

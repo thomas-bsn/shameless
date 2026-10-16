@@ -9,7 +9,7 @@ namespace Shameless.Api.Controllers;
 
 /// <summary>
 /// Le code Companion d'une Série. L'organisateur connecté le lit et le renouvelle ; le Companion le
-/// résout sans connexion en sa Série.
+/// résout sans connexion en sa Série et y envoie les rapports de fin de game.
 /// </summary>
 [ApiController]
 public sealed class CompanionController : ControllerBase
@@ -72,47 +72,15 @@ public sealed class CompanionController : ControllerBase
     /// </summary>
     [HttpPost("companion/{code}/rapports")]
     [AccesParCodeCompanion(SerieTermineeAdmise = true)]
-    [ProducesResponseType<RapportRecuResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<RapportTraiteResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<RapportRecuResponse>> Rapporter(string code, RapportCompanionRequest request)
+    public async Task<ActionResult<RapportTraiteResponse>> Rapporter(string code, RapportDeGameRequest request)
     {
         var result = await _rapports.RecevoirAsync(this.SerieDuCodeCompanion().Id, request.ToRapport());
         if (!result.IsOk) return this.Refusal(result);
 
-        return RapportRecuResponse.From(result.Value!);
-    }
-
-    /// <summary>
-    /// L'organisateur accepte un rapport en revue : la game est terminée avec ce rapport, comme pour un
-    /// rapport conforme. Rapport inconnu (ou disparu avec sa game) : 404 ; déjà décidé : 409.
-    /// </summary>
-    [HttpPost("rapports/{id:int}/accepter")]
-    [ProducesResponseType<RapportRecuResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<RapportRecuResponse>> Accepter(int id)
-    {
-        var result = await _rapports.AccepterAsync(id);
-        if (!result.IsOk) return this.Refusal(result);
-
-        return RapportRecuResponse.From(result.Value!);
-    }
-
-    /// <summary>
-    /// L'organisateur rejette un rapport en revue : il est écarté, la game attend un autre rapport ou
-    /// une saisie manuelle. Rapport inconnu (ou disparu avec sa game) : 404 ; déjà décidé : 409.
-    /// </summary>
-    [HttpPost("rapports/{id:int}/rejeter")]
-    [ProducesResponseType<RapportRecuResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<RapportRecuResponse>> Rejeter(int id)
-    {
-        var result = await _rapports.RejeterAsync(id);
-        if (!result.IsOk) return this.Refusal(result);
-
-        return RapportRecuResponse.From(result.Value!);
+        return RapportTraiteResponse.From(result.Value!);
     }
 }
