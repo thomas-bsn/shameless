@@ -145,5 +145,11 @@ public sealed class DraftChampionsService
         return CommandResult<DraftChampions>.Ok(draft);
     }
 
-    private DateTime Maintenant() => _clock.GetUtcNow().UtcDateTime;
+    // Tronqué à la microseconde, la précision de Postgres : l'échéance renvoyée juste après
+    // une action est ainsi la même que celle relue en base ensuite.
+    private DateTime Maintenant()
+    {
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        return maintenant.AddTicks(-(maintenant.Ticks % 10));
+    }
 }
