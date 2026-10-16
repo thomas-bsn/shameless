@@ -47,6 +47,11 @@ services:
       Auth__SessionLifetimeDays: ${SESSION_LIFETIME_DAYS:-14}
       Auth__Riot__ApiKey: ${RIOT_API_KEY:-}
       Soiree__AutoCloseAfter: ${SOIREE_AUTO_CLOSE_AFTER:-03:00:00}
+      Bot__Url: ${SHAMELESS_BOT_URL:-}
+      Bot__OutboundApiKey: ${SHAMELESS_BOT_API_KEY:-}
+      Bot__WebhookSecret: ${SHAMELESS_WEBHOOK_SECRET:-}
+      Bot__ApiKey: ${SHAMELESS_BOT_TO_API_KEY:-}
+      Bot__WebUrl: ${SHAMELESS_WEB_URL:-}
       DataProtection__KeysPath: /keys
     volumes:
       - api-keys:/keys
