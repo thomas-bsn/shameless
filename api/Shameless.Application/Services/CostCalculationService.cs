@@ -44,8 +44,9 @@ public class CostCalculationService
     }
 
     /// <summary>
-    /// Recalcule et enregistre le cost du Joueur pour ce mois. S'il s'agit de son mois le plus récent,
-    /// c'est aussi son cost actuel.
+    /// Recalcule et enregistre le cost du Joueur pour ce mois, puis celui de chaque mois suivant déjà
+    /// enregistré, qui repart du cost final du mois précédent. Le cost actuel du Joueur est celui de
+    /// son mois le plus récent.
     /// </summary>
     public async Task RecalculatePlayerCost(int playerId, DateOnly month)
     {
@@ -53,24 +54,27 @@ public class CostCalculationService
         if (player == null) return;
 
         var historique = await _monthlyCostRepo.GetByPlayerAsync(playerId);
-        var mois = PremierJour(month);
-        var cost = await CalculerAsync(player, historique, mois);
+        await RecalculerDepuisAsync(player, historique, PremierJour(month));
+    }
 
-        var enregistre = historique.FirstOrDefault(m => DateOnly.FromDateTime(m.Month) == mois)
-                         ?? new PlayerMonthlyCost { PlayerId = playerId, Month = mois.ToDateTime(TimeOnly.MinValue) };
-        enregistre.FinalCost = cost.Cost;
-        enregistre.CostDeDepart = cost.Depart.Cost;
-        enregistre.NoteMoyenne = cost.NoteMoyenne;
-        enregistre.GamesPlayed = cost.GamesTerminees;
-        enregistre.Wins = cost.Victoires;
-        await _monthlyCostRepo.SaveAsync(enregistre);
+    /// <summary>
+    /// Un admin fixe le cost du Joueur : il devient le cost de départ du mois en cours, que les Games
+    /// du mois ajustent ensuite comme les autres, et dont repartent les mois suivants. Renvoie le cost
+    /// actuel du Joueur, ou null si le Joueur n'existe pas.
+    /// </summary>
+    public async Task<decimal?> FixerCostAsync(int playerId, decimal cost)
+    {
+        var player = await _playerRepo.GetByIdAsync(playerId);
+        if (player == null) return null;
 
-        if (historique.All(m => DateOnly.FromDateTime(m.Month) <= mois))
-        {
-            player.CurrentCost = cost.Cost;
-            player.IsPlacement = !cost.Evolue;
-            await _playerRepo.UpdateAsync(player);
-        }
+        var historique = await _monthlyCostRepo.GetByPlayerAsync(playerId);
+        var mois = PremierJour(DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime));
+        var ligne = LigneDuMois(player.Id, historique, mois);
+        ligne.CostDeDepart = cost;
+        ligne.SourceDuCostDeDepart = SourceDuCostDeDepart.FixeParAdmin;
+
+        await RecalculerDepuisAsync(player, historique, mois);
+        return player.CurrentCost;
     }
 
     /// <summary>
@@ -91,6 +95,43 @@ public class CostCalculationService
     public async Task<List<PlayerMonthlyCost>?> HistoriqueAsync(int playerId) =>
         await _playerRepo.GetByIdAsync(playerId) == null ? null : await _monthlyCostRepo.GetByPlayerAsync(playerId);
 
+    /// <summary>
+    /// Recalcule et enregistre ce mois puis, en cascade, chaque mois suivant de l'historique ; le
+    /// dernier recalculé est le plus récent : c'est le cost actuel du Joueur.
+    /// </summary>
+    private async Task RecalculerDepuisAsync(Player player, List<PlayerMonthlyCost> historique, DateOnly depuis)
+    {
+        var aRecalculer = historique.Select(MoisDe).Where(m => m > depuis).Append(depuis).Distinct().Order().ToList();
+        CostMensuel? cost = null;
+        foreach (var mois in aRecalculer)
+        {
+            cost = await CalculerAsync(player, historique, mois);
+            var ligne = LigneDuMois(player.Id, historique, mois);
+            ligne.FinalCost = cost.Cost;
+            ligne.CostDeDepart = cost.Depart.Cost;
+            ligne.SourceDuCostDeDepart = cost.Depart.Source;
+            ligne.NoteMoyenne = cost.NoteMoyenne;
+            ligne.GamesPlayed = cost.GamesTerminees;
+            ligne.Wins = cost.Victoires;
+            await _monthlyCostRepo.UpsertAsync(ligne);
+        }
+
+        player.CurrentCost = cost!.Cost;
+        player.IsPlacement = !cost.Evolue;
+        await _playerRepo.UpdateAsync(player);
+    }
+
+    /// <summary>La ligne du mois dans l'historique, ajoutée si elle n'y est pas encore.</summary>
+    private static PlayerMonthlyCost LigneDuMois(int playerId, List<PlayerMonthlyCost> historique, DateOnly mois)
+    {
+        var ligne = historique.FirstOrDefault(m => MoisDe(m) == mois);
+        if (ligne is not null) return ligne;
+
+        ligne = new PlayerMonthlyCost { PlayerId = playerId, Month = mois.ToDateTime(TimeOnly.MinValue) };
+        historique.Add(ligne);
+        return ligne;
+    }
+
     private async Task<CostMensuel> CalculerAsync(Player player, List<PlayerMonthlyCost> historique, DateOnly mois)
     {
         var games = await _gameRepo.GetCompletedGamesOfPlayerForMonthAsync(player.Id, mois.ToDateTime(TimeOnly.MinValue));
@@ -103,20 +144,25 @@ public class CostCalculationService
     }
 
     /// <summary>
-    /// Le cost final du dernier mois enregistré avant celui-ci ; sans historique, le Rang SoloQ, figé
-    /// au premier calcul du mois.
+    /// Le cost fixé par un admin pour ce mois ; sinon le cost final du dernier mois enregistré avant
+    /// celui-ci ; sans historique, le Rang SoloQ, figé au premier calcul du mois.
     /// </summary>
     private static CostDeDepart Depart(Player player, List<PlayerMonthlyCost> historique, DateOnly mois)
     {
-        var precedent = historique.Where(m => DateOnly.FromDateTime(m.Month) < mois).MaxBy(m => m.Month);
+        var duMois = historique.FirstOrDefault(m => MoisDe(m) == mois);
+        if (duMois is { SourceDuCostDeDepart: SourceDuCostDeDepart.FixeParAdmin, CostDeDepart: { } fixe })
+            return CostDeDepart.FixeParAdmin(fixe);
+
+        var precedent = historique.Where(m => MoisDe(m) < mois).MaxBy(m => m.Month);
         if (precedent is not null)
             return CostDeDepart.DuMoisPrecedent(precedent.FinalCost);
 
-        var dejaCalcule = historique.FirstOrDefault(m => DateOnly.FromDateTime(m.Month) == mois)?.CostDeDepart;
-        return dejaCalcule is { } cost
+        return duMois?.CostDeDepart is { } cost
             ? new CostDeDepart(cost, SourceDuCostDeDepart.RangSoloQ)
             : CostDeDepart.DuRangSoloQ(player.RankTier, player.RankDivision);
     }
+
+    private static DateOnly MoisDe(PlayerMonthlyCost ligne) => DateOnly.FromDateTime(ligne.Month);
 
     private static DateOnly PremierJour(DateOnly date) => new(date.Year, date.Month, 1);
 }

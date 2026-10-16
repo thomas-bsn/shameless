@@ -70,15 +70,18 @@ public class CostMensuelTests
     }
 
     [Fact]
-    public void Sans_note_de_performance_seuls_les_resultats_font_evoluer_le_cost()
+    public void Sans_aucune_note_de_performance_le_cost_n_evolue_pas()
     {
-        // Games saisies à la main : pas de stats, donc pas de note. 5 victoires sur 5 : +0,3.
+        // Games saisies à la main : pas de stats, donc pas de note. Le winrate seul ne fait pas
+        // évoluer le cost, même avec 5 victoires sur 5.
         var cost = CostMensuel.Calculer(Trois, Games(5, gagnee: true, note: null));
 
         Assert.Null(cost.NoteMoyenne);
         Assert.Equal(0, cost.GamesNotees);
+        Assert.False(cost.Evolue);
         Assert.Equal(0m, cost.AjustementPerformance);
-        Assert.Equal(3.3m, cost.Cost);
+        Assert.Equal(0m, cost.AjustementResultats);
+        Assert.Equal(3m, cost.Cost);
     }
 
     [Theory]

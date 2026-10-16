@@ -1892,6 +1892,15 @@ export interface paths {
                         "text/json": components["schemas"]["PlayerDto"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Erreur */
                 default: {
                     headers: {
@@ -3925,7 +3934,7 @@ export interface components {
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
         /** @enum {unknown} */
-        SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ";
+        SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
         /** @enum {unknown} */
         SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
         StatsDeCustoms: {

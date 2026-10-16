@@ -119,10 +119,11 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
             suivi.Add((a.GetProperty("victoires").GetInt32(), a.GetProperty("cost").GetDecimal()));
         }
 
-        // Le cost ne bouge qu'à la cinquième game : 3 victoires sur 5 → 2,1 ; 2 sur 5 → 1,9.
-        Assert.Equal([(1, 2m), (1, 2m), (2, 2m), (2, 2m), (3, 2.1m)], suivi);
+        // Games saisies à la main, sans note de performance : le winrate seul ne fait pas évoluer le
+        // cost (ADR 0012), mais chaque victoire compte pour l'Équipe gagnante, quel que soit son Side.
+        Assert.Equal([(1, 2m), (1, 2m), (2, 2m), (2, 2m), (3, 2m)], suivi);
         var b = await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamB[0]}/cost", Ct));
-        Assert.Equal((2, 1.9m), (b.GetProperty("victoires").GetInt32(), b.GetProperty("cost").GetDecimal()));
+        Assert.Equal((2, 2m), (b.GetProperty("victoires").GetInt32(), b.GetProperty("cost").GetDecimal()));
     }
 
     [Fact]

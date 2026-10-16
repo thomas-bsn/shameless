@@ -2079,6 +2079,16 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "default": {
             "description": "Erreur",
             "content": {
@@ -6022,7 +6032,8 @@
       "SourceDuCostDeDepart": {
         "enum": [
           "MoisPrecedent",
-          "RangSoloQ"
+          "RangSoloQ",
+          "FixeParAdmin"
         ]
       },
       "SourceDuRole": {

@@ -153,16 +153,6 @@ public class PlayerService : IPlayerService
         return true;
     }
 
-    public async Task<bool> SetCostAsync(int playerId, decimal cost)
-    {
-        var player = await _players.GetByIdAsync(playerId);
-        if (player is null) return false;
-
-        player.CurrentCost = cost;
-        await _players.UpdateAsync(player);
-        return true;
-    }
-
     public async Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId)
     {
         var discordIdLong = long.Parse(discordUserId);
@@ -184,17 +174,12 @@ public class PlayerService : IPlayerService
             {
                 var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid);
 
-                // Une file absente de la réponse garde le dernier rang connu.
-                if (ranks.Solo is { } solo)
-                {
-                    var (tier, division) = NormalizeRank(solo);
-                    await _players.UpdateRankAsync(player.Id, tier, division, solo.LP);
-                }
-                if (ranks.Flex is { } flex)
-                {
-                    var (tier, division) = NormalizeRank(flex);
-                    await _players.UpdateFlexRankAsync(player.Id, tier, division, flex.LP);
-                }
+                // Riot a répondu : une file absente de la réponse, c'est un joueur non classé dans
+                // cette file. Si l'appel échoue, les derniers rangs connus restent.
+                var (soloTier, soloDivision) = NormalizeRank(ranks.Solo);
+                await _players.UpdateRankAsync(player.Id, soloTier, soloDivision, ranks.Solo?.LP);
+                var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
+                await _players.UpdateFlexRankAsync(player.Id, flexTier, flexDivision, ranks.Flex?.LP);
             }
             catch (Exception ex)
             {

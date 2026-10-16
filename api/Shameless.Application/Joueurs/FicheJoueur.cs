@@ -74,22 +74,6 @@ public sealed record FicheJoueur(
 /// <param name="DiscordId">L'identifiant Discord, en texte (trop grand pour un nombre JavaScript).</param>
 public sealed record CompteDiscordLie(string DiscordId, string? Username, string? AvatarUrl);
 
-/// <summary>Un rang Riot actuel dans une file classée.</summary>
-/// <param name="Tier">Tier en majuscules (ex. « GOLD »).</param>
-/// <param name="Division">1 à 4 (1 = I), null à partir de Master.</param>
-public sealed record RangActuel(string Tier, int? Division, int Lp)
-{
-    private static readonly string[] Tiers =
-        ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
-
-    /// <summary>Le rang lu sur le Joueur, null s'il n'est pas classé (tier absent, « UNRANKED » ou inconnu).</summary>
-    public static RangActuel? De(string? tier, int? division, int? lp)
-    {
-        var index = tier == null ? -1 : Array.IndexOf(Tiers, tier.ToUpperInvariant());
-        return index < 0 ? null : new RangActuel(Tiers[index], index >= 7 ? null : division, lp ?? 0);
-    }
-}
-
 /// <summary>Les stats d'un champion joué par le Joueur.</summary>
 /// <param name="ChampionId">Le champion (id Data Dragon).</param>
 public sealed record StatsParChampion(string ChampionId, StatsDeCustoms Stats);

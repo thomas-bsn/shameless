@@ -559,6 +559,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("player_id");
 
+                    b.Property<string>("SourceDuCostDeDepart")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source_du_cost_de_depart");
+
                     b.Property<int>("WinrateAdjustment")
                         .HasColumnType("integer")
                         .HasColumnName("winrate_adjustment");

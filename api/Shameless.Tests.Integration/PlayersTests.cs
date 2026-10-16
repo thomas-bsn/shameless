@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Shameless.Application.Interfaces;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -116,6 +118,47 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("MIDDLE", preview.GetProperty("mainRole").GetString());
         Assert.False(preview.GetProperty("alreadyRegistered").GetBoolean());
         Assert.Empty((await client.GetFromJsonAsync<JsonElement>("/players", Ct)).EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Le_rafraichissement_des_rangs_efface_le_rang_d_une_file_ou_le_joueur_n_est_plus_classe()
+    {
+        var client = Factory.CreateSignedInClient();
+        Factory.Riot.AddAccount("Duo#EUW", "GOLD", "II", lp: 40, flexTier: "SILVER", flexDivision: "I", flexLp: 10);
+        var playerId = (await ReadJsonAsync(await client.PostAsJsonAsync("/players", new { prenom = "Duo", riotId = "Duo#EUW" }, Ct)))
+            .GetProperty("id").GetInt32();
+
+        // Riot répond : le joueur est toujours classé en SoloQ, plus en Flex.
+        Factory.Riot.AddAccount("Duo#EUW", "PLATINUM", "IV", lp: 5);
+        await RafraichirLesRangsAsync();
+
+        var player = await ReadJsonAsync(await client.GetAsync($"/players/{playerId}", Ct));
+        Assert.Equal(("PLATINUM", 4), (player.GetProperty("rankTier").GetString(), player.GetProperty("rankDivision").GetInt32()));
+        Assert.Equal(JsonValueKind.Null, player.GetProperty("flexRankTier").ValueKind);
+        Assert.Equal(JsonValueKind.Null, player.GetProperty("flexRankDivision").ValueKind);
+        Assert.Equal(JsonValueKind.Null, player.GetProperty("flexLp").ValueKind);
+    }
+
+    [Fact]
+    public async Task Sans_reponse_de_riot_le_rafraichissement_garde_les_derniers_rangs_connus()
+    {
+        var client = Factory.CreateSignedInClient();
+        Factory.Riot.AddAccount("Duo#EUW", "GOLD", "II", lp: 40, flexTier: "SILVER", flexDivision: "I", flexLp: 10);
+        var playerId = (await ReadJsonAsync(await client.PostAsJsonAsync("/players", new { prenom = "Duo", riotId = "Duo#EUW" }, Ct)))
+            .GetProperty("id").GetInt32();
+
+        Factory.Riot.RangsIndisponibles = true;
+        await RafraichirLesRangsAsync();
+
+        var player = await ReadJsonAsync(await client.GetAsync($"/players/{playerId}", Ct));
+        Assert.Equal("GOLD", player.GetProperty("rankTier").GetString());
+        Assert.Equal("SILVER", player.GetProperty("flexRankTier").GetString());
+    }
+
+    private async Task RafraichirLesRangsAsync()
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<IPlayerService>().RefreshAllRanksAsync();
     }
 
     [Fact]

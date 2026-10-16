@@ -14,7 +14,7 @@ public class MmrCostTests
     [InlineData("DIAMOND", 4, 2300)]
     public void Each_tier_starts_at_its_base_mmr_in_division_IV(string tier, int division, int expected)
     {
-        Assert.Equal(expected, MMRCalculationService.GetPeakRankMMR(tier, division));
+        Assert.Equal(expected, MMRCalculationService.GetRankMMR(tier, division));
     }
 
     [Theory]
@@ -24,7 +24,7 @@ public class MmrCostTests
     [InlineData(1, 1525)]
     public void Each_division_above_IV_adds_25_mmr(int division, int expected)
     {
-        Assert.Equal(expected, MMRCalculationService.GetPeakRankMMR("GOLD", division));
+        Assert.Equal(expected, MMRCalculationService.GetRankMMR("GOLD", division));
     }
 
     [Theory]
@@ -33,8 +33,8 @@ public class MmrCostTests
     [InlineData("CHALLENGER", 3200)]
     public void Master_and_above_ignore_the_division(string tier, int expected)
     {
-        Assert.Equal(expected, MMRCalculationService.GetPeakRankMMR(tier, 1));
-        Assert.Equal(expected, MMRCalculationService.GetPeakRankMMR(tier, null));
+        Assert.Equal(expected, MMRCalculationService.GetRankMMR(tier, 1));
+        Assert.Equal(expected, MMRCalculationService.GetRankMMR(tier, null));
     }
 
     [Theory]
@@ -44,7 +44,7 @@ public class MmrCostTests
     [InlineData("gold", 1450)]
     public void Missing_or_lowercase_tiers_are_handled(string? tier, int expected)
     {
-        Assert.Equal(expected, MMRCalculationService.GetPeakRankMMR(tier, null));
+        Assert.Equal(expected, MMRCalculationService.GetRankMMR(tier, null));
     }
 
     [Theory]

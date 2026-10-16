@@ -24,18 +24,27 @@ perd tout gagne 0,12 ; un Joueur noté 20 qui gagne tout en perd 0,12.
 
 - **Seuil** : avant cinq Games terminées dans le mois, le cost reste le cost de départ ; à partir de
   la cinquième, chaque Game terminée le recalcule sur toutes les Games du mois.
+- **Pas de cost au winrate seul** : sans aucune Game notée dans le mois (toutes saisies à la main,
+  ou sans stats), le cost n'évolue pas, quel que soit le winrate : il reste le cost de départ. Le
+  winrate n'ajuste le cost qu'à côté d'une note de performance.
 - **Games comptées** : les Games terminées lancées dans le mois (date de lancement), y compris
   celles d'une Série interrompue. Une game en attente ne compte pas. Une Game sans note (saisie à la
   main, Joueur absent du rapport) compte pour le winrate ; la moyenne des notes porte sur les seules
-  Games notées, et sans aucune note l'ajustement de performance est nul.
-- **Cost de départ** : le cost final du dernier mois conservé avant ce mois (le mois précédent, ou
-  le dernier mois joué). Sans historique, le cost du Rang SoloQ actuel (pas le Peak) via le barème
+  Games notées.
+- **Cost de départ** : le cost fixé par un admin pour ce mois s'il y en a un ; sinon le cost final
+  du dernier mois conservé avant ce mois (le mois précédent, ou le dernier mois joué). Sans historique, le cost du Rang SoloQ actuel (pas le Peak) via le barème
   MMR existant (Iron, Bronze → 1 ; Silver, Gold → 2 ; Platinum → 3 ; Emerald, Diamond → 4 ;
   Master → 5 ; Grandmaster, Challenger → 6 ; non classé → 1), figé au premier calcul du mois. Un nouveau Joueur reçoit ce cost dès sa création.
 - **Historique** : après chaque Game terminée, le cost du mois est enregistré dans
   `PlayerMonthlyCost` (une ligne par Joueur et par mois : cost, cost de départ, Games terminées,
   victoires, note moyenne). La ligne du mois passé reste : c'est son cost final. Le cost actuel du
-  Joueur (`Player.CurrentCost`) est celui de son mois le plus récent.
+  Joueur (`Player.CurrentCost`) est celui de son mois le plus récent. Recalculer un mois (une game
+  lancée en fin de mois et terminée le mois suivant) recalcule en cascade les mois suivants déjà
+  enregistrés, chacun repartant du cost final du précédent. L'enregistrement d'un mois est un
+  upsert sur (Joueur, mois) : deux Games terminées en même temps ne se gênent pas.
+- **Cost fixé par un admin** : `PUT /players/{id}/cost` enregistre ce cost comme cost de départ du
+  mois en cours (source « fixé par un admin ») ; les Games du mois l'ajustent comme n'importe quel
+  cost de départ, les mois suivants en repartent, et le recalcul d'un mois précédent ne l'écrase pas.
 - **Explicabilité** : `GET /players/{id}/cost` donne le cost du mois en cours avec son détail (cost
   de départ et sa source, Games, winrate, note moyenne, les deux ajustements, le seuil) ;
   `GET /players/{id}/cost/historique` donne les mois conservés.
@@ -54,8 +63,10 @@ Alternatives écartées :
 - Le cost évolue d'au plus un point par mois : changer de tier prend plusieurs mois réguliers.
 - Le cost d'un mois clos est figé dans `PlayerMonthlyCost`, même si les références de la note
   évoluent ensuite.
-- Un cost fixé à la main par un admin reste valable jusqu'à la prochaine Game terminée du Joueur,
-  qui le recalcule.
+- Un cost fixé à la main par un admin n'est plus écrasé par la Game terminée suivante : il devient
+  le point de départ du mois.
+- Un Joueur qui ne joue que des Games saisies à la main garde son cost de départ ; le Companion est
+  nécessaire pour que le cost évolue.
 - Les colonnes `base_mmr` et `winrate_adjustment` de l'ancien modèle restent pour les mois repris de
   l'ancienne application (ADR 0007) ; elles valent 0 pour les mois calculés depuis la Phase 1c.
 - Les valeurs (0,7 / 0,3, ±1, cinq games) sont initiales, à ajuster après quelques mois réels.

@@ -46,14 +46,14 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
     {
         var mesures = new Dictionary<CritereDeNote, double>();
         if (s is { Kills: { } k, Deaths: { } d, Assists: { } a })
-            mesures[CritereDeNote.Kda] = (double)(k + a) / Math.Max(1, d);
+            mesures[CritereDeNote.Kda] = FormulesDeStats.Kda(k, d, a);
         if (s is { Kills: { } kills, Assists: { } assists } && killsDeLEquipe > 0)
-            mesures[CritereDeNote.ParticipationAuxKills] = Math.Min(1.0, (double)(kills + assists) / killsDeLEquipe.Value);
+            mesures[CritereDeNote.ParticipationAuxKills] = Math.Min(1.0, FormulesDeStats.ParticipationAuxKills(kills, assists, killsDeLEquipe.Value));
 
         if (dureeSecondes is not > 0) return mesures;
         var minutes = dureeSecondes.Value / 60.0;
-        if (s.MinionsKilled is not null || s.NeutralMinionsKilled is not null)
-            mesures[CritereDeNote.CsParMinute] = ((s.MinionsKilled ?? 0) + (s.NeutralMinionsKilled ?? 0)) / minutes;
+        if (FormulesDeStats.Cs(s) is { } cs)
+            mesures[CritereDeNote.CsParMinute] = cs / minutes;
         if (s.DamageToChampions is { } degats) mesures[CritereDeNote.DegatsParMinute] = degats / minutes;
         if (s.VisionScore is { } vision) mesures[CritereDeNote.VisionParMinute] = vision / minutes;
         if (s.DamageToObjectives is { } objectifs) mesures[CritereDeNote.ObjectifsParMinute] = objectifs / minutes;

@@ -69,6 +69,7 @@ public class CustomGameRepository : ICustomGameRepository
                         && g.PlayedAt.Month == month.Month
                         && g.Participants.Any(p => p.PlayerId == playerId))
             .OrderBy(g => g.PlayedAt)
+            .AsSplitQuery()
             .ToListAsync();
     }
 

@@ -18,13 +18,22 @@ public sealed class FakeRiotService : IRiotService
     private static RiotRankDto? Rank(string? tier, string? division, int lp) =>
         tier == null ? null : new RiotRankDto { Tier = tier, Division = division ?? "", LP = lp };
 
-    public void Reset() => _accounts.Clear();
+    /// <summary>Vrai : l'API Riot ne répond plus pour les rangs (erreur réseau ou serveur).</summary>
+    public bool RangsIndisponibles { get; set; }
+
+    public void Reset()
+    {
+        _accounts.Clear();
+        RangsIndisponibles = false;
+    }
 
     public Task<string?> GetPuuidFromRiotIdAsync(string riotId) =>
         Task.FromResult(_accounts.TryGetValue(riotId, out var a) ? a.Puuid : null);
 
     public Task<RiotRanksDto> GetRanksFromPuuidAsync(string puuid) =>
-        Task.FromResult(_accounts.Values.FirstOrDefault(a => a.Puuid == puuid).Ranks ?? new RiotRanksDto(null, null));
+        RangsIndisponibles
+            ? Task.FromException<RiotRanksDto>(new HttpRequestException("Riot indisponible"))
+            : Task.FromResult(_accounts.Values.FirstOrDefault(a => a.Puuid == puuid).Ranks ?? new RiotRanksDto(null, null));
 
     public Task<string?> GetMainRoleFromPuuidAsync(string puuid) =>
         Task.FromResult(_accounts.Values.FirstOrDefault(a => a.Puuid == puuid).MainRole);

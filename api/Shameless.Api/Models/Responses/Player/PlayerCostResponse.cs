@@ -30,15 +30,11 @@ public sealed record PlayerCostResponse(
     {
         var calcul = cost.Calcul;
         return new PlayerCostResponse(
-            cost.Player.Id, cost.Player.Prenom, cost.Mois, calcul.Cost, TierDuCost(calcul.Cost),
+            cost.Player.Id, cost.Player.Prenom, cost.Mois, calcul.Cost, ReglesDuCost.TierDuCost(calcul.Cost),
             calcul.Depart.Cost, calcul.Depart.Source, calcul.GamesTerminees, calcul.Victoires, calcul.Winrate,
             calcul.GamesNotees, calcul.NoteMoyenne, calcul.Evolue, ReglesDuCost.GamesMinimum,
             calcul.AjustementPerformance, calcul.AjustementResultats);
     }
-
-    /// <summary>Le tier du cost arrondi à l'unité (comme le front : 2,5 → B).</summary>
-    public static string TierDuCost(decimal cost) =>
-        MMRCalculationService.GetTierLabel(Math.Clamp(Math.Round(cost, MidpointRounding.AwayFromZero), ReglesDuCost.CostMinimum, ReglesDuCost.CostMaximum));
 }
 
 /// <summary>L'historique de cost d'un Joueur, du plus ancien mois au plus récent.</summary>

@@ -1,3 +1,5 @@
+using Shameless.Application.Services;
+
 namespace Shameless.Application.Cost;
 
 /// <summary>
@@ -29,4 +31,8 @@ public static class ReglesDuCost
 
     /// <summary>Le winrate qui ne fait ni monter ni descendre le cost.</summary>
     public const decimal WinrateNeutre = 0.5m;
+
+    /// <summary>Le tier (D à SS) d'un cost, arrondi à l'unité comme le front : 2,5 → B.</summary>
+    public static string TierDuCost(decimal cost) =>
+        MMRCalculationService.GetTierLabel(Math.Clamp(Math.Round(cost, MidpointRounding.AwayFromZero), CostMinimum, CostMaximum));
 }

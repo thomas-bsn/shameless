@@ -31,7 +31,7 @@ public static class MMRCalculationService
     /// Le MMR barème d'un rang SoloQ (tier, division). Sert au cost de départ d'un Joueur sans
     /// historique de cost, à partir de son Rang SoloQ actuel (ADR 0012).
     /// </summary>
-    public static int GetPeakRankMMR(string? tier, int? division)
+    public static int GetRankMMR(string? tier, int? division)
     {
         if (string.IsNullOrEmpty(tier)) return 0; // Unranked
         

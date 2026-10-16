@@ -12,7 +12,10 @@ public enum SourceDuCostDeDepart
     MoisPrecedent,
 
     /// <summary>Pas d'historique de cost : le Rang SoloQ sert d'indicateur initial.</summary>
-    RangSoloQ
+    RangSoloQ,
+
+    /// <summary>Le cost fixé par un admin pour ce mois.</summary>
+    FixeParAdmin
 }
 
 /// <summary>Le cost d'un Joueur au début d'un mois, et sa provenance.</summary>
@@ -20,12 +23,14 @@ public sealed record CostDeDepart(decimal Cost, SourceDuCostDeDepart Source)
 {
     public static CostDeDepart DuMoisPrecedent(decimal costFinal) => new(costFinal, SourceDuCostDeDepart.MoisPrecedent);
 
+    public static CostDeDepart FixeParAdmin(decimal cost) => new(cost, SourceDuCostDeDepart.FixeParAdmin);
+
     /// <summary>
     /// Le cost de départ d'un Joueur sans historique, lu sur son Rang SoloQ actuel (pas le Peak) :
     /// barème MMR du rang, converti en cost (non classé : 1).
     /// </summary>
     public static CostDeDepart DuRangSoloQ(string? tier, int? division) =>
-        new(MMRCalculationService.MMRToCost(MMRCalculationService.GetPeakRankMMR(tier, division)), SourceDuCostDeDepart.RangSoloQ);
+        new(MMRCalculationService.MMRToCost(MMRCalculationService.GetRankMMR(tier, division)), SourceDuCostDeDepart.RangSoloQ);
 }
 
 /// <summary>
@@ -33,7 +38,9 @@ public sealed record CostDeDepart(decimal Cost, SourceDuCostDeDepart Source)
 /// terminées du mois, avec le détail du calcul.
 /// </summary>
 /// <param name="Cost">Le cost du mois, de 1 à 6 au dixième.</param>
-/// <param name="Evolue">Vrai à partir de <see cref="ReglesDuCost.GamesMinimum"/> Games terminées.</param>
+/// <param name="Evolue">
+/// Vrai à partir de <see cref="ReglesDuCost.GamesMinimum"/> Games terminées dont au moins une notée.
+/// </param>
 /// <param name="Winrate">Pourcentage de victoires (0 à 100, au dixième), null sans Game.</param>
 /// <param name="NoteMoyenne">Moyenne des notes de performance (au dixième), null sans Game notée.</param>
 /// <param name="GamesNotees">Nombre de Games ayant une note de performance.</param>
@@ -57,10 +64,11 @@ public sealed record CostMensuel(
         var ratio = games.Count == 0 ? (decimal?)null : (decimal)victoires / games.Count;
         var notes = games.Where(g => g.Note is not null).Select(g => (decimal)g.Note!.Value).ToList();
         var noteMoyenne = notes.Count == 0 ? (decimal?)null : notes.Average();
-        var evolue = games.Count >= ReglesDuCost.GamesMinimum;
+        // Sans aucune note, le winrate seul ne fait pas évoluer le cost (ADR 0012).
+        var evolue = games.Count >= ReglesDuCost.GamesMinimum && noteMoyenne is not null;
 
-        var performance = evolue && noteMoyenne is not null
-            ? Ajustement(ReglesDuCost.PoidsPerformance, (noteMoyenne.Value - ReglesDuCost.NoteNeutre) / ReglesDuCost.NoteNeutre)
+        var performance = evolue
+            ? Ajustement(ReglesDuCost.PoidsPerformance, (noteMoyenne!.Value - ReglesDuCost.NoteNeutre) / ReglesDuCost.NoteNeutre)
             : 0m;
         var resultats = evolue && ratio is not null
             ? Ajustement(ReglesDuCost.PoidsResultats, (ratio.Value - ReglesDuCost.WinrateNeutre) / ReglesDuCost.WinrateNeutre)

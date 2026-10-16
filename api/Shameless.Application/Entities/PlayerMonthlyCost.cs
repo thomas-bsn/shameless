@@ -1,3 +1,5 @@
+using Shameless.Application.Cost;
+
 namespace Shameless.Application.Entities;
 
 /// <summary>
@@ -17,6 +19,12 @@ public class PlayerMonthlyCost
 
     /// <summary>Le cost de départ du mois ; null pour les mois repris de l'ancienne application.</summary>
     public decimal? CostDeDepart { get; set; }
+
+    /// <summary>
+    /// D'où vient le cost de départ ; null pour les mois repris de l'ancienne application. Un cost
+    /// fixé par un admin reste le départ du mois quand les mois précédents sont recalculés.
+    /// </summary>
+    public SourceDuCostDeDepart? SourceDuCostDeDepart { get; set; }
 
     /// <summary>La moyenne des notes de performance du mois ; null sans Game notée.</summary>
     public decimal? NoteMoyenne { get; set; }

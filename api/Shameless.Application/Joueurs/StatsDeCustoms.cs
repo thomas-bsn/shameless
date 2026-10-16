@@ -39,7 +39,7 @@ public sealed record StatsDeCustoms(
         var stats = parties.Where(p => p.Stats is not null).ToList();
 
         var kda = stats.Where(p => p.Stats is { Kills: not null, Deaths: not null, Assists: not null }).ToList();
-        var cs = stats.Where(p => p.Minutes is not null && (p.Stats!.MinionsKilled is not null || p.Stats.NeutralMinionsKilled is not null)).ToList();
+        var cs = stats.Where(p => p.Minutes is not null && FormulesDeStats.Cs(p.Stats!) is not null).ToList();
         var kp = stats.Where(p => p.Stats is { Kills: not null, Assists: not null } && p.KillsDeLEquipe > 0).ToList();
         var degats = stats.Where(p => p.Stats!.DamageToChampions is not null).ToList();
         var dpm = degats.Where(p => p.Minutes is not null).ToList();
@@ -50,15 +50,15 @@ public sealed record StatsDeCustoms(
             victoires,
             parties.Count - victoires,
             parties.Count == 0 ? null : Math.Round(100.0 * victoires / parties.Count, 1),
-            kda.Count == 0 ? null : Math.Round(
-                (double)kda.Sum(p => p.Stats!.Kills!.Value + p.Stats.Assists!.Value) / Math.Max(1, kda.Sum(p => p.Stats!.Deaths!.Value)), 2),
+            kda.Count == 0 ? null : Math.Round(FormulesDeStats.Kda(
+                kda.Sum(p => p.Stats!.Kills!.Value), kda.Sum(p => p.Stats!.Deaths!.Value), kda.Sum(p => p.Stats!.Assists!.Value)), 2),
             Moyenne(stats, s => s.Kills),
             Moyenne(stats, s => s.Deaths),
             Moyenne(stats, s => s.Assists),
             cs.Count == 0 ? null : Math.Round(
-                cs.Sum(p => (p.Stats!.MinionsKilled ?? 0) + (p.Stats.NeutralMinionsKilled ?? 0)) / cs.Sum(p => p.Minutes!.Value), 1),
-            kp.Count == 0 ? null : Math.Round(
-                100.0 * kp.Sum(p => p.Stats!.Kills!.Value + p.Stats.Assists!.Value) / kp.Sum(p => p.KillsDeLEquipe!.Value), 1),
+                cs.Sum(p => FormulesDeStats.Cs(p.Stats!)!.Value) / cs.Sum(p => p.Minutes!.Value), 1),
+            kp.Count == 0 ? null : Math.Round(100.0 * FormulesDeStats.ParticipationAuxKills(
+                kp.Sum(p => p.Stats!.Kills!.Value), kp.Sum(p => p.Stats!.Assists!.Value), kp.Sum(p => p.KillsDeLEquipe!.Value)), 1),
             degats.Count == 0 ? null : (int)Math.Round(degats.Average(p => (double)p.Stats!.DamageToChampions!.Value), MidpointRounding.AwayFromZero),
             dpm.Count == 0 ? null : (int)Math.Round(dpm.Sum(p => p.Stats!.DamageToChampions!.Value) / dpm.Sum(p => p.Minutes!.Value), MidpointRounding.AwayFromZero),
             notes.Count == 0 ? null : Math.Round(notes.Average(), 1),
@@ -89,16 +89,12 @@ internal sealed record PartieDuJoueur(
         if (game.Participants.FirstOrDefault(p => p.PlayerId == playerId) is not { } participant) return null;
 
         var stats = StatsDuParticipant.Lire(participant.RiotParticipantData);
-        var duree = DonneesDuMatch.Lire(game.RiotMatchData)?.DurationSeconds;
-        var killsDesCoequipiers = game.Participants
-            .Where(p => p.Side == participant.Side)
-            .Select(p => StatsDuParticipant.Lire(p.RiotParticipantData)?.Kills)
-            .ToList();
-        int? killsDeLEquipe = killsDesCoequipiers.Any(k => k is not null) ? killsDesCoequipiers.Sum(k => k ?? 0) : null;
+        var duree = NotesDeLaGame.DureeDe(game);
+        var killsDeLEquipe = NotesDeLaGame.KillsDeLEquipe(game, participant.Side);
 
         // Rôle joué : la position de la partie, sinon le rôle de l'Autorole ; le rôle principal SoloQ
         // n'est qu'un repli de la note, pas un rôle réellement joué.
-        var role = stats?.Position ?? game.Series?.Players.FirstOrDefault(p => p.PlayerId == playerId)?.Role;
+        var role = stats?.Position ?? NotesDeLaGame.AutoroleDe(game, playerId);
 
         return new PartieDuJoueur(
             game,
@@ -108,7 +104,7 @@ internal sealed record PartieDuJoueur(
             duree is > 0 ? duree : null,
             killsDeLEquipe,
             role,
-            NotesDeLaGame.DuJoueur(game, playerId));
+            NotesDeLaGame.Noter(game, participant, stats, killsDeLEquipe, duree));
     }
 
     /// <summary>Les minutes jouées, null sans durée connue.</summary>

@@ -15,7 +15,6 @@ public interface IPlayerService
     Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver);
     Task<bool> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
-    Task<bool> SetCostAsync(int playerId, decimal cost);
     Task RefreshAllMainRolesAsync();
     Task RefreshRiotIdsAsync();
 }
