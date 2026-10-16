@@ -5,13 +5,12 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mainALOrganisateur } from "@/lib/draft-champions";
+import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
 import { problemStatus } from "@/lib/problem";
 
 type Series = Schemas["SeriesResponse"];
 type Draft = Schemas["DraftChampionsResponse"];
 
-/** Rafraîchissement de la Draft de champions en cours (polling). */
-const POLLING_DRAFT_MS = 1500;
 
 /**
  * La Draft de champions de la game en attente, côté organisateur : il l'ouvre une fois le Side
@@ -91,7 +90,7 @@ function OuvrirDraft({
 /** La Draft en cours ou terminée ; passé l'échéance du tour, l'organisateur joue à la place de l'Équipe attendue. */
 function DraftEnDirect({ draft, onDraft }: { draft: Draft; onDraft: (data: Draft) => unknown }) {
   const queryClient = useQueryClient();
-  const champions = $api.useQuery("get", "/champions", {}, { staleTime: Infinity });
+  const champions = useChampions();
   const jouer = $api.useMutation("post", "/games/{gameId}/draft-champions/actions", {
     onSuccess: onDraft,
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/games/{gameId}/draft-champions"] }),

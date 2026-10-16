@@ -18,19 +18,18 @@ import {
   toursDeLaDraft,
   type TourDeLaDraft,
 } from "@/lib/draft-champions";
+import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
 import { problemStatus } from "@/lib/problem";
+import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 type Draft = Schemas["DraftChampionsResponse"];
 type Champion = Schemas["ChampionResponse"];
 type Portee = Schemas["PorteeLien"];
 
-/** Rafraîchissement de la Draft de champions (polling). */
-const POLLING_DRAFT_MS = 1500;
 /** Revalidation du lien : un lien renouvelé est refusé dès le prochain appel. */
 const POLLING_LIEN_MS = 5000;
 
-const sideClass = (side: string) => (side === "red" ? "text-red-400" : "text-sky-400");
 
 /**
  * La Draft de champions ouverte par un lien d'accès (ADR 0010), sans connexion. Un Lien capitaine
@@ -45,7 +44,7 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
     retry: false,
     enabled: acces.isSuccess,
   });
-  const champions = $api.useQuery("get", "/champions", {}, { staleTime: Infinity });
+  const champions = useChampions();
   const queryClient = useQueryClient();
   const jouer = $api.useMutation("post", "/liens/{lien}/draft-champions/actions", {
     onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
@@ -223,7 +222,7 @@ function EtatDuTour({ draft, equipe, consigne }: { draft: Draft; equipe: string 
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p aria-label="Tour courant" className="text-lg font-semibold">
-            Tour {tour.numero}/20 · <span className={sideClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
+            Tour {tour.numero}/20 · <span className={sideTextClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
             {consigne ??
@@ -267,7 +266,7 @@ function CoteDraft({
   return (
     <Card role="group" aria-label={`Équipe ${equipe}, ${side} side`}>
       <CardHeader>
-        <CardTitle className={sideClass(side)}>
+        <CardTitle className={sideTextClass(side)}>
           Équipe {equipe} · {side === "blue" ? "Blue side" : "Red side"}
         </CardTitle>
       </CardHeader>
@@ -339,7 +338,7 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
               <Badge
                 variant={t.courant ? "default" : "outline"}
                 aria-current={t.courant ? "step" : undefined}
-                className={cn(!t.courant && sideClass(t.side), !t.courant && !t.championId && "opacity-60")}
+                className={cn(!t.courant && sideTextClass(t.side), !t.courant && !t.championId && "opacity-60")}
               >
                 {t.numero}. {t.libelle}
                 {t.championId && ` · ${parId.get(t.championId)?.name ?? t.championId}`}

@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { pendingGame, outcomeLabel, replacementCandidates } from "@/lib/series";
+import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_connecte/series/$seriesId")({
@@ -30,7 +31,6 @@ export const Route = createFileRoute("/_connecte/series/$seriesId")({
 type Series = Schemas["SeriesResponse"];
 
 const sideLabel = (side: string) => (side === "red" ? "Red side" : "Blue side");
-const sideClass = (side: string) => (side === "red" ? "text-red-400" : "text-sky-400");
 
 /** Après une action, relit la Série et la liste des séries de la Soirée. */
 function useRefreshSeries() {
@@ -135,8 +135,8 @@ function GamePanel({ series }: { series: Series }) {
           {pending ? (
             <>
               <p className="text-sm">
-                Équipe A <span className={sideClass(pending.teamASide)}>{sideLabel(pending.teamASide)}</span> · Équipe B{" "}
-                <span className={sideClass(pending.teamBSide)}>{sideLabel(pending.teamBSide)}</span>
+                Équipe A <span className={sideTextClass(pending.teamASide)}>{sideLabel(pending.teamASide)}</span> · Équipe B{" "}
+                <span className={sideTextClass(pending.teamBSide)}>{sideLabel(pending.teamBSide)}</span>
               </p>
               <div className="flex flex-wrap gap-2">
                 {(["A", "B"] as const).map((winner) => (
@@ -344,8 +344,8 @@ function GamesList({ series }: { series: Series }) {
         {series.games.map((g, index) => (
           <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
             <span>
-              Game {index + 1} · Équipe A <span className={sideClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> · Équipe B{" "}
-              <span className={sideClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
+              Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> · Équipe B{" "}
+              <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
             </span>
             {g.winner ? (
               <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
