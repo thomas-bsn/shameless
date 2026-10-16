@@ -249,10 +249,7 @@ public sealed class SeriesService
         if (replacement == null)
             return CommandResult<SeriesResponse>.Invalid("Le remplaçant n'existe pas.");
 
-        replaced.Player = replacement;
-        replaced.PlayerId = replacement.Id;
-        // Le remplaçant ne reprend pas le rôle de capitaine : l'organisateur en désigne un nouveau.
-        replaced.Capitaine = false;
+        series.Remplacer(replaced, replacement);
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);

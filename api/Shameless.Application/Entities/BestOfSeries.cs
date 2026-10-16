@@ -96,6 +96,21 @@ public class BestOfSeries
 
     public IEnumerable<SeriesPlayer> PlayersOf(string equipe) => Players.Where(p => p.Equipe == equipe);
 
+    /// <summary>
+    /// Remplace un joueur de la composition courante. Le remplaçant ne reprend pas le rôle de capitaine :
+    /// l'organisateur en désigne un nouveau. Un capitaine remplacé perd son accès : le Lien capitaine de
+    /// son Équipe est renouvelé. Demande les liens chargés.
+    /// </summary>
+    public void Remplacer(SeriesPlayer remplace, Player remplacant)
+    {
+        if (remplace.Capitaine)
+            LienCapitaine(remplace.Equipe).Renouveler();
+
+        remplace.Player = remplacant;
+        remplace.PlayerId = remplacant.Id;
+        remplace.Capitaine = false;
+    }
+
     /// <summary>Fait du joueur le Capitaine de son Équipe, à la place du précédent.</summary>
     public void DesignerCapitaine(SeriesPlayer capitaine)
     {

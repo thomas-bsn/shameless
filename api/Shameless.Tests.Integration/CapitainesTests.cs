@@ -16,6 +16,14 @@ public class CapitainesTests(ApiFactory factory) : IntegrationTest(factory)
     private async Task<JsonElement> SerieAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
 
+    private async Task<JsonElement> LiensAsync(HttpClient client, int seriesId) =>
+        await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+
+    private static string Lien(JsonElement liens, string nom) => liens.GetProperty(nom).GetString()!;
+
+    private async Task<HttpResponseMessage> ResoudreAsync(string lien) =>
+        await Factory.CreateAnonymousClient().GetAsync($"/liens/{Uri.EscapeDataString(lien)}", Ct);
+
     [Fact]
     public async Task Une_serie_creee_depuis_une_draft_garde_ses_deux_capitaines()
     {
@@ -169,6 +177,40 @@ public class CapitainesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(serie.TeamB[0], Capitaine(apres, "B"));
         var redesignee = await ReadJsonAsync(await DesignerAsync(client, serie.SeriesId, "A", new { designation = "Manuel", playerId = remplacant }));
         Assert.Equal(remplacant, Capitaine(redesignee, "A"));
+    }
+
+    [Fact]
+    public async Task Le_remplacement_du_capitaine_renouvelle_le_lien_capitaine_de_son_equipe()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        var remplacant = await CreatePlayerAsync(client, "R1");
+        await ReadJsonAsync(await DesignerAsync(client, serie.SeriesId, "A", new { designation = "Manuel", playerId = serie.TeamA[0] }));
+        var avant = await LiensAsync(client, serie.SeriesId);
+
+        await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{serie.SeriesId}/replacements",
+            new { replacedPlayerId = serie.TeamA[0], replacementPlayerId = remplacant }, Ct));
+
+        var apres = await LiensAsync(client, serie.SeriesId);
+        Assert.NotEqual(Lien(avant, "lienCapitaineA"), Lien(apres, "lienCapitaineA"));
+        Assert.Equal(Lien(avant, "lienCapitaineB"), Lien(apres, "lienCapitaineB"));
+        Assert.Equal(HttpStatusCode.NotFound, (await ResoudreAsync(Lien(avant, "lienCapitaineA"))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await ResoudreAsync(Lien(apres, "lienCapitaineA"))).StatusCode);
+    }
+
+    [Fact]
+    public async Task Le_remplacement_d_un_autre_joueur_garde_le_lien_capitaine()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        var remplacant = await CreatePlayerAsync(client, "R1");
+        await ReadJsonAsync(await DesignerAsync(client, serie.SeriesId, "A", new { designation = "Manuel", playerId = serie.TeamA[0] }));
+        var avant = await LiensAsync(client, serie.SeriesId);
+
+        await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{serie.SeriesId}/replacements",
+            new { replacedPlayerId = serie.TeamA[1], replacementPlayerId = remplacant }, Ct));
+
+        Assert.Equal(Lien(avant, "lienCapitaineA"), Lien(await LiensAsync(client, serie.SeriesId), "lienCapitaineA"));
     }
 
     [Fact]
