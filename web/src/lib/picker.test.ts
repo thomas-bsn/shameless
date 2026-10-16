@@ -1,5 +1,5 @@
 import type { Schemas } from "@/api/client";
-import { joueursLibres, parRole, pickerStep } from "./picker";
+import { ajouterCandidats, joueursLibres, parRole, pickerStep } from "./picker";
 
 type Picker = Schemas["PickerResponse"];
 type Participant = Schemas["GameParticipantDto"];
@@ -92,5 +92,16 @@ describe("pickerStep", () => {
     expect(pickerStep(picker({ methode: "Draft", premierPick: "B", canValidate: true, equipeAuTrait: null }))).toBe(
       "equipes",
     );
+  });
+});
+
+describe("ajouterCandidats", () => {
+  it("coche les joueurs en vocal qui ne le sont pas encore, après ceux déjà cochés", () => {
+    expect(ajouterCandidats([3, 1], [1, 7, 8])).toEqual([3, 1, 7, 8]);
+  });
+
+  it("s'arrête à dix joueurs cochés", () => {
+    const neuf = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    expect(ajouterCandidats(neuf, [20, 21])).toEqual([...neuf, 20]);
   });
 });
