@@ -91,6 +91,12 @@ public class CustomGameRepository : ICustomGameRepository
             .ToListAsync();
     }
     
+    public async Task<List<CustomGameParticipant>> GetCompletedParticipationsAsync() =>
+        await _db.CustomGameParticipants
+            .Include(p => p.CustomGame)
+            .Where(p => p.CustomGame.Status == GameStatuses.Completed)
+            .ToListAsync();
+
     public async Task<List<CustomGame>> GetByYearMonthAsync(int year, int month)
     {
         return await _db.CustomGames
