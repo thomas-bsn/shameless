@@ -110,7 +110,7 @@ public sealed class DraftChampionsService
         Func<string, string>? refus = null)
     {
         var courant = draft.TourCourant;
-        if (courant == null || draft.Game.Status != GameStatuses.Pending)
+        if (courant == null)
             return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est terminée.");
         if (tour < courant.Numero)
             return CommandResult<DraftChampions>.Conflict($"Le tour {tour} est déjà joué : c'est au tour {courant.Numero}.");

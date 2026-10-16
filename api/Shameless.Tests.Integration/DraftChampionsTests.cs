@@ -334,10 +334,12 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         });
     }
 
-    [Fact]
-    public async Task Les_roles_autorole_sont_caches_pendant_la_draft_puis_reveles_a_la_fin()
+    /// <summary>
+    /// Une Série validée par le Picker avec l'Autorole, ses deux capitaines, sa game en attente côté
+    /// blue pour l'Équipe A, ses liens envoyés et sa Draft de champions ouverte.
+    /// </summary>
+    private async Task<Preparee> PreparerAvecAutoroleAsync(HttpClient client)
     {
-        var client = Factory.CreateSignedInClient();
         await OpenSoireeAsync(client);
         var dix = await CreatePlayersAsync(client, "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10");
         await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds = dix }, Ct));
@@ -355,6 +357,16 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         var preparee = new Preparee(serie, gameId, liens.GetProperty("lienCapitaineA").GetString()!,
             liens.GetProperty("lienCapitaineB").GetString()!, liens.GetProperty("lienSpectateur").GetString()!);
         await ReadJsonAsync(await OuvrirAsync(client, seriesId));
+        return preparee;
+    }
+
+    [Fact]
+    public async Task Les_roles_autorole_sont_caches_pendant_la_draft_puis_reveles_a_la_fin()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAvecAutoroleAsync(client);
+        var (seriesId, gameId) = (preparee.Serie.SeriesId, preparee.GameId);
+        var serieLue = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
         await JouerToursAsync(preparee, "blue", 1, 19);
 
         var lectures = await LecturesAsync(preparee.LienA);
@@ -387,6 +399,28 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
 
         static IEnumerable<JsonElement> Joueurs(JsonElement draft) =>
             draft.GetProperty("teamA").EnumerateArray().Concat(draft.GetProperty("teamB").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Saisir_le_resultat_pendant_la_draft_la_termine_et_revele_les_roles()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAvecAutoroleAsync(client);
+        await JouerToursAsync(preparee, "blue", 1, 5);
+
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{preparee.GameId}/result", new { winner = "A" }, Ct));
+
+        var draft = await LireAsync(client, preparee.GameId);
+        Assert.True(draft.GetProperty("terminee").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, draft.GetProperty("tourCourant").ValueKind);
+        Assert.Equal(5, draft.GetProperty("actions").GetArrayLength());
+        Assert.All(draft.GetProperty("teamA").EnumerateArray(), j => Assert.NotEqual(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+        var serie = await ReadJsonAsync(await client.GetAsync($"/series/{preparee.Serie.SeriesId}", Ct));
+        Assert.All(serie.GetProperty("teamB").EnumerateArray(), j => Assert.NotEqual(JsonValueKind.Null, j.GetProperty("role").ValueKind));
+
+        await AssertRefusAsync(await JouerAsync(preparee.LienB, 6, "Annie"), HttpStatusCode.Conflict);
+        Factory.Clock.Advance(TimeSpan.FromSeconds(61));
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 6, "Annie"), HttpStatusCode.Conflict);
     }
 
     [Fact]
