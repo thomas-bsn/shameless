@@ -223,7 +223,7 @@ function EtatDuTour({ draft, equipe, consigne }: { draft: Draft; equipe: string 
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p aria-label="Tour courant" className="text-lg font-semibold">
-            Tour {tour.numero}/20 · <span className={sideClass(tour.side)}>{libelleTour(tour.numero)}</span>
+            Tour {tour.numero}/20 · <span className={sideClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
             {consigne ??
@@ -306,7 +306,7 @@ function CaseChampion({ tour, champion }: { tour: TourDeLaDraft; champion?: Cham
   const nom = champion?.name ?? tour.championId;
   return (
     <div
-      title={`${libelleTour(tour.numero)}${nom ? ` : ${nom}` : ""}`}
+      title={`${tour.libelle}${nom ? ` : ${nom}` : ""}`}
       className={cn(
         "relative flex size-12 items-center justify-center overflow-hidden rounded-md border bg-muted text-[10px] text-muted-foreground",
         tour.courant && "border-primary ring-2 ring-primary",
@@ -341,7 +341,7 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
                 aria-current={t.courant ? "step" : undefined}
                 className={cn(!t.courant && sideClass(t.side), !t.courant && !t.championId && "opacity-60")}
               >
-                {t.numero}. {libelleTour(t.numero)}
+                {t.numero}. {t.libelle}
                 {t.championId && ` · ${parId.get(t.championId)?.name ?? t.championId}`}
               </Badge>
             </li>

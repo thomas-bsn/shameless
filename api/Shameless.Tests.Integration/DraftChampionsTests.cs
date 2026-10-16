@@ -158,6 +158,22 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task L_etat_donne_les_vingt_tours_de_l_ordre_tournament_et_l_equipe_attendue_a_chacun()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await PreparerAsync(client, teamASide: "red");
+
+        var draft = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
+
+        var tours = draft.GetProperty("tours").EnumerateArray().ToList();
+        Assert.Equal(Enumerable.Range(1, 20), tours.Select(t => t.GetProperty("numero").GetInt32()));
+        Assert.Equal(SideDesTours, tours.Select(t => t.GetProperty("side").GetString()));
+        Assert.Equal(SideDesTours.Select(s => s == "red" ? "A" : "B"), tours.Select(t => t.GetProperty("equipe").GetString()));
+        Assert.Equal(Enumerable.Range(1, 20).Select(t => ToursDeBan.Contains(t) ? "ban" : "pick"),
+            tours.Select(t => t.GetProperty("action").GetString()));
+    }
+
+    [Fact]
     public async Task Les_capitaines_jouent_les_vingt_tours_dans_l_ordre_tournament_selon_le_side()
     {
         var client = Factory.CreateSignedInClient();

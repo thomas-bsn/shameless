@@ -1,52 +1,33 @@
 import type { Schemas } from "@/api/client";
 
-export type ActionDraft ="ban" | "pick";
-export type Side = "blue" | "red";
+type Tour = Schemas["TourDraftResponse"];
 
-/** Un tour de l'ordre Tournament : son numéro (1 à 20), l'action et le Side qui la joue. */
-export interface TourTournament {
-  numero: number;
-  action: ActionDraft;
-  side: Side;
-}
-
-// bans B1 R1 B2 R2 B3 R3, picks B1 R1 R2 B2 B3 R3, bans R4 B4 R5 B5, picks R4 B4 B5 R5 (comme l'API)
-const sequence: [ActionDraft, Side][] = [
-  ["ban", "blue"], ["ban", "red"], ["ban", "blue"], ["ban", "red"], ["ban", "blue"], ["ban", "red"],
-  ["pick", "blue"], ["pick", "red"], ["pick", "red"], ["pick", "blue"], ["pick", "blue"], ["pick", "red"],
-  ["ban", "red"], ["ban", "blue"], ["ban", "red"], ["ban", "blue"],
-  ["pick", "red"], ["pick", "blue"], ["pick", "blue"], ["pick", "red"],
-];
-
-/** L'ordre fixe du mode Tournament : vingt tours. */
-export const ordreTournament: TourTournament[] = sequence.map(([action, side], i) => ({ numero: i + 1, action, side }));
-
-/** Le libellé d'un tour, ex. « Pick red 2 » : son rang parmi les tours de même action et même Side. */
-export function libelleTour(numero: number): string {
-  const tour = ordreTournament[numero - 1];
-  const rang = ordreTournament
-    .slice(0, numero)
-    .filter((t) => t.action === tour.action && t.side === tour.side).length;
+/**
+ * Le libellé du tour <numero> de l'ordre Tournament donné par l'API, ex. « Pick red 2 » : son rang
+ * parmi les tours de même action et même Side.
+ */
+export function libelleTour(tours: Tour[], numero: number): string {
+  const tour = tours.find((t) => t.numero === numero);
+  if (!tour) return `Tour ${numero}`;
+  const rang = tours.filter((t) => t.numero <= numero && t.action === tour.action && t.side === tour.side).length;
   return `${tour.action === "ban" ? "Ban" : "Pick"} ${tour.side} ${rang}`;
 }
 
-type Draft = Pick<Schemas["DraftChampionsResponse"], "equipeBlue" | "terminee" | "tourCourant" | "actions">;
+type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions">;
 
-/** Un tour de la Draft de champions d'une game : l'Équipe qui le joue, son champion une fois joué. */
-export interface TourDeLaDraft extends TourTournament {
-  equipe: string;
+/** Un tour de la Draft de champions d'une game : l'Équipe qui le joue, son libellé, son champion une fois joué. */
+export interface TourDeLaDraft extends Tour {
+  libelle: string;
   championId: string | null;
   courant: boolean;
 }
 
-const autreEquipe = (equipe: string) => (equipe === "A" ? "B" : "A");
-
-/** Les vingt tours de la Draft dans l'ordre Tournament, joués ou à venir. */
+/** Les vingt tours de la Draft dans l'ordre Tournament donné par l'API, joués ou à venir. */
 export function toursDeLaDraft(draft: Draft): TourDeLaDraft[] {
   const joues = new Map(draft.actions.map((a) => [a.numero, a.championId]));
-  return ordreTournament.map((tour) => ({
+  return draft.tours.map((tour) => ({
     ...tour,
-    equipe: tour.side === "blue" ? draft.equipeBlue : autreEquipe(draft.equipeBlue),
+    libelle: libelleTour(draft.tours, tour.numero),
     championId: joues.get(tour.numero) ?? null,
     courant: draft.tourCourant?.numero === tour.numero,
   }));
