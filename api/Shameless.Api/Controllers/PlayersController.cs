@@ -3,6 +3,7 @@ using Shameless.Api.Models.Requests.Player;
 using Shameless.Api.Models.Responses.Player;
 using Shameless.Application.DTOs.Players;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Joueurs;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,21 @@ public sealed class PlayersController : ControllerBase
     {
         var player = await _playerService.GetPlayerAsync(playerId);
         return player == null ? NotFound() : Ok(player);
+    }
+
+    /// <summary>
+    /// La fiche du Joueur : stats de customs sur ses games terminées, champions et rôles joués, notes de
+    /// performance et historique, compte Discord lié, cost courant et rangs actuels.
+    /// </summary>
+    [HttpGet("{playerId:int}/fiche")]
+    [ProducesResponseType<FicheJoueur>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> GetFiche(int playerId, [FromServices] FicheJoueurService fiches)
+    {
+        var fiche = await fiches.GetAsync(playerId);
+        return fiche == null
+            ? Problem(statusCode: StatusCodes.Status404NotFound, detail: "Joueur introuvable.")
+            : Ok(fiche);
     }
 
     /// <summary>Le compte Riot tel qu'il serait enregistré, sans créer de Joueur.</summary>
