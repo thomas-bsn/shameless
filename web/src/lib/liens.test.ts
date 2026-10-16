@@ -1,4 +1,17 @@
-import { lienCapitaineUrl, lienSpectateurUrl } from "@/lib/liens";
+import { lienCapitaineUrl, lienSpectateurUrl, pageParLien } from "@/lib/liens";
+
+describe("pageParLien", () => {
+  it("reconnaît les pages ouvertes par un lien d'accès, sans connexion", () => {
+    expect(pageParLien("/draft/capitaine/abc123")).toBe(true);
+    expect(pageParLien("/draft/spectateur/xyz789")).toBe(true);
+  });
+
+  it("laisse les autres pages à la session", () => {
+    expect(pageParLien("/")).toBe(false);
+    expect(pageParLien("/series/3")).toBe(false);
+    expect(pageParLien("/draft")).toBe(false);
+  });
+});
 
 describe("liens d'accès", () => {
   it("le Lien capitaine mène à la page capitaine de la Draft, sur l'origine du front", () => {
