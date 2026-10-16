@@ -28,6 +28,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeDiscord Discord { get; } = new();
 
+    public FakeChampionCatalog Champions { get; } = new();
+
     /// <summary>Horloge de l'API : réglable (<c>SetUtcNow</c>) et avançable (<c>Advance</c>). Remise à l'heure réelle avant chaque test.</summary>
     public FakeClock Clock { get; } = new();
 
@@ -52,11 +54,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         Riot.Reset();
         Discord.Reset();
+        Champions.Reset();
         Clock.Reset();
         Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -82,6 +85,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<TimeProvider>(Clock);
             services.RemoveAll<IRandomSource>();
             services.AddSingleton<IRandomSource>(Random);
+            services.RemoveAll<IChampionCatalog>();
+            services.AddSingleton<IChampionCatalog>(Champions);
             services.AddFakeLogging();
         });
     }

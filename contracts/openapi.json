@@ -137,6 +137,482 @@
         }
       }
     },
+    "/champions": {
+      "get": {
+        "tags": [
+          "Champions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChampionResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChampionResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChampionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/draft-champions": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{gameId}/draft-champions": {
+      "get": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{gameId}/draft-champions/actions": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions": {
+      "get": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/actions": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JouerDraftChampionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/games/{id}/result": {
       "put": {
         "tags": [
@@ -327,6 +803,283 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GameHistoryListResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/liens": {
+      "get": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/liens/{equipe}/renouveler": {
+      "post": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "equipe",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/liens/envoyes": {
+      "post": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiensSerieResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}": {
+      "get": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1645,6 +2398,114 @@
         }
       }
     },
+    "/series/{id}/capitaines/{equipe}": {
+      "put": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "equipe",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignerCapitaineRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignerCapitaineRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignerCapitaineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/rematch": {
       "post": {
         "tags": [
@@ -2145,6 +3006,57 @@
   },
   "components": {
     "schemas": {
+      "AccesParLienResponse": {
+        "required": [
+          "seriesId",
+          "portee",
+          "equipe"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "portee": {
+            "$ref": "#/components/schemas/PorteeLien"
+          },
+          "equipe": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ActionDraftResponse": {
+        "required": [
+          "numero",
+          "action",
+          "side",
+          "equipe",
+          "championId"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
+            "type": "string"
+          },
+          "championId": {
+            "type": "string"
+          }
+        }
+      },
       "ActiveSeriesResponse": {
         "required": [
           "series"
@@ -2218,6 +3130,29 @@
           "Aleatoire"
         ]
       },
+      "ChampionResponse": {
+        "required": [
+          "id",
+          "key",
+          "name",
+          "imageUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        }
+      },
       "CreatePlayerRequest": {
         "required": [
           "prenom",
@@ -2283,12 +3218,126 @@
           }
         }
       },
+      "DesignationCapitaine": {
+        "enum": [
+          "Manuel",
+          "AuHasard",
+          "PlusGrosCost"
+        ]
+      },
       "DesignationCapitaines": {
         "enum": [
           "Manuels",
           "AuHasard",
           "PlusGrosCosts"
         ]
+      },
+      "DesignerCapitaineRequest": {
+        "required": [
+          "designation",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "designation": {
+            "$ref": "#/components/schemas/DesignationCapitaine"
+          },
+          "playerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "DraftChampionsResponse": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "fearless",
+          "equipeBlue",
+          "equipeRed",
+          "terminee",
+          "tourCourant",
+          "tours",
+          "actions",
+          "teamA",
+          "teamB",
+          "capitaineA",
+          "capitaineB"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fearless": {
+            "type": "boolean"
+          },
+          "equipeBlue": {
+            "type": "string"
+          },
+          "equipeRed": {
+            "type": "string"
+          },
+          "terminee": {
+            "type": "boolean"
+          },
+          "tourCourant": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TourCourantResponse"
+              }
+            ]
+          },
+          "tours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TourDraftResponse"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDraftResponse"
+            }
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameParticipantDto"
+            }
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
       },
       "DraftPickResponse": {
         "required": [
@@ -2428,6 +3477,22 @@
           }
         }
       },
+      "JouerDraftChampionsRequest": {
+        "required": [
+          "tour",
+          "championId"
+        ],
+        "type": "object",
+        "properties": {
+          "tour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "championId": {
+            "type": "string"
+          }
+        }
+      },
       "LancerDraftRequest": {
         "required": [
           "capitaines",
@@ -2455,6 +3520,37 @@
             "format": "int32"
           },
           "premierPick": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LiensSerieResponse": {
+        "required": [
+          "seriesId",
+          "lienCapitaineA",
+          "lienCapitaineB",
+          "liensCapitaineEnvoyes",
+          "lienSpectateur"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lienCapitaineA": {
+            "type": "string"
+          },
+          "lienCapitaineB": {
+            "type": "string"
+          },
+          "liensCapitaineEnvoyes": {
+            "type": "boolean"
+          },
+          "lienSpectateur": {
             "type": [
               "null",
               "string"
@@ -2878,6 +3974,12 @@
           }
         }
       },
+      "PorteeLien": {
+        "enum": [
+          "Capitaine",
+          "Spectateur"
+        ]
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -3144,6 +4246,8 @@
           "teamBWins",
           "teamA",
           "teamB",
+          "capitaineA",
+          "capitaineB",
           "games"
         ],
         "type": "object",
@@ -3197,6 +4301,20 @@
             "items": {
               "$ref": "#/components/schemas/GameParticipantDto"
             }
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           },
           "games": {
             "type": "array",
@@ -3349,6 +4467,64 @@
           }
         }
       },
+      "TourCourantResponse": {
+        "required": [
+          "numero",
+          "action",
+          "side",
+          "equipe",
+          "commenceLe",
+          "echeance"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
+            "type": "string"
+          },
+          "commenceLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "echeance": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TourDraftResponse": {
+        "required": [
+          "numero",
+          "action",
+          "side",
+          "equipe"
+        ],
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "action": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          },
+          "equipe": {
+            "type": "string"
+          }
+        }
+      },
       "UpdatePeakRequest": {
         "required": [
           "peakTier",
@@ -3415,7 +4591,16 @@
       "name": "Auth"
     },
     {
+      "name": "Champions"
+    },
+    {
+      "name": "DraftChampions"
+    },
+    {
       "name": "Games"
+    },
+    {
+      "name": "Liens"
     },
     {
       "name": "Picker"

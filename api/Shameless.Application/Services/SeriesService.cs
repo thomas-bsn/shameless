@@ -1,3 +1,4 @@
+using Shameless.Application.ChampionDraft;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -20,6 +21,7 @@ public sealed class SeriesService
     private readonly IPlayerRepository _players;
     private readonly CostCalculationService _costs;
     private readonly TimeProvider _clock;
+    private readonly IRandomSource _random;
 
     public SeriesService(
         IBestOfSeriesRepository series,
@@ -27,8 +29,10 @@ public sealed class SeriesService
         ISoireeRepository soirees,
         IPlayerRepository players,
         CostCalculationService costs,
-        TimeProvider clock)
+        TimeProvider clock,
+        IRandomSource random)
     {
+        _random = random;
         _series = series;
         _games = games;
         _soirees = soirees;
@@ -66,7 +70,8 @@ public sealed class SeriesService
         int format,
         bool fearless,
         bool alternateSides,
-        IReadOnlyDictionary<int, Role>? roles = null)
+        IReadOnlyDictionary<int, Role>? roles = null,
+        Capitaines? capitaines = null)
     {
         if (!BestOfSeries.IsValidFormat(format))
             return CommandResult<BestOfSeries>.Invalid("Le format d'une Série est BO1, BO2, BO3 ou BO5.");
@@ -91,14 +96,21 @@ public sealed class SeriesService
             AlternateSides = alternateSides,
             Outcome = SeriesOutcome.EnCours,
             SoireeId = soiree.Id,
-            Players = teamA.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.A, Role = RoleOf(id) })
-                .Concat(teamB.Select(id => new SeriesPlayer { PlayerId = id, Equipe = Equipes.B, Role = RoleOf(id) }))
-                .ToList()
+            Players = teamA.Select(id => NewPlayer(id, Equipes.A, capitaines?.CapitaineA))
+                .Concat(teamB.Select(id => NewPlayer(id, Equipes.B, capitaines?.CapitaineB)))
+                .ToList(),
+            Liens = [LienAcces.Capitaine(Equipes.A), LienAcces.Capitaine(Equipes.B), LienAcces.Spectateur()]
         };
         _series.Add(series);
         return CommandResult<BestOfSeries>.Ok(series);
 
-        Role? RoleOf(int playerId) => roles != null && roles.TryGetValue(playerId, out var role) ? role : null;
+        SeriesPlayer NewPlayer(int playerId, string equipe, int? capitaine) => new()
+        {
+            PlayerId = playerId,
+            Equipe = equipe,
+            Role = roles != null && roles.TryGetValue(playerId, out var role) ? role : null,
+            Capitaine = playerId == capitaine
+        };
     }
 
     /// <summary>
@@ -238,8 +250,41 @@ public sealed class SeriesService
         if (replacement == null)
             return CommandResult<SeriesResponse>.Invalid("Le remplaçant n'existe pas.");
 
-        replaced.Player = replacement;
-        replaced.PlayerId = replacement.Id;
+        series.Remplacer(replaced, replacement);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<SeriesResponse>.Ok(ToResponse(series));
+    }
+
+    /// <summary>
+    /// Désigne le Capitaine d'une Équipe d'une Série en cours, parmi sa composition courante : le joueur
+    /// choisi (<see cref="DesignationCapitaine.Manuel"/>), un joueur au hasard, ou le plus gros cost de
+    /// l'Équipe (à cost égal, l'ordre de la composition départage). Remplace le capitaine précédent.
+    /// </summary>
+    public async Task<CommandResult<SeriesResponse>> DesignerCapitaineAsync(
+        int seriesId, string equipe, DesignationCapitaine designation, int? playerId)
+    {
+        if (!Equipes.IsValid(equipe))
+            return CommandResult<SeriesResponse>.Invalid("Le capitaine est désigné pour l'Équipe A ou l'Équipe B.");
+
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<SeriesResponse>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<SeriesResponse>.Conflict("Cette Série est terminée : ses capitaines ne changent plus.");
+
+        if (!Enum.IsDefined(designation))
+            return CommandResult<SeriesResponse>.Invalid("Désignation du capitaine inconnue.");
+
+        var joueurs = series.PlayersOf(equipe).OrderBy(p => p.Id).ToList();
+        var designe = DesignationDesCapitaines.Designer(
+            designation, joueurs.Select(p => new PickerPlayer(p.PlayerId, p.Player.CurrentCost)).ToList(), playerId, _random);
+        if (designe == null)
+            return CommandResult<SeriesResponse>.Invalid($"Le capitaine fait partie de l'Équipe {equipe}.");
+
+        series.DesignerCapitaine(joueurs.Single(p => p.PlayerId == designe));
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<SeriesResponse>.Conflict(ModifieeEntreTemps);
@@ -290,6 +335,7 @@ public sealed class SeriesService
     public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
         (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
 
+    /// <summary>La Série lue ; les rôles de l'Autorole n'y figurent pas pendant une Draft de champions.</summary>
     private static SeriesResponse ToResponse(BestOfSeries series) => new(
         SeriesId: series.Id,
         SoireeId: series.SoireeId,
@@ -300,7 +346,9 @@ public sealed class SeriesService
         WinningTeam: series.WinningTeam,
         TeamAWins: series.TeamAWins,
         TeamBWins: series.TeamBWins,
-        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
-        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
+        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
+        CapitaineA: series.CapitaineOf(Equipes.A),
+        CapitaineB: series.CapitaineOf(Equipes.B),
         Games: series.Games.Select(SeriesGameResponse.From).ToList());
 }

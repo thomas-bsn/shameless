@@ -22,6 +22,42 @@ namespace Shameless.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Shameless.Application.Entities.ActionDraftChampions", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChampionId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("champion_id");
+
+                    b.Property<int>("DraftChampionsId")
+                        .HasColumnType("integer")
+                        .HasColumnName("draft_champions_id");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero");
+
+                    b.HasKey("Id")
+                        .HasName("pk_drafts_champions_actions");
+
+                    b.HasIndex("DraftChampionsId", "ChampionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_actions_draft_champions_id_champion_id");
+
+                    b.HasIndex("DraftChampionsId", "Numero")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_actions_draft_champions_id_numero");
+
+                    b.ToTable("drafts_champions_actions", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>
                 {
                     b.Property<int>("Id")
@@ -42,6 +78,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<int>("Format")
                         .HasColumnType("integer")
                         .HasColumnName("format");
+
+                    b.Property<bool>("LiensCapitaineEnvoyes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("liens_capitaine_envoyes");
 
                     b.Property<string>("Outcome")
                         .IsRequired()
@@ -191,6 +231,82 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDatabaseName("ix_custom_game_participants_custom_game_id_player_id");
 
                     b.ToTable("custom_game_participants", (string)null);
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("game_id");
+
+                    b.Property<DateTime>("TourCommenceLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("tour_commence_le");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_drafts_champions");
+
+                    b.HasIndex("GameId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_game_id");
+
+                    b.ToTable("drafts_champions", (string)null);
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.LienAcces", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
+                    b.Property<string>("Portee")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("portee");
+
+                    b.Property<string>("Secret")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("secret");
+
+                    b.Property<int>("SeriesId")
+                        .HasColumnType("integer")
+                        .HasColumnName("series_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_liens_acces");
+
+                    b.HasIndex("Secret")
+                        .IsUnique()
+                        .HasDatabaseName("ix_liens_acces_secret");
+
+                    b.HasIndex("SeriesId", "Portee", "Equipe")
+                        .IsUnique()
+                        .HasDatabaseName("ix_liens_acces_series_id_portee_equipe");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("SeriesId", "Portee", "Equipe"), false);
+
+                    b.ToTable("liens_acces", (string)null);
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
@@ -432,6 +548,10 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Capitaine")
+                        .HasColumnType("boolean")
+                        .HasColumnName("capitaine");
+
                     b.Property<string>("Equipe")
                         .IsRequired()
                         .HasMaxLength(1)
@@ -523,6 +643,16 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.ActionDraftChampions", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.DraftChampions", null)
+                        .WithMany("Actions")
+                        .HasForeignKey("DraftChampionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_drafts_champions_actions_drafts_champions_draft_champions_id");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.Soiree", "Soiree")
@@ -563,6 +693,30 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("CustomGame");
 
                     b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
+                        .WithOne()
+                        .HasForeignKey("Shameless.Application.Entities.DraftChampions", "GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_drafts_champions_custom_games_game_id");
+
+                    b.Navigation("Game");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.LienAcces", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.BestOfSeries", "Series")
+                        .WithMany("Liens")
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_liens_acces_best_of_series_series_id");
+
+                    b.Navigation("Series");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
@@ -643,12 +797,19 @@ namespace Shameless.Infrastructure.Migrations
                 {
                     b.Navigation("Games");
 
+                    b.Navigation("Liens");
+
                     b.Navigation("Players");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
                     b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>
+                {
+                    b.Navigation("Actions");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>

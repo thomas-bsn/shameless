@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBestOfSeriesRepository, BestOfSeriesRepository>();
         services.AddScoped<ISoireeRepository, SoireeRepository>();
         services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
+        services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -34,6 +35,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();
         services.AddScoped<PickerService>();
+        services.AddScoped<LiensAccesService>();
+        services.AddScoped<DraftChampionsService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
@@ -45,7 +48,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers()
+        services.AddControllers(o => o.Filters.Add<CatalogueIndisponibleFilter>())
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

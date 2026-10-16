@@ -24,3 +24,8 @@ export const costTierClasses: Record<CostTier, string> = {
   C: "text-slate-300 border-slate-300/30 bg-slate-300/10",
   D: "text-zinc-500 border-zinc-500/30 bg-zinc-500/10",
 };
+
+/** Couleur du texte d'un Side : blue ou red (historique, Série, Draft de champions). */
+export function sideTextClass(side: string): string {
+  return side === "red" ? "text-red-400" : "text-sky-400";
+}

@@ -28,10 +28,21 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
     public Task<List<BestOfSeries>> GetBySoireeWithGamesAsync(int soireeId) =>
         WithGames().Where(s => s.SoireeId == soireeId).OrderBy(s => s.Id).ToListAsync();
 
-    /// <summary>Les Séries avec leur composition courante et leurs games (participants et joueurs), games triées par id.</summary>
+    public Task<BestOfSeries?> GetWithLiensAsync(int id) =>
+        _db.BestOfSeries.Include(s => s.Liens).SingleOrDefaultAsync(s => s.Id == id);
+
+    public Task<LienAcces?> GetLienAsync(string secret) =>
+        _db.LiensAcces.Include(l => l.Series).SingleOrDefaultAsync(l => l.Secret == secret);
+
+    /// <summary>
+    /// Les Séries avec leur composition courante, leurs liens et leurs games (participants et joueurs,
+    /// Draft de champions), games triées par id.
+    /// </summary>
     private IQueryable<BestOfSeries> WithGames() =>
         _db.BestOfSeries
             .Include(s => s.Players).ThenInclude(p => p.Player)
+            .Include(s => s.Liens)
             .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.Participants).ThenInclude(p => p.Player)
+            .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.DraftChampions).ThenInclude(d => d!.Actions)
             .AsSplitQuery();
 }

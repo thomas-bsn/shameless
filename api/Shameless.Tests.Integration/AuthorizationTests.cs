@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Shameless.Api.Auth;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -13,7 +14,8 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     [
         "GET auth/discord/login",
         "GET auth/discord/callback",
-        "GET health"
+        "GET health",
+        "GET champions"
     ];
 
     public static TheoryData<string> AdminActions() =>
@@ -23,36 +25,84 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         "DELETE players/{2}/peak"
     ];
 
-    [Fact]
-    public async Task Every_endpoint_outside_login_callback_and_health_requires_a_session()
-    {
-        var client = Factory.CreateAnonymousClient();
-        var endpoints = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+    /// <summary>Les routes de l'API ; <paramref name="parLien"/> : celles ouvertes à un lien d'accès (ADR 0010), ou les autres.</summary>
+    private List<(string Method, string Route)> Endpoints(bool parLien) =>
+        Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
+            .Where(e => (e.Metadata.GetMetadata<AccesParLienAttribute>() != null) == parLien)
             .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
                 .Select(method => (Method: method, Route: e.RoutePattern.RawText!.TrimStart('/'))))
             .Where(e => !AnonymousEndpoints.Contains($"{e.Method} {e.Route}"))
             .ToList();
 
+    private static HttpRequestMessage AnyRequest(string method, string route) =>
+        new(new HttpMethod(method), "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1"))
+        {
+            Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
+        };
+
+    [Fact]
+    public async Task Toute_route_hors_connexion_callback_sante_et_liens_d_acces_demande_une_session()
+    {
+        var client = Factory.CreateAnonymousClient();
+        var endpoints = Endpoints(parLien: false);
+
         Assert.NotEmpty(endpoints);
         foreach (var (method, route) in endpoints)
         {
-            var url = "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1");
-            var request = new HttpRequestMessage(new HttpMethod(method), url)
-            {
-                Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
-            };
-
-            var response = await client.SendAsync(request, Ct);
+            var response = await client.SendAsync(AnyRequest(method, route), Ct);
 
             Assert.True(response.StatusCode == HttpStatusCode.Unauthorized,
-                $"{method} {url} returned {(int)response.StatusCode} without a session");
+                $"{method} {route} returned {(int)response.StatusCode} without a session");
+        }
+    }
+
+    [Fact]
+    public async Task Sans_session_une_route_ouverte_aux_liens_refuse_un_lien_inconnu()
+    {
+        var client = Factory.CreateAnonymousClient();
+        var endpoints = Endpoints(parLien: true);
+
+        Assert.NotEmpty(endpoints);
+        foreach (var (method, route) in endpoints)
+        {
+            Assert.Contains($"{{{AccesParLienAttribute.RouteParameter}}}", route);
+            var response = await client.SendAsync(AnyRequest(method, route), Ct);
+
+            Assert.True(response.StatusCode == HttpStatusCode.NotFound,
+                $"{method} {route} returned {(int)response.StatusCode} with an unknown link");
+        }
+    }
+
+    [Fact]
+    public async Task Le_lien_spectateur_est_refuse_en_403_sur_toute_commande_de_capitaine()
+    {
+        var organisateur = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(organisateur);
+        var liens = await ReadJsonAsync(await organisateur.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var spectateur = Uri.EscapeDataString(liens.GetProperty("lienSpectateur").GetString()!);
+        var commandes = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.Metadata.GetMetadata<AccesParLienAttribute>() is { CapitaineRequis: true })
+            .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? ["GET"])
+                .Select(method => (Method: method, Route: e.RoutePattern.RawText!.TrimStart('/'))))
+            .ToList();
+        var anonymous = Factory.CreateAnonymousClient();
+
+        Assert.NotEmpty(commandes);
+        foreach (var (method, route) in commandes)
+        {
+            var request = AnyRequest(method, route.Replace($"{{{AccesParLienAttribute.RouteParameter}}}", spectateur));
+            var response = await anonymous.SendAsync(request, Ct);
+
+            Assert.True(response.StatusCode == HttpStatusCode.Forbidden,
+                $"{method} {route} returned {(int)response.StatusCode} with a spectator link");
         }
     }
 
     [Theory]
     [MemberData(nameof(AdminActions))]
-    public async Task A_non_admin_player_is_refused_admin_actions(string action)
+    public async Task Un_joueur_non_admin_est_refuse_sur_les_actions_admin(string action)
     {
         var (method, url) = await PrepareAdminActionAsync(action);
         var client = Factory.CreateSignedInClient("7001");
@@ -64,7 +114,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
     [Theory]
     [MemberData(nameof(AdminActions))]
-    public async Task An_admin_can_perform_admin_actions(string action)
+    public async Task Un_admin_peut_faire_les_actions_admin(string action)
     {
         var (method, url) = await PrepareAdminActionAsync(action);
         var client = Factory.CreateAdminClient();
@@ -75,7 +125,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Me_tells_whether_the_signed_in_user_is_an_admin()
+    public async Task Me_indique_si_l_utilisateur_connecte_est_admin()
     {
         var player = await Factory.CreateSignedInClient("7002").GetFromJsonAsync<JsonElement>("/auth/me", Ct);
         var admin = await Factory.CreateAdminClient().GetFromJsonAsync<JsonElement>("/auth/me", Ct);
@@ -85,7 +135,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task An_admin_sets_a_players_cost_and_peak()
+    public async Task Un_admin_fixe_le_cost_et_le_peak_d_un_joueur()
     {
         var admin = Factory.CreateAdminClient();
         var playerId = await CreatePlayerAsync(admin, "Cible");
@@ -108,7 +158,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     [Theory]
     [InlineData(0)]
     [InlineData(7)]
-    public async Task A_cost_outside_1_to_6_is_rejected(int cost)
+    public async Task Un_cost_hors_de_1_a_6_est_refuse(int cost)
     {
         var admin = Factory.CreateAdminClient();
         var playerId = await CreatePlayerAsync(admin, "Cible");
@@ -119,7 +169,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Linking_a_player_already_linked_to_someone_else_is_refused_unless_admin()
+    public async Task Lier_un_joueur_deja_lie_a_quelqu_un_d_autre_est_refuse_sauf_admin()
     {
         var owner = Factory.CreateSignedInClient("7003");
         var playerId = await CreatePlayerAsync(owner, "Pris");

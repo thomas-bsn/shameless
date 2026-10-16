@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
 import { outcomeLabel } from "@/lib/series";
+import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 const currentMonth = (): Month => {
@@ -164,7 +165,7 @@ function TeamColumn({
   return (
     <div role="group" aria-label={label} className={cn("flex flex-col gap-2 p-3", won && "bg-emerald-400/5")}>
       <div className="flex items-center justify-between text-xs font-semibold">
-        <span className={side === "blue" ? "text-sky-400" : "text-red-400"}>{label}</span>
+        <span className={sideTextClass(side)}>{label}</span>
         <span className="text-muted-foreground">{cost} pts</span>
       </div>
       {players.map((p) => (

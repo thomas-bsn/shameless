@@ -67,6 +67,17 @@ ont un cost total proche ; relancer donne d'autres équipes.
 automatiquement un rôle (top, jungle, mid, ADC, support) à chaque joueur, en deux  
 variantes au choix. **Hors rôle** : personne ne joue son rôle principal. **Aléatoire** :  
 hasard pur. Ne forme pas les équipes.
+- **Draft de champions** : avant chaque game, les deux capitaines bannissent puis  
+choisissent cinq champions pour leur Équipe, dans l'ordre fixe du mode Tournament.  
+Les champions sont choisis pour l'Équipe, pas pour un joueur : qui joue quoi se  
+décide en vocal. À ne pas confondre avec la **Draft**, qui forme les équipes.
+- **Capitaine** : le joueur qui mène une Équipe dans une Draft ou une Draft de  
+champions. Ceux de la Draft le restent pour la Draft de champions ; après une  
+Roulette, l'organisateur en désigne un par Équipe.
+- **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
+champions de son Équipe pendant toute la Série, sans se connecter.
+- **Lien spectateur** : lien public, en lecture seule, pour regarder les Drafts de  
+champions d'une Série.
 
 ## Niveau des joueurs
 

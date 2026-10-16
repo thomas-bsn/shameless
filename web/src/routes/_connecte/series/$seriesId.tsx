@@ -2,6 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
+import { DraftChampionsOrganisateur, DraftChampionsTerminee } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
@@ -19,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { pendingGame, outcomeLabel, replacementCandidates } from "@/lib/series";
+import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_connecte/series/$seriesId")({
@@ -28,7 +31,6 @@ export const Route = createFileRoute("/_connecte/series/$seriesId")({
 type Series = Schemas["SeriesResponse"];
 
 const sideLabel = (side: string) => (side === "red" ? "Red side" : "Blue side");
-const sideClass = (side: string) => (side === "red" ? "text-red-400" : "text-sky-400");
 
 /** Après une action, relit la Série et la liste des séries de la Soirée. */
 function useRefreshSeries() {
@@ -63,6 +65,8 @@ function SeriePage() {
 
 function SerieView({ series }: { series: Series }) {
   const enCours = series.outcome === "EnCours";
+  const refresh = useRefreshSeries();
+  const pending = pendingGame(series);
 
   return (
     <>
@@ -83,13 +87,15 @@ function SerieView({ series }: { series: Series }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <TeamCard equipe="A" players={series.teamA} />
-        <TeamCard equipe="B" players={series.teamB} />
+        <TeamCard equipe="A" players={series.teamA} capitaine={series.capitaineA} />
+        <TeamCard equipe="B" players={series.teamB} capitaine={series.capitaineB} />
       </div>
 
       {enCours ? (
         <>
+          <CapitainesLiensPanel series={series} onSeriesChanged={refresh} />
           <GamePanel series={series} />
+          {pending && <DraftChampionsOrganisateur key={pending.id} series={series} gameId={pending.id} />}
           <ReplacementPanel series={series} />
           <StopPanel series={series} />
         </>
@@ -129,8 +135,8 @@ function GamePanel({ series }: { series: Series }) {
           {pending ? (
             <>
               <p className="text-sm">
-                Équipe A <span className={sideClass(pending.teamASide)}>{sideLabel(pending.teamASide)}</span> · Équipe B{" "}
-                <span className={sideClass(pending.teamBSide)}>{sideLabel(pending.teamBSide)}</span>
+                Équipe A <span className={sideTextClass(pending.teamASide)}>{sideLabel(pending.teamASide)}</span> · Équipe B{" "}
+                <span className={sideTextClass(pending.teamBSide)}>{sideLabel(pending.teamBSide)}</span>
               </p>
               <div className="flex flex-wrap gap-2">
                 {(["A", "B"] as const).map((winner) => (
@@ -336,16 +342,19 @@ function GamesList({ series }: { series: Series }) {
       </h2>
       <ol className="flex flex-col gap-2">
         {series.games.map((g, index) => (
-          <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
-            <span>
-              Game {index + 1} · Équipe A <span className={sideClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> · Équipe B{" "}
-              <span className={sideClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
-            </span>
-            {g.winner ? (
-              <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
-            ) : (
-              <Badge variant="outline">En attente</Badge>
-            )}
+          <li key={g.id} className="flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> ·
+                Équipe B <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
+              </span>
+              {g.winner ? (
+                <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
+              ) : (
+                <Badge variant="outline">En attente</Badge>
+              )}
+            </div>
+            {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
           </li>
         ))}
       </ol>

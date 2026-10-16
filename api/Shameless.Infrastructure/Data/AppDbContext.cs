@@ -29,6 +29,18 @@ public class AppDbContext : DbContext
     public DbSet<Soiree> Soirees => Set<Soiree>();
     public DbSet<SeriesPlayer> SeriesPlayers => Set<SeriesPlayer>();
     public DbSet<PickerSession> PickerSessions => Set<PickerSession>();
+    public DbSet<LienAcces> LiensAcces => Set<LienAcces>();
+    public DbSet<DraftChampions> DraftsChampions => Set<DraftChampions>();
+
+    /// <summary>
+    /// Les dates sont stockées en heure UTC sans fuseau : relues, elles repartent en
+    /// <see cref="DateTimeKind.Utc"/>, et l'API les sérialise avec leur « Z ».
+    /// </summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateTime>().HaveConversion<DateTimeUtcConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveConversion<DateTimeUtcConverter>();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -159,5 +171,8 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SeriesPlayerConfiguration());
         modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
         modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
+        modelBuilder.ApplyConfiguration(new LienAccesConfiguration());
+        modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
+        modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
     }
 }

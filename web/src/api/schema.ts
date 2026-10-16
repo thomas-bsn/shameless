@@ -152,6 +152,430 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/champions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChampionResponse"][];
+                        "application/json": components["schemas"]["ChampionResponse"][];
+                        "text/json": components["schemas"]["ChampionResponse"][];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/draft-champions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{gameId}/draft-champions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    gameId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{gameId}/draft-champions/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    gameId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["JouerDraftChampionsRequest"];
+                    "text/json": components["schemas"]["JouerDraftChampionsRequest"];
+                    "application/*+json": components["schemas"]["JouerDraftChampionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["JouerDraftChampionsRequest"];
+                    "text/json": components["schemas"]["JouerDraftChampionsRequest"];
+                    "application/*+json": components["schemas"]["JouerDraftChampionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}/result": {
         parameters: {
             query?: never;
@@ -307,6 +731,262 @@ export interface paths {
                         "text/plain": components["schemas"]["GameHistoryListResponse"];
                         "application/json": components["schemas"]["GameHistoryListResponse"];
                         "text/json": components["schemas"]["GameHistoryListResponse"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/liens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LiensSerieResponse"];
+                        "application/json": components["schemas"]["LiensSerieResponse"];
+                        "text/json": components["schemas"]["LiensSerieResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/liens/{equipe}/renouveler": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    equipe: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LiensSerieResponse"];
+                        "application/json": components["schemas"]["LiensSerieResponse"];
+                        "text/json": components["schemas"]["LiensSerieResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/series/{id}/liens/envoyes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LiensSerieResponse"];
+                        "application/json": components["schemas"]["LiensSerieResponse"];
+                        "text/json": components["schemas"]["LiensSerieResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AccesParLienResponse"];
+                        "application/json": components["schemas"]["AccesParLienResponse"];
+                        "text/json": components["schemas"]["AccesParLienResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Erreur */
@@ -1490,6 +2170,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/series/{id}/capitaines/{equipe}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    equipe: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DesignerCapitaineRequest"];
+                    "text/json": components["schemas"]["DesignerCapitaineRequest"];
+                    "application/*+json": components["schemas"]["DesignerCapitaineRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeriesResponse"];
+                        "application/json": components["schemas"]["SeriesResponse"];
+                        "text/json": components["schemas"]["SeriesResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/rematch": {
         parameters: {
             query?: never;
@@ -1970,6 +2732,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccesParLienResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            portee: components["schemas"]["PorteeLien"];
+            equipe: null | string;
+        };
+        ActionDraftResponse: {
+            /** Format: int32 */
+            numero: number;
+            action: string;
+            side: string;
+            equipe: string;
+            championId: string;
+        };
         ActiveSeriesResponse: {
             series: components["schemas"]["SeriesResponse"][];
         };
@@ -1987,6 +2763,12 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        ChampionResponse: {
+            id: string;
+            key: string;
+            name: string;
+            imageUrl: string;
+        };
         CreatePlayerRequest: {
             prenom: string;
             riotId: string;
@@ -2006,7 +2788,33 @@ export interface components {
             seriesId: number;
         };
         /** @enum {unknown} */
+        DesignationCapitaine: "Manuel" | "AuHasard" | "PlusGrosCost";
+        /** @enum {unknown} */
         DesignationCapitaines: "Manuels" | "AuHasard" | "PlusGrosCosts";
+        DesignerCapitaineRequest: {
+            designation: components["schemas"]["DesignationCapitaine"];
+            /** Format: int32 */
+            playerId: null | number;
+        };
+        DraftChampionsResponse: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: number;
+            fearless: boolean;
+            equipeBlue: string;
+            equipeRed: string;
+            terminee: boolean;
+            tourCourant: null | components["schemas"]["TourCourantResponse"];
+            tours: components["schemas"]["TourDraftResponse"][];
+            actions: components["schemas"]["ActionDraftResponse"][];
+            teamA: components["schemas"]["GameParticipantDto"][];
+            teamB: components["schemas"]["GameParticipantDto"][];
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
+        };
         DraftPickResponse: {
             /** Format: int32 */
             playerId: number;
@@ -2040,6 +2848,11 @@ export interface components {
             playerId: number;
             role: null | components["schemas"]["Role"];
         };
+        JouerDraftChampionsRequest: {
+            /** Format: int32 */
+            tour: number;
+            championId: string;
+        };
         LancerDraftRequest: {
             capitaines: components["schemas"]["DesignationCapitaines"];
             /** Format: int32 */
@@ -2047,6 +2860,14 @@ export interface components {
             /** Format: int32 */
             capitaineB: null | number;
             premierPick: null | string;
+        };
+        LiensSerieResponse: {
+            /** Format: int32 */
+            seriesId: number;
+            lienCapitaineA: string;
+            lienCapitaineB: string;
+            liensCapitaineEnvoyes: boolean;
+            lienSpectateur: null | string;
         };
         LinkPlayerRequest: {
             /** Format: int32 */
@@ -2152,6 +2973,8 @@ export interface components {
         PlayGameRequest: {
             teamASide: null | string;
         };
+        /** @enum {unknown} */
+        PorteeLien: "Capitaine" | "Spectateur";
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -2231,6 +3054,10 @@ export interface components {
             teamBWins: number;
             teamA: components["schemas"]["GameParticipantDto"][];
             teamB: components["schemas"]["GameParticipantDto"][];
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
             games: components["schemas"]["SeriesGameResponse"][];
         };
         SetCostRequest: {
@@ -2270,6 +3097,24 @@ export interface components {
         };
         TirerRouletteRequest: {
             variante: components["schemas"]["RouletteVariante"];
+        };
+        TourCourantResponse: {
+            /** Format: int32 */
+            numero: number;
+            action: string;
+            side: string;
+            equipe: string;
+            /** Format: date-time */
+            commenceLe: string;
+            /** Format: date-time */
+            echeance: string;
+        };
+        TourDraftResponse: {
+            /** Format: int32 */
+            numero: number;
+            action: string;
+            side: string;
+            equipe: string;
         };
         UpdatePeakRequest: {
             peakTier: null | string;
