@@ -1911,6 +1911,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/{playerId}/fiche": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FicheJoueur"];
+                        "application/json": components["schemas"]["FicheJoueur"];
+                        "text/json": components["schemas"]["FicheJoueur"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/riot-preview": {
         parameters: {
             query?: never;
@@ -3346,6 +3403,11 @@ export interface components {
             /** Format: double */
             poids: number;
         };
+        CompteDiscordLie: {
+            discordId: string;
+            username: null | string;
+            avatarUrl: null | string;
+        };
         CostMensuelHistorique: {
             /** Format: date */
             mois: string;
@@ -3420,6 +3482,37 @@ export interface components {
             /** Format: int32 */
             playerId: number;
             equipe: string;
+        };
+        FicheJoueur: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            discord: null | components["schemas"]["CompteDiscordLie"];
+            /** Format: double */
+            cost: number;
+            soloQ: null | components["schemas"]["RangActuel"];
+            flex: null | components["schemas"]["RangActuel"];
+            stats: components["schemas"]["StatsDeCustoms"];
+            champions: components["schemas"]["StatsParChampion"][];
+            roles: components["schemas"]["StatsParRole"][];
+            games: components["schemas"]["GameDeLaFiche"][];
+        };
+        GameDeLaFiche: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: date-time */
+            playedAt: string;
+            equipe: string;
+            victoire: boolean;
+            /** Format: int32 */
+            dureeSecondes: null | number;
+            championId: null | string;
+            role: null | components["schemas"]["Role"];
+            stats: null | components["schemas"]["StatsDuParticipant"];
+            performance: null | components["schemas"]["NoteDePerformance"];
         };
         GameHistoryListResponse: {
             games: components["schemas"]["SeriesHistoryResponse"][];
@@ -3672,6 +3765,13 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
+        RangActuel: {
+            tier: string;
+            /** Format: int32 */
+            division: null | number;
+            /** Format: int32 */
+            lp: number;
+        };
         RapportDeGameRequest: {
             riotMatchId: string;
             donnees: components["schemas"]["JsonElement"];
@@ -3828,6 +3928,36 @@ export interface components {
         SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ";
         /** @enum {unknown} */
         SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
+        StatsDeCustoms: {
+            /** Format: int32 */
+            gamesJouees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+            /** Format: double */
+            kda: null | number;
+            /** Format: double */
+            killsMoyens: null | number;
+            /** Format: double */
+            mortsMoyennes: null | number;
+            /** Format: double */
+            assistsMoyens: null | number;
+            /** Format: double */
+            csParMinute: null | number;
+            /** Format: double */
+            participationAuxKills: null | number;
+            /** Format: int32 */
+            degatsMoyens: null | number;
+            /** Format: int32 */
+            degatsParMinute: null | number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            /** Format: int32 */
+            gamesNotees: number;
+        };
         StatsDuParticipant: {
             /** Format: int32 */
             kills: null | number;
@@ -3864,6 +3994,14 @@ export interface components {
             /** Format: int32 */
             champLevel: null | number;
             position: null | components["schemas"]["Role"];
+        };
+        StatsParChampion: {
+            championId: string;
+            stats: components["schemas"]["StatsDeCustoms"];
+        };
+        StatsParRole: {
+            role: components["schemas"]["Role"];
+            stats: components["schemas"]["StatsDeCustoms"];
         };
         /** @enum {unknown} */
         StatutRapport: "Accepte" | "EnRevue" | "Rejete";

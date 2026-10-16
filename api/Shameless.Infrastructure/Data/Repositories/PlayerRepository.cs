@@ -141,6 +141,9 @@ public class PlayerRepository : IPlayerRepository
     public async Task<Player?> GetByIdAsync(int id) =>
         await _db.Players.FindAsync(id);
 
+    public Task<Player?> GetWithUserAsync(int id) =>
+        _db.Players.AsNoTracking().Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+
     public async Task<List<Player>> GetByIdsAsync(List<int> ids) =>
         await _db.Players.Where(p => ids.Contains(p.Id)).ToListAsync();
 

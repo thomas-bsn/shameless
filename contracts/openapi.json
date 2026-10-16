@@ -2092,6 +2092,66 @@
         }
       }
     },
+    "/players/{playerId}/fiche": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "parameters": [
+          {
+            "name": "playerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FicheJoueur"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FicheJoueur"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FicheJoueur"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/players/riot-preview": {
       "get": {
         "tags": [
@@ -3822,6 +3882,31 @@
           }
         }
       },
+      "CompteDiscordLie": {
+        "required": [
+          "discordId",
+          "username",
+          "avatarUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "discordId": {
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CostMensuelHistorique": {
         "required": [
           "mois",
@@ -4120,6 +4205,170 @@
           },
           "equipe": {
             "type": "string"
+          }
+        }
+      },
+      "FicheJoueur": {
+        "required": [
+          "playerId",
+          "prenom",
+          "riotId",
+          "discord",
+          "cost",
+          "soloQ",
+          "flex",
+          "stats",
+          "champions",
+          "roles",
+          "games"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "discord": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CompteDiscordLie"
+              }
+            ]
+          },
+          "cost": {
+            "type": "number",
+            "format": "double"
+          },
+          "soloQ": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RangActuel"
+              }
+            ]
+          },
+          "flex": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RangActuel"
+              }
+            ]
+          },
+          "stats": {
+            "$ref": "#/components/schemas/StatsDeCustoms"
+          },
+          "champions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatsParChampion"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatsParRole"
+            }
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameDeLaFiche"
+            }
+          }
+        }
+      },
+      "GameDeLaFiche": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "playedAt",
+          "equipe",
+          "victoire",
+          "dureeSecondes",
+          "championId",
+          "role",
+          "stats",
+          "performance"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "playedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "equipe": {
+            "type": "string"
+          },
+          "victoire": {
+            "type": "boolean"
+          },
+          "dureeSecondes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "championId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "stats": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatsDuParticipant"
+              }
+            ]
+          },
+          "performance": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NoteDePerformance"
+              }
+            ]
           }
         }
       },
@@ -5143,6 +5392,30 @@
           }
         }
       },
+      "RangActuel": {
+        "required": [
+          "tier",
+          "division",
+          "lp"
+        ],
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string"
+          },
+          "division": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "lp": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "RapportDeGameRequest": {
         "required": [
           "riotMatchId",
@@ -5760,6 +6033,113 @@
           "Inconnue"
         ]
       },
+      "StatsDeCustoms": {
+        "required": [
+          "gamesJouees",
+          "victoires",
+          "defaites",
+          "winrate",
+          "kda",
+          "killsMoyens",
+          "mortsMoyennes",
+          "assistsMoyens",
+          "csParMinute",
+          "participationAuxKills",
+          "degatsMoyens",
+          "degatsParMinute",
+          "noteMoyenne",
+          "gamesNotees"
+        ],
+        "type": "object",
+        "properties": {
+          "gamesJouees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "kda": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "killsMoyens": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "mortsMoyennes": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "assistsMoyens": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "csParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "participationAuxKills": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "degatsMoyens": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "degatsParMinute": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "gamesNotees": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "StatsDuParticipant": {
         "required": [
           "kills",
@@ -5911,6 +6291,36 @@
                 "$ref": "#/components/schemas/Role"
               }
             ]
+          }
+        }
+      },
+      "StatsParChampion": {
+        "required": [
+          "championId",
+          "stats"
+        ],
+        "type": "object",
+        "properties": {
+          "championId": {
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/StatsDeCustoms"
+          }
+        }
+      },
+      "StatsParRole": {
+        "required": [
+          "role",
+          "stats"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/StatsDeCustoms"
           }
         }
       },

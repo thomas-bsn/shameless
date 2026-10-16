@@ -35,6 +35,12 @@ public interface ICustomGameRepository
     Task<List<CustomGameParticipant>> GetCompletedParticipationsAsync();
 
     /// <summary>
+    /// Les games terminées auxquelles le joueur a participé (y compris celles d'une Série interrompue),
+    /// avec leurs participants, leurs joueurs et les joueurs de leur Série (rôle de l'Autorole).
+    /// </summary>
+    Task<List<CustomGame>> GetCompletedGamesOfPlayerAsync(int playerId);
+
+    /// <summary>
     /// Enregistre les changements en une transaction. Renvoie false si une commande simultanée a
     /// modifié une game ou sa Série entre-temps : rien n'est enregistré.
     /// </summary>
