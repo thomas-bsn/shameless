@@ -9,6 +9,8 @@ using Shameless.Infrastructure.Options;
 using Shameless.Infrastructure.Integrations.Riot;
 using Shameless.Infrastructure.Integrations.Discord;
 using Shameless.Infrastructure.Integrations.DataDragon;
+using Shameless.Infrastructure.Integrations.Bot;
+using Shameless.Application.Bot;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -92,6 +94,10 @@ public static class AuthenticationExtensions
                 client => client.BaseAddress = DataDragonChampionCatalog.BaseAddress)
             .AddPolicyHandler(GetRetryPolicy());
         services.AddSingleton<IChampionCatalog, DataDragonChampionCatalog>();
+
+        // Bot Discord : pas de retry ici, les webhooks sont retentés par leur job de publication.
+        services.AddHttpClient<IBotDiscord, BotDiscordClient>((sp, client) =>
+            client.Timeout = sp.GetRequiredService<IOptions<BotOptions>>().Value.Timeout);
 
         return services;
     }

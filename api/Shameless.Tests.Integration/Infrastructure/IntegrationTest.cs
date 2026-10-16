@@ -33,6 +33,11 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
         return ids.ToArray();
     }
 
+    /// <summary>L'Utilisateur Discord <paramref name="discordId"/> se connecte et se lie à ce joueur.</summary>
+    protected async Task LierADiscordAsync(int playerId, string discordId) =>
+        await ReadJsonAsync(await Factory.CreateSignedInClient(discordId)
+            .PostAsJsonAsync("/players/link", new { playerId }, Ct));
+
     /// <summary>Ouvre une Soirée et renvoie son id.</summary>
     protected async Task<int> OpenSoireeAsync(HttpClient client)
     {

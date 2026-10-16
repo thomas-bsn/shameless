@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CodeCompanionService>();
         services.AddScoped<RapportsCompanionService>();
         services.AddScoped<DraftChampionsService>();
+        services.AddScoped<CandidatsVocauxService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
@@ -52,7 +53,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers(o => o.Filters.Add<CatalogueIndisponibleFilter>())
+        services.AddControllers(o =>
+            {
+                o.Filters.Add<CatalogueIndisponibleFilter>();
+                o.Filters.Add<BotIndisponibleFilter>();
+            })
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

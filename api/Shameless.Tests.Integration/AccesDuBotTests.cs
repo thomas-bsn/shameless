@@ -18,8 +18,8 @@ public class AccesDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var organisateur = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(organisateur, format: 3);
-        await LierAsync(serie.TeamA[0], "111111111111111111");
-        await LierAsync(serie.TeamB[4], "222222222222222222");
+        await LierADiscordAsync(serie.TeamA[0], "111111111111111111");
+        await LierADiscordAsync(serie.TeamB[4], "222222222222222222");
         var gameId = await PlayGameAsync(organisateur, serie.SeriesId, teamASide: "red");
 
         var game = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/games/{gameId}", Ct));
@@ -71,9 +71,4 @@ public class AccesDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Unauthorized, (await bot.GetAsync("/players", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await bot.GetAsync("/games/1", Ct)).StatusCode);
     }
-
-    /// <summary>L'Utilisateur Discord <paramref name="discordId"/> se connecte et se lie à ce joueur.</summary>
-    private async Task LierAsync(int playerId, string discordId) =>
-        await ReadJsonAsync(await Factory.CreateSignedInClient(discordId)
-            .PostAsJsonAsync("/players/link", new { playerId }, Ct));
 }
