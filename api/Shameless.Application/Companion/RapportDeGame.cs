@@ -45,6 +45,24 @@ public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnl
     public string SideGagnant => Joueurs.First(j => j.Victoire).Side;
 
     /// <summary>
+    /// L'Équipe gagnante dans la game : celle de la plupart des participants détectés sur le Side
+    /// gagnant, même si les Sides de la game sont inversés ; à défaut, l'Équipe qui joue ce Side.
+    /// </summary>
+    public string EquipeGagnanteDans(CustomGame game)
+    {
+        var gagnants = Joueurs.Where(j => j.Victoire).Select(j => j.Puuid).ToHashSet();
+        var parEquipe = game.Participants
+            .Where(p => gagnants.Contains(p.Player.PUUID))
+            .GroupBy(p => game.EquipeOn(p.Side))
+            .Select(g => (Equipe: g.Key, Nombre: g.Count()))
+            .OrderByDescending(g => g.Nombre)
+            .ToList();
+        return parEquipe.Count == 0 || (parEquipe.Count == 2 && parEquipe[0].Nombre == parEquipe[1].Nombre)
+            ? game.EquipeOn(SideGagnant)
+            : parEquipe[0].Equipe;
+    }
+
+    /// <summary>
     /// Ce qui sépare les joueurs détectés de la composition de la game (ses participants,
     /// Remplacements compris) : participants absents du rapport, joueurs détectés qui n'en font pas
     /// partie, participants détectés sur l'autre Side.

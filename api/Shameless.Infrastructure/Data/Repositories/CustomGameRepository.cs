@@ -16,6 +16,9 @@ public class CustomGameRepository : ICustomGameRepository
 
     public void Add(CustomGame game) => _db.CustomGames.Add(game);
 
+    public Task<RapportCompanion?> GetRapportAsync(int id) =>
+        _db.RapportsCompanion.Include(r => r.Game).SingleOrDefaultAsync(r => r.Id == id);
+
     public async Task<CustomGame?> GetByIdAsync(int id)
     {
         return await _db.CustomGames.FindAsync(id);

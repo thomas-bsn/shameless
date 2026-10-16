@@ -553,6 +553,55 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("player_monthly_costs", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.RapportCompanion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Contenu")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("contenu");
+
+                    b.Property<DateTime?>("DecideLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("decide_le");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("game_id");
+
+                    b.Property<DateTime>("RecuLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("recu_le");
+
+                    b.Property<string>("RiotMatchId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("riot_match_id");
+
+                    b.Property<string>("Statut")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("statut");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rapports_companion");
+
+                    b.HasIndex("GameId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_rapports_companion_game_id_en_revue")
+                        .HasFilter("statut = 'en_revue'");
+
+                    b.ToTable("rapports_companion", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.SeriesPlayer", b =>
                 {
                     b.Property<int>("Id")
@@ -786,6 +835,18 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.RapportCompanion", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
+                        .WithMany("Rapports")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_rapports_companion_custom_games_game_id");
+
+                    b.Navigation("Game");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.SeriesPlayer", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.Player", "Player")
@@ -821,6 +882,8 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("DraftChampions");
 
                     b.Navigation("Participants");
+
+                    b.Navigation("Rapports");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>

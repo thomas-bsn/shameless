@@ -25,8 +25,14 @@ public class CustomGame
     public DraftChampions? DraftChampions { get; set; }
 
 
+    /// <summary>Les rapports du Companion mis en revue pour cette game, décidés ou non.</summary>
+    public ICollection<RapportCompanion> Rapports { get; set; } = new List<RapportCompanion>();
+
     // Navigation properties
     public ICollection<CustomGameParticipant> Participants { get; set; } = new List<CustomGameParticipant>();
+
+    /// <summary>Le rapport qui attend la décision de l'organisateur, null s'il n'y en a pas.</summary>
+    public RapportCompanion? RapportEnRevue => Rapports.SingleOrDefault(r => r.Statut == StatutRapport.EnRevue);
 
     public string TeamBSide => Sides.Other(TeamASide);
 
@@ -34,8 +40,9 @@ public class CustomGame
     public string EquipeOn(string side) => side == TeamASide ? Equipes.A : Equipes.B;
 
     /// <summary>
-    /// Garde sur la game et ses participants ce que dit un rapport conforme du Companion : identifiant
-    /// et données Riot de la partie, champion joué et stats de chaque joueur.
+    /// Garde sur la game et ses participants ce que dit un rapport du Companion (conforme, ou accepté
+    /// après revue) : identifiant et données Riot de la partie, champion joué et stats de chaque
+    /// participant détecté. Un participant absent du rapport n'a ni champion ni stats.
     /// </summary>
     public void AppliquerRapport(RapportDeGame rapport)
     {
@@ -44,7 +51,7 @@ public class CustomGame
         var joueurs = rapport.Joueurs.ToDictionary(j => j.Puuid);
         foreach (var participant in Participants)
         {
-            var joueur = joueurs[participant.Player.PUUID];
+            if (!joueurs.TryGetValue(participant.Player.PUUID, out var joueur)) continue;
             participant.ChampionId = joueur.ChampionId;
             participant.RiotParticipantData = joueur.Stats;
         }

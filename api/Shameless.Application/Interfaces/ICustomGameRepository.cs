@@ -9,6 +9,9 @@ public interface ICustomGameRepository
 
     Task<CustomGame?> GetByIdAsync(int id);
     Task<CustomGame?> GetByIdWithParticipantsAsync(int id);
+
+    /// <summary>Un rapport du Companion mis en revue, avec sa game ; null s'il n'existe pas.</summary>
+    Task<RapportCompanion?> GetRapportAsync(int id);
     Task<List<CustomGame>> GetByMonthAsync(DateTime month);
     Task<List<CustomGameParticipant>> GetPlayerGamesForMonthAsync(int playerId, DateTime month);
 

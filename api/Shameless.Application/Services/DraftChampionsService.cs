@@ -44,6 +44,9 @@ public sealed class DraftChampionsService
         if (game == null)
             return CommandResult<DraftChampions>.Conflict(
                 "Aucune game de cette Série n'est en attente : lancez la prochaine game avec son Side avant sa Draft de champions.");
+        if (game.RapportEnRevue != null)
+            return CommandResult<DraftChampions>.Conflict(
+                "Le rapport de la game en attente est en revue : la Draft de champions attend la décision de l'organisateur.");
         if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
             return CommandResult<DraftChampions>.Conflict(
                 "Désignez le capitaine de chaque Équipe avant d'ouvrir la Draft de champions.");

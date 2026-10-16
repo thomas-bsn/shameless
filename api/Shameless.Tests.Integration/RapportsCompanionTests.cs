@@ -26,7 +26,7 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     /// Le rapport d'une game où l'Équipe A (prénoms <paramref name="equipeA"/>) joue
     /// <paramref name="teamASide"/> contre l'Équipe B (<paramref name="equipeB"/>).
     /// </summary>
-    private static object Rapport(
+    internal static object Rapport(
         string riotMatchId,
         string teamASide,
         string gagnante,
@@ -153,11 +153,14 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
             new { replacedPlayerId = serie.TeamA[4], replacementPlayerId = remplacant }, Ct));
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
 
-        var avecLeRemplace = await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B"));
+        var avecLeRemplace = await ReadJsonAsync(await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B")));
+        var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[1].GetProperty("rapportEnRevue");
+        await ReadJsonAsync(await client.PostAsync($"/rapports/{revue.GetProperty("id").GetInt32()}/rejeter", null, Ct));
         var avecLeRemplacant = await EnvoyerAsync(code, Rapport("EUW1_7000000021", teamASide: "blue", gagnante: "B",
             equipeA: ["A1", "A2", "A3", "A4", "C1"]));
 
-        await AssertRefusAsync(avecLeRemplace, HttpStatusCode.Conflict);
+        Assert.Equal("EnRevue", avecLeRemplace.GetProperty("statut").GetString());
+        Assert.Equal(remplacant, Assert.Single(revue.GetProperty("absents").EnumerateArray()).GetProperty("playerId").GetInt32());
         Assert.Equal(HttpStatusCode.OK, avecLeRemplacant.StatusCode);
         var lue = await SerieAsync(client, serie.SeriesId);
         Assert.Equal(1, lue.GetProperty("teamBWins").GetInt32());
@@ -178,10 +181,8 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
 
         var joueurEtranger = await EnvoyerAsync(code, Rapport("EUW1_7000000030", teamASide: "blue", gagnante: "A",
             equipeA: ["A1", "A2", "A3", "A4", "X1"]));
-        var sidesInverses = await EnvoyerAsync(code, Rapport("EUW1_7000000031", teamASide: "red", gagnante: "A"));
 
-        await AssertRefusAsync(joueurEtranger, HttpStatusCode.Conflict);
-        await AssertRefusAsync(sidesInverses, HttpStatusCode.Conflict);
+        Assert.Equal("EnRevue", (await ReadJsonAsync(joueurEtranger)).GetProperty("statut").GetString());
         var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
         Assert.Equal("pending", game.GetProperty("status").GetString());
         Assert.Equal(JsonValueKind.Null, game.GetProperty("riotMatchId").ValueKind);
