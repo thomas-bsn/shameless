@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
-import { DraftChampionsOrganisateur } from "@/components/draft-champions-organisateur";
+import { DraftChampionsOrganisateur, DraftChampionsTerminee } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
@@ -342,16 +342,19 @@ function GamesList({ series }: { series: Series }) {
       </h2>
       <ol className="flex flex-col gap-2">
         {series.games.map((g, index) => (
-          <li key={g.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
-            <span>
-              Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> · Équipe B{" "}
-              <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
-            </span>
-            {g.winner ? (
-              <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
-            ) : (
-              <Badge variant="outline">En attente</Badge>
-            )}
+          <li key={g.id} className="flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> ·
+                Équipe B <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
+              </span>
+              {g.winner ? (
+                <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
+              ) : (
+                <Badge variant="outline">En attente</Badge>
+              )}
+            </div>
+            {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
           </li>
         ))}
       </ol>

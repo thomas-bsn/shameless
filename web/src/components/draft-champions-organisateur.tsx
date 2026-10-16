@@ -58,6 +58,27 @@ export function DraftChampionsOrganisateur({ series, gameId }: { series: Series;
   );
 }
 
+/**
+ * La Draft de champions d'une game terminée, en lecture seule, repliée sous la game. Une game sans
+ * Draft de champions (404) n'affiche rien.
+ */
+export function DraftChampionsTerminee({ gameId }: { gameId: number }) {
+  const draft = $api.useQuery("get", "/games/{gameId}/draft-champions", { params: { path: { gameId } } }, { retry: false });
+  const champions = useChampions();
+
+  if (draft.isPending || (draft.isError && problemStatus(draft.error) === 404)) return null;
+  if (draft.isError) return <ErrorAlert error={draft.error} />;
+
+  return (
+    <details>
+      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Draft de champions</summary>
+      <div className="mt-3">
+        <DraftChampionsView draft={draft.data} champions={champions.data ?? []} equipe={null} jeu={null} avecEquipes={false} />
+      </div>
+    </details>
+  );
+}
+
 /** Ouvre la Draft de champions de la game en attente : il faut un capitaine par Équipe. */
 function OuvrirDraft({
   series,
