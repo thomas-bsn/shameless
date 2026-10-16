@@ -357,27 +357,33 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await OuvrirAsync(client, seriesId));
         await JouerToursAsync(preparee, "blue", 1, 19);
 
-        var lectures = new[]
-        {
-            await LireAsync(client, gameId),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienA)),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur))
-        };
+        var lectures = await LecturesAsync(preparee.LienA);
         Assert.All(lectures, draft => Assert.All(Joueurs(draft), j => Assert.Equal(JsonValueKind.Null, j.GetProperty("role").ValueKind)));
 
         await JouerToursAsync(preparee, "blue", 20, 20);
 
-        lectures =
-        [
-            await LireAsync(client, gameId),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienB)),
-            await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur))
-        ];
+        lectures = await LecturesAsync(preparee.LienB);
         Assert.All(lectures, draft =>
         {
             Assert.Equal(["Adc", "Jungle", "Mid", "Support", "Top"], draft.GetProperty("teamA").EnumerateArray().Select(j => j.GetProperty("role").GetString()).Order());
             Assert.Equal(["Adc", "Jungle", "Mid", "Support", "Top"], draft.GetProperty("teamB").EnumerateArray().Select(j => j.GetProperty("role").GetString()).Order());
         });
+
+        // La Draft de champions, par l'organisateur et par les liens, et la Série elle-même (seule, en
+        // cours, dans sa Soirée) : toutes les lectures qui portent les rôles de l'Autorole.
+        async Task<JsonElement[]> LecturesAsync(string lienCapitaine)
+        {
+            var soireeId = serieLue.GetProperty("soireeId").GetInt32();
+            return
+            [
+                await LireAsync(client, gameId),
+                await ReadJsonAsync(await LireParLienAsync(lienCapitaine)),
+                await ReadJsonAsync(await LireParLienAsync(preparee.LienSpectateur)),
+                await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct)),
+                (await ReadJsonAsync(await client.GetAsync("/series/active", Ct))).GetProperty("series")[0],
+                (await ReadJsonAsync(await client.GetAsync($"/soirees/{soireeId}/series", Ct))).GetProperty("series")[0]
+            ];
+        }
 
         static IEnumerable<JsonElement> Joueurs(JsonElement draft) =>
             draft.GetProperty("teamA").EnumerateArray().Concat(draft.GetProperty("teamB").EnumerateArray());

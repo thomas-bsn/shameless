@@ -1,3 +1,5 @@
+using Shameless.Application.Picker;
+
 namespace Shameless.Application.Entities;
 
 /// <summary>
@@ -100,6 +102,15 @@ public class BestOfSeries
         foreach (var player in PlayersOf(capitaine.Equipe))
             player.Capitaine = player == capitaine;
     }
+
+    /// <summary>
+    /// Une Draft de champions est en cours sur une game de la Série : les rôles de l'Autorole restent
+    /// cachés jusqu'à sa fin. Demande les games et leur Draft de champions chargées.
+    /// </summary>
+    public bool RolesCaches => Games.Any(g => g.DraftChampions is { EstTerminee: false });
+
+    /// <summary>Le rôle attribué par l'Autorole au joueur de la composition courante, null sans Autorole.</summary>
+    public Role? RoleOf(int playerId) => Players.FirstOrDefault(p => p.PlayerId == playerId)?.Role;
 
     /// <summary>Le Capitaine de l'Équipe, ou null tant qu'aucun n'est désigné.</summary>
     public int? CapitaineOf(string equipe) => PlayersOf(equipe).SingleOrDefault(p => p.Capitaine)?.PlayerId;

@@ -21,7 +21,7 @@ public sealed class DraftChampionsConfiguration : IEntityTypeConfiguration<Draft
 
         // Une seule Draft de champions par game ; elle disparaît avec sa game (Série annulée).
         entity.HasOne(e => e.Game)
-              .WithOne()
+              .WithOne(g => g.DraftChampions)
               .HasForeignKey<DraftChampions>(e => e.GameId)
               .OnDelete(DeleteBehavior.Cascade);
 

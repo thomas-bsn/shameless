@@ -347,6 +347,7 @@ public sealed class SeriesService
     public async Task<List<SeriesResponse>> GetOfSoireeAsync(int soireeId) =>
         (await _series.GetBySoireeWithGamesAsync(soireeId)).Select(ToResponse).ToList();
 
+    /// <summary>La Série lue ; les rôles de l'Autorole n'y figurent pas pendant une Draft de champions.</summary>
     private static SeriesResponse ToResponse(BestOfSeries series) => new(
         SeriesId: series.Id,
         SoireeId: series.SoireeId,
@@ -357,8 +358,8 @@ public sealed class SeriesService
         WinningTeam: series.WinningTeam,
         TeamAWins: series.TeamAWins,
         TeamBWins: series.TeamBWins,
-        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
-        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, p.Role)).ToList(),
+        TeamA: series.PlayersOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
+        TeamB: series.PlayersOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player, series.RolesCaches ? null : p.Role)).ToList(),
         CapitaineA: series.CapitaineOf(Equipes.A),
         CapitaineB: series.CapitaineOf(Equipes.B),
         Games: series.Games.Select(SeriesGameResponse.From).ToList());
