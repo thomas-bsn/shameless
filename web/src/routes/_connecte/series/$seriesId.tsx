@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
+import { DraftChampionsOrganisateur } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
@@ -65,6 +66,7 @@ function SeriePage() {
 function SerieView({ series }: { series: Series }) {
   const enCours = series.outcome === "EnCours";
   const refresh = useRefreshSeries();
+  const pending = pendingGame(series);
 
   return (
     <>
@@ -93,6 +95,7 @@ function SerieView({ series }: { series: Series }) {
         <>
           <CapitainesLiensPanel series={series} onSeriesChanged={refresh} />
           <GamePanel series={series} />
+          {pending && <DraftChampionsOrganisateur key={pending.id} series={series} gameId={pending.id} />}
           <ReplacementPanel series={series} />
           <StopPanel series={series} />
         </>
