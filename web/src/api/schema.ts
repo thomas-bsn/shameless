@@ -3199,6 +3199,13 @@ export interface components {
             /** Format: int32 */
             playerId: null | number;
         };
+        DonneesDuMatch: {
+            /** Format: int32 */
+            durationSeconds: null | number;
+            gameMode: null | string;
+            gameType: null | string;
+            gameVersion: null | string;
+        };
         DraftChampionsResponse: {
             /** Format: int32 */
             gameId: number;
@@ -3227,6 +3234,19 @@ export interface components {
         GameHistoryListResponse: {
             games: components["schemas"]["SeriesHistoryResponse"][];
         };
+        GameHistoryParticipantDto: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            rankTier: null | string;
+            /** Format: int32 */
+            rankDivision: null | number;
+            /** Format: double */
+            cost: null | number;
+            championId: null | string;
+            stats: null | components["schemas"]["StatsDuParticipant"];
+        };
         GameHistoryResponse: {
             /** Format: int32 */
             id: number;
@@ -3237,8 +3257,10 @@ export interface components {
             teamASide: string;
             teamBSide: string;
             winner: null | string;
-            teamA: components["schemas"]["GameParticipantDto"][];
-            teamB: components["schemas"]["GameParticipantDto"][];
+            riotMatchId: null | string;
+            match: null | components["schemas"]["DonneesDuMatch"];
+            teamA: components["schemas"]["GameHistoryParticipantDto"][];
+            teamB: components["schemas"]["GameHistoryParticipantDto"][];
         };
         GameParticipantDto: {
             prenom: string;
@@ -3553,6 +3575,43 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        StatsDuParticipant: {
+            /** Format: int32 */
+            kills: null | number;
+            /** Format: int32 */
+            deaths: null | number;
+            /** Format: int32 */
+            assists: null | number;
+            /** Format: int32 */
+            minionsKilled: null | number;
+            /** Format: int32 */
+            neutralMinionsKilled: null | number;
+            /** Format: int32 */
+            damageToChampions: null | number;
+            /** Format: int32 */
+            damageTaken: null | number;
+            /** Format: int32 */
+            goldEarned: null | number;
+            /** Format: int32 */
+            visionScore: null | number;
+            /** Format: int32 */
+            wardsPlaced: null | number;
+            /** Format: int32 */
+            wardsKilled: null | number;
+            /** Format: int32 */
+            controlWardsBought: null | number;
+            /** Format: int32 */
+            damageToObjectives: null | number;
+            /** Format: int32 */
+            turretKills: null | number;
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            champLevel: null | number;
+            position: null | components["schemas"]["Role"];
+        };
         /** @enum {unknown} */
         StatutRapport: "Accepte" | "EnRevue" | "Rejete";
         StopSeriesResponse: {

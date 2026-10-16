@@ -1,6 +1,7 @@
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Stats;
 using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Application.Services;
@@ -56,8 +57,10 @@ public class CustomGameService
                         TeamASide: g.TeamASide,
                         TeamBSide: g.TeamBSide,
                         Winner: g.WinningTeam,
-                        TeamA: g.ParticipantsOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player)).ToList(),
-                        TeamB: g.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList()
+                        RiotMatchId: g.RiotMatchId,
+                        Match: DonneesDuMatch.Lire(g.RiotMatchData),
+                        TeamA: g.ParticipantsOf(Equipes.A).Select(GameHistoryParticipantDto.From).ToList(),
+                        TeamB: g.ParticipantsOf(Equipes.B).Select(GameHistoryParticipantDto.From).ToList()
                     )).ToList()
                 );
             })

@@ -3711,6 +3711,42 @@
           }
         }
       },
+      "DonneesDuMatch": {
+        "required": [
+          "durationSeconds",
+          "gameMode",
+          "gameType",
+          "gameVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "durationSeconds": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameMode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gameType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gameVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "DraftChampionsResponse": {
         "required": [
           "gameId",
@@ -3839,6 +3875,67 @@
           }
         }
       },
+      "GameHistoryParticipantDto": {
+        "required": [
+          "playerId",
+          "prenom",
+          "riotId",
+          "rankTier",
+          "rankDivision",
+          "cost",
+          "championId",
+          "stats"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "rankTier": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rankDivision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "cost": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "championId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stats": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatsDuParticipant"
+              }
+            ]
+          }
+        }
+      },
       "GameHistoryResponse": {
         "required": [
           "id",
@@ -3847,6 +3944,8 @@
           "teamASide",
           "teamBSide",
           "winner",
+          "riotMatchId",
+          "match",
           "teamA",
           "teamB"
         ],
@@ -3879,16 +3978,32 @@
               "string"
             ]
           },
+          "riotMatchId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "match": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DonneesDuMatch"
+              }
+            ]
+          },
           "teamA": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GameParticipantDto"
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
             }
           },
           "teamB": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GameParticipantDto"
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
             }
           }
         }
@@ -5146,6 +5261,160 @@
           "Open",
           "Closed"
         ]
+      },
+      "StatsDuParticipant": {
+        "required": [
+          "kills",
+          "deaths",
+          "assists",
+          "minionsKilled",
+          "neutralMinionsKilled",
+          "damageToChampions",
+          "damageTaken",
+          "goldEarned",
+          "visionScore",
+          "wardsPlaced",
+          "wardsKilled",
+          "controlWardsBought",
+          "damageToObjectives",
+          "turretKills",
+          "dragonKills",
+          "baronKills",
+          "champLevel",
+          "position"
+        ],
+        "type": "object",
+        "properties": {
+          "kills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "deaths": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "assists": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "minionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "neutralMinionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageTaken": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "goldEarned": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "visionScore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsPlaced": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "controlWardsBought": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageToObjectives": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "turretKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dragonKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "baronKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "champLevel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "position": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        }
       },
       "StatutRapport": {
         "enum": [

@@ -5,7 +5,7 @@ import { mockApi } from "@/test/api";
 import { user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
-const team = (...prenoms: string[]): Schemas["GameParticipantDto"][] =>
+const team = (...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
   prenoms.map((prenom, i) => ({
     prenom,
     riotId: `${prenom}#EUW`,
@@ -13,7 +13,8 @@ const team = (...prenoms: string[]): Schemas["GameParticipantDto"][] =>
     rankDivision: 2,
     cost: 3,
     playerId: i + 1,
-    role: null,
+    championId: null,
+    stats: null,
   }));
 
 const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({
@@ -23,6 +24,8 @@ const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): 
   teamASide,
   teamBSide: teamASide === "blue" ? "red" : "blue",
   winner,
+  riotMatchId: null,
+  match: null,
   teamA: team("Alice", "Bob"),
   teamB: team("Chloé", "Dan"),
 });
