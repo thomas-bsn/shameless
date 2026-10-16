@@ -12,7 +12,8 @@ public static class RapportsDeTest
     /// Chaque joueur joue le champion de même rang dans <paramref name="champions"/> (A puis B), par
     /// défaut <see cref="ChampionsA"/> puis <see cref="ChampionsB"/>. Le rapport est vu par le joueur
     /// <paramref name="emetteur"/> : ses stats et ses données diffèrent d'un émetteur à l'autre, comme
-    /// deux Companions qui n'envoient pas exactement les mêmes données.
+    /// deux Companions qui n'envoient pas exactement les mêmes données. <paramref name="statsDe"/>
+    /// remplace les stats du joueur de rang i (A puis B), <paramref name="donnees"/> celles de la partie.
     /// </summary>
     public static object Rapport(
         string riotMatchId,
@@ -21,7 +22,9 @@ public static class RapportsDeTest
         string[]? equipeA = null,
         string[]? equipeB = null,
         string[]? champions = null,
-        int emetteur = 0)
+        int emetteur = 0,
+        Func<int, object>? statsDe = null,
+        object? donnees = null)
     {
         equipeA ??= ["A1", "A2", "A3", "A4", "A5"];
         equipeB ??= ["B1", "B2", "B3", "B4", "B5"];
@@ -35,13 +38,13 @@ public static class RapportsDeTest
                 side = j.Side,
                 championId = champions[i],
                 victoire = j.Victoire,
-                stats = new { kills = i + emetteur, deaths = 2, assists = 7, totalDamageDealtToChampions = 12000 + i }
+                stats = statsDe?.Invoke(i) ?? new { kills = i + emetteur, deaths = 2, assists = 7, totalDamageDealtToChampions = 12000 + i }
             })
             .ToArray();
         return new
         {
             riotMatchId,
-            donnees = new { gameDuration = 1834 + emetteur, gameMode = "CLASSIC", gameType = "CUSTOM_GAME" },
+            donnees = donnees ?? new { gameDuration = 1834 + emetteur, gameMode = "CLASSIC", gameType = "CUSTOM_GAME" },
             joueurs
         };
     }

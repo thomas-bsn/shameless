@@ -160,7 +160,7 @@ function TeamColumn({
 }: {
   team: string;
   side: "blue" | "red";
-  players: Schemas["GameParticipantDto"][];
+  players: Schemas["GameHistoryParticipantDto"][];
   won: boolean;
 }) {
   const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;

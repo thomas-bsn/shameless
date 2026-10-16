@@ -82,13 +82,38 @@ champions d'une Série.
 ## Niveau des joueurs
 
 - **Rang SoloQ** : le rang classé d'un joueur en solo, lu via l'API Riot.
+- **Flex** : la file classée en groupe (`RANKED_FLEX_SR`), distincte de la SoloQ. Son  
+rang actuel est lu via l'API Riot et affiché à part ; il n'entre ni dans le cost ni  
+dans le MMR.
 - **Peak** : le meilleur rang qu'un joueur déclare avoir atteint (tier, division,  
 saison).
-- **MMR** : score interne calculé à partir du peak, puis ajusté par le winrate du mois  
-en customs. Ce n'est pas un Elo.
-- **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6, affichée en  
-tiers D, C, B, A, S, SS. Dérivé du MMR, recalculé après chaque game, remis à zéro  
-chaque mois (`PlayerMonthlyCost`).
+- **MMR** : barème interne qui convertit un rang SoloQ en cost de départ. Ce n'est pas  
+un Elo.
+- **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6 au dixième,  
+affichée en tiers D, C, B, A, S, SS. Recalculé après chaque game terminée du mois  
+depuis le cost de départ du mois, la note de performance moyenne et le winrate, la  
+performance pesant plus que le winrate ; il ne bouge qu'à partir de cinq games  
+terminées dans le mois, dont au moins une notée : le winrate seul ne le fait pas  
+évoluer (ADR 0012).
+- **Cost de départ** : le cost fixé par un admin pour le mois, sinon le cost final du  
+mois précédent ; sans historique de cost, celui du Rang SoloQ actuel (pas du Peak). Le  
+cost n'est jamais remis à zéro.
+- **Cost mensuel** : le cost d'un joueur pour un mois, conservé mois par mois dans  
+`PlayerMonthlyCost` ; un nouveau mois n'efface pas l'historique.
+- **Note de performance** : la note de 0 à 100 d'un joueur pour une game, calculée depuis  
+ses stats envoyées par le Companion. Chaque critère (KDA, KP, CS, dégâts, vision,  
+objectifs) est noté par rapport aux références du rôle joué, puis pondéré selon ce rôle  
+(ADR 0011). Elle ne tient pas compte du résultat de la game.
+- **Fiche Joueur** : la page d'un joueur : ses stats de customs sur ses games terminées  
+(winrate, KDA, CS/min, KP, dégâts, note de performance moyenne), par champion et par  
+rôle joué, l'historique de ses games avec leur note, son compte Discord lié, son cost  
+actuel et ses rangs SoloQ et Flex actuels.
+- **Classement 5v5** : le classement des joueurs de l'instance sur les customs : par  
+winrate sur les games terminées (Séries interrompues comprises), puis par games jouées.  
+Un joueur sans game terminée y figure, en fin de classement.
+- **Classement SoloQ** : le classement des joueurs de l'instance par rang Riot actuel,  
+une liste par file classée (SoloQ et Flex). Le Peak n'y entre pas ; un joueur non  
+classé dans une file y figure, en fin de liste.
 
 ## Votes et titres
 

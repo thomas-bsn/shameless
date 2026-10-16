@@ -1,4 +1,5 @@
 ﻿using Shameless.Application.DTOs.Players;
+using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public class PlayerService : IPlayerService
         var puuid = await _riot.GetPuuidFromRiotIdAsync(riotId);
         if (puuid == null) return null;
 
-        var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var rank = (await _riot.GetRanksFromPuuidAsync(puuid)).Solo;
         var (tier, division) = NormalizeRank(rank);
 
         return new RiotAccountPreview(
@@ -59,9 +60,11 @@ public class PlayerService : IPlayerService
         if (await _players.ExistsByPuuidAsync(puuid))
             throw new InvalidOperationException("Player already exists");
 
-        var rank = await _riot.GetRankFromPuuidAsync(puuid);
+        var ranks = await _riot.GetRanksFromPuuidAsync(puuid);
+        var rank = ranks.Solo;
         var mainRole = await _riot.GetMainRoleFromPuuidAsync(puuid);
         var (tier, division) = NormalizeRank(rank);
+        var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
 
         var player = new PlayerDto
         {
@@ -71,7 +74,12 @@ public class PlayerService : IPlayerService
             MainRole = mainRole,
             RankTier = tier,
             RankDivision = division,
-            Lp = rank?.LP
+            Lp = rank?.LP,
+            FlexRankTier = flexTier,
+            FlexRankDivision = flexDivision,
+            FlexLp = ranks.Flex?.LP,
+            // Sans historique de cost, le Rang SoloQ donne le cost initial (ADR 0012).
+            CurrentCost = CostDeDepart.DuRangSoloQ(tier, division).Cost
         };
 
         var created = await _players.AddAsync(player);
@@ -145,16 +153,6 @@ public class PlayerService : IPlayerService
         return true;
     }
 
-    public async Task<bool> SetCostAsync(int playerId, decimal cost)
-    {
-        var player = await _players.GetByIdAsync(playerId);
-        if (player is null) return false;
-
-        player.CurrentCost = cost;
-        await _players.UpdateAsync(player);
-        return true;
-    }
-
     public async Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId)
     {
         var discordIdLong = long.Parse(discordUserId);
@@ -174,16 +172,14 @@ public class PlayerService : IPlayerService
 
             try
             {
-                var rank = await _riot.GetRankFromPuuidAsync(player.Puuid);
+                var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid);
 
-                if (rank != null)
-                {
-                    var tier = rank.Tier?.ToUpper();
-                    var division = (tier is "MASTER" or "GRANDMASTER" or "CHALLENGER")
-                        ? null
-                        : (int?)ParseDivision(rank.Division);
-                    await _players.UpdateRankAsync(player.Id, tier, division, rank.LP);
-                }
+                // Riot a répondu : une file absente de la réponse, c'est un joueur non classé dans
+                // cette file. Si l'appel échoue, les derniers rangs connus restent.
+                var (soloTier, soloDivision) = NormalizeRank(ranks.Solo);
+                await _players.UpdateRankAsync(player.Id, soloTier, soloDivision, ranks.Solo?.LP);
+                var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
+                await _players.UpdateFlexRankAsync(player.Id, flexTier, flexDivision, ranks.Flex?.LP);
             }
             catch (Exception ex)
             {

@@ -48,8 +48,9 @@ public class ArretSerieTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Empty((await ReadJsonAsync(await client.GetAsync("/games/pending", Ct))).EnumerateArray());
         var active = await ReadJsonAsync(await client.GetAsync("/series/active", Ct));
         Assert.Empty(active.GetProperty("series").EnumerateArray());
-        // Après 3 games (2 victoires, 1 défaite pour l'Équipe A) : l'ajustement de winrate est de ±3 ((2/3 - 50 %) × 150 × 3/20, tronqué).
-        Assert.Equal((3, -3), (costsAvant.A.GetProperty("winrateAdjustment").GetInt32(), costsAvant.B.GetProperty("winrateAdjustment").GetInt32()));
+        // Les 3 games terminées comptent dans le cost du mois (2 victoires pour l'Équipe A, 1 pour la B).
+        Assert.Equal((3, 2, 1), (costsAvant.A.GetProperty("gamesTerminees").GetInt32(),
+            costsAvant.A.GetProperty("victoires").GetInt32(), costsAvant.B.GetProperty("victoires").GetInt32()));
         var costsApres = await CostsAsync(client, serie);
         Assert.Equal(costsAvant.A.ToString(), costsApres.A.ToString());
         Assert.Equal(costsAvant.B.ToString(), costsApres.B.ToString());

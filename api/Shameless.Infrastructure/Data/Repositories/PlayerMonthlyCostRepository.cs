@@ -13,32 +13,33 @@ public class PlayerMonthlyCostRepository : IPlayerMonthlyCostRepository
         _db = db;
     }
 
-    public async Task<List<PlayerMonthlyCost>> GetByMonthAsync(DateTime month)
-    {
-        var startOfMonth = new DateTime(month.Year, month.Month, 1);
-        
-        return await _db.PlayerMonthlyCosts
-            .Where(c => c.Month == startOfMonth)
+    public async Task<List<PlayerMonthlyCost>> GetByPlayerAsync(int playerId) =>
+        await _db.PlayerMonthlyCosts
+            .AsNoTracking()
+            .Where(c => c.PlayerId == playerId)
+            .OrderBy(c => c.Month)
             .ToListAsync();
-    }
 
-    public async Task<PlayerMonthlyCost?> GetByPlayerAndMonthAsync(int playerId, DateTime month)
+    public async Task UpsertAsync(PlayerMonthlyCost monthlyCost)
     {
-        var startOfMonth = new DateTime(month.Year, month.Month, 1);
-        
-        return await _db.PlayerMonthlyCosts
-            .FirstOrDefaultAsync(c => c.PlayerId == playerId && c.Month == startOfMonth);
-    }
-
-    public async Task AddAsync(PlayerMonthlyCost monthlyCost)
-    {
-        _db.PlayerMonthlyCosts.Add(monthlyCost);
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task AddRangeAsync(List<PlayerMonthlyCost> monthlyCosts)
-    {
-        _db.PlayerMonthlyCosts.AddRange(monthlyCosts);
-        await _db.SaveChangesAsync();
+        var mois = DateOnly.FromDateTime(monthlyCost.Month);
+        var source = monthlyCost.SourceDuCostDeDepart?.ToString();
+        // Unique (player_id, month) : deux games terminées en même temps écrivent la même ligne.
+        await _db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO player_monthly_costs
+                (player_id, month, final_cost, cost_de_depart, source_du_cost_de_depart, note_moyenne,
+                 base_mmr, winrate_adjustment, games_played, wins)
+            VALUES
+                ({monthlyCost.PlayerId}, {mois}, {monthlyCost.FinalCost}, {monthlyCost.CostDeDepart}, {source},
+                 {monthlyCost.NoteMoyenne}, {monthlyCost.BaseMMR}, {monthlyCost.WinrateAdjustment},
+                 {monthlyCost.GamesPlayed}, {monthlyCost.Wins})
+            ON CONFLICT (player_id, month) DO UPDATE SET
+                final_cost = EXCLUDED.final_cost,
+                cost_de_depart = EXCLUDED.cost_de_depart,
+                source_du_cost_de_depart = EXCLUDED.source_du_cost_de_depart,
+                note_moyenne = EXCLUDED.note_moyenne,
+                games_played = EXCLUDED.games_played,
+                wins = EXCLUDED.wins
+            """);
     }
 }

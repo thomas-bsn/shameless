@@ -10,6 +10,10 @@ public class PlayerDto
     public int? RankDivision { get; set; }
     public string? MainRole { get; set; }
     public int? Lp { get; set; }
+    /// <summary>Rang actuel en file Flex ; null si le Joueur n'y est pas classé.</summary>
+    public string? FlexRankTier { get; set; }
+    public int? FlexRankDivision { get; set; }
+    public int? FlexLp { get; set; }
     public string? PeakTier { get; set; }
     public int? PeakDivision { get; set; }
     public string? PeakSeason { get; set; }

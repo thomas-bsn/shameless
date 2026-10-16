@@ -440,6 +440,18 @@ namespace Shameless.Infrastructure.Migrations
                         .HasDefaultValue(0m)
                         .HasColumnName("current_cost");
 
+                    b.Property<int?>("FlexLp")
+                        .HasColumnType("integer")
+                        .HasColumnName("flex_lp");
+
+                    b.Property<int?>("FlexRankDivision")
+                        .HasColumnType("integer")
+                        .HasColumnName("flex_rank_division");
+
+                    b.Property<string>("FlexRankTier")
+                        .HasColumnType("text")
+                        .HasColumnName("flex_rank_tier");
+
                     b.Property<bool>("IsPlacement")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -523,6 +535,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("base_mmr");
 
+                    b.Property<decimal?>("CostDeDepart")
+                        .HasColumnType("numeric(3,1)")
+                        .HasColumnName("cost_de_depart");
+
                     b.Property<decimal>("FinalCost")
                         .HasColumnType("numeric(3,1)")
                         .HasColumnName("final_cost");
@@ -535,9 +551,18 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("month");
 
+                    b.Property<decimal?>("NoteMoyenne")
+                        .HasColumnType("numeric(4,1)")
+                        .HasColumnName("note_moyenne");
+
                     b.Property<int>("PlayerId")
                         .HasColumnType("integer")
                         .HasColumnName("player_id");
+
+                    b.Property<string>("SourceDuCostDeDepart")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source_du_cost_de_depart");
 
                     b.Property<int>("WinrateAdjustment")
                         .HasColumnType("integer")

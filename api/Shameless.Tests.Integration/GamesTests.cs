@@ -62,11 +62,11 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("blue", game.GetProperty("teamASide").GetString());
         Assert.Equal("red", game.GetProperty("teamBSide").GetString());
 
-        // DIAMOND IV = 2300 MMR → cost 4 ; sans peak = 0 MMR → cost 1 (moins de 3 games : pas d'ajustement)
+        // Moins de cinq games : chacun garde son cost de départ, celui de son Rang SoloQ GOLD II (le peak ne compte pas).
         var a1 = game.GetProperty("teamA").EnumerateArray().Single(p => p.GetProperty("prenom").GetString() == "A1");
-        Assert.Equal(4m, a1.GetProperty("cost").GetDecimal());
+        Assert.Equal(2m, a1.GetProperty("cost").GetDecimal());
         var b1 = game.GetProperty("teamB").EnumerateArray().Single(p => p.GetProperty("prenom").GetString() == "B1");
-        Assert.Equal(1m, b1.GetProperty("cost").GetDecimal());
+        Assert.Equal(2m, b1.GetProperty("cost").GetDecimal());
     }
 
     [Fact]
@@ -92,24 +92,38 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Une_game_lancee_mais_pas_terminee_ne_compte_pas_dans_les_games_du_mois()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 5);
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await PlayGameAsync(client, serie.SeriesId);
+
+        var cost = await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamA[0]}/cost", Ct));
+        Assert.Equal(2, cost.GetProperty("gamesTerminees").GetInt32());
+    }
+
+    [Fact]
     public async Task Le_cost_est_recalcule_apres_chaque_game_et_compte_les_victoires_de_l_equipe_quel_que_soit_son_side()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 5);
 
-        // L'Équipe A gagne trois games en changeant de Side à chaque fois
-        decimal Adjustment(System.Text.Json.JsonElement cost) => cost.GetProperty("winrateAdjustment").GetDecimal();
-        var adjustments = new List<decimal>();
-        foreach (var side in new[] { "blue", "red", "blue" })
+        // Les Équipes changent de Side à chaque game : A gagne en bleu, B en rouge.
+        var suivi = new List<(int, decimal)>();
+        foreach (var (gagnante, side) in new[] { ("A", "blue"), ("B", "red"), ("A", "blue"), ("B", "red"), ("A", "blue") })
         {
-            await PlayAndWinAsync(client, serie.SeriesId, "A", side);
-            adjustments.Add(Adjustment(await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamA[0]}/cost", Ct))));
+            await PlayAndWinAsync(client, serie.SeriesId, gagnante, side);
+            var a = await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamA[0]}/cost", Ct));
+            suivi.Add((a.GetProperty("victoires").GetInt32(), a.GetProperty("cost").GetDecimal()));
         }
 
-        // Moins de 3 games : pas d'ajustement. 3 games : confiance 3/20, (winrate - 50 %) × 150 × 0,15 = ±11
-        Assert.Equal([0, 0, 11], adjustments);
+        // Games saisies à la main, sans note de performance : le winrate seul ne fait pas évoluer le
+        // cost (ADR 0012), mais chaque victoire compte pour l'Équipe gagnante, quel que soit son Side.
+        Assert.Equal([(1, 2m), (1, 2m), (2, 2m), (2, 2m), (3, 2m)], suivi);
         var b = await ReadJsonAsync(await client.GetAsync($"/players/{serie.TeamB[0]}/cost", Ct));
-        Assert.Equal(-11, Adjustment(b));
+        Assert.Equal((2, 2m), (b.GetProperty("victoires").GetInt32(), b.GetProperty("cost").GetDecimal()));
     }
 
     [Fact]

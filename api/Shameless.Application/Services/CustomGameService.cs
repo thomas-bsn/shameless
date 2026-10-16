@@ -1,6 +1,7 @@
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Stats;
 using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Application.Services;
@@ -49,16 +50,24 @@ public class CustomGameService
                     PlayedAt: series?.PlayedAt ?? firstGame.PlayedAt,
                     Outcome: series?.Outcome,
                     WinningTeam: series?.WinningTeam,
-                    Games: group.Select(g => new GameHistoryResponse(
-                        Id: g.Id,
-                        SeriesId: g.SeriesId,
-                        PlayedAt: g.PlayedAt,
-                        TeamASide: g.TeamASide,
-                        TeamBSide: g.TeamBSide,
-                        Winner: g.WinningTeam,
-                        TeamA: g.ParticipantsOf(Equipes.A).Select(p => GameParticipantDto.From(p.Player)).ToList(),
-                        TeamB: g.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList()
-                    )).ToList()
+                    Games: group.Select(g =>
+                    {
+                        var notes = NotesDeLaGame.Calculer(g);
+                        List<GameHistoryParticipantDto> Equipe(string equipe) => g.ParticipantsOf(equipe)
+                            .Select(p => GameHistoryParticipantDto.From(p, notes[p.PlayerId]))
+                            .ToList();
+                        return new GameHistoryResponse(
+                            Id: g.Id,
+                            SeriesId: g.SeriesId,
+                            PlayedAt: g.PlayedAt,
+                            TeamASide: g.TeamASide,
+                            TeamBSide: g.TeamBSide,
+                            Winner: g.WinningTeam,
+                            RiotMatchId: g.RiotMatchId,
+                            Match: DonneesDuMatch.Lire(g.RiotMatchData),
+                            TeamA: Equipe(Equipes.A),
+                            TeamB: Equipe(Equipes.B));
+                    }).ToList()
                 );
             })
             .OrderByDescending(s => s.PlayedAt)

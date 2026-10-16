@@ -31,6 +31,8 @@ public static class ServiceCollectionExtensions
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
         services.AddScoped<CustomGameService>();
+        services.AddScoped<ClassementsService>();
+        services.AddScoped<FicheJoueurService>();
         services.AddScoped<CostCalculationService>();
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();

@@ -11,6 +11,11 @@ public class Player
     public string? MainRole { get; set; }
     public DateTime CreatedAt { get; set; }
     public int? LP { get; set; }
+
+    /// <summary>Rang actuel en file Flex (RANKED_FLEX_SR), même format que le Rang SoloQ ; null si non classé.</summary>
+    public string? FlexRankTier { get; set; }
+    public int? FlexRankDivision { get; set; }
+    public int? FlexLp { get; set; }
     public int? UserId { get; set; }
     public User? User { get; set; }
     public string? PeakTier { get; set; }

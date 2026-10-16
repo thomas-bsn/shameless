@@ -36,10 +36,10 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
 
 ### 1c. Stats et historique
-- [ ] RiotMatchData / RiotParticipantData remplis
-- [ ] Stats joueur : winrate, KDA, CS/min, KP, dégâts, champions, rôles
-- [ ] Fiche joueur : champions, rôle, perfs, Discord, cost, historique, rang SoloQ
-- [ ] Classements SoloQ et 5v5, reset mensuel du cost (PlayerMonthlyCost)
+- [x] RiotMatchData / RiotParticipantData remplis
+- [x] Stats joueur : winrate, KDA, CS/min, KP, dégâts, champions, rôles
+- [x] Fiche joueur : champions, rôle, perfs, Discord, cost, historique, rang SoloQ
+- [x] Classements SoloQ et 5v5, cost mensuel conservé mois par mois (PlayerMonthlyCost)
 
 ### 1d. Bot Discord (repo séparé, Python)
 - [ ] Réécriture : un cog par projet, config env, base de données, Docker

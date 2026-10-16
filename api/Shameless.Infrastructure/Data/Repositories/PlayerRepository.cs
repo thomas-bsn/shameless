@@ -43,6 +43,18 @@ public class PlayerRepository : IPlayerRepository
         await _db.SaveChangesAsync();
     }
 
+    public async Task UpdateFlexRankAsync(int id, string? tier, int? division, int? lp)
+    {
+        var player = await _db.Players.FindAsync(id);
+        if (player == null) return;
+
+        player.FlexRankTier = tier;
+        player.FlexRankDivision = division;
+        player.FlexLp = lp;
+
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<PlayerDto> AddAsync(PlayerDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Prenom))
@@ -61,6 +73,10 @@ public class PlayerRepository : IPlayerRepository
             MainRole = dto.MainRole,
             CreatedAt = _clock.GetUtcNow().UtcDateTime,
             LP = dto.Lp,
+            FlexRankTier = dto.FlexRankTier,
+            FlexRankDivision = dto.FlexRankDivision,
+            FlexLp = dto.FlexLp,
+            CurrentCost = dto.CurrentCost,
         };
 
         _db.Players.Add(player);
@@ -125,6 +141,9 @@ public class PlayerRepository : IPlayerRepository
     public async Task<Player?> GetByIdAsync(int id) =>
         await _db.Players.FindAsync(id);
 
+    public Task<Player?> GetWithUserAsync(int id) =>
+        _db.Players.AsNoTracking().Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+
     public async Task<List<Player>> GetByIdsAsync(List<int> ids) =>
         await _db.Players.Where(p => ids.Contains(p.Id)).ToListAsync();
 
@@ -156,6 +175,9 @@ public class PlayerRepository : IPlayerRepository
         RankDivision = p.RankDivision,
         MainRole = p.MainRole,
         Lp = p.LP,
+        FlexRankTier = p.FlexRankTier,
+        FlexRankDivision = p.FlexRankDivision,
+        FlexLp = p.FlexLp,
         PeakTier = p.PeakTier,
         PeakDivision = p.PeakDivision,
         PeakSeason = p.PeakSeason,

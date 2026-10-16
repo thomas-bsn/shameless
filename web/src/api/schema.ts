@@ -207,6 +207,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/classements/5v5": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["Classement5v5"];
+                        "application/json": components["schemas"]["Classement5v5"];
+                        "text/json": components["schemas"]["Classement5v5"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/classements/soloq": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClassementSoloQ"];
+                        "application/json": components["schemas"]["ClassementSoloQ"];
+                        "text/json": components["schemas"]["ClassementSoloQ"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/code-companion": {
         parameters: {
             query?: never;
@@ -1800,6 +1892,72 @@ export interface paths {
                         "text/json": components["schemas"]["PlayerDto"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/{playerId}/fiche": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FicheJoueur"];
+                        "application/json": components["schemas"]["FicheJoueur"];
+                        "text/json": components["schemas"]["FicheJoueur"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Erreur */
                 default: {
                     headers: {
@@ -1994,6 +2152,15 @@ export interface paths {
                         "text/json": components["schemas"]["PlayerCostResponse"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Erreur */
                 default: {
                     headers: {
@@ -2040,6 +2207,63 @@ export interface paths {
                 };
             };
         };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/players/{playerId}/cost/historique": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlayerCostHistoryResponse"];
+                        "application/json": components["schemas"]["PlayerCostHistoryResponse"];
+                        "text/json": components["schemas"]["PlayerCostHistoryResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -3167,10 +3391,45 @@ export interface components {
             name: string;
             imageUrl: string;
         };
+        Classement5v5: {
+            joueurs: components["schemas"]["LigneClassement5v5"][];
+        };
+        ClassementSoloQ: {
+            solo: components["schemas"]["LigneClassementSoloQ"][];
+            flex: components["schemas"]["LigneClassementSoloQ"][];
+        };
         CodeCompanionResponse: {
             /** Format: int32 */
             seriesId: number;
             code: string;
+        };
+        ComposanteDeNote: {
+            critere: components["schemas"]["CritereDeNote"];
+            /** Format: double */
+            valeur: number;
+            /** Format: int32 */
+            score: number;
+            /** Format: double */
+            poids: number;
+        };
+        CompteDiscordLie: {
+            discordId: string;
+            username: null | string;
+            avatarUrl: null | string;
+        };
+        CostMensuelHistorique: {
+            /** Format: date */
+            mois: string;
+            /** Format: double */
+            cost: number;
+            /** Format: double */
+            costDeDepart: null | number;
+            /** Format: int32 */
+            gamesTerminees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: double */
+            noteMoyenne: null | number;
         };
         CreatePlayerRequest: {
             prenom: string;
@@ -3191,6 +3450,8 @@ export interface components {
             seriesId: number;
         };
         /** @enum {unknown} */
+        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
+        /** @enum {unknown} */
         DesignationCapitaine: "Manuel" | "AuHasard" | "PlusGrosCost";
         /** @enum {unknown} */
         DesignationCapitaines: "Manuels" | "AuHasard" | "PlusGrosCosts";
@@ -3198,6 +3459,13 @@ export interface components {
             designation: components["schemas"]["DesignationCapitaine"];
             /** Format: int32 */
             playerId: null | number;
+        };
+        DonneesDuMatch: {
+            /** Format: int32 */
+            durationSeconds: null | number;
+            gameMode: null | string;
+            gameType: null | string;
+            gameVersion: null | string;
         };
         DraftChampionsResponse: {
             /** Format: int32 */
@@ -3224,8 +3492,53 @@ export interface components {
             playerId: number;
             equipe: string;
         };
+        FicheJoueur: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            discord: null | components["schemas"]["CompteDiscordLie"];
+            /** Format: double */
+            cost: number;
+            soloQ: null | components["schemas"]["RangActuel"];
+            flex: null | components["schemas"]["RangActuel"];
+            stats: components["schemas"]["StatsDeCustoms"];
+            champions: components["schemas"]["StatsParChampion"][];
+            roles: components["schemas"]["StatsParRole"][];
+            games: components["schemas"]["GameDeLaFiche"][];
+        };
+        GameDeLaFiche: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: date-time */
+            playedAt: string;
+            equipe: string;
+            victoire: boolean;
+            /** Format: int32 */
+            dureeSecondes: null | number;
+            championId: null | string;
+            role: null | components["schemas"]["Role"];
+            stats: null | components["schemas"]["StatsDuParticipant"];
+            performance: null | components["schemas"]["NoteDePerformance"];
+        };
         GameHistoryListResponse: {
             games: components["schemas"]["SeriesHistoryResponse"][];
+        };
+        GameHistoryParticipantDto: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            rankTier: null | string;
+            /** Format: int32 */
+            rankDivision: null | number;
+            /** Format: double */
+            cost: null | number;
+            championId: null | string;
+            stats: null | components["schemas"]["StatsDuParticipant"];
+            performance: null | components["schemas"]["NoteDePerformance"];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -3237,8 +3550,10 @@ export interface components {
             teamASide: string;
             teamBSide: string;
             winner: null | string;
-            teamA: components["schemas"]["GameParticipantDto"][];
-            teamB: components["schemas"]["GameParticipantDto"][];
+            riotMatchId: null | string;
+            match: null | components["schemas"]["DonneesDuMatch"];
+            teamA: components["schemas"]["GameHistoryParticipantDto"][];
+            teamB: components["schemas"]["GameHistoryParticipantDto"][];
         };
         GameParticipantDto: {
             prenom: string;
@@ -3287,9 +3602,41 @@ export interface components {
             liensCapitaineEnvoyes: boolean;
             lienSpectateur: null | string;
         };
+        LigneClassement5v5: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            /** Format: int32 */
+            gamesJouees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+        };
+        LigneClassementSoloQ: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            tier: null | string;
+            /** Format: int32 */
+            division: null | number;
+            /** Format: int32 */
+            lp: null | number;
+        };
         LinkPlayerRequest: {
             /** Format: int32 */
             playerId: number;
+        };
+        NoteDePerformance: {
+            /** Format: int32 */
+            note: number;
+            role: null | components["schemas"]["Role"];
+            sourceDuRole: components["schemas"]["SourceDuRole"];
+            composantes: components["schemas"]["ComposanteDeNote"][];
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
@@ -3339,19 +3686,40 @@ export interface components {
             /** Format: int32 */
             playerId: number;
         };
+        PlayerCostHistoryResponse: {
+            /** Format: int32 */
+            playerId: number;
+            mois: components["schemas"]["CostMensuelHistorique"][];
+        };
         PlayerCostResponse: {
             /** Format: int32 */
             playerId: number;
             name: string;
+            /** Format: date */
+            mois: string;
             /** Format: double */
             cost: number;
             tier: string;
-            /** Format: int32 */
-            mmr: number;
-            /** Format: int32 */
-            baseMMR: number;
             /** Format: double */
-            winrateAdjustment: number;
+            costDeDepart: number;
+            sourceDuCostDeDepart: components["schemas"]["SourceDuCostDeDepart"];
+            /** Format: int32 */
+            gamesTerminees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: double */
+            winrate: null | number;
+            /** Format: int32 */
+            gamesNotees: number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            evolue: boolean;
+            /** Format: int32 */
+            gamesMinimum: number;
+            /** Format: double */
+            ajustementPerformance: number;
+            /** Format: double */
+            ajustementResultats: number;
         };
         PlayerDto: {
             /** Format: int32 */
@@ -3365,6 +3733,11 @@ export interface components {
             mainRole: null | string;
             /** Format: int32 */
             lp: null | number;
+            flexRankTier: null | string;
+            /** Format: int32 */
+            flexRankDivision: null | number;
+            /** Format: int32 */
+            flexLp: null | number;
             peakTier: null | string;
             /** Format: int32 */
             peakDivision: null | number;
@@ -3400,6 +3773,13 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        RangActuel: {
+            tier: string;
+            /** Format: int32 */
+            division: null | number;
+            /** Format: int32 */
+            lp: number;
         };
         RapportDeGameRequest: {
             riotMatchId: string;
@@ -3553,6 +3933,85 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        /** @enum {unknown} */
+        SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
+        /** @enum {unknown} */
+        SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
+        StatsDeCustoms: {
+            /** Format: int32 */
+            gamesJouees: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+            /** Format: double */
+            kda: null | number;
+            /** Format: double */
+            killsMoyens: null | number;
+            /** Format: double */
+            mortsMoyennes: null | number;
+            /** Format: double */
+            assistsMoyens: null | number;
+            /** Format: double */
+            csParMinute: null | number;
+            /** Format: double */
+            participationAuxKills: null | number;
+            /** Format: int32 */
+            degatsMoyens: null | number;
+            /** Format: int32 */
+            degatsParMinute: null | number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            /** Format: int32 */
+            gamesNotees: number;
+        };
+        StatsDuParticipant: {
+            /** Format: int32 */
+            kills: null | number;
+            /** Format: int32 */
+            deaths: null | number;
+            /** Format: int32 */
+            assists: null | number;
+            /** Format: int32 */
+            minionsKilled: null | number;
+            /** Format: int32 */
+            neutralMinionsKilled: null | number;
+            /** Format: int32 */
+            damageToChampions: null | number;
+            /** Format: int32 */
+            damageTaken: null | number;
+            /** Format: int32 */
+            goldEarned: null | number;
+            /** Format: int32 */
+            visionScore: null | number;
+            /** Format: int32 */
+            wardsPlaced: null | number;
+            /** Format: int32 */
+            wardsKilled: null | number;
+            /** Format: int32 */
+            controlWardsBought: null | number;
+            /** Format: int32 */
+            damageToObjectives: null | number;
+            /** Format: int32 */
+            turretKills: null | number;
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            champLevel: null | number;
+            position: null | components["schemas"]["Role"];
+        };
+        StatsParChampion: {
+            championId: string;
+            stats: components["schemas"]["StatsDeCustoms"];
+        };
+        StatsParRole: {
+            role: components["schemas"]["Role"];
+            stats: components["schemas"]["StatsDeCustoms"];
+        };
         /** @enum {unknown} */
         StatutRapport: "Accepte" | "EnRevue" | "Rejete";
         StopSeriesResponse: {

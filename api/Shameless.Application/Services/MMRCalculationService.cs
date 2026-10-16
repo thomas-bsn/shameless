@@ -28,9 +28,10 @@ public static class MMRCalculationService
     };
     
     /// <summary>
-    /// Calcule le MMR de base à partir du peak rank SoloQ
+    /// Le MMR barème d'un rang SoloQ (tier, division). Sert au cost de départ d'un Joueur sans
+    /// historique de cost, à partir de son Rang SoloQ actuel (ADR 0012).
     /// </summary>
-    public static int GetPeakRankMMR(string? tier, int? division)
+    public static int GetRankMMR(string? tier, int? division)
     {
         if (string.IsNullOrEmpty(tier)) return 0; // Unranked
         
@@ -45,39 +46,6 @@ public static class MMRCalculationService
         var divOffset = DivisionOffset.GetValueOrDefault(division ?? 4, 0);
         
         return baseMMR + divOffset;
-    }
-    
-    /// <summary>
-    /// Calcule le bonus/malus MMR basé sur le winrate du mois
-    /// Formule : (winrate - 50%) * 150 * confidence
-    /// </summary>
-    public static int CalculateWinrateAdjustment(int gamesPlayed, int wins)
-    {
-        // Minimum 3 games pour avoir un ajustement
-        if (gamesPlayed < 3) return 0;
-        
-        var winrate = wins / (float)gamesPlayed;
-        
-        // Confidence scale avec le nombre de games (max à 20 games)
-        var confidence = Math.Min(gamesPlayed / 20f, 1f);
-        
-        // Max ±150 MMR d'ajustement
-        var maxAdjustment = 150;
-        
-        var adjustment = (winrate - 0.5f) * maxAdjustment * confidence;
-        
-        return (int)adjustment;
-    }
-    
-    /// <summary>
-    /// Calcule le MMR final (SoloQ + Winrate)
-    /// </summary>
-    public static int CalculateFinalMMR(string? tier, int? division, int gamesPlayed, int wins)
-    {
-        var baseMMR = GetPeakRankMMR(tier, division);
-        var winrateBonus = CalculateWinrateAdjustment(gamesPlayed, wins);
-        
-        return baseMMR + winrateBonus;
     }
     
     /// <summary>

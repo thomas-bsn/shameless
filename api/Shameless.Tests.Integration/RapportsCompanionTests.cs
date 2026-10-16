@@ -62,7 +62,7 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         Assert.Equal("Darius", champions[serie.TeamB[0]]);
         Assert.Equal("Nami", champions[serie.TeamB[4]]);
 
-        // Les données Riot brutes n'ont pas encore de lecture publique (stats de la Phase 1c) : relues en base.
+        // Les données Riot brutes sont gardées telles quelles (l'historique n'en expose que la lecture typée) : relues en base.
         await using var db = Factory.CreateDbContext();
         var donnees = await db.Database.SqlQuery<string>(
             $"SELECT riot_match_data::text AS \"Value\" FROM custom_games WHERE id = {gameId}").SingleAsync(Ct);

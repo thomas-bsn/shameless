@@ -3,6 +3,7 @@ using Shameless.Api.Models.Requests.Player;
 using Shameless.Api.Models.Responses.Player;
 using Shameless.Application.DTOs.Players;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Joueurs;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,10 +33,24 @@ public sealed class PlayersController : ControllerBase
 
     [HttpGet("{playerId:int}")]
     [ProducesResponseType<PlayerDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> GetPlayer(int playerId)
     {
         var player = await _playerService.GetPlayerAsync(playerId);
-        return player == null ? NotFound() : Ok(player);
+        return player == null ? JoueurIntrouvable() : Ok(player);
+    }
+
+    /// <summary>
+    /// La fiche du Joueur : stats de customs sur ses games terminées, champions et rôles joués, notes de
+    /// performance et historique, compte Discord lié, cost courant et rangs actuels.
+    /// </summary>
+    [HttpGet("{playerId:int}/fiche")]
+    [ProducesResponseType<FicheJoueur>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> GetFiche(int playerId, [FromServices] FicheJoueurService fiches)
+    {
+        var fiche = await fiches.GetAsync(playerId);
+        return fiche == null ? JoueurIntrouvable() : Ok(fiche);
     }
 
     /// <summary>Le compte Riot tel qu'il serait enregistré, sans créer de Joueur.</summary>
@@ -76,7 +91,7 @@ public sealed class PlayersController : ControllerBase
 
         return result switch
         {
-            LinkResult.PlayerNotFound => NotFound(),
+            LinkResult.PlayerNotFound => JoueurIntrouvable(),
             LinkResult.AlreadyLinkedToAnotherUser => Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 detail: "Ce joueur est déjà lié à un autre compte Discord. Demande à un admin."),
@@ -84,45 +99,50 @@ public sealed class PlayersController : ControllerBase
         };
     }
 
-    [HttpGet("{playerId}/cost")]
+    /// <summary>Le cost du Joueur pour le mois en cours, avec le détail de son calcul (ADR 0012).</summary>
+    [HttpGet("{playerId:int}/cost")]
     [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     public async Task<IActionResult> GetPlayerCost(int playerId)
     {
-        var (name, cost, mmr, baseMMR, winrateAdj) = await _costService.CalculatePlayerCostPreview(playerId);
-
-        return Ok(new PlayerCostResponse(
-            PlayerId: playerId,
-            Name: name,
-            Cost: cost,
-            Tier: MMRCalculationService.GetTierLabel(cost),
-            Mmr: mmr,
-            BaseMMR: baseMMR,
-            WinrateAdjustment: winrateAdj
-        ));
+        var cost = await _costService.CalculatePlayerCostPreview(playerId);
+        return cost == null ? JoueurIntrouvable() : Ok(PlayerCostResponse.From(cost));
     }
 
-    [HttpPut("{playerId}/cost")]
+    /// <summary>Le cost de chaque mois du Joueur conservé dans l'historique, du plus ancien au plus récent.</summary>
+    [HttpGet("{playerId:int}/cost/historique")]
+    [ProducesResponseType<PlayerCostHistoryResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> GetPlayerCostHistory(int playerId)
+    {
+        var historique = await _costService.HistoriqueAsync(playerId);
+        return historique == null
+            ? JoueurIntrouvable()
+            : Ok(new PlayerCostHistoryResponse(playerId, historique.Select(CostMensuelHistorique.From).ToList()));
+    }
+
+    [HttpPut("{playerId:int}/cost")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> SetPlayerCost(int playerId, [FromBody] SetCostRequest request)
     {
-        if (!await _playerService.SetCostAsync(playerId, request.Cost)) return NotFound();
-        return Ok(new { playerId, cost = request.Cost });
+        var cost = await _costService.FixerCostAsync(playerId, request.Cost);
+        return cost == null ? JoueurIntrouvable() : Ok(new { playerId, cost });
     }
 
-    [HttpPost("{playerId}/peak")]
+    [HttpPost("{playerId:int}/peak")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> SetPlayerPeak(int playerId, [FromBody] UpdatePeakRequest request)
     {
         var found = await _playerService.UpdatePeakForPlayerAsync(playerId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
-        return found ? Ok(new { ok = true }) : NotFound();
+        return found ? Ok(new { ok = true }) : JoueurIntrouvable();
     }
 
-    [HttpDelete("{playerId}/peak")]
+    [HttpDelete("{playerId:int}/peak")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> DeletePlayerPeak(int playerId)
     {
         var found = await _playerService.UpdatePeakForPlayerAsync(playerId, null, null, null, 0);
-        return found ? Ok(new { ok = true }) : NotFound();
+        return found ? Ok(new { ok = true }) : JoueurIntrouvable();
     }
 
     [HttpPost("peak")]
@@ -138,6 +158,10 @@ public sealed class PlayersController : ControllerBase
         var found = await _playerService.UpdatePeakAsync(User.DiscordId(), null, null, null, 0);
         return found ? Ok(new { ok = true }) : NoLinkedPlayer();
     }
+
+    /// <summary>La réponse unique à un Joueur inconnu.</summary>
+    private ObjectResult JoueurIntrouvable() =>
+        Problem(statusCode: StatusCodes.Status404NotFound, detail: "Ce joueur n'existe pas.");
 
     private ObjectResult NoLinkedPlayer() =>
         Problem(statusCode: StatusCodes.Status404NotFound, detail: "Aucun joueur n'est lié à ton compte Discord.");
