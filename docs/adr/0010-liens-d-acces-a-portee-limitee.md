@@ -34,9 +34,16 @@ Alternatives écartées :
   Équipe.
 
 ## Conséquences
-- Seule exception à l'ADR 0005 : les commandes de la Draft de champions acceptent un
-  lien capitaine, et sa lecture accepte un lien spectateur. Tout le reste exige
-  toujours un utilisateur connecté.
-- La capacité d'envoi limitée du Companion (#36) suivra le même principe : une portée
-  étroite, révocable, sans accès au compte.
+- Exceptions à l'ADR 0005, et seulement elles : les commandes de la Draft de champions
+  acceptent un lien capitaine, et sa lecture accepte un lien spectateur ; le Companion
+  agit avec le code Companion (ci-dessous). Tout le reste exige toujours un
+  utilisateur connecté.
+- Le code Companion (#36) suit le même principe : un secret par Série, que
+  l'organisateur lit et renouvelle (l'ancien est alors refusé). Il ne permet que deux
+  choses, sans session ni cookie : résoudre la Série du code, et envoyer un rapport de
+  fin de game pour cette Série. La Série vient toujours du code, jamais de la requête.
+  Il cesse avec la Série : code inconnu, renouvelé ou de Série terminée, refusé ; seul
+  le renvoi d'un rapport déjà reçu répond encore après la clôture, sans rien modifier.
+  Accepter ou rejeter un rapport en revue reste une commande de l'organisateur
+  connecté. Un code n'est pas un lien d'accès, et inversement.
 - Un lien capitaine partagé par erreur se règle en le renouvelant.
