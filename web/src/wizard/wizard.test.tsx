@@ -351,6 +351,7 @@ describe("étape Options (#71)", () => {
     expect(screen.getByText(/docs\/shameless\.md/)).toBeInTheDocument();
     expect(screen.getByText(/voice-candidates/)).toBeInTheDocument();
     expect(screen.getByText("docker compose exec api cat /instance/instance.env")).toBeInTheDocument();
+    expect(screen.getByText(/Cet écran ne sera plus accessible/)).toBeInTheDocument();
   });
 
   it("n'affiche aucun bloc Uchuu quand l'intégration est ignorée", async () => {

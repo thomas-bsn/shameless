@@ -397,7 +397,7 @@ function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
       </section>
       <section aria-label="Relire ces valeurs" className="space-y-2">
         <h3 className="font-medium">Relire ces valeurs plus tard</h3>
-        <p className="text-xs text-muted-foreground">Quand ce wizard sera arrêté, la configuration reste lisible depuis votre serveur :</p>
+        <p className="text-xs text-muted-foreground">Cet écran ne sera plus accessible une fois le wizard arrêté ; la configuration reste lisible depuis votre serveur :</p>
         <BoiteACopier valeur={COMMANDE_RELECTURE} libelle="Copier la commande de relecture" />
       </section>
     </div>

@@ -25,8 +25,10 @@ pas vide ; un `.env` facultatif reste donc valable pour une Instance sans wizard
 les mêmes valeurs que ci-dessus, `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur
 Discord saisi à l'étape Discord) et `SHAMELESS_API_URL`. Le client du bot appelle
 `{SHAMELESS_API_URL}/bot/…` et l'API est servie sous `/api` par le proxy : le wizard affiche
-donc `<adresse publique>/api`. **À confirmer par l'Opérateur** : l'exemple de
-`docs/shameless.md` du bot donne `https://shameless.example`, sans `/api`.
+donc `<adresse publique>/api`, valeur à reporter telle quelle. Confirmé : le bot configure son
+`httpx.AsyncClient` avec `SHAMELESS_API_URL` comme `base_url` et appelle `/bot/…`, et le proxy Caddy
+retire `/api` avant de transmettre à l'API. L'exemple de `docs/shameless.md` du bot
+(`https://shameless.example`, sans `/api`) ne vaut que pour un bot qui joindrait l'API sans proxy.
 
 **Variables du bot saisies à la main** (listées, jamais générées, jamais demandées) :
 `SHAMELESS_TEAM1_VOICE_ID`, `SHAMELESS_TEAM2_VOICE_ID`, `SHAMELESS_ANNOUNCE_CHANNEL_ID`,
@@ -64,7 +66,7 @@ leur réception par l'API et leur absence des logs.
   et le bot ; le test de contrat échoue sinon.
 - Les secrets vivent en clair dans `instance.env` (voir ADR 0015) et dans l'écran de fin le
   temps de la session du wizard.
-- `SHAMELESS_API_URL` se termine par `/api` tant que l'Opérateur n'a pas confirmé le contraire ;
-  si le bot attend l'adresse sans préfixe, l'Opérateur la corrige dans son `.env`.
+- `SHAMELESS_API_URL` se termine toujours par `/api` : c'est la valeur correcte derrière le proxy
+  de Shameless, sans correction à prévoir.
 - Hors périmètre : modifier Uchuu, joindre Discord, déployer le bot, changer les secrets après
   coup (éditer `instance.env` des deux côtés, puis redémarrer).
