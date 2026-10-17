@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
         services.AddScoped<VotesService>();
+        services.AddScoped<HallDeLaHonteService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();

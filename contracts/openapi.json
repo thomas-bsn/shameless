@@ -1316,6 +1316,45 @@
         }
       }
     },
+    "/hall-de-la-honte": {
+      "get": {
+        "tags": [
+          "HallDeLaHonte"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/liens": {
       "get": {
         "tags": [
@@ -5386,6 +5425,20 @@
           }
         }
       },
+      "HallDeLaHonte": {
+        "required": [
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneHallDeLaHonte"
+            }
+          }
+        }
+      },
       "JouerDraftChampionsRequest": {
         "required": [
           "tour",
@@ -5630,6 +5683,36 @@
               "null",
               "integer"
             ],
+            "format": "int32"
+          }
+        }
+      },
+      "LigneHallDeLaHonte": {
+        "required": [
+          "rang",
+          "playerId",
+          "prenom",
+          "riotId",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "rang": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "dofd": {
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -7489,6 +7572,9 @@
     },
     {
       "name": "Games"
+    },
+    {
+      "name": "HallDeLaHonte"
     },
     {
       "name": "Liens"
