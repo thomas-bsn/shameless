@@ -8,14 +8,14 @@ Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 ---
 
 ## Phase 0 — Nettoyage et monorepo
-- [ ] Monorepo web/ api/ companion/ contracts/, licence MIT, README, .env.example
-- [ ] Backend importé dans api/, passage .NET 10
-- [ ] Sécurité backend : [Authorize] sur games/series, expiration JWT corrigée, token hors de l'URL de callback, gestion globale des erreurs
-- [ ] OpenAPI + client TypeScript généré
-- [ ] CI GitHub Actions + premiers tests d'intégration (Testcontainers)
-- [ ] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible)
-- [ ] Migration des données depuis le dump de lol_customs, 7 migrations EF conservées
-- [ ] Front Vite + React + TanStack + Tailwind + shadcn/ui, écrans existants repris sans styles inline
+- [ ] Monorepo web/ api/ companion/ contracts/, licence MIT, README, .env.example (reste : companion/, avec l'app de la 1b)
+- [x] Backend importé dans api/, passage .NET 10
+- [x] Sécurité backend : [Authorize] sur games/series, expiration JWT corrigée, token hors de l'URL de callback, gestion globale des erreurs
+- [x] OpenAPI + client TypeScript généré
+- [x] CI GitHub Actions + premiers tests d'intégration (Testcontainers)
+- [ ] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible) (compose fait, déploiement NAS à confirmer)
+- [x] Migration des données depuis le dump de lol_customs (migration Baseline à la place des migrations legacy, voir api/database/BASELINE.md)
+- [x] Front Vite + React + TanStack + Tailwind + shadcn/ui, écrans existants repris sans styles inline
 
 **Terminé quand** : `docker compose up` sert l'API et le front avec les données existantes, CI verte, endpoints protégés.
 
@@ -50,10 +50,13 @@ Objectif : une soirée complète sans saisie manuelle.
 
 ## Phase 2 — V2 : votes, spectateurs, clips
 - [ ] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
-- [ ] Votes en base (remplace /polls), badges sur fiche joueur et historique
-- [ ] Hall de la Honte (cumul DOFD) ~~+ mention Honte automatique par les stats~~
+- [x] Votes en base (remplace /polls), badges sur fiche joueur et historique
+- [x] Hall de la Honte (cumul DOFD) ~~+ mention Honte automatique par les stats~~
 - [ ] Spectateurs : pronostics avant la game (vainqueur, MVP, DOFD), ~~points, titre de Doyen~~
 - [ ] Clips : postés dans #clips, téléchargés par le bot, rattachés à la game
+
+Votes, pronostics et clips : côté API et site livrés (#59) ; reste l'interaction Discord du bot
+(thomas-bsn/harceleur_bot#13).
 
 Hors périmètre de la Phase 2 (#59), plus tard s'ils sont validés : mention Honte automatique
 par les stats ; points, classement des pronostics et titre de Doyen (voix double).
