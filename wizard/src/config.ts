@@ -1,6 +1,8 @@
 // Configuration d'une Instance : validation de la saisie et calcul des variables d'environnement.
-// Chaque section (adresse, Discord, et plus tard Riot, Uchuu, fuseau : #71) valide ses champs
+// Chaque section (adresse, Discord, options Riot / fuseau / Uchuu) valide ses champs
 // et produit ses variables ; ajouter une section = ajouter une entrée à `SECTIONS`.
+import type { SecretsUchuu } from "./secrets.ts";
+import { validerAdresseBot, validerCleRiot, validerFuseau } from "./validation.ts";
 
 export type ConfigInput = Record<string, unknown>;
 export type Errors = Record<string, string>;
@@ -12,15 +14,23 @@ export interface Config {
   clientSecret: string;
   guildId: string;
   adminIds: string;
+  /** Facultative : vide = fonctions Riot désactivées. */
+  riotKey: string;
+  timezone: string;
+  uchuu: boolean;
+  /** Adresse publique du bot ; vide quand Uchuu est ignoré. */
+  botUrl: string;
 }
 
 /** Secrets internes générés par le wizard (jamais saisis). */
 export interface Generated {
   postgresPassword: string;
+  /** Générés à la première confirmation avec Uchuu activé, puis réutilisés aux relances. */
+  uchuu?: SecretsUchuu;
 }
 
 interface Section {
-  validate(input: ConfigInput, value: Partial<Config>, errors: Errors): void;
+  validate(input: ConfigInput, value: Partial<Config>, errors: Errors, warnings: string[]): void;
   toEnv(value: Config, generated: Generated): InstanceEnv;
 }
 
@@ -103,13 +113,49 @@ const interne: Section = {
   },
 };
 
-const SECTIONS: Section[] = [adresse, discord, interne];
+const options: Section = {
+  validate(input, value, errors, warnings) {
+    const riot = validerCleRiot(text(input.riotKey));
+    if (riot.ok) value.riotKey = riot.valeur;
+    else errors.riotKey = riot.erreur;
 
-export function validateConfig(input: ConfigInput): { errors: Errors; value?: Config } {
+    const fuseau = validerFuseau(text(input.timezone));
+    if (fuseau.ok) value.timezone = fuseau.valeur;
+    else errors.timezone = fuseau.erreur;
+
+    value.uchuu = input.uchuu === true;
+    value.botUrl = "";
+    if (value.uchuu) {
+      const bot = validerAdresseBot(text(input.botUrl));
+      if (bot.ok) {
+        value.botUrl = bot.valeur;
+        warnings.push(...bot.avertissements);
+      } else errors.botUrl = bot.erreur;
+    }
+  },
+  toEnv(value, generated) {
+    const env: InstanceEnv = { RIOT_API_KEY: value.riotKey, SHAMELESS_TIMEZONE: value.timezone };
+    if (!value.uchuu) return env;
+    if (!generated.uchuu) throw new Error("Les secrets Uchuu doivent être générés avant l'écriture de la configuration.");
+    return {
+      ...env,
+      SHAMELESS_BOT_URL: value.botUrl,
+      SHAMELESS_WEB_URL: value.publicUrl,
+      SHAMELESS_BOT_API_KEY: generated.uchuu.botApiKey,
+      SHAMELESS_WEBHOOK_SECRET: generated.uchuu.webhookSecret,
+      SHAMELESS_BOT_TO_API_KEY: generated.uchuu.botToApiKey,
+    };
+  },
+};
+
+const SECTIONS: Section[] = [adresse, discord, options, interne];
+
+export function validateConfig(input: ConfigInput): { errors: Errors; warnings: string[]; value?: Config } {
   const errors: Errors = {};
+  const warnings: string[] = [];
   const value: Partial<Config> = {};
-  for (const s of SECTIONS) s.validate(input, value, errors);
-  return Object.keys(errors).length > 0 ? { errors } : { errors, value: value as Config };
+  for (const s of SECTIONS) s.validate(input, value, errors, warnings);
+  return Object.keys(errors).length > 0 ? { errors, warnings } : { errors, warnings, value: value as Config };
 }
 
 export function buildInstanceEnv(value: Config, generated: Generated): InstanceEnv {

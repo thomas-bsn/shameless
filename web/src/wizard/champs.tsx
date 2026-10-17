@@ -66,15 +66,15 @@ export function Champ({
   );
 }
 
-/** Valeur à recopier ailleurs (ici : l'URL de callback à déclarer chez Discord). */
-export function BoiteACopier({ valeur }: { valeur: string }) {
+/** Valeur à recopier ailleurs (l'URL de callback Discord, une variable, une commande). */
+export function BoiteACopier({ valeur, libelle = "Copier l'URL de callback" }: { valeur: string; libelle?: string }) {
   const [copie, setCopie] = useState(false);
   return (
     <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2">
       <code className="min-w-0 flex-1 break-all text-xs">{valeur}</code>
       <button
         type="button"
-        aria-label="Copier l'URL de callback"
+        aria-label={libelle}
         className="text-muted-foreground hover:text-foreground"
         onClick={() => {
           void navigator.clipboard?.writeText(valeur);

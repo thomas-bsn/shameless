@@ -215,6 +215,95 @@ describe("saisie et installation", () => {
   });
 });
 
+describe("options et intégration Uchuu (#71)", () => {
+  const avecUchuu = { ...saisie, riotKey: "RGAPI-abc-123", timezone: "Europe/Brussels", uchuu: true, botUrl: "https://bot.example.org" };
+  const lire = (dir: string) => Object.fromEntries([...readFileSync(join(dir, "instance.env"), "utf8").matchAll(/^(\w+)='(.*)'$/gm)].map((m) => [m[1], m[2]]));
+
+  it("installe avec toutes les options désactivées, sans variable Uchuu ni recap", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const r = await w.appel("POST", "/_setup/api/install", saisie);
+    assert.equal(r.status, 202);
+    assert.equal(r.json.uchuu, undefined);
+    const env = lire(w.dir);
+    assert.equal(env.RIOT_API_KEY, "");
+    assert.equal(env.SHAMELESS_TIMEZONE, "Europe/Paris");
+    assert.equal(env.SHAMELESS_BOT_API_KEY, undefined);
+  });
+
+  it("valide les options à la volée, avec avertissement pour un bot local", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const r = await w.appel("POST", "/_setup/api/validate", { ...saisie, riotKey: "faux", uchuu: true, botUrl: "http://localhost:9000" });
+    assert.deepEqual(Object.keys(r.json.errors), ["riotKey"]);
+    assert.match(r.json.warnings[0], /injoignable depuis le conteneur de l'API/);
+    assert.ok(!JSON.stringify(r.json).includes("faux"));
+  });
+
+  it("génère trois secrets distincts, les écrit dans instance.env et renvoie le récapitulatif à la confirmation", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const r = await w.appel("POST", "/_setup/api/install", avecUchuu);
+    assert.equal(r.status, 202);
+    const env = lire(w.dir);
+    assert.equal(env.RIOT_API_KEY, "RGAPI-abc-123");
+    assert.equal(env.SHAMELESS_TIMEZONE, "Europe/Brussels");
+    assert.equal(env.SHAMELESS_BOT_URL, "https://bot.example.org");
+    assert.equal(env.SHAMELESS_WEB_URL, "https://shameless.example.org");
+    const secrets = [env.SHAMELESS_BOT_API_KEY, env.SHAMELESS_WEBHOOK_SECRET, env.SHAMELESS_BOT_TO_API_KEY];
+    assert.equal(new Set(secrets).size, 3);
+    for (const s of secrets) assert.match(s, /^[0-9a-f]{64}$/);
+
+    const bot = r.json.uchuu.variables.filter((v: { composant: string }) => v.composant === "Uchuu");
+    assert.equal(bot.find((v: { nom: string }) => v.nom === "SHAMELESS_BOT_API_KEY").valeur, env.SHAMELESS_BOT_API_KEY);
+    assert.equal(bot.find((v: { nom: string }) => v.nom === "SHAMELESS_GUILD_ID").valeur, saisie.guildId);
+    assert.equal(bot.find((v: { nom: string }) => v.nom === "SHAMELESS_API_URL").valeur, "https://shameless.example.org/api");
+    // Le récapitulatif reste lisible par la session tant que le wizard tourne (page rechargée, Caddy relancé).
+    assert.deepEqual((await w.appel("GET", "/_setup/api/state")).json.uchuu, r.json.uchuu);
+  });
+
+  it("réutilise les mêmes secrets aux relances après un échec, même si l'adresse du bot change", async () => {
+    const w = await demarrer({ installTimeoutMs: 80 });
+    await w.ouvrirSession();
+    await w.appel("POST", "/_setup/api/install", avecUchuu);
+    const avant = lire(w.dir);
+    await w.attendre("failed");
+    w.etat.apiUp = true;
+    const r = await w.appel("POST", "/_setup/api/install", { ...avecUchuu, botUrl: "https://bot2.example.org" });
+    assert.equal(r.status, 202);
+    const apres = lire(w.dir);
+    assert.equal(apres.SHAMELESS_BOT_URL, "https://bot2.example.org");
+    for (const k of ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY"]) assert.equal(apres[k], avant[k], k);
+  });
+
+  it("n'écrit aucun secret Uchuu ni la clé Riot dans les logs", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    await w.appel("POST", "/_setup/api/install", avecUchuu);
+    w.etat.apiUp = true;
+    await w.attendre("done");
+    const env = lire(w.dir);
+    const journal = w.logs.join("\n");
+    for (const s of [env.SHAMELESS_BOT_API_KEY, env.SHAMELESS_WEBHOOK_SECRET, env.SHAMELESS_BOT_TO_API_KEY, "RGAPI-abc-123"])
+      assert.ok(!journal.includes(s), "secret dans le journal");
+  });
+
+  it("n'appelle jamais le bot", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const fetchOriginal = globalThis.fetch;
+    const urls: string[] = [];
+    globalThis.fetch = ((u: string, i?: RequestInit) => (urls.push(String(u)), fetchOriginal(u, i))) as typeof fetch;
+    try {
+      await w.appel("POST", "/_setup/api/validate", avecUchuu);
+      await w.appel("POST", "/_setup/api/install", avecUchuu);
+    } finally {
+      globalThis.fetch = fetchOriginal;
+    }
+    assert.ok(urls.every((u) => u.startsWith("http://127.0.0.1")), urls.join(","));
+  });
+});
+
 describe("instance déjà configurée", () => {
   it("est détectée par le marqueur ready, pas par la seule présence de instance.env", () => {
     const dir = mkdtempSync(join(tmpdir(), "wizard-"));

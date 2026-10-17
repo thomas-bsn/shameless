@@ -83,8 +83,9 @@ impossibilité de joindre Discord n'est qu'un avertissement.
   (`SHAMELESS_VERSION`) ; avec le tag mouvant `latest`, une mise à jour peut laisser l'API
   démarrer un instant avant la fin de la migration (elle redémarre seule si elle échoue).
 - **Périmètre #70.** Adresse, Discord, administrateurs et secrets internes. Riot, Uchuu et
-  le fuseau (#71) s'ajoutent comme de nouvelles sections de validation/variables
-  (`wizard/src/config.ts`) et de nouvelles étapes du front ; les réglages avancés restent
+  le fuseau (#71) sont ajoutés comme une section de plus (`options` dans
+  `wizard/src/config.ts`) et une étape du front ; les modules de validation et de génération
+  vivent dans `wizard/src/` (serveur seul à valider, voir l'ADR 0016) ; les réglages avancés restent
   lisibles depuis un `.env` facultatif. La modification de la configuration après coup est
   hors périmètre (en attendant : éditer `instance.env` à la main, puis redémarrer les
   conteneurs).
