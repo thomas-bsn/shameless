@@ -6,6 +6,7 @@ using Shameless.Application.Bot;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
+using Shameless.Infrastructure.Integrations.Clips;
 using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Api.Extensions;
@@ -31,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
         services.AddScoped<IEvenementBotRepository, EvenementBotRepository>();
         services.AddScoped<IVotesRepository, VotesRepository>();
+        services.AddScoped<IClipRepository, ClipRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -48,11 +50,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
         services.AddScoped<VotesService>();
+        services.AddScoped<ClipsService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IRandomSource, SharedRandomSource>();
+        services.AddSingleton<IStockageDesClips, StockageDesClipsSurDisque>();
 
         return services;
     }
