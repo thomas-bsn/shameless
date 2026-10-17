@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getState, install, unlock, validate, type FieldErrors, type Phase, type RecapUchuu, type Values } from "./api";
-import { BoiteACopier, Champ } from "./champs";
+import { BoiteACopier, Champ, LigneACopier } from "./champs";
 
 const ETAPES = [
   { cle: "intro", libelle: "Introduction" },
@@ -366,10 +366,12 @@ function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
     <section aria-label="Bot Discord (Uchuu)" className="space-y-2 text-sm">
       <h3 className="font-medium">Bot Discord (Uchuu)</h3>
       <p className="text-xs text-muted-foreground">
-        Collez ce bloc dans le .env du bot et redémarrez-le. Il ne sera plus affiché une fois ce wizard arrêté. Complétez aussi le jeton et les IDs
-        de salons, voir <code>docs/shameless.md</code> du dépôt harceleur_bot.
+        Collez ces valeurs dans le .env du bot et redémarrez-le. Elles ne seront plus affichées une fois ce wizard arrêté. Complétez aussi le jeton
+        et les IDs de salons, voir <code>docs/shameless.md</code> du dépôt harceleur_bot.
       </p>
-      <BoiteACopier valeur={recap.envUchuu} libelle="Copier le bloc .env du bot" />
+      <ul className="divide-y rounded-lg border">
+        {recap.variables.filter((v) => v.composant === "Uchuu").map((v) => <LigneACopier key={v.nom} nom={v.nom} valeur={v.valeur} />)}
+      </ul>
     </section>
   );
 }
