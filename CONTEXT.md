@@ -121,8 +121,8 @@ classé dans une file y figure, en fin de liste.
 - **Vote** : à la fin d'une game, ses dix joueurs et les spectateurs présents en vocal  
 votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par titre  
 (MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
-voix remportent le titre, tous en cas d'égalité. Résultats dans le récap, titres  
-comptés sur la fiche du joueur.
+voix remportent le titre, tous en cas d'égalité. Les voix restent secrètes jusqu'à la  
+clôture ; résultats ensuite dans le récap et l'historique, titres comptés sur la fiche du joueur.
 - **MVP** : le meilleur joueur d'une game, élu par vote. Titre affiché : Roi ou Reine.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
 élu par vote. Illustré par une bouse de cheval.

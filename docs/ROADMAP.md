@@ -51,9 +51,12 @@ Objectif : une soirée complète sans saisie manuelle.
 ## Phase 2 — V2 : votes, spectateurs, clips
 - [ ] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
 - [ ] Votes en base (remplace /polls), badges sur fiche joueur et historique
-- [ ] Hall de la Honte (cumul DOFD) + mention Honte automatique par les stats (à valider)
-- [ ] Spectateurs : pronostics avant la game, points, titre de Doyen (voix double, à valider)
+- [ ] Hall de la Honte (cumul DOFD) ~~+ mention Honte automatique par les stats~~
+- [ ] Spectateurs : pronostics avant la game (vainqueur, MVP, DOFD), ~~points, titre de Doyen~~
 - [ ] Clips : postés dans #clips, téléchargés par le bot, rattachés à la game
+
+Hors périmètre de la Phase 2 (#59), plus tard s'ils sont validés : mention Honte automatique
+par les stats ; points, classement des pronostics et titre de Doyen (voix double).
 
 ## Phase 3 — V3 : modes de jeu et replay
 - [ ] Undercover : un traître par équipe, révélé par MP, vote final, classement dédié

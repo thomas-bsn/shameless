@@ -52,6 +52,21 @@ tout est refusé (401). Seules les opérations dont le bot a besoin y sont ajout
 et à mesure des tickets (lecture d'une Game pour #65 ; présences, votes, pronostics et
 clips pour la Phase 2). Les routes du bot figurent dans le contrat OpenAPI, tag `Bot`.
 
+**Votes (#60).** La fenêtre des votes s'ouvre à la fin de la Game, c'est-à-dire à la
+saisie de son résultat (`CompletedAt`, quelle qu'en soit la source), et se ferme 10 minutes
+plus tard ; elle est calculée à la lecture, sans job. Un résultat saisi en retard ouvre
+donc les votes en retard. Votent les dix Joueurs (par leur compte Discord lié) et les
+Spectateurs que le bot a signalés présents en vocal (`PUT /bot/games/{id}/spectateurs`,
+qui remplace l'ensemble) : le bot doit pousser ces présences avant la clôture des votes,
+après quoi elles sont refusées (409). Tant que les votes sont ouverts, ni les gagnants ni
+le décompte des voix ne sont exposés (site comme bot), seulement le nombre de votants.
+
+**Pronostics (#62).** Aucune présence n'est suivie avant une Game : pronostique tout ID
+Discord qui n'est pas lié à un Joueur de la composition courante de la Série. Le MVP et
+le DOFD pronostiqués sont validés contre cette composition (la Game n'existe pas encore),
+le vainqueur est « A » ou « B ». Les pronostics se verrouillent au début de la Game
+(ci-dessus) et ceux déposés après son `CreatedAt` sont ignorés à l'évaluation.
+
 ## Conséquences
 - Trois secrets distincts, tous optionnels : sans eux l'Instance démarre, aucun
   webhook n'est émis, les candidats vocaux répondent 503 et les routes `/bot` 401.
