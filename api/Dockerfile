@@ -15,7 +15,9 @@ RUN dotnet ef migrations bundle -p Shameless.Infrastructure -s Shameless.Infrast
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrate
 WORKDIR /app
 COPY --from=build /bundle/efbundle .
-USER $APP_UID
+# The migration job writes a version marker to a shared named volume. Keep this
+# image root so the marker remains writable without Compose's `user` option
+# (which some deployment platforms do not support).
 ENTRYPOINT ["sh", "-c", "./efbundle --connection \"$ConnectionStrings__Shameless\""]
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api

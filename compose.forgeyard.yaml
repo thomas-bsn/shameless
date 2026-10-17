@@ -1,0 +1,138 @@
+# Variante Forgeyard de l’instance Shameless : base, migration, API et reverse proxy,
+# plus le wizard d'installation (ADR 0015).
+# Uniquement des images publiées (GHCR) et des volumes nommés. Aucun build ici : le dev local
+# construit les images via compose.override.yaml. Aucun fichier .env n'est nécessaire :
+# À coller dans Forgeyard. Forgeyard termine HTTPS et expose le proxy sur son port 80.
+#
+# Premier démarrage : postgres, migrate et api attendent que le wizard écrive la configuration
+# dans le volume instance-config (marqueur ready) ; le proxy ne sert que le wizard jusque-là.
+# Ensuite le wizard s'arrête et ne se relance plus : l'Instance démarre seule, à chaque `up`.
+
+name: shameless
+
+services:
+  wizard:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-wizard:${SHAMELESS_VERSION:-latest}
+    # S'arrête une fois l'installation confirmée ; ne se relance pas tout seul.
+    restart: "no"
+    environment:
+      WIZARD_CODE_TTL_SECONDS: ${WIZARD_CODE_TTL_SECONDS:-1800}
+      WIZARD_INSTALL_TIMEOUT_SECONDS: ${WIZARD_INSTALL_TIMEOUT_SECONDS:-300}
+      WIZARD_DISCORD_CHECK: ${WIZARD_DISCORD_CHECK:-on}
+    volumes:
+      - instance-config:/instance
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until [ -f /instance/ready ]; do sleep 1; done
+        set -a; . /instance/instance.env; set +a
+        exec docker-entrypoint.sh postgres
+    environment:
+      POSTGRES_DB: shameless
+      POSTGRES_USER: shameless
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - instance-config:/instance:ro
+    healthcheck:
+      # Sain tant que la configuration n'existe pas : le conteneur attend le wizard.
+      test: ["CMD-SHELL", "[ ! -f /instance/ready ] || pg_isready -U shameless -d shameless"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-migrate:${SHAMELESS_VERSION:-latest}
+    # Relancée en cas d'échec : l'entrypoint relit instance.env (corrigé via « Réessayer » du wizard).
+    # Terminée avec succès, elle ne se relance pas.
+    restart: on-failure
+    # L'image migrate tourne en root pour écrire le marqueur dans migrate-state.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until [ -f /instance/ready ]; do sleep 1; done
+        set -a; . /instance/instance.env; set +a
+        rm -f /state/migrated
+        i=0
+        until ./efbundle --connection "$$ConnectionStrings__Shameless"; do
+          i=$$((i + 1)); [ "$$i" -ge 30 ] && exit 1; sleep 3
+        done
+        printf '%s' "$$SHAMELESS_RELEASE" > /state/migrated
+    environment:
+      SHAMELESS_RELEASE: ${SHAMELESS_VERSION:-latest}
+    volumes:
+      - instance-config:/instance:ro
+      - migrate-state:/state
+
+  api:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-api:${SHAMELESS_VERSION:-latest}
+    restart: unless-stopped
+    # Attend la configuration, puis les migrations de cette version, avant de démarrer l'API.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until [ -f /instance/ready ]; do sleep 1; done
+        until [ "$$(cat /state/migrated 2>/dev/null)" = "$$SHAMELESS_RELEASE" ]; do sleep 1; done
+        # Lu après l'attente des migrations : une saisie corrigée via « Réessayer » entre-temps est prise en compte.
+        set -a; . /instance/instance.env; set +a
+        # Les options du wizard (instance.env) l'emportent sur les valeurs par défaut du compose :
+        # Compose a déjà interpolé les variables ci-dessous avant que instance.env soit lu.
+        export Auth__Riot__ApiKey="$${RIOT_API_KEY:-$$Auth__Riot__ApiKey}"
+        export Instance__TimeZone="$${SHAMELESS_TIMEZONE:-$$Instance__TimeZone}"
+        export Bot__Url="$${SHAMELESS_BOT_URL:-$$Bot__Url}"
+        export Bot__OutboundApiKey="$${SHAMELESS_BOT_API_KEY:-$$Bot__OutboundApiKey}"
+        export Bot__WebhookSecret="$${SHAMELESS_WEBHOOK_SECRET:-$$Bot__WebhookSecret}"
+        export Bot__ApiKey="$${SHAMELESS_BOT_TO_API_KEY:-$$Bot__ApiKey}"
+        export Bot__WebUrl="$${SHAMELESS_WEB_URL:-$$Bot__WebUrl}"
+        exec dotnet Shameless.Api.dll
+    environment:
+      SHAMELESS_RELEASE: ${SHAMELESS_VERSION:-latest}
+      # Discord, adresse publique, administrateurs et connexion à la base : écrits par le wizard
+      # dans instance.env. Les réglages ci-dessous sont facultatifs (valeurs par défaut).
+      Auth__SessionLifetimeDays: ${SESSION_LIFETIME_DAYS:-14}
+      Auth__Riot__ApiKey: ${RIOT_API_KEY:-}
+      Soiree__AutoCloseAfter: ${SOIREE_AUTO_CLOSE_AFTER:-03:00:00}
+      Bot__Url: ${SHAMELESS_BOT_URL:-}
+      Bot__OutboundApiKey: ${SHAMELESS_BOT_API_KEY:-}
+      Bot__WebhookSecret: ${SHAMELESS_WEBHOOK_SECRET:-}
+      Bot__ApiKey: ${SHAMELESS_BOT_TO_API_KEY:-}
+      Bot__WebUrl: ${SHAMELESS_WEB_URL:-}
+      Instance__TimeZone: ${SHAMELESS_TIMEZONE:-Europe/Paris}
+      Clips__StoragePath: /clips
+      Clips__MaxFileSizeBytes: ${SHAMELESS_CLIPS_MAX_BYTES:-524288000}
+      DataProtection__KeysPath: /keys
+    volumes:
+      - instance-config:/instance:ro
+      - migrate-state:/state:ro
+      - api-keys:/keys
+      - api-clips:/clips
+
+  proxy:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-proxy:${SHAMELESS_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      SHAMELESS_CADDYFILE: /etc/caddy/Caddyfile.forgeyard
+    # Forgeyard termine HTTPS et route vers le port HTTP interne de Caddy.
+    x-forgeyard:
+      expose:
+        port: 80
+    volumes:
+      - instance-config:/instance:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  # Contient instance.env (secrets en clair) : à sauvegarder avec les autres volumes.
+  instance-config:
+  migrate-state:
+  postgres-data:
+  api-keys:
+  api-clips:
+  caddy-data:
+  caddy-config:

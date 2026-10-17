@@ -44,6 +44,10 @@ Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}` (`-f c
 
 Pour un domaine en HTTPS automatique, Caddy doit être joignable sur les ports 80 et 443 : `SHAMELESS_HTTP_PORT=80` et `SHAMELESS_HTTPS_PORT=443`. Le wizard est servi sur ces mêmes ports (en HTTPS auto-signé sur le 443 : l'avertissement du navigateur est attendu) ; ne pas laisser un wizard non configuré exposé plus longtemps que nécessaire.
 
+### Déployer sur Forgeyard
+
+Utiliser [`compose.forgeyard.yaml`](compose.forgeyard.yaml) dans Forgeyard. Cette variante laisse Forgeyard terminer HTTPS et exposer le port 80 du proxy. Elle partage les mêmes services et volumes que `compose.yaml`. L’image proxy doit inclure `Caddyfile.forgeyard` ; cette variante sera disponible dans la prochaine version publiée des images.
+
 Tags publiés à chaque tag Git `vX.Y.Z` (semver), pour les quatre images :
 
 - `X.Y.Z` : version exacte, reproductible. Épingler `SHAMELESS_VERSION=X.Y.Z` (sans le `v`) pour une instance prévisible ;

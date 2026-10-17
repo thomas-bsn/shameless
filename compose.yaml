@@ -51,8 +51,7 @@ services:
     # Relancée en cas d'échec : l'entrypoint relit instance.env (corrigé via « Réessayer » du wizard).
     # Terminée avec succès, elle ne se relance pas.
     restart: on-failure
-    # root : le volume migrate-state est créé vide, et l'API (autre utilisateur) y lit le marqueur.
-    user: "0:0"
+    # L'image migrate tourne en root pour écrire le marqueur dans migrate-state.
     entrypoint:
       - sh
       - -c
