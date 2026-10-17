@@ -17,6 +17,7 @@ const navigation = [
   { to: "/joueurs", label: "Joueurs" },
   { to: "/classements", label: "Classements" },
   { to: "/historique", label: "Historique" },
+  { to: "/clips", label: "Clips" },
 ] as const;
 
 function RootLayout() {
