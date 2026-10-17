@@ -174,8 +174,13 @@ webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les ro
 sa Draft de champions. C'est là que part `game_started` et que les pronostics se closent  
 (ADR 0013).
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
-- **Clip** : une vidéo d'un moment de game, postée par un joueur dans le salon `#clips`  
-de Discord, puis rattachée à la game par le bot.
+- **Clip** : une vidéo d'un moment de game, postée dans le salon `#clips` de Discord.  
+Le bot la télécharge et la dépose à l'API, qui la conserve sur l'Instance (le lien  
+Discord n'est pas la source durable). Elle est rattachée automatiquement à sa Game  
+seulement s'il existe une unique **Game plausible** : une Game lancée le jour de  
+publication du clip, dans le fuseau de l'Instance, avant sa publication. Sinon le clip  
+reste **sans Game**, jusqu'à ce qu'un Utilisateur connecté le rattache. Les clips  
+rattachés se lisent sur la page de leur Game (ADR 0014). Entité `Clip`.
 
 ## Données Riot
 
