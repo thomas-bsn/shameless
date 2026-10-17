@@ -1,7 +1,7 @@
-using System.Globalization;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Votes;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Services;
 
@@ -45,9 +45,9 @@ public sealed class VotesService
         var ids = new HashSet<long>();
         foreach (var discordId in discordIds)
         {
-            if (LireDiscordId(discordId) is not { } id)
+            if (DiscordId.Lire(discordId) is not { } id)
                 return CommandResult<SpectateursDeLaGame>.Invalid($"« {discordId} » n'est pas un ID Discord.");
-            ids.Add(id);
+            ids.Add(id.Valeur);
         }
 
         var actuels = await _votes.GetSpectateursAsync(gameId);
@@ -60,7 +60,7 @@ public sealed class VotesService
             return CommandResult<SpectateursDeLaGame>.Conflict("Les Spectateurs de cette game ont changé entre-temps, réessaie.");
         return CommandResult<SpectateursDeLaGame>.Ok(new SpectateursDeLaGame(
             gameId,
-            ids.Order().Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList()));
+            ids.Order().Select(DiscordId.Texte).ToList()));
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public sealed class VotesService
         if (statut == FenetreDeVote.Clos)
             return CommandResult<BulletinDuVotant>.Conflict("Les votes de cette game sont clos.");
 
-        if (LireDiscordId(votantDiscordId) is not { } votant)
+        if (DiscordId.Lire(votantDiscordId)?.Valeur is not { } votant)
             return CommandResult<BulletinDuVotant>.Invalid($"« {votantDiscordId} » n'est pas un ID Discord.");
 
         var estJoueur = game.Participants.Any(p => p.Player.User?.DiscordId == votant);
@@ -137,8 +137,6 @@ public sealed class VotesService
     public async Task<Dictionary<int, TitresDuJoueur>> GetTitresAsync(IReadOnlyCollection<CustomGame> games) =>
         TitresDuJoueur.Compter((await GetResultatsDesGamesAsync(games)).Values);
 
-    private static long? LireDiscordId(string discordId) =>
-        long.TryParse(discordId, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id > 0 ? id : null;
 }
 
 /// <summary>Les Spectateurs présents en vocal pendant une Game, par ID Discord (texte).</summary>

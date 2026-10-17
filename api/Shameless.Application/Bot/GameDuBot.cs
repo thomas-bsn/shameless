@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Bot;
 
@@ -42,7 +43,7 @@ public sealed record GameDuBot(
     }
 
     /// <summary>L'ID Discord (snowflake, en texte : trop grand pour un nombre JSON) du compte lié, ou null.</summary>
-    public static string? DiscordIdDe(Player player) => player.User?.DiscordId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public static string? DiscordIdDe(Player player) => player.User is { } user ? DiscordId.Texte(user.DiscordId) : null;
 }
 
 /// <summary>Un joueur d'une Game, avec l'ID Discord de son compte lié (null sans lien).</summary>

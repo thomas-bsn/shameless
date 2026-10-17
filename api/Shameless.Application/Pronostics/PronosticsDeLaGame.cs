@@ -1,6 +1,6 @@
-using System.Globalization;
 using Shameless.Application.Entities;
 using Shameless.Application.Votes;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Pronostics;
 
@@ -38,7 +38,7 @@ public sealed record PronosticsDeLaGame(
         var evalues = pronostics
             .Where(p => p.PronostiqueLe <= game.CreatedAt)
             .Select(p => new PronosticEvalue(
-                p.PronostiqueurDiscordId.ToString(CultureInfo.InvariantCulture),
+                DiscordId.Texte(p.PronostiqueurDiscordId),
                 p.PronostiqueurNom,
                 p.EquipeGagnante is { } equipe
                     ? new EquipePronostiquee(equipe, vainqueurConnu ? equipe == game.WinningTeam : null)

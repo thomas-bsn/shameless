@@ -1,8 +1,8 @@
-using System.Globalization;
 using Shameless.Application.Bot;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Pronostics;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Services;
 
@@ -62,7 +62,7 @@ public sealed class PronosticsService
         if (gameNumber != prochaine)
             return CommandResult<PronosticDuSpectateur>.Invalid($"On ne pronostique que la prochaine game de la Série (game {prochaine}).");
 
-        if (LireDiscordId(pronostiqueurDiscordId) is not { } pronostiqueur)
+        if (DiscordId.Lire(pronostiqueurDiscordId)?.Valeur is not { } pronostiqueur)
             return CommandResult<PronosticDuSpectateur>.Invalid($"« {pronostiqueurDiscordId} » n'est pas un ID Discord.");
         if (series.Players.Any(p => p.Player.User?.DiscordId == pronostiqueur))
             return CommandResult<PronosticDuSpectateur>.Invalid("Les pronostics sont réservés aux Spectateurs : les Joueurs de la Série ne pronostiquent pas.");
@@ -117,9 +117,6 @@ public sealed class PronosticsService
         series.IsEnCours && series.Games.All(g => g.Status == GameStatuses.Completed)
             ? series.Games.Count + 1
             : null;
-
-    private static long? LireDiscordId(string discordId) =>
-        long.TryParse(discordId, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id > 0 ? id : null;
 }
 
 /// <summary>Les pronostics ouverts d'une Série, pour le bot.</summary>

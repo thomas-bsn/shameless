@@ -1,6 +1,6 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Application.Clips;
+using Shameless.Application.Discord;
 
 namespace Shameless.Api.Models.Requests.Clips;
 
@@ -27,17 +27,15 @@ public sealed class DepotDeClipRequest
     /// <summary>Le dépôt, ou la raison (en français) pour laquelle il est mal formé.</summary>
     public (DepotDeClip? Depot, string? Refus) ToDepot()
     {
-        if (!Snowflake(MessageId, out var message) || !Snowflake(AttachmentId, out var attachment) || !Snowflake(AuteurDiscordId, out var auteur))
+        if (DiscordId.Lire(MessageId) is not { } message || DiscordId.Lire(AttachmentId) is not { } attachment
+            || DiscordId.Lire(AuteurDiscordId) is not { } auteur)
             return (null, "messageId, attachmentId et auteurDiscordId sont des identifiants Discord (snowflakes, en texte).");
         if (PublieLe == default)
             return (null, "publieLe, l'heure de publication du message, est requise.");
         if (Fichier is null)
             return (null, "La vidéo du clip (fichier) est requise.");
 
-        return (new DepotDeClip(message, attachment, auteur, AuteurNom ?? "", PublieLe.UtcDateTime,
+        return (new DepotDeClip(message.Valeur, attachment.Valeur, auteur.Valeur, AuteurNom ?? "", PublieLe.UtcDateTime,
             Fichier.FileName, Fichier.ContentType ?? "", Fichier.Length), null);
     }
-
-    private static bool Snowflake(string? texte, out long valeur) =>
-        long.TryParse(texte, NumberStyles.None, CultureInfo.InvariantCulture, out valeur) && valeur > 0;
 }
