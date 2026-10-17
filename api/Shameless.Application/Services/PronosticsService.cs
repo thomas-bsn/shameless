@@ -2,6 +2,7 @@ using Shameless.Application.Bot;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Pronostics;
+using Shameless.Application.Votes;
 using Shameless.Application.Discord;
 
 namespace Shameless.Application.Services;
@@ -36,10 +37,7 @@ public sealed class PronosticsService
     public async Task<PronosticsDeLaSerie?> GetOuvertsAsync(int seriesId)
     {
         if (await _pronostics.GetSerieAsync(seriesId) is not { } series) return null;
-        List<JoueurDuBot> Equipe(string equipe) => series.PlayersOf(equipe)
-            .OrderBy(p => p.Id)
-            .Select(p => new JoueurDuBot(p.PlayerId, p.Player.Prenom, GameDuBot.DiscordIdDe(p.Player)))
-            .ToList();
+        List<JoueurDuBot> Equipe(string equipe) => JoueurDuBot.Equipe(series.PlayersOf(equipe).Select(p => (p.Id, p.Player)));
         return new PronosticsDeLaSerie(series.Id, series.Format, ProchaineGameOuverte(series), Equipe(Equipes.A), Equipe(Equipes.B));
     }
 
@@ -69,31 +67,27 @@ public sealed class PronosticsService
 
         if (equipeGagnante != null && !Equipes.IsValid(equipeGagnante))
             return CommandResult<PronosticDuSpectateur>.Invalid("L'Équipe gagnante est « A » ou « B ».");
-        foreach (var (choix, titre) in new[] { (mvpPlayerId, "MVP"), (dofdPlayerId, "DOFD") })
-            if (choix is { } playerId && series.Players.All(p => p.PlayerId != playerId))
-                return CommandResult<PronosticDuSpectateur>.Invalid($"Le {titre} pronostiqué doit être l'un des dix Joueurs de la Série.");
+        var choix = new ChoixDesTitres(mvpPlayerId, dofdPlayerId);
+        if (choix.TitreHorsDe(series.Players.Select(p => p.PlayerId)) is { } horsDeLaSerie)
+            return CommandResult<PronosticDuSpectateur>.Invalid($"Le {horsDeLaSerie} pronostiqué doit être l'un des dix Joueurs de la Série.");
 
         var nom = string.IsNullOrWhiteSpace(pronostiqueurNom) ? null : pronostiqueurNom.Trim();
         if (nom is { Length: > LongueurMaxNom }) nom = nom[..LongueurMaxNom];
 
-        var pronostic = await _pronostics.GetAsync(seriesId, gameNumber, pronostiqueur);
-        if (equipeGagnante is null && mvpPlayerId is null && dofdPlayerId is null)
-        {
-            if (pronostic != null) _pronostics.Remove(pronostic);
-        }
-        else
-        {
-            if (pronostic == null)
+        Depot.RemplacerOuRetirer(
+            await _pronostics.GetAsync(seriesId, gameNumber, pronostiqueur),
+            vide: equipeGagnante is null && choix.Aucun,
+            creer: () => new Pronostic { SeriesId = seriesId, NumeroDansLaSerie = gameNumber, PronostiqueurDiscordId = pronostiqueur },
+            ajouter: _pronostics.Add,
+            retirer: _pronostics.Remove,
+            remplir: pronostic =>
             {
-                pronostic = new Pronostic { SeriesId = seriesId, NumeroGame = gameNumber, PronostiqueurDiscordId = pronostiqueur };
-                _pronostics.Add(pronostic);
-            }
-            pronostic.PronostiqueurNom = nom;
-            pronostic.EquipeGagnante = equipeGagnante;
-            pronostic.MvpPlayerId = mvpPlayerId;
-            pronostic.DofdPlayerId = dofdPlayerId;
-            pronostic.PronostiqueLe = _clock.GetUtcNow().UtcDateTime;
-        }
+                pronostic.PronostiqueurNom = nom;
+                pronostic.EquipeGagnante = equipeGagnante;
+                pronostic.MvpPlayerId = mvpPlayerId;
+                pronostic.DofdPlayerId = dofdPlayerId;
+                pronostic.PronostiqueLe = _clock.GetUtcNow().UtcDateTime;
+            });
 
         if (!await _pronostics.TrySaveChangesAsync())
             return CommandResult<PronosticDuSpectateur>.Conflict("Ce pronostic a changé entre-temps, réessaie.");

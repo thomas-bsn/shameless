@@ -87,31 +87,24 @@ public sealed class VotesService
             return CommandResult<BulletinDuVotant>.Invalid(
                 "Seuls les dix Joueurs de la game et les Spectateurs présents en vocal peuvent voter.");
 
-        foreach (var (choix, titre) in new[] { (mvpPlayerId, "MVP"), (dofdPlayerId, "DOFD") })
-        {
-            if (choix is not { } playerId) continue;
-            if (game.Participants.SingleOrDefault(p => p.PlayerId == playerId) is not { } participant)
-                return CommandResult<BulletinDuVotant>.Invalid($"Le {titre} doit être l'un des dix Joueurs de la game.");
-            if (participant.Player.User?.DiscordId == votant)
-                return CommandResult<BulletinDuVotant>.Invalid($"Tu ne peux pas voter pour toi-même ({titre}).");
-        }
+        var choix = new ChoixDesTitres(mvpPlayerId, dofdPlayerId);
+        if (choix.TitreHorsDe(game.Participants.Select(p => p.PlayerId)) is { } horsDeLaGame)
+            return CommandResult<BulletinDuVotant>.Invalid($"Le {horsDeLaGame} doit être l'un des dix Joueurs de la game.");
+        if (choix.TitreParmi(game.Participants.Where(p => p.Player.User?.DiscordId == votant).Select(p => p.PlayerId)) is { } pourSoi)
+            return CommandResult<BulletinDuVotant>.Invalid($"Tu ne peux pas voter pour toi-même ({pourSoi}).");
 
-        var bulletin = await _votes.GetBulletinAsync(gameId, votant);
-        if (mvpPlayerId is null && dofdPlayerId is null)
-        {
-            if (bulletin != null) _votes.Remove(bulletin);
-        }
-        else
-        {
-            if (bulletin == null)
+        Depot.RemplacerOuRetirer(
+            await _votes.GetBulletinAsync(gameId, votant),
+            vide: choix.Aucun,
+            creer: () => new BulletinDeVote { GameId = gameId, VotantDiscordId = votant },
+            ajouter: _votes.Add,
+            retirer: _votes.Remove,
+            remplir: bulletin =>
             {
-                bulletin = new BulletinDeVote { GameId = gameId, VotantDiscordId = votant };
-                _votes.Add(bulletin);
-            }
-            bulletin.MvpPlayerId = mvpPlayerId;
-            bulletin.DofdPlayerId = dofdPlayerId;
-            bulletin.VoteLe = maintenant;
-        }
+                bulletin.MvpPlayerId = mvpPlayerId;
+                bulletin.DofdPlayerId = dofdPlayerId;
+                bulletin.VoteLe = maintenant;
+            });
 
         if (!await _votes.TrySaveChangesAsync())
             return CommandResult<BulletinDuVotant>.Conflict("Ce bulletin a changé entre-temps, réessaie.");

@@ -25,10 +25,7 @@ public sealed record GameDuBot(
     /// <summary>La game chargée avec ses participants (joueur et compte lié) et sa Série (games).</summary>
     public static GameDuBot From(CustomGame game)
     {
-        List<JoueurDuBot> Equipe(string equipe) => game.ParticipantsOf(equipe)
-            .OrderBy(p => p.Id)
-            .Select(p => new JoueurDuBot(p.PlayerId, p.Player.Prenom, DiscordIdDe(p.Player)))
-            .ToList();
+        List<JoueurDuBot> Equipe(string equipe) => JoueurDuBot.Equipe(game.ParticipantsOf(equipe).Select(p => (p.Id, p.Player)));
         return new GameDuBot(
             GameId: game.Id,
             SeriesId: game.SeriesId,
@@ -47,4 +44,11 @@ public sealed record GameDuBot(
 }
 
 /// <summary>Un joueur d'une Game, avec l'ID Discord de son compte lié (null sans lien).</summary>
-public sealed record JoueurDuBot(int PlayerId, string Prenom, string? DiscordId);
+public sealed record JoueurDuBot(int PlayerId, string Prenom, string? DiscordId)
+{
+    /// <summary>Une Équipe (joueurs chargés avec leur compte lié), dans l'ordre de sa composition.</summary>
+    public static List<JoueurDuBot> Equipe(IEnumerable<(int Ordre, Player Player)> joueurs) => joueurs
+        .OrderBy(j => j.Ordre)
+        .Select(j => new JoueurDuBot(j.Player.Id, j.Player.Prenom, GameDuBot.DiscordIdDe(j.Player)))
+        .ToList();
+}
