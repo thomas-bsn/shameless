@@ -41,6 +41,13 @@ disparaît (game en attente d'une Série arrêtée, ADR 0009), le clip reste, sa
 (`ON DELETE SET NULL`). Les associations ambiguës ne sont jamais devinées : un
 Utilisateur connecté les règle depuis le site (#64).
 
+**Rattachement manuel (#64).** Le site liste les clips sans Game (`GET /clips/sans-game`).
+Pour un clip, il propose les Games lancées la veille ou le jour de sa publication (fuseau
+de l'Instance), avant elle (`GET /clips/{id}/games-candidates`) : la veille couvre le
+clip publié après minuit. N'importe quelle Game reste choisissable par son numéro.
+`PUT /clips/{id}/game` rattache ou corrige (rattachement `manuel`), `DELETE /clips/{id}/game`
+retire : le clip redevient sans Game. Le dernier qui enregistre l'emporte.
+
 Alternatives écartées :
 - Garder le lien Discord : il expire, et la spec exclut d'héberger les vidéos ailleurs
   que sur l'Instance.
