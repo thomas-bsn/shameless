@@ -68,7 +68,7 @@ export const VARIABLES_BOT_A_SAISIR: VariableBotASaisir[] = [
 /** Noms des variables du contrat, par composant : figés par un test (ADR 0016). */
 export const NOMS_VARIABLES_UCHUU = {
   shameless: ["SHAMELESS_BOT_URL", "SHAMELESS_WEB_URL", "SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY"],
-  bot: ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_WEB_URL", "SHAMELESS_GUILD_ID", "SHAMELESS_API_URL"],
+  bot: ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_GUILD_ID", "SHAMELESS_API_URL"],
 };
 
 const DOC_BOT = "Les autres variables du bot (jeton, intents, INTERNAL_API_KEY…) sont décrites dans docs/shameless.md du dépôt thomas-bsn/harceleur_bot.";
@@ -91,7 +91,6 @@ export function construireRecapUchuu(entree: EntreeRecapUchuu): RecapUchuu {
     u("SHAMELESS_BOT_API_KEY", ROLES.botApiKey, botApiKey),
     u("SHAMELESS_WEBHOOK_SECRET", ROLES.webhookSecret, webhookSecret),
     u("SHAMELESS_BOT_TO_API_KEY", ROLES.botToApiKey, botToApiKey),
-    u("SHAMELESS_WEB_URL", ROLES.webUrl, webUrl),
     u("SHAMELESS_GUILD_ID", ROLES.guildId, entree.guildId),
     u("SHAMELESS_API_URL", ROLES.apiUrl, `${webUrl}/api`),
   ];

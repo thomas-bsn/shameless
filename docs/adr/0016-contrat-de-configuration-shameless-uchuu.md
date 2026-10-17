@@ -22,8 +22,9 @@ chacune vers sa variable .NET (`Bot__Url`, `Bot__OutboundApiKey`, `Bot__WebhookS
 pas vide ; un `.env` facultatif reste donc valable pour une Instance sans wizard.
 
 **Variables lues par le bot**, à reporter (bloc `.env` copiable) : les trois secrets avec
-les mêmes valeurs que ci-dessus, `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur
-Discord saisi à l'étape Discord) et `SHAMELESS_API_URL`. Le client du bot appelle
+les mêmes valeurs que ci-dessus, `SHAMELESS_GUILD_ID` (l'ID du serveur
+Discord saisi à l'étape Discord) et `SHAMELESS_API_URL`. `SHAMELESS_WEB_URL` n'est pas reportée :
+elle est facultative côté bot (simple repli pour les liens quand l'API n'en fournit pas). Le client du bot appelle
 `{SHAMELESS_API_URL}/bot/…` et l'API est servie sous `/api` par le proxy : le wizard affiche
 donc `<adresse publique>/api`, valeur à reporter telle quelle. Confirmé : le bot configure son
 `httpx.AsyncClient` avec `SHAMELESS_API_URL` comme `base_url` et appelle `/bot/…`, et le proxy Caddy

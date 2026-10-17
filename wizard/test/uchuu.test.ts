@@ -27,12 +27,11 @@ describe("construireRecapUchuu", () => {
     for (const v of recap.variables) assert.ok(v.role.length > 10, v.nom);
   });
 
-  it("liste côté bot les secrets partagés, les adresses et l'ID du serveur Discord", () => {
+  it("liste côté bot les secrets partagés, l'adresse de l'API et l'ID du serveur Discord", () => {
     assert.deepEqual(paires(recap, "Uchuu"), [
       ["SHAMELESS_BOT_API_KEY", secrets.botApiKey],
       ["SHAMELESS_WEBHOOK_SECRET", secrets.webhookSecret],
       ["SHAMELESS_BOT_TO_API_KEY", secrets.botToApiKey],
-      ["SHAMELESS_WEB_URL", "https://shameless.example.org"],
       ["SHAMELESS_GUILD_ID", "123456789012345678"],
       ["SHAMELESS_API_URL", "https://shameless.example.org/api"],
     ]);
@@ -57,7 +56,7 @@ describe("construireRecapUchuu", () => {
   });
 
   it("les valeurs partagées sont identiques des deux côtés", () => {
-    for (const nom of ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_WEB_URL"]) {
+    for (const nom of ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY"]) {
       const valeurs = recap.variables.filter((v) => v.nom === nom).map((v) => v.valeur);
       assert.equal(valeurs.length, 2, nom);
       assert.equal(valeurs[0], valeurs[1], nom);
@@ -88,7 +87,7 @@ describe("construireRecapUchuu", () => {
   it("fige les noms de variables du contrat Shameless ↔ Uchuu (ADR 0016)", () => {
     assert.deepEqual(NOMS_VARIABLES_UCHUU, {
       shameless: ["SHAMELESS_BOT_URL", "SHAMELESS_WEB_URL", "SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY"],
-      bot: ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_WEB_URL", "SHAMELESS_GUILD_ID", "SHAMELESS_API_URL"],
+      bot: ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_GUILD_ID", "SHAMELESS_API_URL"],
     });
   });
 
