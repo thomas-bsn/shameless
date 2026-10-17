@@ -1,0 +1,92 @@
+# Compose de déploiement : images publiées dans GHCR uniquement (aucun `build:`).
+# La configuration de l'Instance est saisie dans le wizard et stockée dans le volume `instance-config`
+# (/config/instance.env, puis le marqueur /config/installed). Voir README, « Déployer avec les images publiées ».
+#
+# Variables facultatives (à l'échelle du shell ou d'un .env à côté de ce fichier) :
+#   SHAMELESS_VERSION       tag des images ; `latest` = dernière release stable. Épingler une version (ex. 1.2.3) en production.
+#   SHAMELESS_IMAGE_PREFIX  préfixe des images (défaut : ghcr.io/thomas-bsn/shameless).
+#   SHAMELESS_SITE_ADDRESS  `:80` par défaut, ou un nom de domaine pour le HTTPS automatique de Caddy.
+#   SHAMELESS_HTTP_PORT, SHAMELESS_HTTPS_PORT
+name: shameless
+
+services:
+  # Wizard : saisie de la configuration au premier démarrage. Le code d'accès à usage unique est dans
+  # `docker compose logs wizard`. Il écrit /config/instance.env puis /config/installed, et s'arrête ;
+  # aux démarrages suivants il sort immédiatement.
+  wizard:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-wizard:${SHAMELESS_VERSION:-latest}
+    restart: "on-failure"
+    volumes:
+      - instance-config:/config
+
+  # Les services ci-dessous attendent /config/installed et chargent /config/instance.env.
+  # Le gating est fait par l'image (api, migrate : api/docker/gate.sh) ou par la commande (postgres).
+  # Pas de `depends_on: condition: service_healthy / service_completed_successfully` entre services « gated » :
+  # `docker compose up -d` resterait bloqué tant que l'installation n'est pas faite.
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    # Utilisateur et base fixes ; le mot de passe vient de instance.env (POSTGRES_PASSWORD).
+    command:
+      - sh
+      - -c
+      - |
+        until [ -f /config/installed ]; do sleep 2; done
+        set -a; . /config/instance.env; set +a
+        export POSTGRES_DB=shameless POSTGRES_USER=shameless
+        exec docker-entrypoint.sh postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - instance-config:/config:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shameless -d shameless"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-migrate:${SHAMELESS_VERSION:-latest}
+    restart: "no"
+    volumes:
+      - instance-config:/config:ro
+    depends_on:
+      - postgres
+
+  api:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-api:${SHAMELESS_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      Clips__StoragePath: /clips
+      DataProtection__KeysPath: /keys
+    volumes:
+      - instance-config:/config:ro
+      - api-keys:/keys
+      - api-clips:/clips
+    depends_on:
+      - postgres
+      - migrate
+
+  # Tant que /config/installed n'existe pas, le proxy envoie tout au wizard.
+  proxy:
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-proxy:${SHAMELESS_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      SHAMELESS_SITE_ADDRESS: ${SHAMELESS_SITE_ADDRESS:-:80}
+    ports:
+      - "${SHAMELESS_HTTP_PORT:-8080}:80"
+      - "${SHAMELESS_HTTPS_PORT:-8443}:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+      - instance-config:/instance-config:ro
+    depends_on:
+      - wizard
+      - api
+
+volumes:
+  instance-config:
+  postgres-data:
+  api-keys:
+  api-clips:
+  caddy-data:
+  caddy-config:

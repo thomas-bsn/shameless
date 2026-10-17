@@ -34,6 +34,28 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 
 `DISCORD_GUILD_ID` est l'ID du serveur de la communauté (mode développeur Discord, clic droit sur le serveur, « Copier l'identifiant »).
 
+## Déployer avec les images publiées
+
+Pour installer une Instance sans cloner les sources ni construire d'image, il suffit de [`deploy/compose.yaml`](deploy/compose.yaml) : il tire uniquement des images publiées dans GHCR (`ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}`), sans `build:`.
+
+```sh
+docker compose -f deploy/compose.yaml up -d
+docker compose -f deploy/compose.yaml logs wizard   # code d'accès du wizard
+```
+
+La configuration (secrets compris) est saisie dans le wizard et stockée dans le volume `instance-config` : aucun secret n'est dans les images.
+
+Tags publiés par la CI (`.github/workflows/images.yml`) :
+
+| Tag | Quand | Usage |
+|---|---|---|
+| `X.Y.Z` | tag git `vX.Y.Z` | version reproductible, à épingler en production |
+| `X.Y` | tag git stable `vX.Y.Z` | dernière version corrective d'une mineure |
+| `latest` | tag git stable (pas de `-rc`, `-beta`…) | tag stable : dernière release |
+| `edge`, `sha-<commit>` | push sur `main` | version de développement, non recommandée |
+
+Choisir la version avec `SHAMELESS_VERSION` (`latest` par défaut) ; `SHAMELESS_IMAGE_PREFIX` change le préfixe (fork, registre privé). Les images sont `linux/amd64`. Publier une release : `git tag v1.0.0 && git push origin v1.0.0`.
+
 ## Variables
 
 Toutes les variables sont décrites dans [`.env.example`](.env.example). Les principales :
@@ -68,7 +90,8 @@ api/              Backend .NET 10 (Api / Application / Infrastructure)
 web/              Front : SPA Vite + React + TanStack + Tailwind + shadcn/ui
 contracts/        Document OpenAPI de l'API, source du client TypeScript du front
 deploy/caddy/     Reverse proxy, qui construit et sert le front
-compose.yaml      Instance complète (images et volumes nommés uniquement)
+compose.yaml      Instance complète construite depuis les sources (.env)
+deploy/compose.yaml  Instance depuis les images GHCR (wizard)
 docs/agents/      Configuration des skills d'agents (tracker, labels)
 ```
 
@@ -121,4 +144,6 @@ Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `f
 
 - restaure, compile et teste l'API, et vérifie que `contracts/openapi.json` est à jour ;
 - vérifie que le client TypeScript commité correspond au contrat, puis lance lint, typecheck, tests et build du front ;
-- construit les images du compose.
+- construit les images du compose et valide `deploy/compose.yaml`.
+
+Un tag `v*` ou un push sur `main` publie les images dans GHCR (voir « Déployer avec les images publiées »).

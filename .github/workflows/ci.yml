@@ -86,3 +86,6 @@ jobs:
           DISCORD_CLIENT_ID: ci
           DISCORD_CLIENT_SECRET: ci
           DISCORD_GUILD_ID: ci
+
+      - name: Compose de déploiement valide
+        run: docker compose -f deploy/compose.yaml config --quiet

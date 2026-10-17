@@ -1,0 +1,12 @@
+# Contexte racine (image wizard) : ni secrets, ni dépendances, ni artefacts de build.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.git/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
