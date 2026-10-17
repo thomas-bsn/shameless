@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:wizard": "tsc -b && vite build --config vite.wizard.config.ts",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b",

@@ -20,6 +20,12 @@ des pronostics ; identifié par le bot comme présent en vocal pendant la game, 
 aussi pour son MVP et son DOFD.
 - **Instance** : un déploiement de Shameless pour une communauté, avec son serveur  
 Discord, sa base de données et sa propre clé Riot.
+- **Opérateur** : la personne qui installe et héberge l'Instance de sa communauté.  
+Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
+- **Wizard** : l'interface web temporaire, distincte du site, qui guide l'Opérateur  
+pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
+un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  
+ne se rouvre jamais (ADR 0015).
 
 ## Jeu
 

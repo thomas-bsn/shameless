@@ -23,3 +23,10 @@ services:
       context: ./deploy/caddy
       additional_contexts:
         web: ./web
+
+  wizard:
+    image: shameless-wizard:local
+    build:
+      context: ./wizard
+      additional_contexts:
+        web: ./web

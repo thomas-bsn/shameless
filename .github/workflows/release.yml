@@ -29,7 +29,9 @@ jobs:
           - name: proxy
             context: deploy/caddy
             build-contexts: web=./web
-          # Ajouter ici l'image wizard (#70) : name, context, et target ou build-contexts si besoin.
+          - name: wizard
+            context: wizard
+            build-contexts: web=./web
     steps:
       - uses: actions/checkout@v5
 
