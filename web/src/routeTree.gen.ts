@@ -17,6 +17,7 @@ import { Route as ConnecteClipsRouteImport } from './routes/_connecte/clips'
 import { Route as ConnecteCompteRouteImport } from './routes/_connecte/compte'
 import { Route as ConnecteHallDeLaHonteRouteImport } from './routes/_connecte/hall-de-la-honte'
 import { Route as ConnecteHistoriqueRouteImport } from './routes/_connecte/historique'
+import { Route as PrototypeWizardRouteImport } from './routes/prototype.wizard'
 import { Route as ConnecteGamesGameIdRouteImport } from './routes/_connecte/games/$gameId'
 import { Route as ConnecteJoueursIndexRouteImport } from './routes/_connecte/joueurs/index'
 import { Route as ConnecteJoueursPlayerIdRouteImport } from './routes/_connecte/joueurs/$playerId'
@@ -65,6 +66,11 @@ const ConnecteHistoriqueRoute = ConnecteHistoriqueRouteImport.update({
   id: '/historique',
   path: '/historique',
   getParentRoute: () => ConnecteRoute,
+} as any)
+const PrototypeWizardRoute = PrototypeWizardRouteImport.update({
+  id: '/prototype/wizard',
+  path: '/prototype/wizard',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ConnecteGamesGameIdRoute = ConnecteGamesGameIdRouteImport.update({
   id: '/games/$gameId',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/compte': typeof ConnecteCompteRoute
   '/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/historique': typeof ConnecteHistoriqueRoute
+  '/prototype/wizard': typeof PrototypeWizardRoute
   '/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/compte': typeof ConnecteCompteRoute
   '/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/historique': typeof ConnecteHistoriqueRoute
+  '/prototype/wizard': typeof PrototypeWizardRoute
   '/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_connecte/compte': typeof ConnecteCompteRoute
   '/_connecte/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/_connecte/historique': typeof ConnecteHistoriqueRoute
+  '/prototype/wizard': typeof PrototypeWizardRoute
   '/_connecte/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/_connecte/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
   '/_connecte/joueurs/nouveau': typeof ConnecteJoueursNouveauRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/compte'
     | '/hall-de-la-honte'
     | '/historique'
+    | '/prototype/wizard'
     | '/games/$gameId'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/compte'
     | '/hall-de-la-honte'
     | '/historique'
+    | '/prototype/wizard'
     | '/games/$gameId'
     | '/joueurs/$playerId'
     | '/joueurs/nouveau'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/_connecte/compte'
     | '/_connecte/hall-de-la-honte'
     | '/_connecte/historique'
+    | '/prototype/wizard'
     | '/_connecte/games/$gameId'
     | '/_connecte/joueurs/$playerId'
     | '/_connecte/joueurs/nouveau'
@@ -230,6 +242,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConnecteRoute: typeof ConnecteRouteWithChildren
   ConnexionRoute: typeof ConnexionRoute
+  PrototypeWizardRoute: typeof PrototypeWizardRoute
   DraftCapitaineLienRoute: typeof DraftCapitaineLienRoute
   DraftSpectateurLienRoute: typeof DraftSpectateurLienRoute
 }
@@ -291,6 +304,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/historique'
       preLoaderRoute: typeof ConnecteHistoriqueRouteImport
       parentRoute: typeof ConnecteRoute
+    }
+    '/prototype/wizard': {
+      id: '/prototype/wizard'
+      path: '/prototype/wizard'
+      fullPath: '/prototype/wizard'
+      preLoaderRoute: typeof PrototypeWizardRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_connecte/games/$gameId': {
       id: '/_connecte/games/$gameId'
@@ -396,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConnecteRoute: ConnecteRouteWithChildren,
   ConnexionRoute: ConnexionRoute,
+  PrototypeWizardRoute: PrototypeWizardRoute,
   DraftCapitaineLienRoute: DraftCapitaineLienRoute,
   DraftSpectateurLienRoute: DraftSpectateurLienRoute,
 }
