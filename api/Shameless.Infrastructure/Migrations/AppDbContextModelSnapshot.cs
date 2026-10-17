@@ -136,6 +136,40 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("best_of_series", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.BulletinDeVote", b =>
+                {
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("game_id");
+
+                    b.Property<long>("VotantDiscordId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("votant_discord_id");
+
+                    b.Property<int?>("DofdPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("dofd_player_id");
+
+                    b.Property<int?>("MvpPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("mvp_player_id");
+
+                    b.Property<DateTime>("VoteLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("vote_le");
+
+                    b.HasKey("GameId", "VotantDiscordId")
+                        .HasName("pk_bulletins_de_vote");
+
+                    b.HasIndex("DofdPlayerId")
+                        .HasDatabaseName("ix_bulletins_de_vote_dofd_player_id");
+
+                    b.HasIndex("MvpPlayerId")
+                        .HasDatabaseName("ix_bulletins_de_vote_mvp_player_id");
+
+                    b.ToTable("bulletins_de_vote", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
                     b.Property<int>("Id")
@@ -788,6 +822,22 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("soirees", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.SpectateurDeGame", b =>
+                {
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("game_id");
+
+                    b.Property<long>("DiscordId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("discord_id");
+
+                    b.HasKey("GameId", "DiscordId")
+                        .HasName("pk_spectateurs_de_game");
+
+                    b.ToTable("spectateurs_de_game", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -834,6 +884,30 @@ namespace Shameless.Infrastructure.Migrations
                         .HasConstraintName("fk_best_of_series_soirees_soiree_id");
 
                     b.Navigation("Soiree");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.BulletinDeVote", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Player", null)
+                        .WithMany()
+                        .HasForeignKey("DofdPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_bulletins_de_vote_players_dofd_player_id");
+
+                    b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_bulletins_de_vote_custom_games_game_id");
+
+                    b.HasOne("Shameless.Application.Entities.Player", null)
+                        .WithMany()
+                        .HasForeignKey("MvpPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_bulletins_de_vote_players_mvp_player_id");
+
+                    b.Navigation("Game");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
@@ -994,6 +1068,18 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.SpectateurDeGame", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_spectateurs_de_game_custom_games_game_id");
+
+                    b.Navigation("Game");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>

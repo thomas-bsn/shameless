@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
         services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
         services.AddScoped<IEvenementBotRepository, EvenementBotRepository>();
+        services.AddScoped<IVotesRepository, VotesRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -46,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<DraftChampionsService>();
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
+        services.AddScoped<VotesService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
