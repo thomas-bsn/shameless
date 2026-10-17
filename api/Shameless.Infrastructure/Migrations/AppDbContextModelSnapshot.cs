@@ -773,6 +773,57 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("player_monthly_costs", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.Pronostic", b =>
+                {
+                    b.Property<int>("SeriesId")
+                        .HasColumnType("integer")
+                        .HasColumnName("series_id");
+
+                    b.Property<int>("NumeroGame")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero_game");
+
+                    b.Property<long>("PronostiqueurDiscordId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pronostiqueur_discord_id");
+
+                    b.Property<int?>("DofdPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("dofd_player_id");
+
+                    b.Property<string>("EquipeGagnante")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe_gagnante");
+
+                    b.Property<int?>("MvpPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("mvp_player_id");
+
+                    b.Property<DateTime>("PronostiqueLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("pronostique_le");
+
+                    b.Property<string>("PronostiqueurNom")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("pronostiqueur_nom");
+
+                    b.HasKey("SeriesId", "NumeroGame", "PronostiqueurDiscordId")
+                        .HasName("pk_pronostics");
+
+                    b.HasIndex("DofdPlayerId")
+                        .HasDatabaseName("ix_pronostics_dofd_player_id");
+
+                    b.HasIndex("MvpPlayerId")
+                        .HasDatabaseName("ix_pronostics_mvp_player_id");
+
+                    b.ToTable("pronostics", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_pronostics_equipe_gagnante", "equipe_gagnante IS NULL OR equipe_gagnante IN ('A', 'B')");
+                        });
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.RapportCompanion", b =>
                 {
                     b.Property<int>("Id")
@@ -1127,6 +1178,34 @@ namespace Shameless.Infrastructure.Migrations
                         .HasConstraintName("fk_player_monthly_costs_players_player_id");
 
                     b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.Pronostic", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Player", "Dofd")
+                        .WithMany()
+                        .HasForeignKey("DofdPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_pronostics_players_dofd_player_id");
+
+                    b.HasOne("Shameless.Application.Entities.Player", "Mvp")
+                        .WithMany()
+                        .HasForeignKey("MvpPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_pronostics_players_mvp_player_id");
+
+                    b.HasOne("Shameless.Application.Entities.BestOfSeries", "Series")
+                        .WithMany()
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_pronostics_best_of_series_series_id");
+
+                    b.Navigation("Dofd");
+
+                    b.Navigation("Mvp");
+
+                    b.Navigation("Series");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.RapportCompanion", b =>

@@ -117,6 +117,15 @@ public class CustomGameRepository : ICustomGameRepository
             .AsSplitQuery()
             .ToListAsync();
 
+    public async Task<List<CustomGame>> GetCompletedGamesWithPlayersAsync() =>
+        await _db.CustomGames
+            .AsNoTracking()
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.Status == GameStatuses.Completed)
+            .AsSplitQuery()
+            .ToListAsync();
+
     public async Task<List<CustomGame>> GetByYearMonthAsync(int year, int month)
     {
         return await _db.CustomGames

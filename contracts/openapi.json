@@ -1850,6 +1850,45 @@
         }
       }
     },
+    "/hall-de-la-honte": {
+      "get": {
+        "tags": [
+          "HallDeLaHonte"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/liens": {
       "get": {
         "tags": [
@@ -3324,6 +3363,314 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Pronostics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/series/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -5452,6 +5799,24 @@
           }
         }
       },
+      "EquipePronostiquee": {
+        "required": [
+          "equipe",
+          "correct"
+        ],
+        "type": "object",
+        "properties": {
+          "equipe": {
+            "type": "string"
+          },
+          "correct": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -6097,6 +6462,20 @@
           }
         }
       },
+      "HallDeLaHonte": {
+        "required": [
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneHallDeLaHonte"
+            }
+          }
+        }
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
@@ -6193,6 +6572,29 @@
               {
                 "$ref": "#/components/schemas/GameParticipantDto"
               }
+            ]
+          }
+        }
+      },
+      "JoueurPronostique": {
+        "required": [
+          "playerId",
+          "prenom",
+          "correct"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "correct": {
+            "type": [
+              "null",
+              "boolean"
             ]
           }
         }
@@ -6345,6 +6747,36 @@
               "null",
               "integer"
             ],
+            "format": "int32"
+          }
+        }
+      },
+      "LigneHallDeLaHonte": {
+        "required": [
+          "rang",
+          "playerId",
+          "prenom",
+          "riotId",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "rang": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "dofd": {
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -6929,6 +7361,225 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "PronosticDuSpectateur": {
+        "required": [
+          "seriesId",
+          "gameNumber",
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "equipeGagnante",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "equipeGagnante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PronosticEvalue": {
+        "required": [
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "equipeGagnante",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "equipeGagnante": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EquipePronostiquee"
+              }
+            ]
+          },
+          "mvp": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JoueurPronostique"
+              }
+            ]
+          },
+          "dofd": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JoueurPronostique"
+              }
+            ]
+          }
+        }
+      },
+      "PronosticsDeLaGame": {
+        "required": [
+          "gameId",
+          "gameNumber",
+          "vainqueurConnu",
+          "votesClos",
+          "pronostics"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vainqueurConnu": {
+            "type": "boolean"
+          },
+          "votesClos": {
+            "type": "boolean"
+          },
+          "pronostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PronosticEvalue"
+            }
+          }
+        }
+      },
+      "PronosticsDeLaSerie": {
+        "required": [
+          "seriesId",
+          "bestOf",
+          "gameNumber",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          }
+        }
+      },
+      "PronostiquerRequest": {
+        "required": [
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "gameNumber",
+          "equipeGagnante",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "equipeGagnante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -8256,6 +8907,9 @@
       "name": "Games"
     },
     {
+      "name": "HallDeLaHonte"
+    },
+    {
       "name": "Liens"
     },
     {
@@ -8263,6 +8917,9 @@
     },
     {
       "name": "Players"
+    },
+    {
+      "name": "Pronostics"
     },
     {
       "name": "RapportsEnRevue"

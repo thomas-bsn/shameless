@@ -15,6 +15,7 @@ import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as ConnecteClassementsRouteImport } from './routes/_connecte/classements'
 import { Route as ConnecteClipsRouteImport } from './routes/_connecte/clips'
 import { Route as ConnecteCompteRouteImport } from './routes/_connecte/compte'
+import { Route as ConnecteHallDeLaHonteRouteImport } from './routes/_connecte/hall-de-la-honte'
 import { Route as ConnecteHistoriqueRouteImport } from './routes/_connecte/historique'
 import { Route as ConnecteGamesGameIdRouteImport } from './routes/_connecte/games/$gameId'
 import { Route as ConnecteJoueursIndexRouteImport } from './routes/_connecte/joueurs/index'
@@ -53,6 +54,11 @@ const ConnecteClipsRoute = ConnecteClipsRouteImport.update({
 const ConnecteCompteRoute = ConnecteCompteRouteImport.update({
   id: '/compte',
   path: '/compte',
+  getParentRoute: () => ConnecteRoute,
+} as any)
+const ConnecteHallDeLaHonteRoute = ConnecteHallDeLaHonteRouteImport.update({
+  id: '/hall-de-la-honte',
+  path: '/hall-de-la-honte',
   getParentRoute: () => ConnecteRoute,
 } as any)
 const ConnecteHistoriqueRoute = ConnecteHistoriqueRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ConnecteClassementsRoute
   '/clips': typeof ConnecteClipsRoute
   '/compte': typeof ConnecteCompteRoute
+  '/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/historique': typeof ConnecteHistoriqueRoute
   '/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/classements': typeof ConnecteClassementsRoute
   '/clips': typeof ConnecteClipsRoute
   '/compte': typeof ConnecteCompteRoute
+  '/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/historique': typeof ConnecteHistoriqueRoute
   '/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/_connecte/classements': typeof ConnecteClassementsRoute
   '/_connecte/clips': typeof ConnecteClipsRoute
   '/_connecte/compte': typeof ConnecteCompteRoute
+  '/_connecte/hall-de-la-honte': typeof ConnecteHallDeLaHonteRoute
   '/_connecte/historique': typeof ConnecteHistoriqueRoute
   '/_connecte/games/$gameId': typeof ConnecteGamesGameIdRoute
   '/_connecte/joueurs/$playerId': typeof ConnecteJoueursPlayerIdRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/clips'
     | '/compte'
+    | '/hall-de-la-honte'
     | '/historique'
     | '/games/$gameId'
     | '/joueurs/$playerId'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/clips'
     | '/compte'
+    | '/hall-de-la-honte'
     | '/historique'
     | '/games/$gameId'
     | '/joueurs/$playerId'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/_connecte/classements'
     | '/_connecte/clips'
     | '/_connecte/compte'
+    | '/_connecte/hall-de-la-honte'
     | '/_connecte/historique'
     | '/_connecte/games/$gameId'
     | '/_connecte/joueurs/$playerId'
@@ -264,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/compte'
       fullPath: '/compte'
       preLoaderRoute: typeof ConnecteCompteRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
+    '/_connecte/hall-de-la-honte': {
+      id: '/_connecte/hall-de-la-honte'
+      path: '/hall-de-la-honte'
+      fullPath: '/hall-de-la-honte'
+      preLoaderRoute: typeof ConnecteHallDeLaHonteRouteImport
       parentRoute: typeof ConnecteRoute
     }
     '/_connecte/historique': {
@@ -343,6 +362,7 @@ interface ConnecteRouteChildren {
   ConnecteClassementsRoute: typeof ConnecteClassementsRoute
   ConnecteClipsRoute: typeof ConnecteClipsRoute
   ConnecteCompteRoute: typeof ConnecteCompteRoute
+  ConnecteHallDeLaHonteRoute: typeof ConnecteHallDeLaHonteRoute
   ConnecteHistoriqueRoute: typeof ConnecteHistoriqueRoute
   ConnecteGamesGameIdRoute: typeof ConnecteGamesGameIdRoute
   ConnecteJoueursPlayerIdRoute: typeof ConnecteJoueursPlayerIdRoute
@@ -357,6 +377,7 @@ const ConnecteRouteChildren: ConnecteRouteChildren = {
   ConnecteClassementsRoute: ConnecteClassementsRoute,
   ConnecteClipsRoute: ConnecteClipsRoute,
   ConnecteCompteRoute: ConnecteCompteRoute,
+  ConnecteHallDeLaHonteRoute: ConnecteHallDeLaHonteRoute,
   ConnecteHistoriqueRoute: ConnecteHistoriqueRoute,
   ConnecteGamesGameIdRoute: ConnecteGamesGameIdRoute,
   ConnecteJoueursPlayerIdRoute: ConnecteJoueursPlayerIdRoute,

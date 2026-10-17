@@ -1672,6 +1672,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/hall-de-la-honte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HallDeLaHonte"];
+                        "application/json": components["schemas"]["HallDeLaHonte"];
+                        "text/json": components["schemas"]["HallDeLaHonte"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/liens": {
         parameters: {
             query?: never;
@@ -3040,6 +3086,269 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{id}/pronostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PronosticsDeLaGame"];
+                        "application/json": components["schemas"]["PronosticsDeLaGame"];
+                        "text/json": components["schemas"]["PronosticsDeLaGame"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bot/series/{id}/pronostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PronosticsDeLaSerie"];
+                        "application/json": components["schemas"]["PronosticsDeLaSerie"];
+                        "text/json": components["schemas"]["PronosticsDeLaSerie"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PronostiquerRequest"];
+                    "text/json": components["schemas"]["PronostiquerRequest"];
+                    "application/*+json": components["schemas"]["PronostiquerRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PronosticDuSpectateur"];
+                        "application/json": components["schemas"]["PronosticDuSpectateur"];
+                        "text/json": components["schemas"]["PronosticDuSpectateur"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bot/games/{id}/pronostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PronosticsDeLaGame"];
+                        "application/json": components["schemas"]["PronosticsDeLaGame"];
+                        "text/json": components["schemas"]["PronosticsDeLaGame"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4448,6 +4757,10 @@ export interface components {
             tag: components["schemas"]["StringSegment"];
             isWeak: boolean;
         };
+        EquipePronostiquee: {
+            equipe: string;
+            correct: null | boolean;
+        };
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -4589,6 +4902,9 @@ export interface components {
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
         };
+        HallDeLaHonte: {
+            joueurs: components["schemas"]["LigneHallDeLaHonte"][];
+        };
         /** Format: binary */
         IFormFile: string;
         JouerDraftChampionsRequest: {
@@ -4614,6 +4930,12 @@ export interface components {
             side: string;
             championId: string;
             joueur: null | components["schemas"]["GameParticipantDto"];
+        };
+        JoueurPronostique: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            correct: null | boolean;
         };
         JsonElement: unknown;
         LancerDraftRequest: {
@@ -4656,6 +4978,16 @@ export interface components {
             division: null | number;
             /** Format: int32 */
             lp: null | number;
+        };
+        LigneHallDeLaHonte: {
+            /** Format: int32 */
+            rang: number;
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            /** Format: int32 */
+            dofd: number;
         };
         LinkPlayerRequest: {
             /** Format: int32 */
@@ -4803,6 +5135,56 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        PronosticDuSpectateur: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            gameNumber: number;
+            pronostiqueurDiscordId: string;
+            pronostiqueurNom: null | string;
+            equipeGagnante: null | string;
+            /** Format: int32 */
+            mvpPlayerId: null | number;
+            /** Format: int32 */
+            dofdPlayerId: null | number;
+        };
+        PronosticEvalue: {
+            pronostiqueurDiscordId: string;
+            pronostiqueurNom: null | string;
+            equipeGagnante: null | components["schemas"]["EquipePronostiquee"];
+            mvp: null | components["schemas"]["JoueurPronostique"];
+            dofd: null | components["schemas"]["JoueurPronostique"];
+        };
+        PronosticsDeLaGame: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            gameNumber: number;
+            vainqueurConnu: boolean;
+            votesClos: boolean;
+            pronostics: components["schemas"]["PronosticEvalue"][];
+        };
+        PronosticsDeLaSerie: {
+            /** Format: int32 */
+            seriesId: number;
+            /** Format: int32 */
+            bestOf: number;
+            /** Format: int32 */
+            gameNumber: null | number;
+            teamA: components["schemas"]["JoueurDuBot"][];
+            teamB: components["schemas"]["JoueurDuBot"][];
+        };
+        PronostiquerRequest: {
+            pronostiqueurDiscordId: string;
+            pronostiqueurNom: null | string;
+            /** Format: int32 */
+            gameNumber: number;
+            equipeGagnante: null | string;
+            /** Format: int32 */
+            mvpPlayerId: null | number;
+            /** Format: int32 */
+            dofdPlayerId: null | number;
         };
         RangActuel: {
             tier: string;
