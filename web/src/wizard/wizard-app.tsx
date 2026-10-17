@@ -241,7 +241,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             <div className="space-y-3 rounded-lg border p-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <Label htmlFor="uchuu">Intégration Uchuu (bot Discord)</Label>
+                  <Label htmlFor="uchuu">Intégration du bot Discord</Label>
                   <p className="text-xs text-muted-foreground">Annonces, votes, pronostics et clips dans Discord. Le wizard génère les clés et vous donne les valeurs à copier dans le bot ; il ne contacte ni ne modifie le bot.</p>
                 </div>
                 <Switch id="uchuu" checked={valeurs.uchuu} onCheckedChange={(v) => { modifier("uchuu", v); if (!v) setErreurs((e) => ({ ...e, botUrl: undefined })); }} />
@@ -287,7 +287,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                 ["Administrateurs", valeurs.adminIds],
                 ["Clé Riot", valeurs.riotKey ? masquer(valeurs.riotKey) : "Non renseignée (facultatif)"],
                 ["Fuseau horaire", valeurs.timezone],
-                ["Intégration Uchuu", valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
+                ["Bot Discord", valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
                 ["Clés internes", valeurs.uchuu ? "Générées automatiquement (base, bot)" : "Générées automatiquement"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 py-2">
@@ -363,8 +363,8 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
 
 function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
   return (
-    <section aria-label="Bot Discord (Uchuu)" className="space-y-2 text-sm">
-      <h3 className="font-medium">Bot Discord (Uchuu)</h3>
+    <section aria-label="Bot Discord" className="space-y-2 text-sm">
+      <h3 className="font-medium">Bot Discord</h3>
       <p className="text-xs text-muted-foreground">
         Collez ces valeurs dans le .env du bot et redémarrez-le. Elles ne seront plus affichées une fois ce wizard arrêté. Complétez aussi le jeton
         et les IDs de salons, voir <code>docs/shameless.md</code> du dépôt harceleur_bot.
