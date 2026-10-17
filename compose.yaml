@@ -60,8 +60,8 @@ services:
     # Relancée en cas d'échec : l'entrypoint relit instance.env (corrigé via « Réessayer » du wizard).
     # Terminée avec succès, elle ne se relance pas.
     restart: on-failure
-    # Le volume migrate-state hérite à sa création du propriétaire de /state dans l'image (voir
-    # api/Dockerfile) : pas de `user:` ici, Forgeyard ne le prend pas en charge.
+    # L'image migrate tourne en root pour écrire le marqueur dans migrate-state : pas de `user:` ici,
+    # Forgeyard ne le prend pas en charge.
     entrypoint:
       - sh
       - -c

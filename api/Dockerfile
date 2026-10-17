@@ -15,9 +15,9 @@ RUN dotnet ef migrations bundle -p Shameless.Infrastructure -s Shameless.Infrast
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrate
 WORKDIR /app
 COPY --from=build /bundle/efbundle .
-# Le volume nommé monté sur /state (marqueur lu par l'API) hérite de ce propriétaire à sa création.
-RUN mkdir /state && chown $APP_UID /state
-USER $APP_UID
+# Le job écrit le marqueur de version dans le volume nommé /state, qui peut être root-owned
+# (créé vide, ou par une ancienne image). L'image reste root pour pouvoir y écrire sans
+# l'option Compose `user:` (refusée par Forgeyard) ; l'API, non-root, ne fait que le lire.
 ENTRYPOINT ["sh", "-c", "./efbundle --connection \"$ConnectionStrings__Shameless\""]
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
