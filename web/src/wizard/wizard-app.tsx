@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { getState, install, unlock, validate, type FieldErrors, type Phase, type RecapUchuu, type Values } from "./api";
-import { BoiteACopier, Champ } from "./champs";
+import { BoiteACopier, Champ, LigneACopier } from "./champs";
 
 const ETAPES = [
   { cle: "intro", libelle: "Introduction" },
@@ -33,7 +33,7 @@ const CHAMPS_PAR_ETAPE: Record<Etape, (keyof Values)[]> = {
 const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "" };
 const COMMANDE_RELECTURE = "docker compose exec api cat /instance/instance.env";
 const DONNEES_A_SAUVEGARDER =
-  "Pensez à configurer les sauvegardes de vos données persistantes dans votre infrastructure : la base Postgres (volume postgres-data), les clips (api-clips), les clés d'authentification (api-keys) et la configuration de l'Instance (instance-config, qui contient des secrets).";
+  "Sauvegardez les volumes du projet (base, clips, clés) et instance-config, qui contient des secrets.";
 
 const masquer = (s: string) => (s ? "•".repeat(Math.min(s.length, 24)) : "—");
 
@@ -311,11 +311,11 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
           <CardHeader>
             <CardTitle role="heading" aria-level={2}>{phase === "done" ? "Shameless est prêt" : phase === "failed" ? "L'installation a échoué" : "Installation en cours…"}</CardTitle>
           </CardHeader>
+          {recap && phase !== "failed" && <CardContent><RecapUchuuEcran recap={recap} /></CardContent>}
           <CardContent className="space-y-3 text-sm">
             {phase === "installing" && (
               <>
                 <p className="flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Démarrage de la base de données, migrations, puis de l'API. Cela prend en général moins d'une minute.</p>
-                {recap && <p className="text-xs text-muted-foreground">En attendant, copiez les valeurs Uchuu ci-dessous : elles ne seront plus affichées quand ce wizard s'arrêtera.</p>}
                 {connexionCoupee && (
                   <p className="text-muted-foreground">
                     La connexion à cette page s'est coupée : c'est normal quand le serveur bascule sur votre adresse définitive. Ouvrez{" "}
@@ -339,13 +339,18 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
               </Alert>
             )}
             {phase === "done" && (
-              <>
-                <p className="flex items-center gap-2 rounded-md bg-emerald-500/10 p-3"><PartyPopper className="size-4" /> Votre Instance répond à {urlPublique}. Ce wizard s'arrête et ne se rouvrira plus.</p>
-                <p className="text-xs text-muted-foreground">{DONNEES_A_SAUVEGARDER}</p>
-              </>
+              <p className="flex items-center gap-2 rounded-md bg-emerald-500/10 p-3"><PartyPopper className="size-4" /> Votre Instance répond à {urlPublique}. Ce wizard s'arrête.</p>
             )}
           </CardContent>
-          {recap && phase !== "failed" && <CardContent className="space-y-5 border-t pt-5"><RecapUchuuEcran recap={recap} /></CardContent>}
+          {phase !== "failed" && (
+            <CardContent className="space-y-3 border-t pt-4 text-xs text-muted-foreground">
+              <p>{DONNEES_A_SAUVEGARDER}</p>
+              <details>
+                <summary className="cursor-pointer">Relire les secrets plus tard</summary>
+                <div className="mt-2"><BoiteACopier valeur={COMMANDE_RELECTURE} libelle="Copier la commande de relecture" /></div>
+              </details>
+            </CardContent>
+          )}
           <CardFooter className="justify-end gap-2">
             {phase === "failed" && <Button onClick={() => aller("recap")}>Réessayer</Button>}
             {phase === "done" && <Button asChild><a href={urlPublique}>Ouvrir Shameless</a></Button>}
@@ -357,50 +362,17 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
 }
 
 function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
-  const section = (titre: string, composant: "Shameless" | "Uchuu", aide: string, pied?: React.ReactNode) => (
-    <section aria-label={titre} className="space-y-2">
-      <h3 className="font-medium">{titre}</h3>
-      <p className="text-xs text-muted-foreground">{aide}</p>
-      <ul className="divide-y rounded-lg border">
-        {recap.variables.filter((v) => v.composant === composant).map((v) => (
-          <li key={v.nom} className="space-y-1 p-3">
-            <div className="flex items-center gap-2">
-              <code className="text-xs font-semibold">{v.nom}</code>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{composant === "Uchuu" ? "Bot (Uchuu)" : "Shameless (API)"}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{v.role}</p>
-            <BoiteACopier valeur={v.valeur} libelle={`Copier ${v.nom}`} />
-          </li>
-        ))}
-      </ul>
-      {pied}
-    </section>
-  );
   return (
-    <div className="space-y-6 text-sm">
-      {section("Dans Shameless", "Shameless", "Déjà enregistré dans la configuration de l'Instance : rien à faire, ces valeurs sont là pour référence.")}
-      {section("À reporter dans le bot", "Uchuu", "À coller dans la configuration du bot (fichier .env), puis redémarrer le bot. Les clés sont identiques des deux côtés.",
-        <div className="space-y-1"><p className="text-xs text-muted-foreground">Ou tout le bloc d'un coup :</p><BoiteACopier valeur={recap.envUchuu} libelle="Copier le bloc .env du bot" /></div>)}
-      <section aria-label="À saisir à la main dans le bot" className="space-y-2">
-        <h3 className="font-medium">À saisir à la main dans le bot</h3>
-        <p className="text-xs text-muted-foreground">Ces identifiants de salons Discord ne sont pas connus du wizard. {recap.docBot}</p>
-        <ul className="space-y-1 text-xs">
-          {recap.aSaisirAMain.map((v) => (
-            <li key={v.nom}><code className="font-semibold">{v.nom}</code>{v.facultatif ? " (facultatif)" : ""} : {v.role}</li>
-          ))}
-        </ul>
-      </section>
-      <section aria-label="Vérifier la liaison" className="space-y-2">
-        <h3 className="font-medium">Vérifier la liaison</h3>
-        <p className="text-xs text-muted-foreground">Une fois le bot redémarré, cette commande doit répondre par la liste des candidats vocaux (le wizard n'appelle jamais le bot).</p>
-        <BoiteACopier valeur={recap.verification} libelle="Copier la commande de vérification" />
-      </section>
-      <section aria-label="Relire ces valeurs" className="space-y-2">
-        <h3 className="font-medium">Relire ces valeurs plus tard</h3>
-        <p className="text-xs text-muted-foreground">Cet écran ne sera plus accessible une fois le wizard arrêté ; la configuration reste lisible depuis votre serveur :</p>
-        <BoiteACopier valeur={COMMANDE_RELECTURE} libelle="Copier la commande de relecture" />
-      </section>
-    </div>
+    <section aria-label="Bot Discord (Uchuu)" className="space-y-2 text-sm">
+      <h3 className="font-medium">Bot Discord (Uchuu)</h3>
+      <p className="text-xs text-muted-foreground">
+        Collez ces valeurs dans le .env du bot et redémarrez-le. Elles ne seront plus affichées une fois ce wizard arrêté. Complétez aussi le jeton
+        et les IDs de salons, voir <code>docs/shameless.md</code> du dépôt harceleur_bot.
+      </p>
+      <ul className="divide-y rounded-lg border">
+        {recap.variables.filter((v) => v.composant === "Uchuu").map((v) => <LigneACopier key={v.nom} nom={v.nom} valeur={v.valeur} />)}
+      </ul>
+    </section>
   );
 }
 

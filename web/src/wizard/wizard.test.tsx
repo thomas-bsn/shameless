@@ -320,7 +320,7 @@ describe("étape Options (#71)", () => {
     expect(await screen.findByText(/relue automatiquement/)).toBeInTheDocument();
   });
 
-  it("affiche à la fin les sections « Dans Shameless » et « À reporter dans le bot » avec valeurs et boutons Copier", async () => {
+  it("affiche à la fin un seul bloc Bot Discord, une ligne Copier par variable et la doc du bot", async () => {
     const serveur = fauxServeur();
     serveur.recap = RECAP_UCHUU;
     const user = userEvent.setup();
@@ -331,33 +331,26 @@ describe("étape Options (#71)", () => {
     expect(await screen.findByText(/Activé/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Installer" }));
 
-    const shameless = await screen.findByRole("region", { name: "Dans Shameless" });
-    expect(within(shameless).getByText("SHAMELESS_BOT_URL")).toBeInTheDocument();
-    expect(within(shameless).getByText("https://bot.example.org")).toBeInTheDocument();
-    expect(within(shameless).getAllByRole("button", { name: /Copier/ }).length).toBe(2);
-
-    const bot = screen.getByRole("region", { name: "À reporter dans le bot" });
-    expect(within(bot).getByText("SHAMELESS_API_URL")).toBeInTheDocument();
-    expect(within(bot).getByText("https://shameless.example.org/api")).toBeInTheDocument();
-    expect(within(bot).getByText("a".repeat(64))).toBeInTheDocument();
-    expect(within(bot).getByRole("button", { name: "Copier le bloc .env du bot" })).toBeInTheDocument();
+    const bot = await screen.findByRole("region", { name: "Bot Discord (Uchuu)" });
+    expect(within(bot).getByRole("button", { name: "Copier SHAMELESS_BOT_API_KEY" })).toBeInTheDocument();
+    expect(within(bot).getByRole("button", { name: "Copier SHAMELESS_API_URL" })).toBeInTheDocument();
+    expect(within(bot).getByText(/docs\/shameless\.md/)).toBeInTheDocument();
+    expect(within(bot).getAllByRole("button", { name: /Copier/ }).length).toBe(2);
+    expect(screen.queryByText("SHAMELESS_TEAM1_VOICE_ID")).not.toBeInTheDocument();
+    expect(screen.queryByText(/voice-candidates/)).not.toBeInTheDocument();
   });
 
-  it("liste les variables du bot à saisir à la main, la commande de vérification et de relecture", async () => {
-    fauxServeur({ phase: "installing", publicUrl: "https://shameless.example.org", uchuu: RECAP_UCHUU });
+  it("garde la relecture des secrets repliée sur l'écran de fin", async () => {
+    fauxServeur({ phase: "done", publicUrl: "https://shameless.example.org", uchuu: RECAP_UCHUU });
     render(<WizardApp />);
-    expect(await screen.findByText("SHAMELESS_TEAM1_VOICE_ID")).toBeInTheDocument();
-    expect(screen.getByText("SHAMELESS_CLIPS_CHANNEL_ID")).toBeInTheDocument();
-    expect(screen.getByText(/docs\/shameless\.md/)).toBeInTheDocument();
-    expect(screen.getByText(/voice-candidates/)).toBeInTheDocument();
-    expect(screen.getByText("docker compose exec api cat /instance/instance.env")).toBeInTheDocument();
-    expect(screen.getByText(/Cet écran ne sera plus accessible/)).toBeInTheDocument();
+    expect(await screen.findByText("Relire les secrets plus tard")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copier la commande de relecture" })).toBeInTheDocument();
   });
 
   it("n'affiche aucun bloc Uchuu quand l'intégration est ignorée", async () => {
     fauxServeur({ phase: "done", publicUrl: "https://shameless.example.org" });
     render(<WizardApp />);
     expect(await screen.findByRole("link", { name: "Ouvrir Shameless" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Dans Shameless" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Bot Discord (Uchuu)" })).not.toBeInTheDocument();
   });
 });

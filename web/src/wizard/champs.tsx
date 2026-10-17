@@ -87,3 +87,28 @@ export function BoiteACopier({ valeur, libelle = "Copier l'URL de callback" }: {
     </div>
   );
 }
+
+/** Une variable à recopier : son nom, sa valeur tronquée et un bouton Copier. */
+export function LigneACopier({ nom, valeur }: { nom: string; valeur: string }) {
+  const [copie, setCopie] = useState(false);
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2">
+      <div className="min-w-0">
+        <code className="block text-xs font-semibold">{nom}</code>
+        <code className="block truncate text-[11px] text-muted-foreground">{valeur}</code>
+      </div>
+      <button
+        type="button"
+        aria-label={`Copier ${nom}`}
+        className="rounded-md border px-2.5 py-1 text-xs hover:bg-muted"
+        onClick={() => {
+          void navigator.clipboard?.writeText(valeur);
+          setCopie(true);
+          setTimeout(() => setCopie(false), 1200);
+        }}
+      >
+        {copie ? "Copié" : "Copier"}
+      </button>
+    </li>
+  );
+}

@@ -225,7 +225,11 @@ export function createWizard(o: WizardOptions) {
 
       // Page servie en HTTPS par un proxy en amont qui joint Caddy en HTTP (en-têtes posés par Caddy) :
       // Caddy ne doit pas chercher à gérer le HTTPS, sinon il redirigerait en boucle vers lui-même.
-      value.tlsEnAmont = req.headers["x-shameless-entry"] === "http" && req.headers["x-forwarded-proto"] === "https";
+      // X-Forwarded-Proto n'est conservé par Caddy que d'un proxy du réseau privé : si le proxy en amont
+      // n'en fait pas partie, l'en-tête est perdu. L'Origin posée par le navigateur sur ce POST dit aussi
+      // que la page est vue en HTTPS alors qu'elle est entrée en HTTP.
+      const pageEnHttps = req.headers["x-forwarded-proto"] === "https" || String(req.headers.origin ?? "").startsWith("https://");
+      value.tlsEnAmont = req.headers["x-shameless-entry"] === "http" && pageEnHttps;
       if (value.tlsEnAmont && value.publicUrl.startsWith("https://"))
         warnings.push("Le HTTPS est géré par le proxy en amont de Shameless : Caddy sert l'Instance en HTTP derrière lui.");
       installer(value);
