@@ -66,7 +66,18 @@ public sealed class ClipsService
         if (gameId is { } id) clip.RattacherA(id, RattachementsClip.Automatique);
         _clips.Add(clip);
 
-        if (await _clips.TrySaveChangesAsync())
+        bool enregistre;
+        try
+        {
+            enregistre = await _clips.TrySaveChangesAsync();
+        }
+        catch
+        {
+            // Pas de vidéo orpheline : sans ses métadonnées, personne ne la retrouverait.
+            _stockage.Supprimer(fichier);
+            throw;
+        }
+        if (enregistre)
             return CommandResult<(ClipDuBot, bool)>.Ok((ClipDuBot.From(clip), true));
 
         // Le même dépôt, reçu en même temps : on garde le premier.

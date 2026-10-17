@@ -1,6 +1,14 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
+using Shameless.Infrastructure.Data;
+using Shameless.Infrastructure.Data.Repositories;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -152,6 +160,43 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
         var fichier = await client.GetAsync($"/clips/{clip.GetProperty("id").GetInt32()}/fichier", Ct);
         Assert.Equal(Video, await fichier.Content.ReadAsByteArrayAsync(Ct));
         Assert.Single(Directory.GetFiles(Factory.DossierDesClips));
+    }
+
+    /// <summary>Le dépôt des clips réel, dont l'enregistrement échoue sur une erreur de la base.</summary>
+    private sealed class DepotDesClipsEnPanne(AppDbContext db) : IClipRepository
+    {
+        private readonly ClipRepository _reel = new(db);
+        public void Add(Clip clip) => _reel.Add(clip);
+        public Task<Clip?> GetAsync(int id) => _reel.GetAsync(id);
+        public Task<Clip?> GetByAttachmentIdAsync(long discordAttachmentId) => _reel.GetByAttachmentIdAsync(discordAttachmentId);
+        public Task<List<Clip>> GetDeLaGameAsync(int gameId) => _reel.GetDeLaGameAsync(gameId);
+        public Task<List<Clip>> GetSansGameAsync() => _reel.GetSansGameAsync();
+        public Task<bool> TrySaveChangesAsync() => throw new InvalidOperationException("La base est en panne.");
+    }
+
+    [Fact]
+    public async Task Si_le_clip_ne_peut_pas_etre_enregistre_sa_video_n_est_pas_gardee()
+    {
+        OrganisateurLeSoir();
+        using var enPanne = Factory.WithWebHostBuilder(b => b.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IClipRepository>();
+            services.AddScoped<IClipRepository, DepotDesClipsEnPanne>();
+        }));
+        var bot = enPanne.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        bot.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestSession.BotKey);
+
+        try
+        {
+            var response = await bot.PostAsync("/bot/clips", Clip("1300000000000000109", Soir), Ct);
+            Assert.False(response.IsSuccessStatusCode);
+        }
+        catch (InvalidOperationException)
+        {
+            // L'erreur peut remonter telle quelle depuis le serveur de test.
+        }
+
+        Assert.False(Directory.Exists(Factory.DossierDesClips) && Directory.GetFiles(Factory.DossierDesClips).Length > 0);
     }
 
     [Fact]
