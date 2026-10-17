@@ -23,22 +23,5 @@ public sealed class ClipRepository : IClipRepository
     public Task<List<Clip>> GetSansGameAsync() =>
         _db.Clips.AsNoTracking().Where(c => c.GameId == null).OrderBy(c => c.PublieLe).ThenBy(c => c.Id).ToListAsync();
 
-    public async Task<List<(int Id, DateTime LanceeLe)>> GetGamesLanceesEntreAsync(DateTime debut, DateTime fin) =>
-        (await _db.CustomGames.AsNoTracking()
-            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
-            .Select(g => new { g.Id, g.CreatedAt })
-            .ToListAsync())
-        .Select(g => (g.Id, g.CreatedAt))
-        .ToList();
-
-    public Task<List<CustomGame>> GetGamesCandidatesAsync(DateTime debut, DateTime fin) =>
-        _db.CustomGames.AsNoTrackingWithIdentityResolution()
-            .Include(g => g.Series).ThenInclude(s => s!.Games)
-            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
-            .OrderByDescending(g => g.CreatedAt).ThenByDescending(g => g.Id)
-            .ToListAsync();
-
-    public Task<bool> GameExisteAsync(int gameId) => _db.CustomGames.AnyAsync(g => g.Id == gameId);
-
     public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

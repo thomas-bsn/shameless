@@ -16,15 +16,18 @@ public static class GamePlausible
     }
 
     /// <summary>
-    /// L'id de l'unique Game plausible parmi les games données (id, lancée le, UTC), ou null s'il n'y en a
-    /// aucune ou plusieurs.
+    /// Les bornes UTC [Debut, Fin] des games plausibles : lancées le jour de publication (fuseau de
+    /// l'Instance), au plus tard à l'instant de la publication.
     /// </summary>
-    public static int? Unique(DateTime publieLeUtc, TimeZoneInfo fuseau, IEnumerable<(int Id, DateTime LanceeLe)> games)
-    {
-        var (debut, _) = JourDePublication(publieLeUtc, fuseau);
-        var plausibles = games.Where(g => g.LanceeLe >= debut && g.LanceeLe <= publieLeUtc).Select(g => g.Id).Distinct().ToList();
-        return plausibles.Count == 1 ? plausibles[0] : null;
-    }
+    public static (DateTime Debut, DateTime Fin) FenetreDesPlausibles(DateTime publieLeUtc, TimeZoneInfo fuseau) =>
+        (JourDePublication(publieLeUtc, fuseau).Debut, publieLeUtc);
+
+    /// <summary>
+    /// L'id de l'unique Game plausible parmi les games lancées dans <see cref="FenetreDesPlausibles"/>, ou
+    /// null s'il n'y en a aucune ou plusieurs.
+    /// </summary>
+    public static int? Unique(IReadOnlyCollection<int> plausibles) =>
+        plausibles.Count == 1 ? plausibles.Single() : null;
 
     /// <summary>
     /// Les bornes UTC [Debut, Fin] des games à proposer pour rattacher un clip à la main : lancées la veille

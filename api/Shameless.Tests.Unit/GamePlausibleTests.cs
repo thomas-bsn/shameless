@@ -43,43 +43,39 @@ public class GamePlausibleTests
     }
 
     [Fact]
-    public void Une_seule_game_lancee_le_jour_avant_la_publication_est_la_game_plausible()
+    public void Les_games_plausibles_sont_lancees_entre_minuit_heure_de_l_instance_et_la_publication()
     {
-        var publieLe = Utc(10, 17, 21);
+        // 21 h UTC = 23 h à Paris : depuis minuit à Paris (22 h UTC la veille) jusqu'à la publication.
+        var fenetre = GamePlausible.FenetreDesPlausibles(Utc(10, 17, 21), Paris);
 
-        var game = GamePlausible.Unique(publieLe, Paris, [(7, Utc(10, 17, 19))]);
-
-        Assert.Equal(7, game);
-    }
-
-    [Fact]
-    public void Deux_games_lancees_le_jour_avant_la_publication_sont_ambigues()
-    {
-        var game = GamePlausible.Unique(Utc(10, 17, 21), Paris, [(7, Utc(10, 17, 19)), (8, Utc(10, 17, 20))]);
-
-        Assert.Null(game);
-    }
-
-    [Fact]
-    public void Une_game_lancee_apres_la_publication_n_est_pas_plausible()
-    {
-        var game = GamePlausible.Unique(Utc(10, 17, 19, 30), Paris, [(7, Utc(10, 17, 19)), (8, Utc(10, 17, 20))]);
-
-        Assert.Equal(7, game);
+        Assert.Equal(Utc(10, 16, 22), fenetre.Debut);
+        Assert.Equal(Utc(10, 17, 21), fenetre.Fin);
     }
 
     [Fact]
     public void Une_game_de_la_veille_heure_de_l_instance_n_est_pas_plausible()
     {
-        // Game lancée à 23 h 30 à Paris le 17, clip publié à 0 h 30 le 18.
-        var game = GamePlausible.Unique(Utc(10, 17, 22, 30), Paris, [(7, Utc(10, 17, 21, 30))]);
+        // Clip publié à 0 h 30 à Paris le 18 : une game lancée à 23 h 30 le 17 est hors de la fenêtre.
+        var fenetre = GamePlausible.FenetreDesPlausibles(Utc(10, 17, 22, 30), Paris);
 
-        Assert.Null(game);
+        Assert.True(Utc(10, 17, 21, 30) < fenetre.Debut);
     }
 
     [Fact]
-    public void Sans_game_le_jour_de_publication_il_n_y_a_pas_de_game_plausible()
+    public void Une_seule_game_plausible_est_la_game_du_clip()
     {
-        Assert.Null(GamePlausible.Unique(Utc(10, 17, 21), Paris, []));
+        Assert.Equal(7, GamePlausible.Unique([7]));
+    }
+
+    [Fact]
+    public void Deux_games_plausibles_sont_ambigues()
+    {
+        Assert.Null(GamePlausible.Unique([7, 8]));
+    }
+
+    [Fact]
+    public void Sans_game_plausible_le_clip_reste_sans_game()
+    {
+        Assert.Null(GamePlausible.Unique([]));
     }
 }

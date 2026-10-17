@@ -12,13 +12,17 @@ namespace Shameless.Application.Services;
 public sealed class ClipsService
 {
     private readonly IClipRepository _clips;
+    private readonly ICustomGameRepository _games;
     private readonly IStockageDesClips _stockage;
     private readonly TimeProvider _clock;
     private readonly TimeZoneInfo _fuseau;
 
-    public ClipsService(IClipRepository clips, IStockageDesClips stockage, TimeProvider clock, IOptions<InstanceOptions> instance)
+    public ClipsService(
+        IClipRepository clips, ICustomGameRepository games, IStockageDesClips stockage, TimeProvider clock,
+        IOptions<InstanceOptions> instance)
     {
         _clips = clips;
+        _games = games;
         _stockage = stockage;
         _clock = clock;
         _fuseau = instance.Value.Fuseau();
@@ -42,8 +46,8 @@ public sealed class ClipsService
             return CommandResult<(ClipDuBot, bool)>.Invalid("Le nom de l'auteur du clip est requis.");
 
         var publieLe = depot.PublieLe.ToUniversalTime();
-        var jour = GamePlausible.JourDePublication(publieLe, _fuseau);
-        var gameId = GamePlausible.Unique(publieLe, _fuseau, await _clips.GetGamesLanceesEntreAsync(jour.Debut, publieLe));
+        var (debut, fin) = GamePlausible.FenetreDesPlausibles(publieLe, _fuseau);
+        var gameId = GamePlausible.Unique(await _games.GetIdsLanceesEntreAsync(debut, fin));
 
         var fichier = await _stockage.EnregistrerAsync(video, extension, ct);
         var clip = new Clip
@@ -74,7 +78,7 @@ public sealed class ClipsService
 
     /// <summary>Les clips rattachés à la game, ou null si elle n'existe pas.</summary>
     public async Task<List<ClipResponse>?> GetDeLaGameAsync(int gameId) =>
-        await _clips.GameExisteAsync(gameId)
+        await _games.ExisteAsync(gameId)
             ? (await _clips.GetDeLaGameAsync(gameId)).Select(ClipResponse.From).ToList()
             : null;
 
@@ -90,7 +94,7 @@ public sealed class ClipsService
     {
         if (await _clips.GetAsync(clipId) is not { } clip) return null;
         var (debut, fin) = GamePlausible.FenetreDesCandidates(clip.PublieLe, _fuseau);
-        return (await _clips.GetGamesCandidatesAsync(debut, fin)).Select(GameCandidateDuClip.From).ToList();
+        return (await _games.GetLanceesEntreAsync(debut, fin)).Select(GameCandidateDuClip.From).ToList();
     }
 
     /// <summary>
@@ -100,7 +104,7 @@ public sealed class ClipsService
     {
         if (await _clips.GetAsync(clipId) is not { } clip)
             return CommandResult<ClipResponse>.NotFound("Ce clip n'existe pas.");
-        if (!await _clips.GameExisteAsync(gameId))
+        if (!await _games.ExisteAsync(gameId))
             return CommandResult<ClipResponse>.NotFound("Cette game n'existe pas.");
 
         clip.RattacherA(gameId, RattachementsClip.Manuel);
@@ -126,7 +130,6 @@ public sealed class ClipsService
     public async Task<FichierDeClip?> GetFichierAsync(int clipId)
     {
         if (await _clips.GetAsync(clipId) is not { } clip) return null;
-        var chemin = _stockage.CheminDe(clip.Fichier);
-        return File.Exists(chemin) ? new FichierDeClip(chemin, clip.ContentType, clip.NomFichier) : null;
+        return _stockage.Trouver(clip.Fichier) is { } chemin ? new FichierDeClip(chemin, clip.ContentType, clip.NomFichier) : null;
     }
 }

@@ -37,7 +37,9 @@ public sealed class StockageDesClipsSurDisque : IStockageDesClips
         return fichier;
     }
 
-    public string CheminDe(string fichier) => Path.Combine(_dossier, Path.GetFileName(fichier));
+    public string? Trouver(string fichier) => CheminDe(fichier) is var chemin && File.Exists(chemin) ? chemin : null;
+
+    private string CheminDe(string fichier) => Path.Combine(_dossier, Path.GetFileName(fichier));
 
     public void Supprimer(string fichier) => File.Delete(CheminDe(fichier));
 }
