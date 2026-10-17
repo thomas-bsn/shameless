@@ -89,6 +89,10 @@ describe("variables d'Instance calculées", () => {
     assert.equal(buildInstanceEnv(local, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
   });
 
+  it("sert un domaine en HTTP sur le port 80 quand un proxy en amont termine le HTTPS", () => {
+    assert.equal(buildInstanceEnv({ ...(validateConfig(valide).value!), tlsEnAmont: true }, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
+  });
+
   it("sérialise en fichier sourçable par sh, même avec une apostrophe", () => {
     const texte = serializeEnv({ A: "simple", B: "l'apo" });
     assert.equal(texte, "A='simple'\nB='l'\\''apo'\n");

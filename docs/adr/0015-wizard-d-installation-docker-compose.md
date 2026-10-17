@@ -106,3 +106,24 @@ impossibilité de joindre Discord n'est qu'un avertissement.
 - Le test d'acceptation `tests/compose/acceptance.sh` (job CI `compose-acceptance`) couvre
   le parcours de bout en bout ; la vérification Discord est désactivée pour lui
   (`WIZARD_DISCORD_CHECK=off`), faute de vrai compte.
+
+## Addendum — un seul Compose, pour Docker Compose et pour Forgeyard (2026-10-17)
+`compose.yaml` est la base de tout : lancé à la main ou collé tel quel dans Forgeyard, il mène au
+wizard. Forgeyard n'accepte qu'un sous-ensemble de Compose (`ports`, `user`, `build`,
+`env_file`... refusés) et ignore les clés `x-`. En découle :
+- **Pas de `ports` ni de `user` dans `compose.yaml`.** Les ports locaux vivent dans
+  `compose.override.yaml` (clone, chargé seul) et `compose.ports.yaml` (images publiées, ajouté
+  avec `-f`). Le volume `migrate-state` n'a plus besoin d'un `migrate` root : `/state` appartient
+  à l'utilisateur de l'image `migrate`, que le volume neuf hérite. Un volume `migrate-state` créé
+  par une version antérieure (propriétaire root) doit être supprimé.
+- **Extensions `x-forgeyard`** dans `compose.yaml` : `expose: { port: 80 }` sur le proxy (le seul
+  service publié) et `backup: { type: postgres }` sur la base (`POSTGRES_USER` et `POSTGRES_DB`
+  y sont déjà posés). Docker Compose les ignore.
+- **HTTPS terminé en amont.** Traefik joint Caddy en HTTP avec `X-Forwarded-Proto: https` ; un Caddy
+  qui gère le domaine redirigerait en boucle. Pendant l'installation, Caddy fait confiance aux
+  en-têtes du réseau privé et pose `X-Shameless-Entry` (`http` ou `https`, selon son port d'entrée,
+  non forgeable). Si le wizard reçoit `http` + `X-Forwarded-Proto: https`, il écrit
+  `SHAMELESS_SITE_ADDRESS=:80` au lieu du domaine. Accès direct au domaine : inchangé (Caddy
+  obtient son certificat).
+- Test : `tests/compose/forgeyard-compat.mjs` (CI, job `images`) ; le parcours E de
+  `tests/compose/acceptance.sh` couvre le proxy qui termine le HTTPS.

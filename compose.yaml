@@ -8,6 +8,12 @@
 # Premier démarrage : postgres, migrate et api attendent que le wizard écrive la configuration
 # dans le volume instance-config (marqueur ready) ; le proxy ne sert que le wizard jusque-là.
 # Ensuite le wizard s'arrête et ne se relance plus : l'Instance démarre seule, à chaque `up`.
+#
+# Ce fichier est la base de tout : le même, sans modification, se lance à la main et se colle dans
+# Forgeyard (qui ignore `x-forgeyard` ailleurs). Il se limite donc à ce que Forgeyard accepte : pas de
+# `ports`, `user`, `build`, `env_file`... ; tests/compose/forgeyard-compat.mjs le vérifie.
+# En local, publier le proxy : `docker compose -f compose.yaml -f compose.ports.yaml up -d`
+# (depuis un clone, compose.override.yaml le fait déjà).
 
 name: shameless
 
@@ -45,13 +51,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # Extension Forgeyard (sauvegarde par pg_dump) : Docker Compose l'ignore.
+    x-forgeyard:
+      backup: { type: postgres }
 
   migrate:
     image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-migrate:${SHAMELESS_VERSION:-latest}
     # Relancée en cas d'échec : l'entrypoint relit instance.env (corrigé via « Réessayer » du wizard).
     # Terminée avec succès, elle ne se relance pas.
     restart: on-failure
-    # L'image migrate tourne en root pour écrire le marqueur dans migrate-state.
+    # L'image migrate tourne en root pour écrire le marqueur dans migrate-state : pas de `user:` ici,
+    # Forgeyard ne le prend pas en charge.
     entrypoint:
       - sh
       - -c
@@ -117,13 +127,15 @@ services:
   proxy:
     image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-proxy:${SHAMELESS_VERSION:-latest}
     restart: unless-stopped
-    ports:
-      - "${SHAMELESS_HTTP_PORT:-8080}:80"
-      - "${SHAMELESS_HTTPS_PORT:-8443}:443"
+    # Aucun `ports:` ici : Forgeyard le refuse (il publie le service par x-forgeyard). Les ports locaux
+    # viennent de compose.override.yaml (clone) ou de compose.ports.yaml (images publiées).
     volumes:
       - instance-config:/instance:ro
       - caddy-data:/data
       - caddy-config:/config
+    # Extension Forgeyard : Docker Compose l'ignore.
+    x-forgeyard:
+      expose: { port: 80 }
 
 volumes:
   # Contient instance.env (secrets en clair) : à sauvegarder avec les autres volumes.

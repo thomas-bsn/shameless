@@ -157,11 +157,6 @@ la fin, chaque équipe vote pour désigner son traître.
 
 ## Logiciels
 
-- **Assistant d'installation** : interface web temporaire qui prépare une nouvelle Instance
-  Shameless. Elle guide l'Opérateur pour configurer Discord et les options de l'Instance,
-  puis lance Docker Compose sur un hôte Docker ou exporte les fichiers de configuration
-  pour un autre hébergeur. Elle est distincte du site Shameless et ne dépend d'aucun
-  fournisseur d'hébergement.
 - **Web** : l'interface Shameless (Vite, React).
 - **API** : le backend Shameless (.NET). Source de vérité des données.
 - **Companion** : l'app PC qui lit les stats de fin de game dans le client LoL et les  

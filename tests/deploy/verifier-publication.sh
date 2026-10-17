@@ -23,6 +23,7 @@ verifier "les tags de version sont reproductibles (semver)" grep -q '{{version}}
 verifier "compose.yaml ne contient aucun build:" bash -c "! grep -Eq '^\s*(build|additional_contexts):' compose.yaml"
 verifier "compose.yaml tire les images depuis ghcr.io par défaut" grep -q 'SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless' compose.yaml
 verifier "compose.override.yaml porte les build: de dev" bash -c "grep -c 'build:' compose.override.yaml | grep -q 4"
+verifier "compose.yaml n'a ni ports: ni user: (refusés par Forgeyard ; voir compose.ports.yaml)" bash -c "! grep -Eq '^\s+(ports|user):' compose.yaml"
 
 # Pas de secret dans les images.
 verifier "api/.dockerignore exclut .env" grep -Eq '^\*\*/\.env|^\.env' api/.dockerignore

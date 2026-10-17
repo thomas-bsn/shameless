@@ -23,10 +23,9 @@ fi
 charger() { set -a; . /instance/instance.env; set +a; }
 empreinte() { cksum < /instance/instance.env; }
 
-config=${SHAMELESS_CADDYFILE:-/etc/caddy/Caddyfile}
 charger
 derniere=$(empreinte)
-caddy run --config "$config" --adapter caddyfile &
+caddy run --config /etc/caddy/Caddyfile --adapter caddyfile &
 pid=$!
 trap 'kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; exit 0' TERM INT
 
@@ -37,7 +36,7 @@ while kill -0 "$pid" 2>/dev/null; do
   if [ "$actuelle" != "$derniere" ]; then
     derniere=$actuelle
     echo "instance.env a changé : rechargement de la configuration."
-    (charger && caddy reload --config "$config" --adapter caddyfile) || echo "Rechargement impossible : redémarrez le proxy (docker compose restart proxy)."
+    (charger && caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile) || echo "Rechargement impossible : redémarrez le proxy (docker compose restart proxy)."
   fi
 done
 wait "$pid"

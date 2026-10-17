@@ -223,6 +223,11 @@ export function createWizard(o: WizardOptions) {
       if (discord === "unreachable")
         warnings.push("Discord n'a pas pu être joint pour vérifier ces identifiants : ils seront testés au premier démarrage.");
 
+      // Page servie en HTTPS par un proxy en amont qui joint Caddy en HTTP (en-têtes posés par Caddy) :
+      // Caddy ne doit pas chercher à gérer le HTTPS, sinon il redirigerait en boucle vers lui-même.
+      value.tlsEnAmont = req.headers["x-shameless-entry"] === "http" && req.headers["x-forwarded-proto"] === "https";
+      if (value.tlsEnAmont && value.publicUrl.startsWith("https://"))
+        warnings.push("Le HTTPS est géré par le proxy en amont de Shameless : Caddy sert l'Instance en HTTP derrière lui.");
       installer(value);
       return repondre(res, 202, { phase, warnings, ...(recapUchuu ? { uchuu: recapUchuu } : {}) });
     }

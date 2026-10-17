@@ -1,4 +1,11 @@
 # Cette configuration n'est chargée qu'une fois l'Instance installée (voir entrypoint.sh).
+# Derrière un proxy qui termine le TLS, on garde ses en-têtes X-Forwarded-* (réseau privé seulement).
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
 # Adresse du site, écrite par le wizard : ":80" en local (HTTP), un nom de domaine en production (HTTPS automatique).
 {$SHAMELESS_SITE_ADDRESS::80} {
 	encode gzip

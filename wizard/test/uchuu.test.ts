@@ -47,11 +47,13 @@ describe("construireRecapUchuu", () => {
     assert.ok(!recap.envUchuu.includes("SHAMELESS_BOT_URL"));
   });
 
-  it("signale SHAMELESS_API_URL comme à confirmer, dans son rôle et dans le bloc .env", () => {
+  it("donne SHAMELESS_API_URL comme valeur ferme : l'adresse publique suivie de /api, sans réserve", () => {
     const api = recap.variables.find((v) => v.nom === "SHAMELESS_API_URL")!;
-    assert.match(api.role, /À confirmer/);
-    assert.match(recap.envUchuu, /# SHAMELESS_API_URL : à confirmer/);
-    for (const v of recap.variables.filter((v) => v.nom !== "SHAMELESS_API_URL")) assert.doesNotMatch(v.role, /À confirmer/);
+    assert.equal(api.valeur, "https://shameless.example.org/api");
+    assert.match(api.role, /\/api/);
+    assert.match(recap.envUchuu, /^SHAMELESS_API_URL=https:\/\/shameless\.example\.org\/api$/m);
+    assert.doesNotMatch(recap.envUchuu, /confirmer|peut-être/i);
+    for (const v of recap.variables) assert.doesNotMatch(v.role, /confirmer/i);
   });
 
   it("les valeurs partagées sont identiques des deux côtés", () => {

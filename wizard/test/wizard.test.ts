@@ -45,10 +45,10 @@ async function demarrer(
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
   let cookie = "";
 
-  const appel = async (method: string, chemin: string, corps?: unknown) => {
+  const appel = async (method: string, chemin: string, corps?: unknown, entetes: Record<string, string> = {}) => {
     const res = await fetch(base + chemin, {
       method,
-      headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) },
+      headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), ...entetes },
       body: corps === undefined ? undefined : JSON.stringify(corps),
     });
     const set = res.headers.get("set-cookie");
@@ -312,5 +312,28 @@ describe("instance déjà configurée", () => {
     assert.equal(isConfigured(dir), false);
     writeFileSync(join(dir, "ready"), "");
     assert.equal(isConfigured(dir), true);
+  });
+});
+
+describe("HTTPS terminé par un proxy en amont (Forgeyard, Traefik)", () => {
+  const adresseServie = (w: Awaited<ReturnType<typeof demarrer>>) =>
+    /^SHAMELESS_SITE_ADDRESS='(.*)'$/m.exec(readFileSync(join(w.dir, "instance.env"), "utf8"))?.[1];
+
+  it("fait servir Caddy en HTTP quand la page arrive en HTTPS par le port 80", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const r = await w.appel("POST", "/_setup/api/install", saisie, { "x-shameless-entry": "http", "x-forwarded-proto": "https" });
+    assert.equal(r.status, 202);
+    assert.equal(adresseServie(w), ":80");
+    assert.ok(r.json.warnings.some((m: string) => /proxy en amont/.test(m)));
+  });
+
+  it("laisse Caddy gérer le HTTPS d'un domaine joint directement", async () => {
+    for (const entetes of [{} as Record<string, string>, { "x-shameless-entry": "https", "x-forwarded-proto": "https" }, { "x-shameless-entry": "http" }]) {
+      const w = await demarrer();
+      await w.ouvrirSession();
+      assert.equal((await w.appel("POST", "/_setup/api/install", saisie, entetes)).status, 202);
+      assert.equal(adresseServie(w), "shameless.example.org", JSON.stringify(entetes));
+    }
   });
 });
