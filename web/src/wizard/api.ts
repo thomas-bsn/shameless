@@ -1,12 +1,22 @@
 // Client HTTP du serveur du wizard (conteneur `wizard`, joint via le proxy sous /_setup/api).
 export type Phase = "locked" | "configuring" | "installing" | "done" | "failed";
 
+/** Récapitulatif Uchuu construit par le serveur du wizard (valeurs en clair : à ne jamais journaliser). */
+export interface RecapUchuu {
+  variables: { nom: string; composant: "Shameless" | "Uchuu"; role: string; valeur: string }[];
+  envUchuu: string;
+  aSaisirAMain: { nom: string; facultatif: boolean; role: string }[];
+  docBot: string;
+  verification: string;
+}
+
 export interface WizardState {
   phase: Phase;
   publicUrl?: string;
   failure?: string;
   codeExpired?: boolean;
   warnings?: string[];
+  uchuu?: RecapUchuu;
 }
 
 export type Values = {
@@ -15,6 +25,10 @@ export type Values = {
   clientSecret: string;
   guildId: string;
   adminIds: string;
+  riotKey: string;
+  timezone: string;
+  uchuu: boolean;
+  botUrl: string;
 };
 export type FieldErrors = Partial<Record<keyof Values, string>>;
 
@@ -42,5 +56,5 @@ async function call<T>(method: "GET" | "POST", route: string, body?: unknown): P
 
 export const getState = () => call<WizardState>("GET", "state");
 export const unlock = (code: string) => call<{ phase: Phase }>("POST", "unlock", { code });
-export const validate = (values: Values) => call<{ errors: FieldErrors; callbackUrl: string | null }>("POST", "validate", values);
-export const install = (values: Values) => call<{ errors?: FieldErrors; warnings?: string[] }>("POST", "install", values);
+export const validate = (values: Values) => call<{ errors: FieldErrors; warnings?: string[]; callbackUrl: string | null }>("POST", "validate", values);
+export const install = (values: Values) => call<{ errors?: FieldErrors; warnings?: string[]; uchuu?: RecapUchuu }>("POST", "install", values);

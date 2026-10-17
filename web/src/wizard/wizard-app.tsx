@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { getState, install, unlock, validate, type FieldErrors, type Phase, type Values } from "./api";
+import { getState, install, unlock, validate, type FieldErrors, type Phase, type RecapUchuu, type Values } from "./api";
 import { BoiteACopier, Champ } from "./champs";
 
 const ETAPES = [
   { cle: "intro", libelle: "Introduction" },
   { cle: "adresse", libelle: "Adresse" },
   { cle: "discord", libelle: "Discord" },
+  { cle: "options", libelle: "Options" },
   { cle: "recap", libelle: "Récapitulatif" },
   { cle: "fin", libelle: "Installation" },
 ] as const;
@@ -23,11 +25,13 @@ const CHAMPS_PAR_ETAPE: Record<Etape, (keyof Values)[]> = {
   intro: [],
   adresse: ["publicUrl"],
   discord: ["clientId", "clientSecret", "guildId", "adminIds"],
+  options: ["riotKey", "timezone", "botUrl"],
   recap: [],
   fin: [],
 };
 
-const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "" };
+const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "" };
+const COMMANDE_RELECTURE = "docker compose exec api cat /instance/instance.env";
 const DONNEES_A_SAUVEGARDER =
   "Pensez à configurer les sauvegardes de vos données persistantes dans votre infrastructure : la base Postgres (volume postgres-data), les clips (api-clips), les clés d'authentification (api-keys) et la configuration de l'Instance (instance-config, qui contient des secrets).";
 
@@ -46,9 +50,12 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   const [erreurInstall, setErreurInstall] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [connexionCoupee, setConnexionCoupee] = useState(false);
+  const [avertissements, setAvertissements] = useState<string[]>([]);
+  const [recap, setRecap] = useState<RecapUchuu | null>(null);
 
-  const appliquer = useCallback((e: { phase: Phase; publicUrl?: string; failure?: string; codeExpired?: boolean }) => {
+  const appliquer = useCallback((e: { phase: Phase; publicUrl?: string; failure?: string; codeExpired?: boolean; uchuu?: RecapUchuu }) => {
     setPhase(e.phase);
+    if (e.uchuu) setRecap(e.uchuu);
     setCodeExpire(!!e.codeExpired);
     if (e.publicUrl) setUrlPublique(e.publicUrl);
     setEchec(e.failure ?? "");
@@ -84,10 +91,11 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
     const r = await validate(v);
     setErreurs(r.body.errors ?? {});
     setCallback(r.body.callbackUrl ?? null);
+    setAvertissements(r.body.warnings ?? []);
     return r.body.errors ?? {};
   }, []);
 
-  const modifier = (champ: keyof Values, valeur: string) => setValeurs((v) => ({ ...v, [champ]: valeur }));
+  const modifier = <K extends keyof Values>(champ: K, valeur: Values[K]) => setValeurs((v) => ({ ...v, [champ]: valeur }));
   const quitter = (champ: keyof Values) => {
     setTouches((t) => new Set(t).add(champ));
     void verifier(valeurs);
@@ -112,6 +120,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
       const r = await install(valeurs);
       if (r.status === 202) {
         setUrlPublique(valeurs.publicUrl);
+        setRecap(r.body.uchuu ?? null);
         setPhase("installing");
         setEtape("fin");
       } else if (r.status === 422 && r.body.errors) {
@@ -130,7 +139,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
 
   const corriger = () => {
     const premier = (Object.keys(erreurs) as (keyof Values)[])[0];
-    setEtape(CHAMPS_PAR_ETAPE.adresse.includes(premier) ? "adresse" : "discord");
+    setEtape(CHAMPS_PAR_ETAPE.adresse.includes(premier) ? "adresse" : CHAMPS_PAR_ETAPE.options.includes(premier) ? "options" : "discord");
   };
 
   if (phase === "chargement") return <Cadre><Loader2 className="mx-auto size-6 animate-spin" aria-label="Chargement" /></Cadre>;
@@ -217,6 +226,40 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
         </Card>
       )}
 
+      {etape === "options" && (
+        <Card>
+          <CardHeader>
+            <CardTitle role="heading" aria-level={2}>Options</CardTitle>
+            <CardDescription>Tout est facultatif : vous pouvez continuer sans rien remplir.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <Champ label="Clé de l'API Riot (facultatif)" secret value={valeurs.riotKey} onChange={(v) => modifier("riotKey", v)} onBlur={() => quitter("riotKey")} error={erreur("riotKey")}
+              placeholder="RGAPI-…"
+              aide="Portail développeur Riot, « Personal API Key » (elle expire et se renouvelle). Sans clé, le rafraîchissement des rangs est désactivé et l'ajout de joueurs depuis Riot échoue : le reste du site fonctionne. Vous pourrez l'ajouter plus tard." />
+            <Champ label="Fuseau horaire" value={valeurs.timezone} onChange={(v) => modifier("timezone", v)} onBlur={() => quitter("timezone")} error={erreur("timezone")}
+              aide="Nom IANA, par exemple Europe/Paris. Il découpe les jours de votre communauté (un clip est rattaché à la Game lancée le jour de sa publication)." />
+            <div className="space-y-3 rounded-lg border p-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="uchuu">Intégration Uchuu (bot Discord)</Label>
+                  <p className="text-xs text-muted-foreground">Annonces, votes, pronostics et clips dans Discord. Le wizard génère les clés et vous donne les valeurs à copier dans le bot ; il ne contacte ni ne modifie le bot.</p>
+                </div>
+                <Switch id="uchuu" checked={valeurs.uchuu} onCheckedChange={(v) => { modifier("uchuu", v); if (!v) setErreurs((e) => ({ ...e, botUrl: undefined })); }} />
+              </div>
+              {valeurs.uchuu && (
+                <>
+                  <Champ label="Adresse publique du bot" placeholder="https://bot.example.org" value={valeurs.botUrl}
+                    onChange={(v) => modifier("botUrl", v)} onBlur={() => quitter("botUrl")} error={erreur("botUrl")}
+                    aide="L'adresse à laquelle l'API de Shameless joint le bot (son API interne derrière votre reverse proxy), en HTTPS, sans chemin." />
+                  {avertissements.map((a) => <p key={a} className="text-xs text-amber-600 dark:text-amber-400">{a}</p>)}
+                </>
+              )}
+            </div>
+          </CardContent>
+          <Navigation retour={() => aller("discord")} suite={() => void continuer()} />
+        </Card>
+      )}
+
       {etape === "recap" && (
         <Card>
           <CardHeader>
@@ -242,7 +285,10 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                 ["Client Secret", masquer(valeurs.clientSecret)],
                 ["Serveur Discord", valeurs.guildId],
                 ["Administrateurs", valeurs.adminIds],
-                ["Clés internes", "Générées automatiquement"],
+                ["Clé Riot", valeurs.riotKey ? masquer(valeurs.riotKey) : "Non renseignée (facultatif)"],
+                ["Fuseau horaire", valeurs.timezone],
+                ["Intégration Uchuu", valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
+                ["Clés internes", valeurs.uchuu ? "Générées automatiquement (base, bot)" : "Générées automatiquement"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 py-2">
                   <dt className="text-muted-foreground">{k}</dt>
@@ -253,7 +299,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             <p className="text-xs text-muted-foreground">{DONNEES_A_SAUVEGARDER}</p>
           </CardContent>
           <CardFooter className="justify-between">
-            <Button variant="ghost" onClick={() => aller("discord")}>Retour</Button>
+            <Button variant="ghost" onClick={() => aller("options")}>Retour</Button>
             <Button disabled={enCours} onClick={() => void installer()}>Installer</Button>
           </CardFooter>
         </Card>
@@ -268,6 +314,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             {phase === "installing" && (
               <>
                 <p className="flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Démarrage de la base de données, migrations, puis de l'API. Cela prend en général moins d'une minute.</p>
+                {recap && <p className="text-xs text-muted-foreground">En attendant, copiez les valeurs Uchuu ci-dessous : elles ne seront plus affichées quand ce wizard s'arrêtera.</p>}
                 {connexionCoupee && (
                   <p className="text-muted-foreground">
                     La connexion à cette page s'est coupée : c'est normal quand le serveur bascule sur votre adresse définitive. Ouvrez{" "}
@@ -290,6 +337,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
               </>
             )}
           </CardContent>
+          {recap && phase !== "failed" && <CardContent className="space-y-5 border-t pt-5"><RecapUchuuEcran recap={recap} /></CardContent>}
           <CardFooter className="justify-end gap-2">
             {phase === "failed" && <Button onClick={() => aller("recap")}>Réessayer</Button>}
             {phase === "done" && <Button asChild><a href={urlPublique}>Ouvrir Shameless</a></Button>}
@@ -297,6 +345,54 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
         </Card>
       )}
     </Cadre>
+  );
+}
+
+function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
+  const section = (titre: string, composant: "Shameless" | "Uchuu", aide: string, pied?: React.ReactNode) => (
+    <section aria-label={titre} className="space-y-2">
+      <h3 className="font-medium">{titre}</h3>
+      <p className="text-xs text-muted-foreground">{aide}</p>
+      <ul className="divide-y rounded-lg border">
+        {recap.variables.filter((v) => v.composant === composant).map((v) => (
+          <li key={v.nom} className="space-y-1 p-3">
+            <div className="flex items-center gap-2">
+              <code className="text-xs font-semibold">{v.nom}</code>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{composant === "Uchuu" ? "Bot (Uchuu)" : "Shameless (API)"}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{v.role}</p>
+            <BoiteACopier valeur={v.valeur} libelle={`Copier ${v.nom}`} />
+          </li>
+        ))}
+      </ul>
+      {pied}
+    </section>
+  );
+  return (
+    <div className="space-y-6 text-sm">
+      {section("Dans Shameless", "Shameless", "Déjà enregistré dans la configuration de l'Instance : rien à faire, ces valeurs sont là pour référence.")}
+      {section("À reporter dans le bot", "Uchuu", "À coller dans la configuration du bot (fichier .env), puis redémarrer le bot. Les clés sont identiques des deux côtés.",
+        <div className="space-y-1"><p className="text-xs text-muted-foreground">Ou tout le bloc d'un coup :</p><BoiteACopier valeur={recap.envUchuu} libelle="Copier le bloc .env du bot" /></div>)}
+      <section aria-label="À saisir à la main dans le bot" className="space-y-2">
+        <h3 className="font-medium">À saisir à la main dans le bot</h3>
+        <p className="text-xs text-muted-foreground">Ces identifiants de salons Discord ne sont pas connus du wizard. {recap.docBot}</p>
+        <ul className="space-y-1 text-xs">
+          {recap.aSaisirAMain.map((v) => (
+            <li key={v.nom}><code className="font-semibold">{v.nom}</code>{v.facultatif ? " (facultatif)" : ""} : {v.role}</li>
+          ))}
+        </ul>
+      </section>
+      <section aria-label="Vérifier la liaison" className="space-y-2">
+        <h3 className="font-medium">Vérifier la liaison</h3>
+        <p className="text-xs text-muted-foreground">Une fois le bot redémarré, cette commande doit répondre par la liste des candidats vocaux (le wizard n'appelle jamais le bot).</p>
+        <BoiteACopier valeur={recap.verification} libelle="Copier la commande de vérification" />
+      </section>
+      <section aria-label="Relire ces valeurs" className="space-y-2">
+        <h3 className="font-medium">Relire ces valeurs plus tard</h3>
+        <p className="text-xs text-muted-foreground">Quand ce wizard sera arrêté, la configuration reste lisible depuis votre serveur :</p>
+        <BoiteACopier valeur={COMMANDE_RELECTURE} libelle="Copier la commande de relecture" />
+      </section>
+    </div>
   );
 }
 

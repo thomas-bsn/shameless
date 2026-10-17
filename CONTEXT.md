@@ -26,6 +26,9 @@ Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
 pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
 un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  
 ne se rouvre jamais (ADR 0015).
+- **Uchuu** : le bot Discord de l'Instance (dépôt `harceleur_bot`), intégration facultative.  
+Le wizard génère les secrets partagés et affiche les valeurs à reporter dans le bot,  
+sans jamais l'appeler (ADR 0016).
 
 ## Jeu
 

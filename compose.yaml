@@ -80,6 +80,15 @@ services:
         until [ -f /instance/ready ]; do sleep 1; done
         set -a; . /instance/instance.env; set +a
         until [ "$$(cat /state/migrated 2>/dev/null)" = "$$SHAMELESS_RELEASE" ]; do sleep 1; done
+        # Les options du wizard (instance.env) l'emportent sur les valeurs par défaut du compose :
+        # Compose a déjà interpolé les variables ci-dessous avant que instance.env soit lu.
+        export Auth__Riot__ApiKey="$${RIOT_API_KEY:-$$Auth__Riot__ApiKey}"
+        export Instance__TimeZone="$${SHAMELESS_TIMEZONE:-$$Instance__TimeZone}"
+        export Bot__Url="$${SHAMELESS_BOT_URL:-$$Bot__Url}"
+        export Bot__OutboundApiKey="$${SHAMELESS_BOT_API_KEY:-$$Bot__OutboundApiKey}"
+        export Bot__WebhookSecret="$${SHAMELESS_WEBHOOK_SECRET:-$$Bot__WebhookSecret}"
+        export Bot__ApiKey="$${SHAMELESS_BOT_TO_API_KEY:-$$Bot__ApiKey}"
+        export Bot__WebUrl="$${SHAMELESS_WEB_URL:-$$Bot__WebUrl}"
         exec dotnet Shameless.Api.dll
     environment:
       SHAMELESS_RELEASE: ${SHAMELESS_VERSION:-latest}

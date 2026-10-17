@@ -5,6 +5,8 @@ import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "n
 import type { IncomingMessage, RequestListener, ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { buildInstanceEnv, serializeEnv, validateConfig, type Config, type Generated } from "./config.ts";
+import { genererSecretsUchuu } from "./secrets.ts";
+import { construireRecapUchuu, type RecapUchuu } from "./uchuu.ts";
 
 export type DiscordCheck = "ok" | "refused" | "unreachable";
 export type Phase = "locked" | "configuring" | "installing" | "done" | "failed";
@@ -83,6 +85,8 @@ export function createWizard(o: WizardOptions) {
   let failure = "";
   let warnings: string[] = [];
   let generated: Generated | null = null;
+  // Récapitulatif Uchuu (contient les secrets) : en mémoire seulement, jamais journalisé.
+  let recapUchuu: RecapUchuu | null = null;
   let termine = false;
 
   const emettreCode = (raison: string) => {
@@ -108,6 +112,7 @@ export function createWizard(o: WizardOptions) {
       ...(publicUrl ? { publicUrl } : {}),
       ...(phase === "failed" ? { failure } : {}),
       ...(warnings.length > 0 ? { warnings } : {}),
+      ...(recapUchuu ? { uchuu: recapUchuu } : {}),
     };
   };
 
@@ -199,15 +204,17 @@ export function createWizard(o: WizardOptions) {
     if (!sessionValide(req)) return repondre(res, 401, { message: "Accès verrouillé : saisissez le code affiché dans les logs." });
 
     if (route === "validate") {
-      return repondre(res, 200, { errors: validateConfig(corps).errors, callbackUrl: callback(corps) });
+      const { errors, warnings } = validateConfig(corps);
+      return repondre(res, 200, { errors, warnings, callbackUrl: callback(corps) });
     }
 
     if (route === "install") {
       if (phase !== "configuring" && phase !== "failed") return repondre(res, 409, { message: "Une installation est déjà en cours." });
-      const { errors, value } = validateConfig(corps);
+      const verdict = validateConfig(corps);
+      const { errors, value } = verdict;
       if (!value) return repondre(res, 422, { errors });
 
-      warnings = [];
+      warnings = [...verdict.warnings];
       const discord = await o.checkDiscord(value.clientId, value.clientSecret);
       if (discord === "refused")
         return repondre(res, 422, {
@@ -217,7 +224,7 @@ export function createWizard(o: WizardOptions) {
         warnings.push("Discord n'a pas pu être joint pour vérifier ces identifiants : ils seront testés au premier démarrage.");
 
       installer(value);
-      return repondre(res, 202, { phase, warnings });
+      return repondre(res, 202, { phase, warnings, ...(recapUchuu ? { uchuu: recapUchuu } : {}) });
     }
 
     return repondre(res, 404, { message: "Inconnu." });
@@ -231,6 +238,11 @@ export function createWizard(o: WizardOptions) {
   function installer(value: Config) {
     // Les secrets internes sont générés une seule fois : la base est initialisée avec ce mot de passe.
     generated ??= { postgresPassword: tirer(ALNUM, 32) };
+    // Idem pour les secrets Uchuu : le bloc déjà copié par l'Opérateur reste valide après une relance.
+    if (value.uchuu) generated.uchuu ??= genererSecretsUchuu();
+    recapUchuu = value.uchuu
+      ? construireRecapUchuu({ adresseBot: value.botUrl, adressePublique: value.publicUrl, guildId: value.guildId, secrets: generated.uchuu! })
+      : null;
     ecrireAtomique(join(o.instanceDir, "instance.env"), serializeEnv(buildInstanceEnv(value, generated)));
     ecrireAtomique(join(o.instanceDir, "ready"), "");
     publicUrl = value.publicUrl;

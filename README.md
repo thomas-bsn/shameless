@@ -11,7 +11,7 @@ docker compose up -d --build
 docker compose logs wizard      # affiche le code d'accès à usage unique
 ```
 
-Depuis un clone du dépôt, `compose.override.yaml` est chargé automatiquement et construit les images depuis les sources. Ouvrir http://localhost:8080, saisir le code d'accès lu dans les logs, puis suivre les étapes : adresse publique, application Discord, récapitulatif. À la confirmation, l'Instance démarre toute seule et le wizard s'arrête ; `http://localhost:8080/api/health` répond `Healthy`.
+Depuis un clone du dépôt, `compose.override.yaml` est chargé automatiquement et construit les images depuis les sources. Ouvrir http://localhost:8080, saisir le code d'accès lu dans les logs, puis suivre les étapes : adresse publique, application Discord, options (clé Riot, fuseau horaire, intégration Uchuu : toutes facultatives), récapitulatif. À la confirmation, l'Instance démarre toute seule et le wizard s'arrête ; `http://localhost:8080/api/health` répond `Healthy`.
 
 Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'acceptent sur `http://localhost`, Safari non : en local, utiliser l'un des deux, ou servir l'instance en HTTPS. L'adresse publique saisie dans le wizard doit être en HTTPS (seul un accès `http://localhost` est toléré).
 
@@ -29,7 +29,7 @@ Le volume `instance-config` contient des secrets en clair : le sauvegarder avec 
 
 ### Instance existante (avant le wizard)
 
-Une Instance installée avec un `.env` peut garder sa base : créer `instance.env` et `ready` dans le volume `instance-config` avec les mêmes valeurs (mot de passe de base de `POSTGRES_PASSWORD`, `Auth__Discord__*`, `Auth__AllowedReturnOrigins`, `Auth__AdminDiscordIds`, `ConnectionStrings__Shameless`, `SHAMELESS_SITE_ADDRESS`), au format `CLE='valeur'`. Sans cela, le wizard s'ouvrirait et générerait un mot de passe de base différent de celui du volume `postgres-data`.
+Une Instance installée avec un `.env` peut garder sa base : créer `instance.env` et `ready` dans le volume `instance-config` avec les mêmes valeurs (mot de passe de base de `POSTGRES_PASSWORD`, `Auth__Discord__*`, `Auth__AllowedReturnOrigins`, `Auth__AdminDiscordIds`, `ConnectionStrings__Shameless`, `SHAMELESS_SITE_ADDRESS` ; Riot, fuseau et bot peuvent rester dans le `.env`), au format `CLE='valeur'`. Sans cela, le wizard s'ouvrirait et générerait un mot de passe de base différent de celui du volume `postgres-data`.
 
 ### Déployer avec les images publiées
 
@@ -60,9 +60,25 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 - l'ID du serveur Discord de la communauté (mode développeur, clic droit sur le serveur, « Copier l'identifiant ») : seuls ses membres peuvent se connecter ;
 - au moins un ID Discord d'administrateur.
 
+### Options et bot Uchuu
+
+L'étape « Options » du wizard est entièrement facultative : la clé Riot peut rester vide (rangs non rafraîchis), le fuseau vaut `Europe/Paris` par défaut, et l'intégration Uchuu (bot Discord) peut être ignorée. Si elle est activée, le wizard demande l'adresse publique du bot, génère trois secrets distincts (une fois par session de wizard, réutilisés si l'installation est relancée), les écrit dans `instance.env` et affiche à la fin :
+
+- **Dans Shameless** : `SHAMELESS_BOT_URL`, `SHAMELESS_WEB_URL`, `SHAMELESS_BOT_API_KEY`, `SHAMELESS_WEBHOOK_SECRET`, `SHAMELESS_BOT_TO_API_KEY` (déjà enregistrées) ;
+- **À reporter dans le bot** : les trois secrets (mêmes valeurs), `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur Discord saisi) et `SHAMELESS_API_URL` (`<adresse publique>/api`), avec un bouton Copier par valeur et pour le bloc `.env` entier ;
+- les variables du bot à saisir à la main (salons vocaux et textuels, `SHAMELESS_CLIPS_MAX_BYTES` aligné sur Shameless), décrites dans `docs/shameless.md` du dépôt `thomas-bsn/harceleur_bot`.
+
+Le wizard n'appelle jamais le bot ni Discord pour cette étape et ne modifie rien d'autre. Ces valeurs ne sont affichées qu'une fois, mais restent relisibles après l'arrêt du wizard :
+
+```sh
+docker compose exec api cat /instance/instance.env
+```
+
+Contrat complet : [ADR 0016](docs/adr/0016-contrat-de-configuration-shameless-uchuu.md).
+
 ## Variables
 
-Le wizard écrit lui-même la configuration de base (adresse, Discord, administrateurs, mot de passe de la base). Les réglages facultatifs se posent dans un `.env` (voir [`.env.example`](.env.example)) :
+Le wizard écrit lui-même la configuration de base (adresse, Discord, administrateurs, mot de passe de la base, et les options ci-dessus dans `instance.env`). Les autres réglages se posent dans un `.env` (voir [`.env.example`](.env.example)) ; les variables ci-dessous qui existent aussi dans `instance.env` (clé Riot, fuseau, bot) y sont prioritaires sur le `.env` quand elles ne sont pas vides :
 
 | Variable | Rôle |
 |---|---|
