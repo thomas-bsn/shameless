@@ -54,8 +54,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             .UseSnakeCaseNamingConvention()
             .Options);
 
+    /// <summary>Le stockage des clips : un dossier temporaire propre à la suite, vidé avant chaque test.</summary>
+    public string DossierDesClips { get; } = Path.Combine(Path.GetTempPath(), "shameless-clips-" + Guid.NewGuid().ToString("N"));
+
+    /// <summary>Taille maximale d'un clip en test, petite pour exercer le refus.</summary>
+    public const long TailleMaxDesClips = 64 * 1024;
+
     public async Task ResetAsync()
     {
+        if (Directory.Exists(DossierDesClips)) Directory.Delete(DossierDesClips, recursive: true);
         Riot.Reset();
         Discord.Reset();
         Champions.Reset();
@@ -64,7 +71,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Random.Reset();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE evenements_bot, rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+            "TRUNCATE clips, evenements_bot, rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -86,6 +93,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Bot:WebUrl", TestSession.AllowedOrigin);
         // Les tests publient eux-mêmes les webhooks (PublierAsync) : le job ne tourne pas seul.
         builder.UseSetting("Bot:Publication:Interval", "40.00:00:00");
+        builder.UseSetting("Clips:StoragePath", DossierDesClips);
+        builder.UseSetting("Clips:MaxFileSizeBytes", TailleMaxDesClips.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.UseSetting("Instance:TimeZone", "Europe/Paris");
 
         builder.ConfigureTestServices(services =>
         {
@@ -108,5 +118,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        if (Directory.Exists(DossierDesClips)) Directory.Delete(DossierDesClips, recursive: true);
     }
 }

@@ -137,6 +137,136 @@
         }
       }
     },
+    "/bot/clips": {
+      "post": {
+        "tags": [
+          "Bot"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messageId": {
+                    "type": "string"
+                  },
+                  "attachmentId": {
+                    "type": "string"
+                  },
+                  "auteurDiscordId": {
+                    "type": "string"
+                  },
+                  "auteurNom": {
+                    "type": "string"
+                  },
+                  "publieLe": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "fichier": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bot/games/{id}": {
       "get": {
         "tags": [
@@ -326,6 +456,135 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassementSoloQ"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{gameId}/clips": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clips/{id}/fichier": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4075,6 +4334,86 @@
           }
         }
       },
+      "ClipDuBot": {
+        "required": [
+          "clipId",
+          "gameId",
+          "rattachement"
+        ],
+        "type": "object",
+        "properties": {
+          "clipId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rattachement": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ClipResponse": {
+        "required": [
+          "id",
+          "gameId",
+          "rattachement",
+          "auteurNom",
+          "auteurDiscordId",
+          "publieLe",
+          "nomFichier",
+          "contentType",
+          "taille"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rattachement": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "auteurNom": {
+            "type": "string"
+          },
+          "auteurDiscordId": {
+            "type": "string"
+          },
+          "publieLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nomFichier": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "taille": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "CodeCompanionResponse": {
         "required": [
           "seriesId",
@@ -4443,6 +4782,21 @@
           }
         }
       },
+      "EntityTagHeaderValue": {
+        "required": [
+          "tag",
+          "isWeak"
+        ],
+        "type": "object",
+        "properties": {
+          "tag": {
+            "$ref": "#/components/schemas/StringSegment"
+          },
+          "isWeak": {
+            "type": "boolean"
+          }
+        }
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -4523,6 +4877,50 @@
             "items": {
               "$ref": "#/components/schemas/GameDeLaFiche"
             }
+          }
+        }
+      },
+      "FileResult": {
+        "required": [
+          "contentType",
+          "fileDownloadName",
+          "lastModified",
+          "entityTag",
+          "enableRangeProcessing"
+        ],
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fileDownloadName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastModified": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "entityTag": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntityTagHeaderValue"
+              }
+            ]
+          },
+          "enableRangeProcessing": {
+            "type": "boolean"
           }
         }
       },
@@ -5001,6 +5399,10 @@
             }
           }
         }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
       },
       "JouerDraftChampionsRequest": {
         "required": [
@@ -6789,6 +7191,41 @@
           }
         }
       },
+      "StringSegment": {
+        "required": [
+          "buffer",
+          "offset",
+          "length",
+          "value",
+          "hasValue"
+        ],
+        "type": "object",
+        "properties": {
+          "buffer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasValue": {
+            "type": "boolean"
+          }
+        }
+      },
       "TirerRouletteRequest": {
         "required": [
           "variante"
@@ -6931,6 +7368,9 @@
     },
     {
       "name": "Classements"
+    },
+    {
+      "name": "Clips"
     },
     {
       "name": "Companion"

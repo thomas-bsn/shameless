@@ -47,11 +47,20 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             .Where(e => !AnonymousEndpoints.Contains($"{e.Method} {e.Route}"))
             .ToList();
 
-    private static HttpRequestMessage AnyRequest(string method, string route) =>
+    /// <summary>Une requête quelconque vers la route, avec un corps du type qu'elle accepte (JSON, ou multipart pour un dépôt de fichier).</summary>
+    private HttpRequestMessage AnyRequest(string method, string route) =>
         new(new HttpMethod(method), "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1"))
         {
-            Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
+            Content = method is "GET" or "DELETE" ? null
+                : AccepteDuMultipart(route) ? new MultipartFormDataContent { { new StringContent(""), "vide" } }
+                : JsonContent.Create(new { })
         };
+
+    private bool AccepteDuMultipart(string route) =>
+        Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.RoutePattern.RawText!.TrimStart('/') == route)
+            .Any(e => e.Metadata.GetMetadata<Microsoft.AspNetCore.Http.Metadata.IAcceptsMetadata>()?.ContentTypes.Contains("multipart/form-data") == true);
 
     [Fact]
     public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_et_code_companion_demande_une_session()
