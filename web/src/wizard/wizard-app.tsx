@@ -296,6 +296,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                 </div>
               ))}
             </dl>
+            {avertissements.map((a) => <p key={a} className="text-xs text-amber-600 dark:text-amber-400">{a}</p>)}
             <p className="text-xs text-muted-foreground">{DONNEES_A_SAUVEGARDER}</p>
           </CardContent>
           <CardFooter className="justify-between">
@@ -327,7 +328,14 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
               <Alert variant="destructive">
                 <AlertTriangle />
                 <AlertTitle>Impossible de démarrer l'Instance</AlertTitle>
-                <AlertDescription><p>{echec}</p></AlertDescription>
+                <AlertDescription>
+                  <p>{echec}</p>
+                  <p>
+                    Cliquez sur « Réessayer », corrigez la saisie puis installez à nouveau : la configuration corrigée est relue automatiquement par la base,
+                    les migrations, l'API et le proxy, sans commande à lancer. Si l'installation reste bloquée malgré tout, exécutez{" "}
+                    <code>docker compose restart migrate api proxy</code> sur votre serveur.
+                  </p>
+                </AlertDescription>
               </Alert>
             )}
             {phase === "done" && (

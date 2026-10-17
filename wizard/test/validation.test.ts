@@ -10,7 +10,7 @@ describe("validerAdresseBot", () => {
   });
 
   it("refuse une adresse vide avec le message de l'étape", () => {
-    assert.deepEqual(validerAdresseBot("   "), { ok: false, erreur: "Indique l'adresse de ton bot, ou désactive l'intégration." });
+    assert.deepEqual(validerAdresseBot("   "), { ok: false, erreur: "Indiquez l'adresse de votre bot, ou désactivez l'intégration." });
   });
 
   it("donne un message distinct par cas d'erreur", () => {
@@ -92,5 +92,21 @@ describe("validerFuseau", () => {
   it("refuse un fuseau inconnu", () => {
     assert.equal(validerFuseau("Paris").ok, false);
     assert.equal(validerFuseau("UTC+2").ok, false);
+  });
+
+  it("vouvoie l'Opérateur dans tous les messages, comme le reste du wizard", () => {
+    const messages = [
+      validerAdresseBot(""), validerAdresseBot("pas une adresse"), validerAdresseBot("ftp://bot.example.org"),
+      validerAdresseBot("http://bot.example.org"), validerAdresseBot("https://bot.example.org/"), validerAdresseBot("https://bot.example.org/api"),
+      validerCleRiot("abc"), validerCleRiot("RGAPI-a b"), validerFuseau("a b"), validerFuseau("Nulle/Part"),
+    ].map((r) => (r.ok ? "" : r.erreur));
+    for (const m of messages) assert.doesNotMatch(m, /\b(tu|ton|ta|tes|toi|Indique|Retire|Utilise|désactive)\b/i, m);
+  });
+
+  it("explique que http:// n'est accepté que pour un hôte local quand le schéma est refusé", () => {
+    for (const a of ["ftp://bot.example.org", "http://bot.example.org"]) {
+      const r = validerAdresseBot(a);
+      assert.ok(!r.ok && /https:\/\/.*http:\/\/.*(local|privé)/.test(r.erreur), a);
+    }
   });
 });

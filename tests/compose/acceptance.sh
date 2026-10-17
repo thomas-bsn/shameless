@@ -4,12 +4,13 @@
 # (code d'accès lu dans les logs, saisie, confirmation), puis vérifie que le site s'ouvre, que la
 # connexion Discord est possible, que le wizard s'est arrêté, que rien de secret n'est dans les
 # logs et que l'Instance repart seule, avec ses données, après un redémarrage.
-# Deux parcours complets : toutes les options facultatives désactivées, puis Riot + fuseau + Uchuu.
+# Deux parcours complets : toutes les options facultatives désactivées, puis Riot + fuseau + Uchuu ;
+# puis une reprise après échec : l'installation échoue, l'Opérateur corrige, la configuration corrigée est reprise.
 #
 # Usage : tests/compose/acceptance.sh        (Docker et Docker Compose v2 requis)
 #   SKIP_BUILD=1  ne reconstruit pas les images locales (shameless-*:local, voir compose.override.yaml)
 set -euo pipefail
-[ -z "${DEBUG:-}" ] || set -x
+# Pas de `set -x` : la trace afficherait le Client Secret et les clés dans les commandes curl.
 cd "$(dirname "$0")/../.."
 
 PORT=18080
@@ -218,6 +219,50 @@ verifier_logs
 redemarrage
 [ "$(process_value Bot__ApiKey)" = "$K3" ] && [ "$(process_value Instance__TimeZone)" = "Europe/Brussels" ] || fail "les valeurs Uchuu ne sont pas conservées après redémarrage"
 ok "les valeurs Uchuu sont conservées après redémarrage"
+verifier_logs
+dc down -v --remove-orphans >/dev/null 2>&1
+
+# --- D. Échec de l'installation, correction, puis succès --------------------------------------
+# L'API ne peut pas démarrer (base arrêtée) : le wizard signale l'échec. L'Opérateur corrige sa
+# saisie (fuseau) et réessaie : la configuration réécrite doit être reprise sans action manuelle.
+echo "== Reprise après échec"
+JAR_D="$TMP/reprise.jar"
+WIZARD_INSTALL_TIMEOUT_SECONDS=30 dc up -d >/dev/null
+wait_for 60 "le wizard affiche son code dans les logs" has_code
+expect_status 200 "$(post "$JAR_D" unlock "{\"code\":\"$(code_from_logs)\"}")" "le code ouvre une session"
+dc stop postgres >/dev/null 2>&1
+expect_status 202 "$(post "$JAR_D" install "$(saisie '"riotKey":"","timezone":"Europe/Paris","uchuu":false,"botUrl":""')")" "la première saisie est acceptée"
+phase_echec() { curl -s -b "$JAR_D" "$SETUP/state" | grep -q '"phase":"failed"'; }
+wait_for 90 "le wizard signale l'échec : l'API n'a pas démarré dans le délai" phase_echec
+curl -s -b "$JAR_D" "$SETUP/state" | grep -q 'docker compose logs' || fail "l'échec n'indique pas où lire les journaux"
+ok "le message d'échec indique les journaux à consulter"
+! api_healthy || fail "l'API répond alors que la base est arrêtée"
+
+echo "== Correction et nouvel essai"
+dc start postgres >/dev/null 2>&1
+pg_pret() { dc exec -T postgres pg_isready -U shameless -d shameless; }
+wait_for 90 "la base redémarre" pg_pret
+expect_status 202 "$(post "$JAR_D" install "$(saisie '"riotKey":"","timezone":"Europe/Brussels","uchuu":false,"botUrl":""')")" "la saisie corrigée est acceptée après l'échec"
+wait_for 240 "l'API démarre seule avec la configuration corrigée" api_healthy
+[ "$(process_value Instance__TimeZone)" = "Europe/Brussels" ] || fail "l'API n'a pas repris le fuseau corrigé"
+ok "l'API a pris en compte la configuration corrigée (fuseau Europe/Brussels), sans commande manuelle"
+wait_for 60 "le wizard s'arrête une fois l'installation réussie" wizard_stopped
+[ "$(docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' "$(dc ps -a -q migrate)")" = "on-failure" ] || fail "migrate ne se relance pas en cas d'échec"
+ok "migrate est relancée en cas d'échec (elle relit instance.env à chaque démarrage)"
+proxy_recharge() { dc logs --no-color proxy 2>&1 | grep -q "instance.env a changé"; }
+wait_for 30 "le proxy a relu instance.env modifié par la correction" proxy_recharge
+! dc logs --no-color proxy 2>&1 | grep -q "Rechargement impossible" || fail "le proxy n'a pas pu recharger sa configuration"
+
+echo "== Une API qui plante repart avec la configuration en vigueur"
+dc run --rm --no-deps -T --entrypoint sh wizard -c "sed -i \"s|^SHAMELESS_TIMEZONE=.*|SHAMELESS_TIMEZONE='Europe/Rome'|\" /instance/instance.env" >/dev/null 2>&1 || fail "modification d'instance.env impossible"
+# Arrêt interne (SIGTERM au PID 1) : Docker applique la politique de redémarrage. `docker kill`
+# compterait comme un arrêt manuel et empêcherait le redémarrage.
+dc exec -T api sh -c 'kill -TERM 1' >/dev/null 2>&1 || true
+wait_for 120 "l'API relancée par Docker répond de nouveau" api_healthy
+[ "$(process_value Instance__TimeZone)" = "Europe/Rome" ] || fail "l'API relancée n'a pas relu instance.env"
+ok "après un plantage, l'API relit instance.env au redémarrage (restart: unless-stopped)"
+
+SECRETS_A_CACHER=("$CLIENT_SECRET" "$(env_value POSTGRES_PASSWORD)")
 verifier_logs
 
 echo "Acceptation OK"

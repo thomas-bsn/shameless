@@ -19,7 +19,7 @@ Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'accepten
 
 Le Compose lance tous les services d'un coup, sans `.env` :
 
-1. **wizard** : un serveur temporaire, joint via le proxy. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée ;
+1. **wizard** : un serveur temporaire, joint via le proxy. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée. Si le démarrage échoue, l'écran d'échec permet de corriger la saisie et de réessayer : la configuration corrigée est relue automatiquement par les autres services (sinon : `docker compose restart migrate api proxy`) ;
 2. **postgres**, **migrate**, **api** : attendent le marqueur `ready`, puis démarrent dans l'ordre (base, migrations, API). Les migrations ne s'appliquent jamais au démarrage de l'API, seulement via le service `migrate` ;
 3. **proxy** : Caddy ne sert que le wizard (HTTP sur le port 80, HTTPS auto-signé sur le port 443) tant que `ready` n'existe pas, puis redémarre avec l'adresse publique saisie (HTTPS automatique pour un domaine), `/api` vers l'API et le front sur tout le reste.
 
@@ -65,7 +65,7 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 L'étape « Options » du wizard est entièrement facultative : la clé Riot peut rester vide (rangs non rafraîchis), le fuseau vaut `Europe/Paris` par défaut, et l'intégration Uchuu (bot Discord) peut être ignorée. Si elle est activée, le wizard demande l'adresse publique du bot, génère trois secrets distincts (une fois par session de wizard, réutilisés si l'installation est relancée), les écrit dans `instance.env` et affiche à la fin :
 
 - **Dans Shameless** : `SHAMELESS_BOT_URL`, `SHAMELESS_WEB_URL`, `SHAMELESS_BOT_API_KEY`, `SHAMELESS_WEBHOOK_SECRET`, `SHAMELESS_BOT_TO_API_KEY` (déjà enregistrées) ;
-- **À reporter dans le bot** : les trois secrets (mêmes valeurs), `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur Discord saisi) et `SHAMELESS_API_URL` (`<adresse publique>/api`), avec un bouton Copier par valeur et pour le bloc `.env` entier ;
+- **À reporter dans le bot** : les trois secrets (mêmes valeurs), `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur Discord saisi) et `SHAMELESS_API_URL` (`<adresse publique>/api`, **à confirmer** : l'exemple de `docs/shameless.md` du bot donne l'adresse sans `/api`, à retirer si le bot l'exige ; l'écran de fin le signale de même), avec un bouton Copier par valeur et pour le bloc `.env` entier ;
 - les variables du bot à saisir à la main (salons vocaux et textuels, `SHAMELESS_CLIPS_MAX_BYTES` aligné sur Shameless), décrites dans `docs/shameless.md` du dépôt `thomas-bsn/harceleur_bot`.
 
 Le wizard n'appelle jamais le bot ni Discord pour cette étape et ne modifie rien d'autre. Ces valeurs ne sont affichées qu'une fois, mais restent relisibles après l'arrêt du wizard :

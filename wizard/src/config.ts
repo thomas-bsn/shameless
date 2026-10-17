@@ -2,7 +2,7 @@
 // Chaque section (adresse, Discord, options Riot / fuseau / Uchuu) valide ses champs
 // et produit ses variables ; ajouter une section = ajouter une entrée à `SECTIONS`.
 import type { SecretsUchuu } from "./secrets.ts";
-import { validerAdresseBot, validerCleRiot, validerFuseau } from "./validation.ts";
+import { estIdDiscord, FORMAT_ID_DISCORD, validerAdresseBot, validerCleRiot, validerFuseau } from "./validation.ts";
 
 export type ConfigInput = Record<string, unknown>;
 export type Errors = Record<string, string>;
@@ -34,7 +34,6 @@ interface Section {
   toEnv(value: Config, generated: Generated): InstanceEnv;
 }
 
-const SNOWFLAKE = /^\d{17,20}$/;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
@@ -76,7 +75,7 @@ const adresse: Section = {
 const discord: Section = {
   validate(input, value, errors) {
     const clientId = text(input.clientId);
-    if (!SNOWFLAKE.test(clientId)) errors.clientId = "Le Client ID est un nombre de 17 à 20 chiffres (portail développeur Discord, page OAuth2).";
+    if (!estIdDiscord(clientId)) errors.clientId = `Le Client ID est ${FORMAT_ID_DISCORD} (portail développeur Discord, page OAuth2).`;
     else value.clientId = clientId;
 
     const clientSecret = text(input.clientSecret);
@@ -85,12 +84,12 @@ const discord: Section = {
     else value.clientSecret = clientSecret;
 
     const guildId = text(input.guildId);
-    if (!SNOWFLAKE.test(guildId)) errors.guildId = "L'identifiant du serveur est un nombre de 17 à 20 chiffres (clic droit sur le serveur, « Copier l'identifiant »).";
+    if (!estIdDiscord(guildId)) errors.guildId = `L'identifiant du serveur est ${FORMAT_ID_DISCORD} (clic droit sur le serveur, « Copier l'identifiant »).`;
     else value.guildId = guildId;
 
     const admins = [...new Set(text(input.adminIds).split(/[\s,;]+/).filter(Boolean))];
-    if (admins.length === 0) errors.adminIds = "Indiquez au moins un administrateur : son identifiant Discord (17 à 20 chiffres).";
-    else if (!admins.every((a) => SNOWFLAKE.test(a))) errors.adminIds = "Chaque identifiant d'administrateur est un nombre de 17 à 20 chiffres, séparés par une virgule ou un espace.";
+    if (admins.length === 0) errors.adminIds = `Indiquez au moins un administrateur : son identifiant Discord (${FORMAT_ID_DISCORD}).`;
+    else if (!admins.every(estIdDiscord)) errors.adminIds = `Chaque identifiant d'administrateur est ${FORMAT_ID_DISCORD}, séparés par une virgule ou un espace.`;
     else value.adminIds = admins.join(",");
   },
   toEnv(value) {

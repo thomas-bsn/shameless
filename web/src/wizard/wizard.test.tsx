@@ -303,6 +303,23 @@ describe("étape Options (#71)", () => {
     expect(await screen.findByText(/injoignable depuis le conteneur de l'API/)).toBeInTheDocument();
   });
 
+  it("rappelle l'avertissement d'adresse locale du bot dans le récapitulatif, avant d'installer", async () => {
+    fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versOptions(user);
+    await activerUchuu(user, "http://localhost:9000");
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(await screen.findByRole("heading", { name: "Récapitulatif" })).toBeInTheDocument();
+    expect(screen.getByText(/injoignable depuis le conteneur de l'API/)).toBeInTheDocument();
+  });
+
+  it("explique quoi faire après un échec : corriger puis réessayer, sans commande à lancer", async () => {
+    fauxServeur({ phase: "failed", publicUrl: "https://shameless.example.org", failure: "L'API n'a pas démarré." });
+    render(<WizardApp />);
+    expect(await screen.findByText(/relue automatiquement/)).toBeInTheDocument();
+  });
+
   it("affiche à la fin les sections « Dans Shameless » et « À reporter dans le bot » avec valeurs et boutons Copier", async () => {
     const serveur = fauxServeur();
     serveur.recap = RECAP_UCHUU;

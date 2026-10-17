@@ -10,6 +10,11 @@ export type ValidationAdresse =
   | { ok: true; valeur: string; avertissements: string[] }
   | { ok: false; erreur: string };
 
+/** Identifiant Discord : 17 à 20 chiffres. Motif et formulation uniques pour tout le wizard. */
+export const ID_DISCORD = /^\d{17,20}$/;
+export const FORMAT_ID_DISCORD = "un nombre de 17 à 20 chiffres";
+export const estIdDiscord = (valeur: string): boolean => ID_DISCORD.test(valeur);
+
 export const FUSEAU_PAR_DEFAUT = "Europe/Paris";
 
 const AVERTISSEMENT_LOCAL =
@@ -38,7 +43,7 @@ function estHoteLocal(hote: string): boolean {
 /** L'adresse publique du bot Discord (Uchuu) : `https://bot.example.org`, sans chemin ni « / » final. */
 export function validerAdresseBot(saisie: string): ValidationAdresse {
   const adresse = saisie.trim();
-  if (adresse === "") return { ok: false, erreur: "Indique l'adresse de ton bot, ou désactive l'intégration." };
+  if (adresse === "") return { ok: false, erreur: "Indiquez l'adresse de votre bot, ou désactivez l'intégration." };
 
   let url: URL;
   try {
@@ -47,7 +52,7 @@ export function validerAdresseBot(saisie: string): ValidationAdresse {
     return { ok: false, erreur: "Cette adresse n'est pas valide. Exemple : https://bot.example.org" };
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") {
-    return { ok: false, erreur: "L'adresse doit commencer par https://." };
+    return { ok: false, erreur: "L'adresse doit commencer par https:// (http:// n'est accepté que pour localhost ou un réseau privé)." };
   }
   if (url.username !== "" || url.password !== "") {
     return { ok: false, erreur: "L'adresse ne doit pas contenir d'identifiants (utilisateur ou mot de passe)." };
@@ -56,15 +61,15 @@ export function validerAdresseBot(saisie: string): ValidationAdresse {
     return { ok: false, erreur: "L'adresse ne doit pas contenir de paramètres ni d'ancre (? ou #)." };
   }
   if (adresse.endsWith("/") && url.pathname === "/") {
-    return { ok: false, erreur: "Retire le « / » final de l'adresse." };
+    return { ok: false, erreur: "Retirez le « / » final de l'adresse." };
   }
   if (url.pathname !== "/") {
-    return { ok: false, erreur: "L'adresse ne doit pas contenir de chemin : indique seulement l'hôte (et le port)." };
+    return { ok: false, erreur: "L'adresse ne doit pas contenir de chemin : indiquez seulement l'hôte (et le port)." };
   }
 
   const local = estHoteLocal(url.hostname);
   if (url.protocol === "http:" && !local) {
-    return { ok: false, erreur: "L'adresse doit commencer par https:// (http:// n'est toléré que pour localhost ou un réseau privé)." };
+    return { ok: false, erreur: "L'adresse doit commencer par https:// (http:// n'est accepté que pour localhost ou un réseau privé)." };
   }
   return { ok: true, valeur: `${url.protocol}//${url.host}`, avertissements: local ? [AVERTISSEMENT_LOCAL] : [] };
 }
@@ -90,6 +95,6 @@ export function validerFuseau(saisie: string): Validation<string> {
   try {
     return { ok: true, valeur: new Intl.DateTimeFormat("en-US", { timeZone: fuseau }).resolvedOptions().timeZone };
   } catch {
-    return { ok: false, erreur: "Ce fuseau horaire est inconnu. Utilise un nom IANA, par exemple Europe/Paris." };
+    return { ok: false, erreur: "Ce fuseau horaire est inconnu. Utilisez un nom IANA, par exemple Europe/Paris." };
   }
 }

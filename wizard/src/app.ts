@@ -80,7 +80,7 @@ export function createWizard(o: WizardOptions) {
   let codeUtilise = false;
   let essais = 0;
   let session: { token: string; expire: number } | null = null;
-  let phase: "locked" | "configuring" | "installing" | "done" | "failed" = "locked";
+  let phase: Phase = "locked";
   let publicUrl = "";
   let failure = "";
   let warnings: string[] = [];
@@ -106,9 +106,9 @@ export function createWizard(o: WizardOptions) {
   };
 
   const etat = (req: IncomingMessage) => {
-    if (!sessionValide(req)) return { phase: "locked" as Phase, codeExpired: !codeUtilise && o.now() > codeEmisA + o.codeTtlMs };
+    if (!sessionValide(req)) return { phase: "locked" satisfies Phase, codeExpired: !codeUtilise && o.now() > codeEmisA + o.codeTtlMs };
     return {
-      phase: phase as Phase,
+      phase,
       ...(publicUrl ? { publicUrl } : {}),
       ...(phase === "failed" ? { failure } : {}),
       ...(warnings.length > 0 ? { warnings } : {}),
