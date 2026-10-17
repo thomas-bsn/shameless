@@ -39,6 +39,14 @@ installé. En cas d'échec de démarrage, il explique le problème et permet de 
 saisie puis de relancer ; les secrets générés (mot de passe de la base, déjà utilisé pour
 initialiser le volume) sont conservés pour la durée du processus.
 
+**Reprise après échec.** « Réessayer » réécrit `instance.env` sans rien redémarrer : chaque
+service relit donc le fichier à son propre démarrage. `migrate` est en `restart: on-failure`
+et l'API en `restart: unless-stopped` (un plantage relance l'entrypoint, qui relit
+`instance.env`) ; le proxy surveille le fichier et recharge Caddy à chaud ; la base n'en lit que
+le mot de passe, qui ne change jamais. Une API déjà démarrée avec l'ancienne saisie (échec
+signalé par simple dépassement du délai) ne la relit pas : l'écran d'échec indique alors
+`docker compose restart migrate api proxy`.
+
 **Valeurs calculées et générées.** Le callback Discord est
 `<adresse publique>/api/auth/discord/callback`, `Auth__AllowedReturnOrigins` est l'origine
 publique, l'adresse servie par Caddy est le domaine (HTTPS automatique) ou `:80` pour un

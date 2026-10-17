@@ -19,7 +19,7 @@ Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'accepten
 
 Le Compose lance tous les services d'un coup, sans `.env` :
 
-1. **wizard** : un serveur temporaire, joint via le proxy. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée ;
+1. **wizard** : un serveur temporaire, joint via le proxy. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée. Si le démarrage échoue, l'écran d'échec permet de corriger la saisie et de réessayer : la configuration corrigée est relue automatiquement par les autres services (sinon : `docker compose restart migrate api proxy`) ;
 2. **postgres**, **migrate**, **api** : attendent le marqueur `ready`, puis démarrent dans l'ordre (base, migrations, API). Les migrations ne s'appliquent jamais au démarrage de l'API, seulement via le service `migrate` ;
 3. **proxy** : Caddy ne sert que le wizard (HTTP sur le port 80, HTTPS auto-signé sur le port 443) tant que `ready` n'existe pas, puis redémarre avec l'adresse publique saisie (HTTPS automatique pour un domaine), `/api` vers l'API et le front sur tout le reste.
 

@@ -48,7 +48,9 @@ services:
 
   migrate:
     image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-migrate:${SHAMELESS_VERSION:-latest}
-    restart: "no"
+    # Relancée en cas d'échec : l'entrypoint relit instance.env (corrigé via « Réessayer » du wizard).
+    # Terminée avec succès, elle ne se relance pas.
+    restart: on-failure
     # root : le volume migrate-state est créé vide, et l'API (autre utilisateur) y lit le marqueur.
     user: "0:0"
     entrypoint:
@@ -78,8 +80,9 @@ services:
       - -c
       - |
         until [ -f /instance/ready ]; do sleep 1; done
-        set -a; . /instance/instance.env; set +a
         until [ "$$(cat /state/migrated 2>/dev/null)" = "$$SHAMELESS_RELEASE" ]; do sleep 1; done
+        # Lu après l'attente des migrations : une saisie corrigée via « Réessayer » entre-temps est prise en compte.
+        set -a; . /instance/instance.env; set +a
         # Les options du wizard (instance.env) l'emportent sur les valeurs par défaut du compose :
         # Compose a déjà interpolé les variables ci-dessous avant que instance.env soit lu.
         export Auth__Riot__ApiKey="$${RIOT_API_KEY:-$$Auth__Riot__ApiKey}"
