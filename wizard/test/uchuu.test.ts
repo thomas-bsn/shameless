@@ -47,6 +47,13 @@ describe("construireRecapUchuu", () => {
     assert.ok(!recap.envUchuu.includes("SHAMELESS_BOT_URL"));
   });
 
+  it("signale SHAMELESS_API_URL comme à confirmer, dans son rôle et dans le bloc .env", () => {
+    const api = recap.variables.find((v) => v.nom === "SHAMELESS_API_URL")!;
+    assert.match(api.role, /À confirmer/);
+    assert.match(recap.envUchuu, /# SHAMELESS_API_URL : à confirmer/);
+    for (const v of recap.variables.filter((v) => v.nom !== "SHAMELESS_API_URL")) assert.doesNotMatch(v.role, /À confirmer/);
+  });
+
   it("les valeurs partagées sont identiques des deux côtés", () => {
     for (const nom of ["SHAMELESS_BOT_API_KEY", "SHAMELESS_WEBHOOK_SECRET", "SHAMELESS_BOT_TO_API_KEY", "SHAMELESS_WEB_URL"]) {
       const valeurs = recap.variables.filter((v) => v.nom === nom).map((v) => v.valeur);

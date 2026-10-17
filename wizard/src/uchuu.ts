@@ -51,7 +51,8 @@ const ROLES = {
   webhookSecret: "Secret de signature HMAC-SHA256 des webhooks ; même valeur des deux côtés.",
   botToApiKey: "Clé que le bot présente à l'API sur les routes /bot/… (Bearer) ; même valeur des deux côtés.",
   guildId: "ID du serveur Discord de l'Instance, identique à DISCORD_GUILD_ID côté Shameless.",
-  apiUrl: "Adresse de l'API de Shameless que le bot appelle : le bot y ajoute /bot/… et l'API est servie sous /api par le proxy.",
+  apiUrl:
+    "À confirmer : adresse de l'API de Shameless que le bot appelle. Le bot y ajoute /bot/… et l'API est servie sous /api par le proxy ; si le bot attend l'adresse sans /api (son exemple donne https://shameless.example), retirez ce suffixe.",
 } as const;
 
 export const VARIABLES_BOT_A_SAISIR: VariableBotASaisir[] = [
@@ -97,7 +98,9 @@ export function construireRecapUchuu(entree: EntreeRecapUchuu): RecapUchuu {
 
   const envUchuu = [
     "# Intégration Shameless — à reporter dans la configuration d'Uchuu, puis redémarrer le bot.",
-    ...variables.filter((v) => v.composant === "Uchuu").map((v) => `${v.nom}=${v.valeur}`),
+    ...variables
+      .filter((v) => v.composant === "Uchuu")
+      .flatMap((v) => (v.nom === "SHAMELESS_API_URL" ? ["# SHAMELESS_API_URL : à confirmer (le bot attend peut-être l'adresse sans /api)."] : []).concat(`${v.nom}=${v.valeur}`)),
     "",
   ].join("\n");
 
