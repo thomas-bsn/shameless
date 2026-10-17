@@ -53,5 +53,18 @@ public sealed record ClipResponse(
         clip.Taille);
 }
 
+/// <summary>
+/// Une Game proposée pour rattacher un clip à la main (<c>GET /clips/{id}/games-candidates</c>).
+/// </summary>
+/// <param name="SeriesId">La Série de la game, null pour une game legacy hors Série.</param>
+/// <param name="GameNumber">Le rang de la game dans sa Série, à partir de 1.</param>
+/// <param name="BestOf">Le format de la Série (BO1, BO3…), null hors Série.</param>
+/// <param name="LanceeLe">Quand la game a été lancée (UTC).</param>
+public sealed record GameCandidateDuClip(int GameId, int? SeriesId, int GameNumber, int? BestOf, DateTime LanceeLe)
+{
+    public static GameCandidateDuClip From(CustomGame game) =>
+        new(game.Id, game.SeriesId, game.NumeroDansLaSerie, game.Series?.Format, game.CreatedAt);
+}
+
 /// <summary>La vidéo d'un clip, à servir : chemin absolu et type.</summary>
 public sealed record FichierDeClip(string Chemin, string ContentType, string NomFichier);

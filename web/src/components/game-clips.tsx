@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
+import { RattacherClip, RetirerClip } from "@/components/rattachement-de-clip";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** L'URL de la vidéo d'un clip, servie par l'API (même origine : le cookie de session suffit). */
@@ -41,12 +44,22 @@ export function GameClips({ gameId }: { gameId: number }) {
 }
 
 function Clip({ clip }: { clip: Schemas["ClipResponse"] }) {
+  const [corriger, setCorriger] = useState(false);
+
   return (
     <figure aria-label={clip.nomFichier} className="flex flex-col gap-2">
       <video controls preload="metadata" src={clipVideoUrl(clip.id)} className="aspect-video w-full rounded-md bg-black" />
       <figcaption className="text-xs text-muted-foreground">
         {clip.auteurNom} · {publieLeLabel(clip.publieLe)}
+        {clip.rattachement === "manuel" && " · rattaché à la main"}
       </figcaption>
+      <div className="flex flex-wrap gap-1">
+        <Button size="sm" variant="ghost" aria-expanded={corriger} onClick={() => setCorriger((c) => !c)}>
+          Corriger la Game
+        </Button>
+        <RetirerClip clip={clip} />
+      </div>
+      {corriger && clip.gameId != null && <RattacherClip clip={clip} sauf={clip.gameId} />}
     </figure>
   );
 }

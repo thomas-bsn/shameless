@@ -57,6 +57,13 @@ public class Clip
         GameId = gameId;
         Rattachement = rattachement;
     }
+
+    /// <summary>Retire le clip de sa Game : il attend de nouveau un rattachement manuel.</summary>
+    public void Detacher()
+    {
+        GameId = null;
+        Rattachement = null;
+    }
 }
 
 /// <summary>Les façons dont un clip est rattaché à sa Game.</summary>

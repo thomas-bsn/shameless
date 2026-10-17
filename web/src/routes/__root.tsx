@@ -18,6 +18,7 @@ const navigation = [
   { to: "/classements", label: "Classements" },
   { to: "/historique", label: "Historique" },
   { to: "/hall-de-la-honte", label: "Hall de la Honte" },
+  { to: "/clips", label: "Clips" },
 ] as const;
 
 function RootLayout() {

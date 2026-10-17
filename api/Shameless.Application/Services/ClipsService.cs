@@ -78,6 +78,50 @@ public sealed class ClipsService
             ? (await _clips.GetDeLaGameAsync(gameId)).Select(ClipResponse.From).ToList()
             : null;
 
+    /// <summary>Les clips qui attendent un rattachement manuel, du plus ancien au plus récent publié.</summary>
+    public async Task<List<ClipResponse>> GetSansGameAsync() =>
+        (await _clips.GetSansGameAsync()).Select(ClipResponse.From).ToList();
+
+    /// <summary>
+    /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou
+    /// null si le clip n'existe pas (<see cref="GamePlausible.FenetreDesCandidates"/>).
+    /// </summary>
+    public async Task<List<GameCandidateDuClip>?> GetGamesCandidatesAsync(int clipId)
+    {
+        if (await _clips.GetAsync(clipId) is not { } clip) return null;
+        var (debut, fin) = GamePlausible.FenetreDesCandidates(clip.PublieLe, _fuseau);
+        return (await _clips.GetGamesCandidatesAsync(debut, fin)).Select(GameCandidateDuClip.From).ToList();
+    }
+
+    /// <summary>
+    /// Rattache le clip à cette Game, à la main : un clip sans Game, ou dont le rattachement était faux.
+    /// </summary>
+    public async Task<CommandResult<ClipResponse>> RattacherAsync(int clipId, int gameId)
+    {
+        if (await _clips.GetAsync(clipId) is not { } clip)
+            return CommandResult<ClipResponse>.NotFound("Ce clip n'existe pas.");
+        if (!await _clips.GameExisteAsync(gameId))
+            return CommandResult<ClipResponse>.NotFound("Cette game n'existe pas.");
+
+        clip.RattacherA(gameId, RattachementsClip.Manuel);
+        return await EnregistrerAsync(clip);
+    }
+
+    /// <summary>Retire le clip de sa Game : il revient parmi les clips sans Game. Sans effet s'il n'en a pas.</summary>
+    public async Task<CommandResult<ClipResponse>> DetacherAsync(int clipId)
+    {
+        if (await _clips.GetAsync(clipId) is not { } clip)
+            return CommandResult<ClipResponse>.NotFound("Ce clip n'existe pas.");
+
+        clip.Detacher();
+        return await EnregistrerAsync(clip);
+    }
+
+    private async Task<CommandResult<ClipResponse>> EnregistrerAsync(Clip clip) =>
+        await _clips.TrySaveChangesAsync()
+            ? CommandResult<ClipResponse>.Ok(ClipResponse.From(clip))
+            : CommandResult<ClipResponse>.Conflict("Le rattachement du clip n'a pas pu être enregistré, réessayer.");
+
     /// <summary>La vidéo du clip, ou null si le clip ou son fichier n'existe pas.</summary>
     public async Task<FichierDeClip?> GetFichierAsync(int clipId)
     {
