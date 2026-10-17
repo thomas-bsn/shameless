@@ -12,8 +12,8 @@ using Shameless.Infrastructure.Data;
 namespace Shameless.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261017030631_Clips")]
-    partial class Clips
+    [Migration("20261017030431_VotesDesGames")]
+    partial class VotesDesGames
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -139,85 +139,38 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("best_of_series", (string)null);
                 });
 
-            modelBuilder.Entity("Shameless.Application.Entities.Clip", b =>
+            modelBuilder.Entity("Shameless.Application.Entities.BulletinDeVote", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<long>("AuteurDiscordId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("auteur_discord_id");
-
-                    b.Property<string>("AuteurNom")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("auteur_nom");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("content_type");
-
-                    b.Property<long>("DiscordAttachmentId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("discord_attachment_id");
-
-                    b.Property<long>("DiscordMessageId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("discord_message_id");
-
-                    b.Property<string>("Fichier")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("fichier");
-
-                    b.Property<int?>("GameId")
+                    b.Property<int>("GameId")
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
 
-                    b.Property<string>("NomFichier")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("nom_fichier");
-
-                    b.Property<DateTime>("PublieLe")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("publie_le");
-
-                    b.Property<string>("Rattachement")
-                        .HasColumnType("text")
-                        .HasColumnName("rattachement");
-
-                    b.Property<DateTime>("RecuLe")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("recu_le");
-
-                    b.Property<long>("Taille")
+                    b.Property<long>("VotantDiscordId")
                         .HasColumnType("bigint")
-                        .HasColumnName("taille");
+                        .HasColumnName("votant_discord_id");
 
-                    b.HasKey("Id")
-                        .HasName("pk_clips");
+                    b.Property<int?>("DofdPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("dofd_player_id");
 
-                    b.HasIndex("DiscordAttachmentId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_clips_discord_attachment_id");
+                    b.Property<int?>("MvpPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("mvp_player_id");
 
-                    b.HasIndex("GameId")
-                        .HasDatabaseName("ix_clips_game_id");
+                    b.Property<DateTime>("VoteLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("vote_le");
 
-                    b.ToTable("clips", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_clips_rattachement", "rattachement IN ('automatique', 'manuel')");
-                        });
+                    b.HasKey("GameId", "VotantDiscordId")
+                        .HasName("pk_bulletins_de_vote");
+
+                    b.HasIndex("DofdPlayerId")
+                        .HasDatabaseName("ix_bulletins_de_vote_dofd_player_id");
+
+                    b.HasIndex("MvpPlayerId")
+                        .HasDatabaseName("ix_bulletins_de_vote_mvp_player_id");
+
+                    b.ToTable("bulletins_de_vote", (string)null);
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
@@ -872,6 +825,22 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("soirees", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.SpectateurDeGame", b =>
+                {
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("game_id");
+
+                    b.Property<long>("DiscordId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("discord_id");
+
+                    b.HasKey("GameId", "DiscordId")
+                        .HasName("pk_spectateurs_de_game");
+
+                    b.ToTable("spectateurs_de_game", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -920,13 +889,26 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Soiree");
                 });
 
-            modelBuilder.Entity("Shameless.Application.Entities.Clip", b =>
+            modelBuilder.Entity("Shameless.Application.Entities.BulletinDeVote", b =>
                 {
+                    b.HasOne("Shameless.Application.Entities.Player", null)
+                        .WithMany()
+                        .HasForeignKey("DofdPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_bulletins_de_vote_players_dofd_player_id");
+
                     b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
                         .WithMany()
                         .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_clips_custom_games_game_id");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_bulletins_de_vote_custom_games_game_id");
+
+                    b.HasOne("Shameless.Application.Entities.Player", null)
+                        .WithMany()
+                        .HasForeignKey("MvpPlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_bulletins_de_vote_players_mvp_player_id");
 
                     b.Navigation("Game");
                 });
@@ -1089,6 +1071,18 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Player");
 
                     b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.SpectateurDeGame", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGame", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_spectateurs_de_game_custom_games_game_id");
+
+                    b.Navigation("Game");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>

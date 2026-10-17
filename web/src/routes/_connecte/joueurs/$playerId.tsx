@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { $api } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
+import { TitresDuJoueur } from "@/components/titres-du-joueur";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { roleLabel } from "@/lib/ranks";
 
@@ -61,6 +62,9 @@ function FicheJoueur() {
                 <span className="text-muted-foreground">Inconnu</span>
               )}
             </Stat>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <TitresDuJoueur playerId={player.data.id} />
           </div>
         </>
       )}

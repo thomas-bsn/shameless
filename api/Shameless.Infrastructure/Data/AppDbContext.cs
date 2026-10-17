@@ -34,6 +34,8 @@ public class AppDbContext : DbContext
     public DbSet<DraftChampions> DraftsChampions => Set<DraftChampions>();
     public DbSet<RapportCompanion> RapportsCompanion => Set<RapportCompanion>();
     public DbSet<EvenementBot> EvenementsBot => Set<EvenementBot>();
+    public DbSet<BulletinDeVote> BulletinsDeVote => Set<BulletinDeVote>();
+    public DbSet<SpectateurDeGame> SpectateursDeGame => Set<SpectateurDeGame>();
     public DbSet<Clip> Clips => Set<Clip>();
 
     /// <summary>
@@ -188,6 +190,8 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new RapportCompanionConfiguration());
         modelBuilder.ApplyConfiguration(new EvenementBotConfiguration());
+        modelBuilder.ApplyConfiguration(new BulletinDeVoteConfiguration());
+        modelBuilder.ApplyConfiguration(new SpectateurDeGameConfiguration());
         modelBuilder.ApplyConfiguration(new ClipConfiguration());
     }
 }

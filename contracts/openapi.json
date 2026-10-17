@@ -4086,6 +4086,354 @@
           }
         }
       }
+    },
+    "/games/{id}/votes": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/spectateurs": {
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/votes": {
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4213,6 +4561,38 @@
           "HorsRole",
           "Aleatoire"
         ]
+      },
+      "BulletinDuVotant": {
+        "required": [
+          "gameId",
+          "votantDiscordId",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "votantDiscordId": {
+            "type": "string"
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
       },
       "CandidatsVocaux": {
         "required": [
@@ -4809,7 +5189,8 @@
           "stats",
           "champions",
           "roles",
-          "games"
+          "games",
+          "titres"
         ],
         "type": "object",
         "properties": {
@@ -4877,6 +5258,9 @@
             "items": {
               "$ref": "#/components/schemas/GameDeLaFiche"
             }
+          },
+          "titres": {
+            "$ref": "#/components/schemas/TitresDuJoueur"
           }
         }
       },
@@ -6408,6 +6792,73 @@
           }
         }
       },
+      "ResultatDuTitre": {
+        "required": [
+          "gagnants",
+          "decompte"
+        ],
+        "type": "object",
+        "properties": {
+          "gagnants": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "decompte": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoixDuJoueur"
+            }
+          }
+        }
+      },
+      "ResultatsDesVotes": {
+        "required": [
+          "gameId",
+          "statut",
+          "ouvertureLe",
+          "fermetureLe",
+          "votants",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statut": {
+            "type": "string"
+          },
+          "ouvertureLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fermetureLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "votants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mvp": {
+            "$ref": "#/components/schemas/ResultatDuTitre"
+          },
+          "dofd": {
+            "$ref": "#/components/schemas/ResultatDuTitre"
+          }
+        }
+      },
       "RiotAccountPreview": {
         "required": [
           "riotId",
@@ -6802,6 +7253,20 @@
           }
         }
       },
+      "SignalerSpectateursRequest": {
+        "required": [
+          "discordIds"
+        ],
+        "type": "object",
+        "properties": {
+          "discordIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "SoireeResponse": {
         "required": [
           "id",
@@ -6876,6 +7341,25 @@
           "RolePrincipal",
           "Inconnue"
         ]
+      },
+      "SpectateursDeLaGame": {
+        "required": [
+          "gameId",
+          "discordIds"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "discordIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "StatsDeCustoms": {
         "required": [
@@ -7237,6 +7721,23 @@
           }
         }
       },
+      "TitresDuJoueur": {
+        "required": [
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "mvp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dofd": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "TourCourantResponse": {
         "required": [
           "numero",
@@ -7350,6 +7851,54 @@
             "default": false
           }
         }
+      },
+      "VoixDuJoueur": {
+        "required": [
+          "playerId",
+          "prenom",
+          "voix"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "voix": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VoterRequest": {
+        "required": [
+          "votantDiscordId",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "votantDiscordId": {
+            "type": "string"
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
       }
     }
   },
@@ -7398,6 +7947,9 @@
     },
     {
       "name": "Soirees"
+    },
+    {
+      "name": "Votes"
     }
   ]
 }

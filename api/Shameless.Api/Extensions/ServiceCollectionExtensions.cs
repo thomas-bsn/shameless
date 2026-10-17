@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
         services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
         services.AddScoped<IEvenementBotRepository, EvenementBotRepository>();
+        services.AddScoped<IVotesRepository, VotesRepository>();
         services.AddScoped<IClipRepository, ClipRepository>();
 
         // Services
@@ -48,6 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<DraftChampionsService>();
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
+        services.AddScoped<VotesService>();
         services.AddScoped<ClipsService>();
 
         // Singletons
