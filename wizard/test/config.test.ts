@@ -48,6 +48,7 @@ describe("validation de la configuration", () => {
   it("vérifie le format des identifiants Discord", () => {
     const r = validateConfig({ ...valide, clientId: "abc", guildId: "12", adminIds: "111111111111111111, x" });
     assert.ok(r.errors.clientId && r.errors.guildId && r.errors.adminIds);
+    for (const m of [r.errors.clientId, r.errors.guildId, r.errors.adminIds]) assert.match(m, /un nombre de 17 à 20 chiffres/);
   });
 
   it("accepte plusieurs administrateurs séparés par virgule ou espace, sans doublon", () => {

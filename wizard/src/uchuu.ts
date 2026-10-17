@@ -4,6 +4,7 @@
  * « Uchuu » désigne le bot Discord de l'Instance (dépôt `thomas-bsn/harceleur_bot`).
  */
 import type { SecretsUchuu } from "./secrets.ts";
+import { estIdDiscord, FORMAT_ID_DISCORD } from "./validation.ts";
 
 export type Composant = "Shameless" | "Uchuu";
 
@@ -72,8 +73,8 @@ export const NOMS_VARIABLES_UCHUU = {
 const DOC_BOT = "Les autres variables du bot (jeton, intents, INTERNAL_API_KEY…) sont décrites dans docs/shameless.md du dépôt thomas-bsn/harceleur_bot.";
 
 export function construireRecapUchuu(entree: EntreeRecapUchuu): RecapUchuu {
-  if (!/^\d{17,20}$/.test(entree.guildId)) {
-    throw new Error("L'ID du serveur Discord doit être un identifiant de 17 à 20 chiffres.");
+  if (!estIdDiscord(entree.guildId)) {
+    throw new Error(`L'ID du serveur Discord doit être ${FORMAT_ID_DISCORD}.`);
   }
   const webUrl = entree.adressePublique.trim().replace(/\/+$/, "");
   const { botApiKey, webhookSecret, botToApiKey } = entree.secrets;
