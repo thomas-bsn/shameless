@@ -1447,6 +1447,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/hall-de-la-honte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HallDeLaHonte"];
+                        "application/json": components["schemas"]["HallDeLaHonte"];
+                        "text/json": components["schemas"]["HallDeLaHonte"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/series/{id}/liens": {
         parameters: {
             query?: never;
@@ -4352,6 +4398,9 @@ export interface components {
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
         };
+        HallDeLaHonte: {
+            joueurs: components["schemas"]["LigneHallDeLaHonte"][];
+        };
         /** Format: binary */
         IFormFile: string;
         JouerDraftChampionsRequest: {
@@ -4419,6 +4468,16 @@ export interface components {
             division: null | number;
             /** Format: int32 */
             lp: null | number;
+        };
+        LigneHallDeLaHonte: {
+            /** Format: int32 */
+            rang: number;
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            riotId: string;
+            /** Format: int32 */
+            dofd: number;
         };
         LinkPlayerRequest: {
             /** Format: int32 */

@@ -50,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
         services.AddScoped<VotesService>();
+        services.AddScoped<HallDeLaHonteService>();
         services.AddScoped<ClipsService>();
 
         // Singletons

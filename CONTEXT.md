@@ -128,7 +128,8 @@ comptés sur la fiche du joueur.
 élu par vote. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
-- **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
+- **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
+les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).
 - **Pronostic** : le pari d'un spectateur avant la game sur l'équipe gagnante, le MVP  
 et le DOFD. Un bon pronostic rapporte des points.
 - **Doyen** *(à valider)* : le spectateur qui a le plus de points de pronostic sur le  
