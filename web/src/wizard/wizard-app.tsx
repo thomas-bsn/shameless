@@ -30,7 +30,8 @@ const CHAMPS_PAR_ETAPE: Record<Etape, (keyof Values)[]> = {
   fin: [],
 };
 
-const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "" };
+const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "", botName: "" };
+const NOM_BOT_PAR_DEFAUT = "Bot Discord";
 const COMMANDE_RELECTURE = "docker compose exec api cat /instance/instance.env";
 const DONNEES_A_SAUVEGARDER =
   "Sauvegardez les volumes du projet (base, clips, clés) et instance-config, qui contient des secrets.";
@@ -42,6 +43,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   const [codeExpire, setCodeExpire] = useState(false);
   const [etape, setEtape] = useState<Etape>("intro");
   const [valeurs, setValeurs] = useState<Values>(VIDE);
+  const nomBot = valeurs.botName.trim() || NOM_BOT_PAR_DEFAUT;
   const [touches, setTouches] = useState<Set<keyof Values>>(new Set());
   const [erreurs, setErreurs] = useState<FieldErrors>({});
   const [callback, setCallback] = useState<string | null>(null);
@@ -241,13 +243,16 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             <div className="space-y-3 rounded-lg border p-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <Label htmlFor="uchuu">Intégration Uchuu (bot Discord)</Label>
+                  <Label htmlFor="uchuu">Intégration du bot Discord</Label>
                   <p className="text-xs text-muted-foreground">Annonces, votes, pronostics et clips dans Discord. Le wizard génère les clés et vous donne les valeurs à copier dans le bot ; il ne contacte ni ne modifie le bot.</p>
                 </div>
                 <Switch id="uchuu" checked={valeurs.uchuu} onCheckedChange={(v) => { modifier("uchuu", v); if (!v) setErreurs((e) => ({ ...e, botUrl: undefined })); }} />
               </div>
               {valeurs.uchuu && (
                 <>
+                  <Champ label="Nom du bot (facultatif)" placeholder={NOM_BOT_PAR_DEFAUT} value={valeurs.botName}
+                    onChange={(v) => modifier("botName", v.slice(0, 40))}
+                    aide="Le nom sous lequel le wizard désigne votre bot, par exemple celui qu'il porte sur votre serveur Discord." />
                   <Champ label="Adresse publique du bot" placeholder="https://bot.example.org" value={valeurs.botUrl}
                     onChange={(v) => modifier("botUrl", v)} onBlur={() => quitter("botUrl")} error={erreur("botUrl")}
                     aide="L'adresse à laquelle l'API de Shameless joint le bot (son API interne derrière votre reverse proxy), en HTTPS, sans chemin." />
@@ -287,7 +292,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                 ["Administrateurs", valeurs.adminIds],
                 ["Clé Riot", valeurs.riotKey ? masquer(valeurs.riotKey) : "Non renseignée (facultatif)"],
                 ["Fuseau horaire", valeurs.timezone],
-                ["Intégration Uchuu", valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
+                [nomBot, valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
                 ["Clés internes", valeurs.uchuu ? "Générées automatiquement (base, bot)" : "Générées automatiquement"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 py-2">
@@ -311,7 +316,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
           <CardHeader>
             <CardTitle role="heading" aria-level={2}>{phase === "done" ? "Shameless est prêt" : phase === "failed" ? "L'installation a échoué" : "Installation en cours…"}</CardTitle>
           </CardHeader>
-          {recap && phase !== "failed" && <CardContent><RecapUchuuEcran recap={recap} /></CardContent>}
+          {recap && phase !== "failed" && <CardContent><RecapUchuuEcran recap={recap} nom={nomBot} /></CardContent>}
           <CardContent className="space-y-3 text-sm">
             {phase === "installing" && (
               <>
@@ -361,10 +366,10 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   );
 }
 
-function RecapUchuuEcran({ recap }: { recap: RecapUchuu }) {
+function RecapUchuuEcran({ recap, nom }: { recap: RecapUchuu; nom: string }) {
   return (
-    <section aria-label="Bot Discord (Uchuu)" className="space-y-2 text-sm">
-      <h3 className="font-medium">Bot Discord (Uchuu)</h3>
+    <section aria-label={nom} className="space-y-2 text-sm">
+      <h3 className="font-medium">{nom}</h3>
       <p className="text-xs text-muted-foreground">
         Collez ces valeurs dans le .env du bot et redémarrez-le. Elles ne seront plus affichées une fois ce wizard arrêté. Complétez aussi le jeton
         et les IDs de salons, voir <code>docs/shameless.md</code> du dépôt harceleur_bot.

@@ -99,7 +99,7 @@ const RECAP_UCHUU = {
 };
 
 async function activerUchuu(user: ReturnType<typeof userEvent.setup>, adresse = "https://bot.example.org") {
-  await user.click(screen.getByRole("switch", { name: /Uchuu/ }));
+  await user.click(screen.getByRole("switch", { name: /bot Discord/i }));
   await user.type(await screen.findByLabelText("Adresse publique du bot"), adresse);
 }
 
@@ -251,7 +251,7 @@ describe("étape Options (#71)", () => {
     await screen.findByRole("heading", { name: "Options" });
   };
 
-  it("propose Europe/Paris, une clé Riot masquée et facultative, et Uchuu désactivé", async () => {
+  it("propose Europe/Paris, une clé Riot masquée et facultative, et le bot Discord désactivé", async () => {
     fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
@@ -259,7 +259,7 @@ describe("étape Options (#71)", () => {
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Options");
     expect(screen.getByLabelText("Fuseau horaire")).toHaveValue("Europe/Paris");
     expect(screen.getByLabelText("Clé de l'API Riot (facultatif)")).toHaveAttribute("type", "password");
-    expect(screen.getByRole("switch", { name: /Uchuu/ })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: /bot Discord/i })).not.toBeChecked();
     expect(screen.queryByLabelText("Adresse publique du bot")).not.toBeInTheDocument();
   });
 
@@ -288,12 +288,12 @@ describe("étape Options (#71)", () => {
     expect(screen.getByRole("heading", { name: "Options" })).toBeInTheDocument();
   });
 
-  it("demande l'adresse du bot quand Uchuu est activé, l'exige, et affiche l'avertissement d'une adresse locale", async () => {
+  it("demande l'adresse du bot quand le bot Discord est activé, l'exige, et affiche l'avertissement d'une adresse locale", async () => {
     fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
     await versOptions(user);
-    await user.click(screen.getByRole("switch", { name: /Uchuu/ }));
+    await user.click(screen.getByRole("switch", { name: /bot Discord/i }));
     await user.click(screen.getByRole("button", { name: "Continuer" }));
     expect(await screen.findByText("Erreur serveur sur botUrl.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Options" })).toBeInTheDocument();
@@ -331,13 +331,27 @@ describe("étape Options (#71)", () => {
     expect(await screen.findByText(/Activé/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Installer" }));
 
-    const bot = await screen.findByRole("region", { name: "Bot Discord (Uchuu)" });
+    const bot = await screen.findByRole("region", { name: "Bot Discord" });
     expect(within(bot).getByRole("button", { name: "Copier SHAMELESS_BOT_API_KEY" })).toBeInTheDocument();
     expect(within(bot).getByRole("button", { name: "Copier SHAMELESS_API_URL" })).toBeInTheDocument();
     expect(within(bot).getByText(/docs\/shameless\.md/)).toBeInTheDocument();
     expect(within(bot).getAllByRole("button", { name: /Copier/ }).length).toBe(2);
     expect(screen.queryByText("SHAMELESS_TEAM1_VOICE_ID")).not.toBeInTheDocument();
     expect(screen.queryByText(/voice-candidates/)).not.toBeInTheDocument();
+  });
+
+  it("désigne le bot par le nom saisi, « Bot Discord » sinon", async () => {
+    const serveur = fauxServeur();
+    serveur.recap = RECAP_UCHUU;
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versOptions(user);
+    await activerUchuu(user);
+    await user.type(screen.getByLabelText(/Nom du bot/), "Harceleur");
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(await screen.findByText("Harceleur")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Installer" }));
+    expect(await screen.findByRole("region", { name: "Harceleur" })).toBeInTheDocument();
   });
 
   it("garde la relecture des secrets repliée sur l'écran de fin", async () => {
@@ -347,10 +361,10 @@ describe("étape Options (#71)", () => {
     expect(screen.getByRole("button", { name: "Copier la commande de relecture" })).toBeInTheDocument();
   });
 
-  it("n'affiche aucun bloc Uchuu quand l'intégration est ignorée", async () => {
+  it("n'affiche aucun bloc bot Discord quand l'intégration est ignorée", async () => {
     fauxServeur({ phase: "done", publicUrl: "https://shameless.example.org" });
     render(<WizardApp />);
     expect(await screen.findByRole("link", { name: "Ouvrir Shameless" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Bot Discord (Uchuu)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Bot Discord" })).not.toBeInTheDocument();
   });
 });
