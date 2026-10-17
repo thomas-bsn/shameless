@@ -102,22 +102,19 @@ describe("Votes MVP et DOFD", () => {
     expect(screen.getByText("Votes clos · 4 votants")).toBeInTheDocument();
   });
 
-  it("annonce les votes en cours sans gagnant", async () => {
+  it("annonce les votes en cours sans dévoiler gagnants ni décompte", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /games/42": recap(),
-      "GET /games/42/votes": votes({
-        statut: "ouverts",
-        votants: 1,
-        mvp: { gagnants: [], decompte: [{ playerId: 1, prenom: "Alice", voix: 1 }] },
-      }),
+      "GET /games/42/votes": votes({ statut: "ouverts", votants: 1 }),
     });
 
     renderApp("/games/42");
 
-    expect(await screen.findByText(/Votes ouverts dans Discord jusqu'à/)).toBeInTheDocument();
-    expect(screen.queryByText("Gagnant")).not.toBeInTheDocument();
-    expect(within(screen.getByRole("group", { name: "DOFD" })).getByText("Aucun vote")).toBeInTheDocument();
+    expect(await screen.findByText(/Votes ouverts dans Discord jusqu'à .* · 1 votant$/)).toBeInTheDocument();
+    expect(screen.getByText("Les gagnants et le décompte des voix seront dévoilés à la clôture.")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "MVP" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "DOFD" })).not.toBeInTheDocument();
   });
 
   it("annonce l'ouverture des votes à la fin de la Game", async () => {

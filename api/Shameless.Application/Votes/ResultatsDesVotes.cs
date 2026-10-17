@@ -60,11 +60,15 @@ public sealed record ResultatsDesVotes(
 /// Les Joueurs ayant reçu le plus de voix, tous reconnus en cas d'égalité ; vide tant que les votes
 /// ne sont pas clos ou si personne n'a voté pour ce titre.
 /// </param>
-/// <param name="Decompte">Les voix reçues par chaque Joueur qui en a, de la plus à la moins votée.</param>
+/// <param name="Decompte">
+/// Les voix reçues par chaque Joueur qui en a, de la plus à la moins votée ; vide tant que les votes
+/// ne sont pas clos, pour ne pas influencer les votants.
+/// </param>
 public sealed record ResultatDuTitre(List<int> Gagnants, List<VoixDuJoueur> Decompte)
 {
     public static ResultatDuTitre Calculer(CustomGame game, IEnumerable<int?> choix, bool clos)
     {
+        if (!clos) return new ResultatDuTitre([], []);
         var prenoms = game.Participants.ToDictionary(p => p.PlayerId, p => p.Player.Prenom);
         var decompte = choix
             .OfType<int>()
@@ -74,9 +78,7 @@ public sealed record ResultatDuTitre(List<int> Gagnants, List<VoixDuJoueur> Deco
             .ThenBy(v => v.Prenom, StringComparer.OrdinalIgnoreCase)
             .ToList();
         var max = decompte.Count == 0 ? 0 : decompte[0].Voix;
-        var gagnants = clos
-            ? decompte.Where(v => v.Voix == max).Select(v => v.PlayerId).ToList()
-            : [];
+        var gagnants = decompte.Where(v => v.Voix == max).Select(v => v.PlayerId).ToList();
         return new ResultatDuTitre(gagnants, decompte);
     }
 }
