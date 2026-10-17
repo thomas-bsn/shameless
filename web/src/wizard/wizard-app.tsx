@@ -31,6 +31,8 @@ const CHAMPS_PAR_ETAPE: Record<Etape, (keyof Values)[]> = {
 };
 
 const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "", botName: "" };
+/** Adresse de cette page si elle est locale (port compris), sinon localhost sur le port par défaut. */
+const adresseLocale = () => (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? window.location.origin : "http://localhost:8080");
 const NOM_BOT_PAR_DEFAUT = "Bot Discord";
 const COMMANDE_RELECTURE = "docker compose exec api cat /instance/instance.env";
 const DONNEES_A_SAUVEGARDER =
@@ -43,6 +45,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   const [codeExpire, setCodeExpire] = useState(false);
   const [etape, setEtape] = useState<Etape>("intro");
   const [valeurs, setValeurs] = useState<Values>(VIDE);
+  const [hebergement, setHebergement] = useState<"internet" | "local">("internet");
   const nomBot = valeurs.botName.trim() || NOM_BOT_PAR_DEFAUT;
   const [touches, setTouches] = useState<Set<keyof Values>>(new Set());
   const [erreurs, setErreurs] = useState<FieldErrors>({});
@@ -98,6 +101,10 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   }, []);
 
   const modifier = <K extends keyof Values>(champ: K, valeur: Values[K]) => setValeurs((v) => ({ ...v, [champ]: valeur }));
+  const choisirHebergement = (h: "internet" | "local") => {
+    setHebergement(h);
+    modifier("publicUrl", h === "local" ? adresseLocale() : "");
+  };
   const quitter = (champ: keyof Values) => {
     setTouches((t) => new Set(t).add(champ));
     void verifier(valeurs);
@@ -196,9 +203,28 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             <CardDescription>L'adresse à laquelle vos joueurs ouvriront Shameless.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Champ label="Adresse publique" placeholder="https://shameless.example.org" value={valeurs.publicUrl}
-              onChange={(v) => modifier("publicUrl", v)} onBlur={() => quitter("publicUrl")} error={erreur("publicUrl")}
-              aide="Le nom de domaine qui pointe vers ce serveur, en HTTPS, sans chemin. L'URL de callback Discord et les origines autorisées en sont déduites. Le serveur doit être joignable sur les ports 80 et 443 pour obtenir le certificat HTTPS automatiquement." />
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium">Où tourne cette instance ?</legend>
+              {([
+                ["internet", "Sur internet", "Un nom de domaine public, en HTTPS."],
+                ["local", "Sur cette machine", "Pour essayer en local, à l'adresse de cette page (localhost)."],
+              ] as const).map(([valeur, titre, aide]) => (
+                <label key={valeur} className={cn("flex cursor-pointer items-start gap-3 rounded-lg border p-3", hebergement === valeur && "border-foreground")}>
+                  <input type="radio" name="hebergement" className="mt-1" checked={hebergement === valeur} onChange={() => choisirHebergement(valeur)} />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{titre}</span>
+                    <span className="block text-xs text-muted-foreground">{aide}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            {hebergement === "internet" ? (
+              <Champ label="Adresse publique" placeholder="https://shameless.example.org" value={valeurs.publicUrl}
+                onChange={(v) => modifier("publicUrl", v)} onBlur={() => quitter("publicUrl")} error={erreur("publicUrl")}
+                aide="Le nom de domaine qui pointe vers ce serveur, en HTTPS, sans chemin. L'URL de callback Discord et les origines autorisées en sont déduites. Le serveur doit être joignable sur les ports 80 et 443 pour obtenir le certificat HTTPS automatiquement." />
+            ) : (
+              <p className="rounded-md bg-muted/50 p-3 text-sm">Adresse de l'instance : <code>{valeurs.publicUrl}</code></p>
+            )}
           </CardContent>
           <Navigation retour={() => aller("intro")} suite={() => void continuer()} />
         </Card>
@@ -284,7 +310,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             )}
             <dl className="divide-y text-sm">
               {[
-                ["Adresse publique", valeurs.publicUrl],
+                [hebergement === "local" ? "Adresse (cette machine)" : "Adresse publique", valeurs.publicUrl],
                 ["Callback Discord", callback ?? "—"],
                 ["Client ID", valeurs.clientId],
                 ["Client Secret", masquer(valeurs.clientSecret)],

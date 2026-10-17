@@ -340,6 +340,22 @@ describe("étape Options (#71)", () => {
     expect(screen.queryByText(/voice-candidates/)).not.toBeInTheDocument();
   });
 
+  it("propose Sur internet ou Sur cette machine, et préremplit l'adresse locale sans saisie", async () => {
+    fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await deverrouillerEtCommencer(user);
+    expect(screen.getByRole("radio", { name: /Sur internet/ })).toBeChecked();
+    expect(screen.getByLabelText("Adresse publique")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /Sur cette machine/ }));
+    expect(screen.queryByLabelText("Adresse publique")).not.toBeInTheDocument();
+    expect(screen.getByText(window.location.origin)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /Sur internet/ }));
+    expect(screen.getByLabelText("Adresse publique")).toHaveValue("");
+  });
+
   it("désigne le bot par le nom saisi, « Bot Discord » sinon", async () => {
     const serveur = fauxServeur();
     serveur.recap = RECAP_UCHUU;
