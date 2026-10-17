@@ -63,7 +63,10 @@ public sealed class PublicationWebhooksBotJob : BackgroundService
         }
     }
 
-    /// <summary>Un passage du job : tente la livraison de chaque événement dû, dans l'ordre où ils sont survenus.</summary>
+    /// <summary>
+    /// Un passage du job : tente la livraison de chaque événement dû, dans l'ordre où ils sont survenus.
+    /// S'arrête au premier dont l'issue n'a pas pu être enregistrée, pour garder l'ordre.
+    /// </summary>
     public async Task PublierAsync(CancellationToken ct = default)
     {
         using var scope = _services.CreateScope();
@@ -91,7 +94,12 @@ public sealed class PublicationWebhooksBotJob : BackgroundService
 
             if (evenement.Statut == StatutEvenementBot.Abandonne && resultat.Issue == LivraisonWebhook.ARetenter)
                 _logger.LogError("Webhook {EventId} non livré depuis {Duree} : abandonné", evenement.EventId, EvenementBot.DureeDeVie);
-            await evenements.TrySaveChangesAsync();
+            if (!await evenements.TrySaveChangesAsync())
+            {
+                // Les suivants attendent le prochain passage : ils ne doivent pas arriver avant celui-ci.
+                _logger.LogWarning("Webhook {EventId} : issue non enregistrée, publication interrompue", evenement.EventId);
+                return;
+            }
         }
     }
 
