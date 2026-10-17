@@ -6,7 +6,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "src/routeTree.gen.ts", "src/api/schema.ts"] },
+  { ignores: ["dist", "dist-wizard", "src/routeTree.gen.ts", "src/api/schema.ts"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
