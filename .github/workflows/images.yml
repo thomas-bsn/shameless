@@ -1,0 +1,82 @@
+name: Publier les images
+
+# Règles de version :
+#  - un tag git `vX.Y.Z` (ex. v1.0.0, ou v1.0.0-rc.1) publie les images `X.Y.Z`, `X.Y` et `sha-<commit>` ;
+#    `latest` et `X.Y` ne bougent que pour une version stable (pas de suffixe de pré-release) ;
+#  - un push sur `main` publie `edge` et `sha-<commit>` (jamais `latest`).
+# Les tags `X.Y.Z` sont reproductibles : on ne republie pas un tag de version existant.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            context: api
+            file: api/Dockerfile
+            target: api
+          - image: migrate
+            context: api
+            file: api/Dockerfile
+            target: migrate
+          - image: proxy
+            context: deploy/caddy
+            file: deploy/caddy/Dockerfile
+            contexts: web=./web
+          - image: wizard
+            context: .
+            file: wizard/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Le nom d'image GHCR doit être en minuscules.
+      - name: Nom de l'image
+        id: name
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/shameless-${{ matrix.image }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.name.outputs.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref_name, '-') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+            type=edge,branch=main
+            type=sha,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
+          build-contexts: ${{ matrix.contexts }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
