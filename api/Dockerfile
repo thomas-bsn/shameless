@@ -21,8 +21,8 @@ ENTRYPOINT ["sh", "-c", "./efbundle --connection \"$ConnectionStrings__Shameless
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
 WORKDIR /app
 COPY --from=build /publish .
-# Le volume nommé monté ici hérite de ce propriétaire à sa création.
-RUN mkdir /keys && chown $APP_UID /keys
+# Les volumes nommés montés ici (clés, vidéos des clips) héritent de ce propriétaire à leur création.
+RUN mkdir /keys /clips && chown $APP_UID /keys /clips
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Shameless.Api.dll"]

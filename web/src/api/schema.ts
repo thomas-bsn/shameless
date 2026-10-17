@@ -152,6 +152,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bot/clips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        messageId?: string;
+                        attachmentId?: string;
+                        auteurDiscordId?: string;
+                        auteurNom?: string;
+                        /** Format: date-time */
+                        publieLe?: string;
+                        fichier?: components["schemas"]["IFormFile"];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipDuBot"];
+                        "application/json": components["schemas"]["ClipDuBot"];
+                        "text/json": components["schemas"]["ClipDuBot"];
+                    };
+                };
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipDuBot"];
+                        "application/json": components["schemas"]["ClipDuBot"];
+                        "text/json": components["schemas"]["ClipDuBot"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Payload Too Large */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bot/games/{id}": {
         parameters: {
             query?: never;
@@ -344,6 +449,120 @@ export interface paths {
                         "text/plain": components["schemas"]["ClassementSoloQ"];
                         "application/json": components["schemas"]["ClassementSoloQ"];
                         "text/json": components["schemas"]["ClassementSoloQ"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{gameId}/clips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    gameId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipResponse"][];
+                        "application/json": components["schemas"]["ClipResponse"][];
+                        "text/json": components["schemas"]["ClipResponse"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clips/{id}/fichier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "video/mp4": components["schemas"]["FileResult"];
+                        "video/webm": components["schemas"]["FileResult"];
+                        "video/quicktime": components["schemas"]["FileResult"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Erreur */
@@ -3930,6 +4149,28 @@ export interface components {
             solo: components["schemas"]["LigneClassementSoloQ"][];
             flex: components["schemas"]["LigneClassementSoloQ"][];
         };
+        ClipDuBot: {
+            /** Format: int32 */
+            clipId: number;
+            /** Format: int32 */
+            gameId: null | number;
+            rattachement: null | string;
+        };
+        ClipResponse: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            gameId: null | number;
+            rattachement: null | string;
+            auteurNom: string;
+            auteurDiscordId: string;
+            /** Format: date-time */
+            publieLe: string;
+            nomFichier: string;
+            contentType: string;
+            /** Format: int64 */
+            taille: number;
+        };
         CodeCompanionResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -4024,6 +4265,10 @@ export interface components {
             playerId: number;
             equipe: string;
         };
+        EntityTagHeaderValue: {
+            tag: components["schemas"]["StringSegment"];
+            isWeak: boolean;
+        };
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -4039,6 +4284,14 @@ export interface components {
             roles: components["schemas"]["StatsParRole"][];
             games: components["schemas"]["GameDeLaFiche"][];
             titres: components["schemas"]["TitresDuJoueur"];
+        };
+        FileResult: {
+            contentType: null | string;
+            fileDownloadName: null | string;
+            /** Format: date-time */
+            lastModified: null | string;
+            entityTag: null | components["schemas"]["EntityTagHeaderValue"];
+            enableRangeProcessing: boolean;
         };
         GameDeLaFiche: {
             /** Format: int32 */
@@ -4148,6 +4401,8 @@ export interface components {
         HallDeLaHonte: {
             joueurs: components["schemas"]["LigneHallDeLaHonte"][];
         };
+        /** Format: binary */
+        IFormFile: string;
         JouerDraftChampionsRequest: {
             /** Format: int32 */
             tour: number;
@@ -4640,6 +4895,15 @@ export interface components {
             /** Format: int32 */
             seriesId: number;
             arret: components["schemas"]["ArretSerie"];
+        };
+        StringSegment: {
+            buffer: null | string;
+            /** Format: int32 */
+            offset: number;
+            /** Format: int32 */
+            length: number;
+            value: null | string;
+            hasValue: boolean;
         };
         TirerRouletteRequest: {
             variante: components["schemas"]["RouletteVariante"];
