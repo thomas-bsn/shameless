@@ -6232,7 +6232,9 @@
           "riotMatchId",
           "match",
           "teamA",
-          "teamB"
+          "teamB",
+          "mvp",
+          "dofd"
         ],
         "type": "object",
         "properties": {
@@ -6289,6 +6291,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          },
+          "mvp": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "dofd": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         }

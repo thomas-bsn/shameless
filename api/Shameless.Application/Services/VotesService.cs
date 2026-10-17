@@ -119,18 +119,23 @@ public sealed class VotesService
     }
 
     /// <summary>
-    /// Les titres de MVP et de DOFD remportés par chaque Joueur dans les Games données (chargées avec
-    /// leurs participants et leurs Joueurs) dont les votes sont clos, égalités comprises.
+    /// Les résultats des votes de chacune des Games données (chargées avec leurs participants et leurs
+    /// Joueurs), par Game.
     /// </summary>
-    public async Task<Dictionary<int, TitresDuJoueur>> GetTitresAsync(IReadOnlyCollection<CustomGame> games)
+    public async Task<Dictionary<int, ResultatsDesVotes>> GetResultatsDesGamesAsync(IReadOnlyCollection<CustomGame> games)
     {
         var bulletins = (await _votes.GetBulletinsDesGamesAsync(games.Select(g => g.Id).ToList()))
             .ToLookup(b => b.GameId);
         var maintenant = Maintenant();
-        return TitresDuJoueur.Compter(games
-            .Where(g => bulletins.Contains(g.Id))
-            .Select(g => ResultatsDesVotes.Calculer(g, bulletins[g.Id], maintenant)));
+        return games.ToDictionary(g => g.Id, g => ResultatsDesVotes.Calculer(g, bulletins[g.Id], maintenant));
     }
+
+    /// <summary>
+    /// Les titres de MVP et de DOFD remportés par chaque Joueur dans les Games données (chargées avec
+    /// leurs participants et leurs Joueurs) dont les votes sont clos, égalités comprises.
+    /// </summary>
+    public async Task<Dictionary<int, TitresDuJoueur>> GetTitresAsync(IReadOnlyCollection<CustomGame> games) =>
+        TitresDuJoueur.Compter((await GetResultatsDesGamesAsync(games)).Values);
 
     private static long? LireDiscordId(string discordId) =>
         long.TryParse(discordId, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id > 0 ? id : null;

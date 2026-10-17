@@ -212,6 +212,34 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task L_historique_donne_le_mvp_et_le_dofd_de_chaque_game_une_fois_les_votes_clos()
+    {
+        var (serie, gameId, client) = await GameTermineeAsync();
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, mvp: serie.TeamB[2], dofd: serie.TeamB[3]));
+
+        async Task<JsonElement> GameDeLHistoriqueAsync()
+        {
+            var now = Factory.Clock.GetUtcNow();
+            var history = await ReadJsonAsync(await client.GetAsync($"/games/history/{now.Year}/{now.Month}", Ct));
+            return history.GetProperty("games").EnumerateArray()
+                .SelectMany(s => s.GetProperty("games").EnumerateArray())
+                .Single(g => g.GetProperty("id").GetInt32() == gameId);
+        }
+        static List<int> Ids(JsonElement game, string titre) =>
+            game.GetProperty(titre).EnumerateArray().Select(i => i.GetInt32()).Order().ToList();
+
+        var ouverts = await GameDeLHistoriqueAsync();
+        Assert.Empty(Ids(ouverts, "mvp"));
+        Assert.Empty(Ids(ouverts, "dofd"));
+
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
+        var clos = await GameDeLHistoriqueAsync();
+        Assert.Equal(new[] { serie.TeamA[2], serie.TeamB[2] }.Order(), Ids(clos, "mvp"));
+        Assert.Equal([serie.TeamB[3]], Ids(clos, "dofd"));
+    }
+
+    [Fact]
     public async Task Les_spectateurs_d_une_game_annulee_disparaissent_avec_elle()
     {
         var client = Factory.CreateSignedInClient();

@@ -143,12 +143,16 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
           side="blue"
           players={aOnBlue ? game.teamA : game.teamB}
           won={winner === (aOnBlue ? "A" : "B")}
+          mvp={game.mvp}
+          dofd={game.dofd}
         />
         <TeamColumn
           team={aOnBlue ? "B" : "A"}
           side="red"
           players={aOnBlue ? game.teamB : game.teamA}
           won={winner === (aOnBlue ? "B" : "A")}
+          mvp={game.mvp}
+          dofd={game.dofd}
         />
       </div>
     </li>
@@ -160,11 +164,15 @@ function TeamColumn({
   side,
   players,
   won,
+  mvp,
+  dofd,
 }: {
   team: string;
   side: "blue" | "red";
   players: Schemas["GameHistoryParticipantDto"][];
   won: boolean;
+  mvp: number[];
+  dofd: number[];
 }) {
   const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;
   const cost = players.reduce((sum, p) => sum + (p.cost ?? 0), 0);
@@ -177,7 +185,11 @@ function TeamColumn({
       </div>
       {players.map((p) => (
         <div key={p.riotId} className="flex items-center justify-between gap-2 text-sm">
-          <span className="truncate">{p.prenom}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{p.prenom}</span>
+            {mvp.includes(p.playerId) && <Badge variant="secondary">MVP</Badge>}
+            {dofd.includes(p.playerId) && <Badge variant="outline">DOFD</Badge>}
+          </span>
           <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />
         </div>
       ))}
