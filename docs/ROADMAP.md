@@ -29,7 +29,7 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Draft de champions en ligne (capitaines et spectateurs, sans connexion)
 
 ### 1b. Companion (récupération des stats)
-- [ ] App .NET 10 Avalonia, icône barre des tâches, login Discord
+- [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion
 - [ ] Détection du client LoL via lockfile + écoute WebSocket locale
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
 - [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit)
