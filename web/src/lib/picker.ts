@@ -28,3 +28,12 @@ export function joueursLibres(picker: Picker) {
   const places = new Set([...picker.teamA, ...picker.teamB].map((p) => p.playerId));
   return picker.players.filter((p) => !places.has(p.playerId));
 }
+
+/**
+ * « Ajouter au Picker » : coche, après les joueurs déjà cochés, les Joueurs liés présents en vocal
+ * qui ne le sont pas encore, sans dépasser les dix de la sélection.
+ */
+export function ajouterCandidats(selected: number[], candidats: number[], max = 10): number[] {
+  const ajoutes = candidats.filter((id, i) => !selected.includes(id) && candidats.indexOf(id) === i);
+  return [...selected, ...ajoutes].slice(0, Math.max(max, selected.length));
+}

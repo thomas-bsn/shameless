@@ -137,6 +137,206 @@
         }
       }
     },
+    "/bot/clips": {
+      "post": {
+        "tags": [
+          "Bot"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messageId": {
+                    "type": "string"
+                  },
+                  "attachmentId": {
+                    "type": "string"
+                  },
+                  "auteurDiscordId": {
+                    "type": "string"
+                  },
+                  "auteurNom": {
+                    "type": "string"
+                  },
+                  "publieLe": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "fichier": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipDuBot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameDuBot"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/champions": {
       "get": {
         "tags": [
@@ -256,6 +456,410 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassementSoloQ"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/games/{gameId}/clips": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clips/sans-game": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipResponse"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clips/{id}/games-candidates": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GameCandidateDuClip"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GameCandidateDuClip"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GameCandidateDuClip"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clips/{id}/game": {
+      "put": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RattacherClipRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RattacherClipRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RattacherClipRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clips/{id}/fichier": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              },
+              "video/webm": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              },
+              "video/quicktime": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1079,6 +1683,66 @@
         }
       }
     },
+    "/games/{id}": {
+      "get": {
+        "tags": [
+          "Games"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameRecapResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/games/pending": {
       "get": {
         "tags": [
@@ -1169,6 +1833,45 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GameHistoryListResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hall-de-la-honte": {
+      "get": {
+        "tags": [
+          "HallDeLaHonte"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HallDeLaHonte"
                 }
               }
             }
@@ -1442,6 +2145,55 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soirees/open/picker/candidats-vocaux": {
+      "get": {
+        "tags": [
+          "Picker"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidatsVocaux"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2625,6 +3377,314 @@
         }
       }
     },
+    "/games/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Pronostics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/series/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaSerie"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronostiquerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticDuSpectateur"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/pronostics": {
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronosticsDeLaGame"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rapports/{id}/accepter": {
       "post": {
         "tags": [
@@ -3648,6 +4708,354 @@
           }
         }
       }
+    },
+    "/games/{id}/votes": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/spectateurs": {
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalerSpectateursRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectateursDeLaGame"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bot/games/{id}/votes": {
+      "put": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinDuVotant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatsDesVotes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3776,6 +5184,84 @@
           "Aleatoire"
         ]
       },
+      "BulletinDuVotant": {
+        "required": [
+          "gameId",
+          "votantDiscordId",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "votantDiscordId": {
+            "type": "string"
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CandidatsVocaux": {
+        "required": [
+          "channelId",
+          "joueurs",
+          "membresNonLies"
+        ],
+        "type": "object",
+        "properties": {
+          "channelId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CandidatVocal"
+            }
+          },
+          "membresNonLies": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CandidatVocal": {
+        "required": [
+          "playerId",
+          "prenom",
+          "discordId"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "discordId": {
+            "type": "string"
+          }
+        }
+      },
       "ChampionJoueResponse": {
         "required": [
           "playerId",
@@ -3847,6 +5333,86 @@
             "items": {
               "$ref": "#/components/schemas/LigneClassementSoloQ"
             }
+          }
+        }
+      },
+      "ClipDuBot": {
+        "required": [
+          "clipId",
+          "gameId",
+          "rattachement"
+        ],
+        "type": "object",
+        "properties": {
+          "clipId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rattachement": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ClipResponse": {
+        "required": [
+          "id",
+          "gameId",
+          "rattachement",
+          "auteurNom",
+          "auteurDiscordId",
+          "publieLe",
+          "nomFichier",
+          "contentType",
+          "taille"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rattachement": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "auteurNom": {
+            "type": "string"
+          },
+          "auteurDiscordId": {
+            "type": "string"
+          },
+          "publieLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nomFichier": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "taille": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -4218,6 +5784,39 @@
           }
         }
       },
+      "EntityTagHeaderValue": {
+        "required": [
+          "tag",
+          "isWeak"
+        ],
+        "type": "object",
+        "properties": {
+          "tag": {
+            "$ref": "#/components/schemas/StringSegment"
+          },
+          "isWeak": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EquipePronostiquee": {
+        "required": [
+          "equipe",
+          "correct"
+        ],
+        "type": "object",
+        "properties": {
+          "equipe": {
+            "type": "string"
+          },
+          "correct": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -4230,7 +5829,8 @@
           "stats",
           "champions",
           "roles",
-          "games"
+          "games",
+          "titres"
         ],
         "type": "object",
         "properties": {
@@ -4298,6 +5898,91 @@
             "items": {
               "$ref": "#/components/schemas/GameDeLaFiche"
             }
+          },
+          "titres": {
+            "$ref": "#/components/schemas/TitresDuJoueur"
+          }
+        }
+      },
+      "FileResult": {
+        "required": [
+          "contentType",
+          "fileDownloadName",
+          "lastModified",
+          "entityTag",
+          "enableRangeProcessing"
+        ],
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fileDownloadName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastModified": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "entityTag": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntityTagHeaderValue"
+              }
+            ]
+          },
+          "enableRangeProcessing": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GameCandidateDuClip": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "lanceeLe"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "lanceeLe": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -4379,6 +6064,74 @@
                 "$ref": "#/components/schemas/NoteDePerformance"
               }
             ]
+          }
+        }
+      },
+      "GameDuBot": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "status",
+          "startedAt",
+          "completedAt",
+          "winner",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "winner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
           }
         }
       },
@@ -4479,7 +6232,9 @@
           "riotMatchId",
           "match",
           "teamA",
-          "teamB"
+          "teamB",
+          "mvp",
+          "dofd"
         ],
         "type": "object",
         "properties": {
@@ -4536,6 +6291,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          },
+          "mvp": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "dofd": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         }
@@ -4594,6 +6363,139 @@
           }
         }
       },
+      "GameRecapResponse": {
+        "required": [
+          "id",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "status",
+          "playedAt",
+          "completedAt",
+          "teamASide",
+          "teamBSide",
+          "winner",
+          "teamAWins",
+          "teamBWins",
+          "seriesOutcome",
+          "riotMatchId",
+          "match",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "playedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "teamASide": {
+            "type": "string"
+          },
+          "teamBSide": {
+            "type": "string"
+          },
+          "winner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "teamAWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teamBWins": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesOutcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeriesOutcome"
+              }
+            ]
+          },
+          "riotMatchId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "match": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DonneesDuMatch"
+              }
+            ]
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          }
+        }
+      },
+      "HallDeLaHonte": {
+        "required": [
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneHallDeLaHonte"
+            }
+          }
+        }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
       "JouerDraftChampionsRequest": {
         "required": [
           "tour",
@@ -4607,6 +6509,29 @@
           },
           "championId": {
             "type": "string"
+          }
+        }
+      },
+      "JoueurDuBot": {
+        "required": [
+          "playerId",
+          "prenom",
+          "discordId"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "discordId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -4663,6 +6588,29 @@
               {
                 "$ref": "#/components/schemas/GameParticipantDto"
               }
+            ]
+          }
+        }
+      },
+      "JoueurPronostique": {
+        "required": [
+          "playerId",
+          "prenom",
+          "correct"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "correct": {
+            "type": [
+              "null",
+              "boolean"
             ]
           }
         }
@@ -4815,6 +6763,36 @@
               "null",
               "integer"
             ],
+            "format": "int32"
+          }
+        }
+      },
+      "LigneHallDeLaHonte": {
+        "required": [
+          "rang",
+          "playerId",
+          "prenom",
+          "riotId",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "rang": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          },
+          "dofd": {
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -5402,6 +7380,225 @@
           }
         }
       },
+      "PronosticDuSpectateur": {
+        "required": [
+          "seriesId",
+          "gameNumber",
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "equipeGagnante",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "equipeGagnante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PronosticEvalue": {
+        "required": [
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "equipeGagnante",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "equipeGagnante": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EquipePronostiquee"
+              }
+            ]
+          },
+          "mvp": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JoueurPronostique"
+              }
+            ]
+          },
+          "dofd": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JoueurPronostique"
+              }
+            ]
+          }
+        }
+      },
+      "PronosticsDeLaGame": {
+        "required": [
+          "gameId",
+          "gameNumber",
+          "vainqueurConnu",
+          "votesClos",
+          "pronostics"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vainqueurConnu": {
+            "type": "boolean"
+          },
+          "votesClos": {
+            "type": "boolean"
+          },
+          "pronostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PronosticEvalue"
+            }
+          }
+        }
+      },
+      "PronosticsDeLaSerie": {
+        "required": [
+          "seriesId",
+          "bestOf",
+          "gameNumber",
+          "teamA",
+          "teamB"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "teamA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          },
+          "teamB": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuBot"
+            }
+          }
+        }
+      },
+      "PronostiquerRequest": {
+        "required": [
+          "pronostiqueurDiscordId",
+          "pronostiqueurNom",
+          "gameNumber",
+          "equipeGagnante",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "pronostiqueurDiscordId": {
+            "type": "string"
+          },
+          "pronostiqueurNom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "equipeGagnante": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RangActuel": {
         "required": [
           "tier",
@@ -5536,6 +7733,18 @@
           }
         }
       },
+      "RattacherClipRequest": {
+        "required": [
+          "gameId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "RematchRequest": {
         "required": [
           "format",
@@ -5572,6 +7781,73 @@
           "replacementPlayerId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ResultatDuTitre": {
+        "required": [
+          "gagnants",
+          "decompte"
+        ],
+        "type": "object",
+        "properties": {
+          "gagnants": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "decompte": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoixDuJoueur"
+            }
+          }
+        }
+      },
+      "ResultatsDesVotes": {
+        "required": [
+          "gameId",
+          "statut",
+          "ouvertureLe",
+          "fermetureLe",
+          "votants",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statut": {
+            "type": "string"
+          },
+          "ouvertureLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fermetureLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "votants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mvp": {
+            "$ref": "#/components/schemas/ResultatDuTitre"
+          },
+          "dofd": {
+            "$ref": "#/components/schemas/ResultatDuTitre"
           }
         }
       },
@@ -5969,6 +8245,20 @@
           }
         }
       },
+      "SignalerSpectateursRequest": {
+        "required": [
+          "discordIds"
+        ],
+        "type": "object",
+        "properties": {
+          "discordIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "SoireeResponse": {
         "required": [
           "id",
@@ -6043,6 +8333,25 @@
           "RolePrincipal",
           "Inconnue"
         ]
+      },
+      "SpectateursDeLaGame": {
+        "required": [
+          "gameId",
+          "discordIds"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "discordIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "StatsDeCustoms": {
         "required": [
@@ -6358,6 +8667,41 @@
           }
         }
       },
+      "StringSegment": {
+        "required": [
+          "buffer",
+          "offset",
+          "length",
+          "value",
+          "hasValue"
+        ],
+        "type": "object",
+        "properties": {
+          "buffer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasValue": {
+            "type": "boolean"
+          }
+        }
+      },
       "TirerRouletteRequest": {
         "required": [
           "variante"
@@ -6366,6 +8710,23 @@
         "properties": {
           "variante": {
             "$ref": "#/components/schemas/RouletteVariante"
+          }
+        }
+      },
+      "TitresDuJoueur": {
+        "required": [
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "mvp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dofd": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6482,6 +8843,54 @@
             "default": false
           }
         }
+      },
+      "VoixDuJoueur": {
+        "required": [
+          "playerId",
+          "prenom",
+          "voix"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "voix": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VoterRequest": {
+        "required": [
+          "votantDiscordId",
+          "mvpPlayerId",
+          "dofdPlayerId"
+        ],
+        "type": "object",
+        "properties": {
+          "votantDiscordId": {
+            "type": "string"
+          },
+          "mvpPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dofdPlayerId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
       }
     }
   },
@@ -6493,10 +8902,16 @@
       "name": "Auth"
     },
     {
+      "name": "Bot"
+    },
+    {
       "name": "Champions"
     },
     {
       "name": "Classements"
+    },
+    {
+      "name": "Clips"
     },
     {
       "name": "Companion"
@@ -6508,6 +8923,9 @@
       "name": "Games"
     },
     {
+      "name": "HallDeLaHonte"
+    },
+    {
       "name": "Liens"
     },
     {
@@ -6517,6 +8935,9 @@
       "name": "Players"
     },
     {
+      "name": "Pronostics"
+    },
+    {
       "name": "RapportsEnRevue"
     },
     {
@@ -6524,6 +8945,9 @@
     },
     {
       "name": "Soirees"
+    },
+    {
+      "name": "Votes"
     }
   ]
 }

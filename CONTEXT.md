@@ -16,7 +16,8 @@ connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl).
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
 joueur ; un joueur peut exister sans utilisateur lié.
 - **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
-des pronostics.
+des pronostics ; identifié par le bot comme présent en vocal pendant la game, il vote  
+aussi pour son MVP et son DOFD.
 - **Instance** : un déploiement de Shameless pour une communauté, avec son serveur  
 Discord, sa base de données et sa propre clé Riot.
 
@@ -117,17 +118,25 @@ classé dans une file y figure, en fin de liste.
 
 ## Votes et titres
 
-- **MVP** : le meilleur joueur d'une game, élu par les dix joueurs. Titre affiché :  
-Roi ou Reine.
+- **Vote** : à la fin d'une game, ses dix joueurs et les spectateurs présents en vocal  
+votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par titre  
+(MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
+voix remportent le titre, tous en cas d'égalité. Les voix restent secrètes jusqu'à la  
+clôture ; résultats ensuite dans le récap et l'historique, titres comptés sur la fiche du joueur.
+- **MVP** : le meilleur joueur d'une game, élu par vote. Titre affiché : Roi ou Reine.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
-élu par les dix joueurs. Illustré par une bouse de cheval.
+élu par vote. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
-- **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
-- **Pronostic** : le pari d'un spectateur avant la game sur l'équipe gagnante, le MVP  
-et le DOFD. Un bon pronostic rapporte des points.
-- **Doyen** *(à valider)* : le spectateur qui a le plus de points de pronostic sur le  
-mois. Sa voix compte double aux votes MVP et DOFD.
+- **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
+les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).
+- **Pronostic** : le pari d'un spectateur, dans Discord, sur la prochaine game d'une  
+série : l'équipe gagnante, le MVP et le DOFD, chacun facultatif. Les joueurs de la  
+série ne pronostiquent pas. Verrouillé au lancement de la game. Chaque choix est jugé  
+séparément dès que son résultat est connu (le vainqueur à la fin de la game, le MVP et  
+le DOFD à la clôture des votes ; un joueur à égalité parmi les gagnants rend le choix  
+juste). Les pronostics justes se lisent dans le récap. Ni points, ni classement, ni  
+titre : il n'y a pas de Doyen, et aucune voix ne compte double aux votes.
 
 ## Modes de jeu
 
@@ -166,10 +175,21 @@ saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien cr�
 saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
 la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
-séries, poste les récaps, gère les votes et rattache les clips.
+séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
+par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
+webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les routes  
+`/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
+- **Début de la Game** : son lancement dans la Série (`POST /series/{id}/games`), avant  
+sa Draft de champions. C'est là que part `game_started` et que les pronostics se closent  
+(ADR 0013).
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
-- **Clip** : une vidéo d'un moment de game, postée par un joueur dans le salon `#clips`  
-de Discord, puis rattachée à la game par le bot.
+- **Clip** : une vidéo d'un moment de game, postée dans le salon `#clips` de Discord.  
+Le bot la télécharge et la dépose à l'API, qui la conserve sur l'Instance (le lien  
+Discord n'est pas la source durable). Elle est rattachée automatiquement à sa Game  
+seulement s'il existe une unique **Game plausible** : une Game lancée le jour de  
+publication du clip, dans le fuseau de l'Instance, avant sa publication. Sinon le clip  
+reste **sans Game**, jusqu'à ce qu'un Utilisateur connecté le rattache. Les clips  
+rattachés se lisent sur la page de leur Game (ADR 0014). Entité `Clip`.
 
 ## Données Riot
 

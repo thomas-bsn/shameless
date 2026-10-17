@@ -5,14 +5,14 @@ import { mockApi } from "@/test/api";
 import { user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
-const team = (...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
+const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
   prenoms.map((prenom, i) => ({
     prenom,
     riotId: `${prenom}#EUW`,
     rankTier: "GOLD",
     rankDivision: 2,
     cost: 3,
-    playerId: i + 1,
+    playerId: premierId + i,
     championId: null,
     stats: null,
     performance: null,
@@ -27,8 +27,10 @@ const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): 
   winner,
   riotMatchId: null,
   match: null,
-  teamA: team("Alice", "Bob"),
-  teamB: team("Chloé", "Dan"),
+  teamA: team(1, "Alice", "Bob"),
+  teamB: team(3, "Chloé", "Dan"),
+  mvp: [],
+  dofd: [],
 });
 
 const october: Schemas["GameHistoryListResponse"] = {
@@ -71,6 +73,34 @@ describe("Historique", () => {
     expect(within(games[1]!).getByText("Équipe B gagne")).toBeInTheDocument();
     expect(within(games[2]!).getByText("Équipe A gagne")).toBeInTheDocument();
     expect(within(games[1]!).getByRole("group", { name: "Équipe A · Red side" })).toHaveTextContent("Alice");
+    expect(within(games[1]!).getByRole("link", { name: "Game 2" })).toHaveAttribute("href", "/games/12");
+  });
+
+  it("montre le MVP et le DOFD élus de chaque game", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /games/history/2026/10": {
+        games: [
+          {
+            seriesId: 5,
+            format: 1,
+            playedAt: "2026-10-03T20:00:00Z",
+            outcome: "Gagnee",
+            winningTeam: "A",
+            games: [{ ...game(11, "A", "blue"), mvp: [1], dofd: [4] }],
+          },
+        ],
+      },
+    });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    const equipeA = await screen.findByRole("group", { name: "Équipe A · Blue side" });
+    expect(within(equipeA).getByText("Alice").parentElement).toHaveTextContent("MVP");
+    expect(within(equipeA).queryByText("DOFD")).not.toBeInTheDocument();
+    const equipeB = screen.getByRole("group", { name: "Équipe B · Red side" });
+    expect(within(equipeB).getByText("Dan").parentElement).toHaveTextContent("DOFD");
+    expect(within(equipeB).queryByText("MVP")).not.toBeInTheDocument();
   });
 
   it("navigates from month to month", async () => {

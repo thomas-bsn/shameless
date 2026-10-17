@@ -147,6 +147,12 @@ public class PlayerRepository : IPlayerRepository
     public async Task<List<Player>> GetByIdsAsync(List<int> ids) =>
         await _db.Players.Where(p => ids.Contains(p.Id)).ToListAsync();
 
+    public async Task<List<Player>> GetByDiscordIdsAsync(IReadOnlyCollection<long> discordIds) =>
+        await _db.Players.AsNoTracking()
+            .Include(p => p.User)
+            .Where(p => p.User != null && discordIds.Contains(p.User.DiscordId))
+            .ToListAsync();
+
     public async Task<List<Player>> GetByPuuidsAsync(IReadOnlyCollection<string> puuids) =>
         await _db.Players.Where(p => puuids.Contains(p.PUUID)).ToListAsync();
 

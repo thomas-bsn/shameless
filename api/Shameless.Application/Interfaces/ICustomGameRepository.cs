@@ -8,7 +8,24 @@ public interface ICustomGameRepository
     void Add(CustomGame game);
 
     Task<CustomGame?> GetByIdAsync(int id);
+
+    Task<bool> ExisteAsync(int id);
+
+    /// <summary>Les ids des games lancées (<c>CreatedAt</c>) dans l'intervalle [debut, fin] (UTC).</summary>
+    Task<List<int>> GetIdsLanceesEntreAsync(DateTime debut, DateTime fin);
+
+    /// <summary>
+    /// Les games lancées (<c>CreatedAt</c>) dans l'intervalle [debut, fin] (UTC), avec leur Série et ses
+    /// games, de la plus récente à la plus ancienne.
+    /// </summary>
+    Task<List<CustomGame>> GetLanceesEntreAsync(DateTime debut, DateTime fin);
     Task<CustomGame?> GetByIdWithParticipantsAsync(int id);
+
+    /// <summary>
+    /// La game, de quoi la raconter : ses participants avec leur joueur et leur compte
+    /// Discord lié, sa Série avec ses games et sa composition (rôles de l'Autorole) ; null si inconnue.
+    /// </summary>
+    Task<CustomGame?> GetRecitAsync(int id);
 
     /// <summary>Un rapport du Companion mis en revue, avec sa game ; null s'il n'existe pas.</summary>
     Task<RapportCompanion?> GetRapportAsync(int id);
@@ -39,6 +56,12 @@ public interface ICustomGameRepository
     /// avec leurs participants, leurs joueurs et les joueurs de leur Série (rôle de l'Autorole).
     /// </summary>
     Task<List<CustomGame>> GetCompletedGamesOfPlayerAsync(int playerId);
+
+    /// <summary>
+    /// Toutes les games terminées (y compris celles d'une Série interrompue), avec leurs participants et
+    /// leurs joueurs : de quoi calculer les résultats de leurs votes.
+    /// </summary>
+    Task<List<CustomGame>> GetCompletedGamesWithPlayersAsync();
 
     /// <summary>
     /// Enregistre les changements en une transaction. Renvoie false si une commande simultanée a

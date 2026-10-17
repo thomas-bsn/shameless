@@ -22,6 +22,9 @@ public interface IPlayerRepository
     Task<Player?> GetWithUserAsync(int id);
     Task<List<Player>> GetByIdsAsync(List<int> ids);
 
+    /// <summary>Les joueurs liés à l'un de ces comptes Discord, avec leur compte (User).</summary>
+    Task<List<Player>> GetByDiscordIdsAsync(IReadOnlyCollection<long> discordIds);
+
     /// <summary>Les joueurs enregistrés parmi ces PUUID.</summary>
     Task<List<Player>> GetByPuuidsAsync(IReadOnlyCollection<string> puuids);
     Task<List<Player>> GetAllEntitiesAsync(); 

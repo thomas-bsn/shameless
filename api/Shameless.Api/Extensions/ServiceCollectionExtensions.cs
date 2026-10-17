@@ -2,9 +2,11 @@ using System.Text.Json.Serialization;
 using Shameless.Api.Interfaces;
 using Shameless.Api.Services;
 using Shameless.Application.BackgroundJobs;
+using Shameless.Application.Bot;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
+using Shameless.Infrastructure.Integrations.Clips;
 using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Api.Extensions;
@@ -16,6 +18,7 @@ public static class ServiceCollectionExtensions
         // Background jobs
         services.AddHostedService<RefreshRanksJob>();
         services.AddHostedService<FermetureAutomatiqueSoireeJob>();
+        services.AddHostedService<PublicationWebhooksBotJob>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -27,6 +30,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISoireeRepository, SoireeRepository>();
         services.AddScoped<IPickerSessionRepository, PickerSessionRepository>();
         services.AddScoped<IDraftChampionsRepository, DraftChampionsRepository>();
+        services.AddScoped<IEvenementBotRepository, EvenementBotRepository>();
+        services.AddScoped<IVotesRepository, VotesRepository>();
+        services.AddScoped<IPronosticsRepository, PronosticsRepository>();
+        services.AddScoped<IClipRepository, ClipRepository>();
 
         // Services
         services.AddScoped<IPlayerService, PlayerService>();
@@ -41,18 +48,29 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CodeCompanionService>();
         services.AddScoped<RapportsCompanionService>();
         services.AddScoped<DraftChampionsService>();
+        services.AddScoped<CandidatsVocauxService>();
+        services.AddScoped<EvenementsBot>();
+        services.AddScoped<VotesService>();
+        services.AddScoped<PronosticsService>();
+        services.AddScoped<HallDeLaHonteService>();
+        services.AddScoped<ClipsService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IRandomSource, SharedRandomSource>();
+        services.AddSingleton<IStockageDesClips, StockageDesClipsSurDisque>();
 
         return services;
     }
 
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
-        services.AddControllers(o => o.Filters.Add<CatalogueIndisponibleFilter>())
+        services.AddControllers(o =>
+            {
+                o.Filters.Add<CatalogueIndisponibleFilter>();
+                o.Filters.Add<BotIndisponibleFilter>();
+            })
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

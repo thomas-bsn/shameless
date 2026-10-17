@@ -26,16 +26,17 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     ];
 
     /// <summary>Comment une route s'ouvre sans session.</summary>
-    private enum Ouverture { Session, Lien, CodeCompanion }
+    private enum Ouverture { Session, Lien, CodeCompanion, Bot }
 
     private static Ouverture OuvertureDe(RouteEndpoint e) =>
         e.Metadata.GetMetadata<AccesParLienAttribute>() != null ? Ouverture.Lien
         : e.Metadata.GetMetadata<AccesParCodeCompanionAttribute>() != null ? Ouverture.CodeCompanion
+        : e.Metadata.GetMetadata<AccesParBotAttribute>() != null ? Ouverture.Bot
         : Ouverture.Session;
 
     /// <summary>
-    /// Les routes de l'API ouvertes de cette façon : par session, par lien d'accès (ADR 0010) ou par
-    /// code Companion.
+    /// Les routes de l'API ouvertes de cette façon : par session, par lien d'accès (ADR 0010), par
+    /// code Companion ou par la clé du bot (ADR 0013).
     /// </summary>
     private List<(string Method, string Route)> Endpoints(Ouverture ouverture) =>
         Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
@@ -46,14 +47,23 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             .Where(e => !AnonymousEndpoints.Contains($"{e.Method} {e.Route}"))
             .ToList();
 
-    private static HttpRequestMessage AnyRequest(string method, string route) =>
+    /// <summary>Une requête quelconque vers la route, avec un corps du type qu'elle accepte (JSON, ou multipart pour un dépôt de fichier).</summary>
+    private HttpRequestMessage AnyRequest(string method, string route) =>
         new(new HttpMethod(method), "/" + System.Text.RegularExpressions.Regex.Replace(route, @"\{[^}]+\}", "1"))
         {
-            Content = method is "GET" or "DELETE" ? null : JsonContent.Create(new { })
+            Content = method is "GET" or "DELETE" ? null
+                : AccepteDuMultipart(route) ? new MultipartFormDataContent { { new StringContent(""), "vide" } }
+                : JsonContent.Create(new { })
         };
 
+    private bool AccepteDuMultipart(string route) =>
+        Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.RoutePattern.RawText!.TrimStart('/') == route)
+            .Any(e => e.Metadata.GetMetadata<Microsoft.AspNetCore.Http.Metadata.IAcceptsMetadata>()?.ContentTypes.Contains("multipart/form-data") == true);
+
     [Fact]
-    public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_et_code_companion_demande_une_session()
+    public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_code_companion_et_routes_du_bot_demande_une_session()
     {
         var client = Factory.CreateAnonymousClient();
         var endpoints = Endpoints(Ouverture.Session);
@@ -100,6 +110,39 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             Assert.True(response.StatusCode == HttpStatusCode.NotFound,
                 $"{method} {route} returned {(int)response.StatusCode} with an unknown code");
         }
+    }
+
+    [Fact]
+    public async Task Une_route_du_bot_est_sous_bot_et_refuse_sans_la_cle_du_bot_meme_avec_une_session()
+    {
+        var anonyme = Factory.CreateAnonymousClient();
+        var connecte = Factory.CreateSignedInClient();
+        var endpoints = Endpoints(Ouverture.Bot);
+
+        Assert.NotEmpty(endpoints);
+        foreach (var (method, route) in endpoints)
+        {
+            Assert.StartsWith("bot/", route);
+            foreach (var client in new[] { anonyme, connecte })
+            {
+                var response = await client.SendAsync(AnyRequest(method, route), Ct);
+
+                Assert.True(response.StatusCode == HttpStatusCode.Unauthorized,
+                    $"{method} {route} returned {(int)response.StatusCode} without the bot key");
+            }
+        }
+    }
+
+    [Fact]
+    public void Toute_route_sous_bot_est_ouverte_par_la_cle_du_bot()
+    {
+        var routes = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(e => e.RoutePattern.RawText!.TrimStart('/').StartsWith("bot/"))
+            .ToList();
+
+        Assert.NotEmpty(routes);
+        Assert.All(routes, e => Assert.Equal(Ouverture.Bot, OuvertureDe(e)));
     }
 
     [Fact]

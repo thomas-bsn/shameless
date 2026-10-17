@@ -16,6 +16,17 @@ public sealed class PickerController : ControllerBase
 
     public PickerController(PickerService pickerService) => _pickerService = pickerService;
 
+    /// <summary>
+    /// Les Joueurs liés présents en vocal Discord, à ajouter au Picker. L'API les demande au bot avec
+    /// sa propre clé : le navigateur ne la voit jamais. Bot non configuré ou indisponible : 503.
+    /// </summary>
+    [HttpGet("candidats-vocaux")]
+    [ProducesResponseType<CandidatsVocaux>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
+    public async Task<ActionResult<CandidatsVocaux>> GetCandidatsVocaux(
+        [FromServices] CandidatsVocauxService candidats, CancellationToken cancellationToken) =>
+        await candidats.GetAsync(cancellationToken);
+
     /// <summary>Coche les dix joueurs : ouvre la session de Picker, ou remplace sa sélection.</summary>
     [HttpPut("selection")]
     [ProducesResponseType<PickerResponse>(StatusCodes.Status200OK)]

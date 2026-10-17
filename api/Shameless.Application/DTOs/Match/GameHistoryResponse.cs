@@ -2,6 +2,9 @@
 
 namespace Shameless.Application.DTOs.Match;
 
+/// <summary>Une game terminée de l'historique.</summary>
+/// <param name="Mvp">Les Joueurs élus MVP par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
+/// <param name="Dofd">Les Joueurs élus DOFD par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
 public record GameHistoryResponse(
     int Id,
     int? SeriesId,
@@ -12,7 +15,9 @@ public record GameHistoryResponse(
     string? RiotMatchId, // null sans rapport du Companion (saisie manuelle)
     DonneesDuMatch? Match, // null sans données Riot (saisie manuelle)
     List<GameHistoryParticipantDto> TeamA,
-    List<GameHistoryParticipantDto> TeamB
+    List<GameHistoryParticipantDto> TeamB,
+    List<int> Mvp,
+    List<int> Dofd
 );
 
 /// <summary>Un participant d'une game de l'historique, avec son champion joué et ses stats envoyées par le Companion.</summary>

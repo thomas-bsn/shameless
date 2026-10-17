@@ -1,6 +1,7 @@
 using Shameless.Api.Contracts.Matches;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Responses.Game;
+using Shameless.Application.DTOs.Match;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,6 +43,18 @@ public sealed class GamesController : ControllerBase
             Status: game.Status
         );
     }
+
+    /// <summary>
+    /// La page d'une game, en attente ou terminée : sa place dans la Série, ses Équipes, son vainqueur
+    /// et les stats du Companion. C'est le lien de récap posté par le bot.
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> GetGame(int id) =>
+        await _gameService.GetRecapAsync(id) is { } recap
+            ? recap
+            : Problem(statusCode: StatusCodes.Status404NotFound, detail: "Cette game n'existe pas.");
 
     [HttpGet("pending")]
     [ProducesResponseType<List<PendingGameResponse>>(StatusCodes.Status200OK)]

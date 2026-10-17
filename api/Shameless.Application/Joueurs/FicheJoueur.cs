@@ -1,6 +1,7 @@
 using Shameless.Application.Entities;
 using Shameless.Application.Picker;
 using Shameless.Application.Stats;
+using Shameless.Application.Votes;
 
 namespace Shameless.Application.Joueurs;
 
@@ -15,6 +16,7 @@ namespace Shameless.Application.Joueurs;
 /// <param name="Champions">Les champions joués, du plus joué au moins joué.</param>
 /// <param name="Roles">Les rôles joués, du plus joué au moins joué.</param>
 /// <param name="Games">Les Games terminées du Joueur, de la plus récente à la plus ancienne.</param>
+/// <param name="Titres">Les titres de MVP et de DOFD remportés par le Joueur (votes clos, égalités comprises).</param>
 public sealed record FicheJoueur(
     int PlayerId,
     string Prenom,
@@ -26,14 +28,15 @@ public sealed record FicheJoueur(
     StatsDeCustoms Stats,
     List<StatsParChampion> Champions,
     List<StatsParRole> Roles,
-    List<GameDeLaFiche> Games)
+    List<GameDeLaFiche> Games,
+    TitresDuJoueur Titres)
 {
     /// <summary>
     /// La fiche du Joueur à partir de ses Games. Seules les Games terminées comptent (y compris celles
     /// d'une Série interrompue). Les Games doivent être chargées avec leurs participants et leurs
     /// Joueurs (et <c>Series.Players</c> pour le rôle de l'Autorole), comme pour <see cref="NotesDeLaGame"/>.
     /// </summary>
-    public static FicheJoueur Calculer(Player joueur, IEnumerable<CustomGame> games)
+    public static FicheJoueur Calculer(Player joueur, IEnumerable<CustomGame> games, TitresDuJoueur? titres = null)
     {
         var parties = games
             .Where(g => g.Status == GameStatuses.Completed)
@@ -66,7 +69,8 @@ public sealed record FicheJoueur(
                 .OrderByDescending(r => r.Stats.GamesJouees)
                 .ThenBy(r => r.Role)
                 .ToList(),
-            parties.Select(p => p.EnLigne()).ToList());
+            parties.Select(p => p.EnLigne()).ToList(),
+            titres ?? TitresDuJoueur.Aucun);
     }
 }
 

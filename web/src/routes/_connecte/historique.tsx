@@ -8,6 +8,7 @@ import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/l
 import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { dateHeureLabel } from "@/lib/dates";
 
 const currentMonth = (): Month => {
   const now = new Date();
@@ -78,9 +79,6 @@ function Historique() {
   );
 }
 
-const dateLabel = (iso: string) =>
-  new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
 function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
   // seriesId 0 : games enregistrées sans Série.
   const title = series.seriesId === 0 ? "Games hors série" : `Série BO${series.format}`;
@@ -91,7 +89,7 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle>
-            {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateLabel(series.playedAt)}</span>
+            {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateHeureLabel(series.playedAt)}</span>
           </CardTitle>
           {series.seriesId !== 0 && (
             <div className="flex items-center gap-3">
@@ -126,7 +124,10 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
     <li className="overflow-hidden rounded-lg border">
       <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         <span>
-          Game {index} · #{game.id} · {dateLabel(game.playedAt)}
+          <Link to="/games/$gameId" params={{ gameId: String(game.id) }} className="hover:text-foreground">
+            Game {index}
+          </Link>{" "}
+          · #{game.id} · {dateHeureLabel(game.playedAt)}
         </span>
         {winner ? (
           <Badge variant="secondary">Équipe {winner} gagne</Badge>
@@ -140,12 +141,16 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
           side="blue"
           players={aOnBlue ? game.teamA : game.teamB}
           won={winner === (aOnBlue ? "A" : "B")}
+          mvp={game.mvp}
+          dofd={game.dofd}
         />
         <TeamColumn
           team={aOnBlue ? "B" : "A"}
           side="red"
           players={aOnBlue ? game.teamB : game.teamA}
           won={winner === (aOnBlue ? "B" : "A")}
+          mvp={game.mvp}
+          dofd={game.dofd}
         />
       </div>
     </li>
@@ -157,11 +162,15 @@ function TeamColumn({
   side,
   players,
   won,
+  mvp,
+  dofd,
 }: {
   team: string;
   side: "blue" | "red";
   players: Schemas["GameHistoryParticipantDto"][];
   won: boolean;
+  mvp: number[];
+  dofd: number[];
 }) {
   const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;
   const cost = players.reduce((sum, p) => sum + (p.cost ?? 0), 0);
@@ -174,7 +183,11 @@ function TeamColumn({
       </div>
       {players.map((p) => (
         <div key={p.riotId} className="flex items-center justify-between gap-2 text-sm">
-          <span className="truncate">{p.prenom}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{p.prenom}</span>
+            {mvp.includes(p.playerId) && <Badge variant="secondary">MVP</Badge>}
+            {dofd.includes(p.playerId) && <Badge variant="outline">DOFD</Badge>}
+          </span>
           <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />
         </div>
       ))}

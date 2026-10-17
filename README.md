@@ -49,6 +49,11 @@ Toutes les variables sont décrites dans [`.env.example`](.env.example). Les pri
 | `SESSION_LIFETIME_DAYS` | Durée de la session, prolongée à chaque utilisation (14 jours par défaut). |
 | `RIOT_API_KEY` | Clé Riot, optionnelle : sans elle, le rafraîchissement des rangs est désactivé. |
 | `SOIREE_AUTO_CLOSE_AFTER` | Période sans game au bout de laquelle la Soirée ouverte se ferme seule, au format `hh:mm:ss` (3 h par défaut). |
+| `SHAMELESS_BOT_URL`, `SHAMELESS_BOT_API_KEY`, `SHAMELESS_WEBHOOK_SECRET` | Bot Discord, optionnel (ADR 0013) : URL du bot, clé API → bot (candidats vocaux) et secret HMAC des webhooks, mêmes valeurs que dans l'env du bot. |
+| `SHAMELESS_BOT_TO_API_KEY` | Clé du bot pour les routes `/bot` de l'API, distincte des précédentes. Vide : routes refusées. |
+| `SHAMELESS_WEB_URL` | URL publique du site, pour les liens envoyés au bot (récap de Game). |
+| `SHAMELESS_TIMEZONE` | Fuseau horaire IANA de l'Instance (`Europe/Paris` par défaut) : il découpe les jours, ex. pour rattacher un clip à la Game du jour (ADR 0014). |
+| `SHAMELESS_CLIPS_MAX_BYTES` | Taille maximale d'une vidéo de clip, en octets (500 Mo par défaut). Les vidéos vivent dans le volume nommé `api-clips`. |
 | `SHAMELESS_SITE_ADDRESS` | `:80` en local, ou un nom de domaine pour le HTTPS automatique de Caddy. |
 
 Aucun secret ni identifiant d'environnement n'est versionné : tout passe par `.env`, qui est ignoré par Git.

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { points } from "@/lib/cost";
-import { joueursLibres, type PickerStep, pickerStep } from "@/lib/picker";
+import { ajouterCandidats, joueursLibres, type PickerStep, pickerStep } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
 import { cn } from "@/lib/utils";
 
@@ -142,6 +142,12 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
     },
   });
 
+  // Le navigateur demande à l'API, qui interroge le bot Discord avec sa propre clé.
+  const vocal = $api.useMutation("get", "/soirees/open/picker/candidats-vocaux", {
+    onSuccess: (candidats) =>
+      setSelected((current) => ajouterCandidats(current, candidats.joueurs.map((j) => j.playerId), SELECTION_SIZE)),
+  });
+
   const toggle = (id: number) =>
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
 
@@ -194,6 +200,8 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
             })}
           </ul>
         )}
+        {vocal.isError && <ErrorAlert error={vocal.error} />}
+        {vocal.data && <CandidatsVocauxAjoutes candidats={vocal.data} />}
         {select.isError && <ErrorAlert error={select.error} />}
         <div className="flex flex-wrap gap-2">
           <Button
@@ -201,6 +209,9 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
             onClick={() => select.mutate({ body: { playerIds: selected } })}
           >
             Valider la sélection
+          </Button>
+          <Button variant="outline" disabled={vocal.isPending} onClick={() => vocal.mutate({})}>
+            Ajouter les joueurs en vocal
           </Button>
           {selected.length > 0 && (
             <Button variant="ghost" onClick={() => setSelected([])}>
@@ -215,6 +226,18 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+
+function CandidatsVocauxAjoutes({ candidats }: { candidats: Schemas["CandidatsVocaux"] }) {
+  if (!candidats.channelId) return <p className="text-sm text-muted-foreground">Personne n'est en vocal.</p>;
+  return (
+    <p className="text-sm text-muted-foreground">
+      {pluriel(candidats.joueurs.length, "joueur")} en vocal ajouté{candidats.joueurs.length > 1 ? "s" : ""}
+      {candidats.membresNonLies > 0 && ` · ${pluriel(candidats.membresNonLies, "membre")} en vocal sans joueur lié`}
+    </p>
   );
 }
 

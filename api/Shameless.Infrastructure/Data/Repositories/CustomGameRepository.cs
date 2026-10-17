@@ -16,6 +16,21 @@ public class CustomGameRepository : ICustomGameRepository
 
     public void Add(CustomGame game) => _db.CustomGames.Add(game);
 
+    public Task<bool> ExisteAsync(int id) => _db.CustomGames.AnyAsync(g => g.Id == id);
+
+    public Task<List<int>> GetIdsLanceesEntreAsync(DateTime debut, DateTime fin) =>
+        _db.CustomGames
+            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
+            .Select(g => g.Id)
+            .ToListAsync();
+
+    public Task<List<CustomGame>> GetLanceesEntreAsync(DateTime debut, DateTime fin) =>
+        _db.CustomGames.AsNoTrackingWithIdentityResolution()
+            .Include(g => g.Series).ThenInclude(s => s!.Games)
+            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
+            .OrderByDescending(g => g.CreatedAt).ThenByDescending(g => g.Id)
+            .ToListAsync();
+
     public Task<RapportCompanion?> GetRapportAsync(int id) =>
         _db.RapportsCompanion.Include(r => r.Game).SingleOrDefaultAsync(r => r.Id == id);
 
@@ -37,6 +52,14 @@ public class CustomGameRepository : ICustomGameRepository
                 .ThenInclude(p => p.Player)
             .FirstOrDefaultAsync(g => g.Id == id);
     }
+
+    public Task<CustomGame?> GetRecitAsync(int id) =>
+        _db.CustomGames
+            .Include(g => g.Participants).ThenInclude(p => p.Player).ThenInclude(p => p.User)
+            .Include(g => g.Series).ThenInclude(s => s!.Games)
+            .Include(g => g.Series).ThenInclude(s => s!.Players).ThenInclude(p => p.Player).ThenInclude(p => p.User)
+            .AsSplitQuery()
+            .SingleOrDefaultAsync(g => g.Id == id);
 
     public Task<CustomGame?> GetByRiotMatchIdAsync(string riotMatchId) =>
         _db.CustomGames
@@ -106,6 +129,15 @@ public class CustomGameRepository : ICustomGameRepository
             .Include(g => g.Series)
             .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
             .Where(g => g.Status == GameStatuses.Completed && g.Participants.Any(p => p.PlayerId == playerId))
+            .AsSplitQuery()
+            .ToListAsync();
+
+    public async Task<List<CustomGame>> GetCompletedGamesWithPlayersAsync() =>
+        await _db.CustomGames
+            .AsNoTracking()
+            .Include(g => g.Participants)
+            .ThenInclude(p => p.Player)
+            .Where(g => g.Status == GameStatuses.Completed)
             .AsSplitQuery()
             .ToListAsync();
 
