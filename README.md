@@ -11,7 +11,7 @@ docker compose up -d --build
 docker compose logs wizard      # affiche le code d'accès à usage unique
 ```
 
-Depuis un clone du dépôt, `compose.override.yaml` est chargé automatiquement et construit les images depuis les sources. Ouvrir http://localhost:8080, saisir le code d'accès lu dans les logs, puis suivre les étapes : adresse publique, application Discord, options (clé Riot, fuseau horaire, intégration Uchuu : toutes facultatives), récapitulatif. À la confirmation, l'Instance démarre toute seule et le wizard s'arrête ; `http://localhost:8080/api/health` répond `Healthy`.
+Depuis un clone du dépôt, `compose.override.yaml` est chargé automatiquement : il construit les images depuis les sources et publie le proxy sur les ports 8080 et 8443. Ouvrir http://localhost:8080, saisir le code d'accès lu dans les logs, puis suivre les étapes : adresse publique, application Discord, options (clé Riot, fuseau horaire, intégration Uchuu : toutes facultatives), récapitulatif. À la confirmation, l'Instance démarre toute seule et le wizard s'arrête ; `http://localhost:8080/api/health` répond `Healthy`.
 
 Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'acceptent sur `http://localhost`, Safari non : en local, utiliser l'un des deux, ou servir l'instance en HTTPS. L'adresse publique saisie dans le wizard doit être en HTTPS (seul un accès `http://localhost` est toléré).
 
@@ -33,14 +33,18 @@ Une Instance installée avec un `.env` peut garder sa base : créer `instance.en
 
 ### Déployer avec les images publiées
 
-Sans cloner le dépôt ni construire quoi que ce soit : récupérer `compose.yaml`, puis :
+Sans cloner le dépôt ni construire quoi que ce soit : récupérer `compose.yaml` et `compose.ports.yaml`, puis :
 
 ```sh
-docker compose -f compose.yaml up -d
-docker compose -f compose.yaml logs wizard
+docker compose -f compose.yaml -f compose.ports.yaml up -d
+docker compose -f compose.yaml -f compose.ports.yaml logs wizard
 ```
 
-Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). Les images ne contiennent aucun secret : la configuration vient du wizard (et, pour les réglages avancés, d'un `.env` facultatif, voir `.env.example`).
+Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). `compose.ports.yaml` ne fait que publier le proxy sur la machine.
+
+### Avec Forgeyard
+
+`compose.yaml` est la base de tout : le coller tel quel dans un projet Forgeyard (Nouvelle app › Docker Compose) mène au même wizard, sans variable à renseigner ni fichier à modifier. Il se limite pour cela à ce que Forgeyard accepte (images publiées, volumes nommés, pas de `ports`, de `user` ni de `build`) ; ses extensions `x-forgeyard` (service exposé, sauvegarde `pg_dump` de la base) sont ignorées par Docker Compose. Le wizard s'ouvre sur l'adresse du projet : Forgeyard y termine le HTTPS, et le wizard le détecte pour que Caddy serve l'Instance en HTTP derrière lui, sans demander de certificat. `tests/compose/forgeyard-compat.mjs` vérifie ces contraintes. Les images ne contiennent aucun secret : la configuration vient du wizard (et, pour les réglages avancés, d'un `.env` facultatif, voir `.env.example`).
 
 Pour un domaine en HTTPS automatique, Caddy doit être joignable sur les ports 80 et 443 : `SHAMELESS_HTTP_PORT=80` et `SHAMELESS_HTTPS_PORT=443`. Le wizard est servi sur ces mêmes ports (en HTTPS auto-signé sur le 443 : l'avertissement du navigateur est attendu) ; ne pas laisser un wizard non configuré exposé plus longtemps que nécessaire.
 
@@ -65,7 +69,7 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 L'étape « Options » du wizard est entièrement facultative : la clé Riot peut rester vide (rangs non rafraîchis), le fuseau vaut `Europe/Paris` par défaut, et l'intégration Uchuu (bot Discord) peut être ignorée. Si elle est activée, le wizard demande l'adresse publique du bot, génère trois secrets distincts (une fois par session de wizard, réutilisés si l'installation est relancée), les écrit dans `instance.env` et affiche à la fin :
 
 - **Dans Shameless** : `SHAMELESS_BOT_URL`, `SHAMELESS_WEB_URL`, `SHAMELESS_BOT_API_KEY`, `SHAMELESS_WEBHOOK_SECRET`, `SHAMELESS_BOT_TO_API_KEY` (déjà enregistrées) ;
-- **À reporter dans le bot** : les trois secrets (mêmes valeurs), `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur Discord saisi) et `SHAMELESS_API_URL` (`<adresse publique>/api`, **à confirmer** : l'exemple de `docs/shameless.md` du bot donne l'adresse sans `/api`, à retirer si le bot l'exige ; l'écran de fin le signale de même), avec un bouton Copier par valeur et pour le bloc `.env` entier ;
+- **À reporter dans le bot** : les trois secrets (mêmes valeurs), `SHAMELESS_WEB_URL`, `SHAMELESS_GUILD_ID` (l'ID du serveur Discord saisi) et `SHAMELESS_API_URL` (`<adresse publique>/api` : le bot y ajoute `/bot/…` et le proxy retire le préfixe `/api` avant de joindre l'API ; à reporter avec `/api`), avec un bouton Copier par valeur et pour le bloc `.env` entier ;
 - les variables du bot à saisir à la main (salons vocaux et textuels, `SHAMELESS_CLIPS_MAX_BYTES` aligné sur Shameless), décrites dans `docs/shameless.md` du dépôt `thomas-bsn/harceleur_bot`.
 
 Le wizard n'appelle jamais le bot ni Discord pour cette étape et ne modifie rien d'autre. Ces valeurs ne sont affichées qu'une fois, mais restent relisibles après l'arrêt du wizard :

@@ -15,6 +15,8 @@ RUN dotnet ef migrations bundle -p Shameless.Infrastructure -s Shameless.Infrast
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrate
 WORKDIR /app
 COPY --from=build /bundle/efbundle .
+# Le volume nommé monté sur /state (marqueur lu par l'API) hérite de ce propriétaire à sa création.
+RUN mkdir /state && chown $APP_UID /state
 USER $APP_UID
 ENTRYPOINT ["sh", "-c", "./efbundle --connection \"$ConnectionStrings__Shameless\""]
 

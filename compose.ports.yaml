@@ -1,0 +1,11 @@
+# Publie le proxy sur la machine : à ajouter à compose.yaml quand Docker Compose est lancé à la main
+# avec les images publiées (Forgeyard n'en a pas besoin : il publie le service par x-forgeyard).
+#   docker compose -f compose.yaml -f compose.ports.yaml up -d
+# Pour un domaine en HTTPS géré par Caddy : SHAMELESS_HTTP_PORT=80 et SHAMELESS_HTTPS_PORT=443.
+name: shameless
+
+services:
+  proxy:
+    ports:
+      - "${SHAMELESS_HTTP_PORT:-8080}:80"
+      - "${SHAMELESS_HTTPS_PORT:-8443}:443"

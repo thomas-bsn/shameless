@@ -20,6 +20,11 @@ export interface Config {
   uchuu: boolean;
   /** Adresse publique du bot ; vide quand Uchuu est ignoré. */
   botUrl: string;
+  /**
+   * Posé par le serveur du wizard, jamais par la saisie : la page a été servie en HTTPS par un proxy
+   * en amont (Traefik de Forgeyard...) qui joint Caddy en HTTP. Caddy ne gère alors pas le HTTPS.
+   */
+  tlsEnAmont?: boolean;
 }
 
 /** Secrets internes générés par le wizard (jamais saisis). */
@@ -66,8 +71,9 @@ const adresse: Section = {
     return {
       Auth__Discord__RedirectUri: `${value.publicUrl}/api/auth/discord/callback`,
       Auth__AllowedReturnOrigins: value.publicUrl,
-      // Un domaine : Caddy obtient son certificat HTTPS. Accès local : HTTP sur le port 80 du conteneur.
-      SHAMELESS_SITE_ADDRESS: r.https ? r.hostname : ":80",
+      // Un domaine joint directement : Caddy obtient son certificat HTTPS. Accès local, ou HTTPS terminé
+      // par un proxy en amont (qui joint Caddy en HTTP, sans redirection) : HTTP sur le port 80.
+      SHAMELESS_SITE_ADDRESS: r.https && !value.tlsEnAmont ? r.hostname : ":80",
     };
   },
 };

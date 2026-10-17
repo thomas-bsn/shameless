@@ -81,6 +81,10 @@ jobs:
       - name: Vérifier la publication et le compose de déploiement
         run: tests/deploy/verifier-publication.sh
 
+      # Le même compose.yaml doit passer tel quel dans Forgeyard et dans Docker Compose.
+      - name: Compatibilité Forgeyard du compose
+        run: node tests/compose/forgeyard-compat.mjs
+
       # Aucune variable d'Instance n'est requise : le wizard les collecte au premier démarrage.
       - name: Build
         run: docker compose build

@@ -1,16 +1,28 @@
 # Configuration de Caddy tant que l'Instance n'est pas installée : seul le wizard répond.
 # En HTTP sur le port 80, et en HTTPS auto-signé sur le port 443 pour saisir les secrets sur un
 # canal chiffré (le navigateur affichera un avertissement de certificat : c'est attendu).
+#
+# Derrière un proxy qui termine le TLS (Traefik de Forgeyard...), la page arrive en HTTP sur le
+# port 80 avec X-Forwarded-Proto: https. Caddy ne garde cet en-tête que d'un proxy du réseau privé
+# (trusted_proxies) ; X-Shameless-Entry dit par quel port la requête est entrée, sans qu'un client
+# puisse le forger. Le wizard en déduit si Caddy doit gérer le HTTPS lui-même (voir config.ts).
 {
 	auto_https disable_redirects
 	default_sni wizard.local
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
 http://:80 {
-	reverse_proxy wizard:8080
+	reverse_proxy wizard:8080 {
+		header_up X-Shameless-Entry http
+	}
 }
 
 https://:443 {
 	tls internal
-	reverse_proxy wizard:8080
+	reverse_proxy wizard:8080 {
+		header_up X-Shameless-Entry https
+	}
 }

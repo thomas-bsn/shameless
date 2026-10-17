@@ -5,7 +5,7 @@
 # connexion Discord est possible, que le wizard s'est arrêté, que rien de secret n'est dans les
 # logs et que l'Instance repart seule, avec ses données, après un redémarrage.
 # Deux parcours complets : toutes les options facultatives désactivées, puis Riot + fuseau + Uchuu ;
-# puis une reprise après échec : l'installation échoue, l'Opérateur corrige, la configuration corrigée est reprise.
+# un parcours derrière un proxy qui termine le HTTPS (Forgeyard), puis une reprise après échec : l'installation échoue, l'Opérateur corrige, la configuration corrigée est reprise.
 #
 # Usage : tests/compose/acceptance.sh        (Docker et Docker Compose v2 requis)
 #   SKIP_BUILD=1  ne reconstruit pas les images locales (shameless-*:local, voir compose.override.yaml)
@@ -40,7 +40,7 @@ ok() { echo "ok   $*"; }
 # post JSON : post <jar> <route> <json> -> écrit le corps dans $TMP/body, imprime le code HTTP
 post() {
   curl -s -o "$TMP/body" -w '%{http_code}' -b "$1" -c "$1" -H 'content-type: application/json' \
-    -X POST "$SETUP/$2" -d "$3"
+    ${POST_HEADER:+-H "$POST_HEADER"} -X POST "$SETUP/$2" -d "$3"
 }
 expect_status() { # expect_status <attendu> <obtenu> <message>
   [ "$1" = "$2" ] || fail "$3 (attendu $1, obtenu $2 : $(cat "$TMP/body" 2>/dev/null))"
@@ -175,6 +175,8 @@ grep -q '"uchuu"' "$TMP/sans-options-install.json" && fail "un récapitulatif Uc
 [ -z "$(instance_env | grep -E '^SHAMELESS_(BOT|WEB|WEBHOOK)' || true)" ] || fail "des variables Uchuu sont écrites alors que l'intégration est ignorée"
 [ -z "$(process_value Bot__Url)" ] && [ -z "$(process_value Bot__OutboundApiKey)" ] && [ -z "$(process_value Auth__Riot__ApiKey)" ] || fail "l'API a reçu des valeurs Riot ou bot"
 [ "$(process_value Instance__TimeZone)" = "Europe/Paris" ] || fail "l'API n'a pas reçu le fuseau par défaut"
+[ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/bot/games/1")" = "401" ] || fail "les routes /bot devraient répondre 401 sans intégration Uchuu"
+ok "intégration ignorée : les routes /bot répondent 401"
 ok "options désactivées : Riot vide, fuseau Europe/Paris, aucune variable Uchuu, API démarrée sans"
 SECRETS_A_CACHER+=("$PG_PASSWORD")
 verifier_logs
@@ -264,5 +266,28 @@ ok "après un plantage, l'API relit instance.env au redémarrage (restart: unles
 
 SECRETS_A_CACHER=("$CLIENT_SECRET" "$(env_value POSTGRES_PASSWORD)")
 verifier_logs
+
+dc down -v --remove-orphans >/dev/null 2>&1
+
+# --- E. Derrière un proxy qui termine le HTTPS (Traefik de Forgeyard) ------------------------------
+# Le même Compose : l'adresse publique est un domaine en HTTPS, mais la page arrive en HTTP sur le
+# port 80 avec X-Forwarded-Proto: https. Caddy ne doit pas gérer le HTTPS (ni rediriger vers lui-même).
+echo "== Proxy en amont qui termine le HTTPS"
+JAR_E2="$TMP/amont.jar"
+DOMAINE="shameless.example.org"
+dc up -d >/dev/null
+wait_for 60 "le wizard affiche son code dans les logs" has_code
+expect_status 200 "$(post "$JAR_E2" unlock "{\"code\":\"$(code_from_logs)\"}")" "le code ouvre une session"
+amont() { curl -s -o /dev/null -w '%{http_code}' -H "Host: $DOMAINE" -H 'X-Forwarded-Proto: https' "$BASE/api/health"; }
+POST_HEADER='X-Forwarded-Proto: https' expect_status 202 "$(POST_HEADER='X-Forwarded-Proto: https' post "$JAR_E2" install "$(printf '{"publicUrl":"https://%s","clientId":"%s","clientSecret":"%s","guildId":"%s","adminIds":"%s","riotKey":"","timezone":"","uchuu":false,"botUrl":""}' "$DOMAINE" "$CLIENT_ID" "$CLIENT_SECRET" "$GUILD_ID" "$ADMIN_ID")")" "l'installation d'un domaine HTTPS est acceptée derrière un proxy"
+grep -q 'proxy en amont' "$TMP/body" || fail "le wizard n'a pas signalé le HTTPS géré en amont"
+amont_sain() { [ "$(amont)" = "200" ]; }
+wait_for 240 "l'Instance répond en HTTP sur le port 80 sans redirection, pour le domaine public" amont_sain
+[ "$(env_value SHAMELESS_SITE_ADDRESS)" = ":80" ] || fail "Caddy devrait servir :80 derrière un proxy qui termine le HTTPS"
+ok "Caddy ne gère pas le HTTPS : SHAMELESS_SITE_ADDRESS=:80"
+[ "$(env_value Auth__Discord__RedirectUri)" = "https://$DOMAINE/api/auth/discord/callback" ] || fail "le callback Discord devrait rester l'adresse publique HTTPS"
+ok "le callback Discord reste l'adresse publique en HTTPS"
+wait_for 60 "le wizard s'arrête" wizard_stopped
+dc down -v --remove-orphans >/dev/null 2>&1
 
 echo "Acceptation OK"
