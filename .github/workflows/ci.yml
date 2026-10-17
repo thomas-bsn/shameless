@@ -78,6 +78,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Vérifier la publication et le compose de déploiement
+        run: tests/deploy/verifier-publication.sh
+
       - name: Build
         run: docker compose --env-file .env.example build
         env:

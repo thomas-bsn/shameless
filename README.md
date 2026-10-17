@@ -12,7 +12,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Puis ouvrir http://localhost:8080. L'API est servie sous `/api` ; `http://localhost:8080/api/health` doit répondre `Healthy`.
+Depuis un clone du dépôt, `compose.override.yaml` est chargé automatiquement et construit les images depuis les sources. Puis ouvrir http://localhost:8080. L'API est servie sous `/api` ; `http://localhost:8080/api/health` doit répondre `Healthy`.
 
 Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'acceptent sur `http://localhost`, Safari non : en local, utiliser l'un des deux, ou servir l'instance en HTTPS. Sur un vrai domaine, renseigner `SHAMELESS_SITE_ADDRESS` pour que Caddy active le HTTPS.
 
@@ -24,6 +24,24 @@ Au démarrage, le compose lance dans l'ordre :
 4. **proxy** : Caddy, qui sert `/api` vers l'API et le front (build Vite, construit dans l'image) sur tout le reste.
 
 Les migrations ne s'appliquent jamais au démarrage de l'API, seulement via le service `migrate`.
+
+### Déployer avec les images publiées
+
+Sans cloner le dépôt ni construire quoi que ce soit : récupérer `compose.yaml` et `.env.example` (copié en `.env`), puis :
+
+```sh
+docker compose -f compose.yaml up -d
+```
+
+Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy}` (`-f compose.yaml` évite l'override de dev, qui construit). Les images ne contiennent aucun secret : toute la configuration passe par `.env` au démarrage.
+
+Tags publiés à chaque tag git `vX.Y.Z` (semver), pour les trois images :
+
+- `X.Y.Z` : version exacte, reproductible. Épingler `SHAMELESS_VERSION=X.Y.Z` (sans le `v`) pour une instance prévisible ;
+- `X.Y` : dernier correctif de la série ;
+- `latest` : tag stable, dernière version non préversion. C'est le défaut du compose.
+
+Une préversion (`vX.Y.Z-rc.1`) ne pose que son tag exact. Les images sont multi-architecture (amd64, arm64). Le workflow est `.github/workflows/release.yml` ; pour publier : `git tag vX.Y.Z && git push origin vX.Y.Z`. Les packages GHCR doivent être rendus publics dans les réglages GitHub pour être tirés sans authentification.
 
 ### Application Discord
 
@@ -121,4 +139,6 @@ Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `f
 
 - restaure, compile et teste l'API, et vérifie que `contracts/openapi.json` est à jour ;
 - vérifie que le client TypeScript commité correspond au contrat, puis lance lint, typecheck, tests et build du front ;
-- construit les images du compose.
+- vérifie le compose de déploiement (aucun `build:`, images GHCR) via `tests/deploy/verifier-publication.sh`, puis construit les images du compose.
+
+Sur un tag `vX.Y.Z`, le workflow `release.yml` publie les images dans GHCR.

@@ -1,5 +1,6 @@
 # Instance Shameless complète : base, migration, API et reverse proxy qui sert le front.
-# Uniquement des images, des volumes nommés et une configuration par .env.
+# Uniquement des images publiées (GHCR), des volumes nommés et une configuration par .env.
+# Aucun build ici : le dev local construit les images via compose.override.yaml.
 name: shameless
 
 services:
@@ -19,10 +20,7 @@ services:
       retries: 10
 
   migrate:
-    image: ${SHAMELESS_IMAGE_PREFIX:-shameless}-migrate:${SHAMELESS_VERSION:-local}
-    build:
-      context: ./api
-      target: migrate
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-migrate:${SHAMELESS_VERSION:-latest}
     environment:
       ConnectionStrings__Shameless: Host=postgres;Database=${POSTGRES_DB:-shameless};Username=${POSTGRES_USER:-shameless};Password=${POSTGRES_PASSWORD}
     depends_on:
@@ -31,10 +29,7 @@ services:
     restart: "no"
 
   api:
-    image: ${SHAMELESS_IMAGE_PREFIX:-shameless}-api:${SHAMELESS_VERSION:-local}
-    build:
-      context: ./api
-      target: api
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-api:${SHAMELESS_VERSION:-latest}
     restart: unless-stopped
     environment:
       ConnectionStrings__Shameless: Host=postgres;Database=${POSTGRES_DB:-shameless};Username=${POSTGRES_USER:-shameless};Password=${POSTGRES_PASSWORD}
@@ -66,11 +61,7 @@ services:
         condition: service_completed_successfully
 
   proxy:
-    image: ${SHAMELESS_IMAGE_PREFIX:-shameless}-proxy:${SHAMELESS_VERSION:-local}
-    build:
-      context: ./deploy/caddy
-      additional_contexts:
-        web: ./web
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-proxy:${SHAMELESS_VERSION:-latest}
     restart: unless-stopped
     environment:
       SHAMELESS_SITE_ADDRESS: ${SHAMELESS_SITE_ADDRESS:-:80}
