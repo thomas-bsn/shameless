@@ -129,10 +129,13 @@ comptés sur la fiche du joueur.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
 - **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
-- **Pronostic** : le pari d'un spectateur avant la game sur l'équipe gagnante, le MVP  
-et le DOFD. Un bon pronostic rapporte des points.
-- **Doyen** *(à valider)* : le spectateur qui a le plus de points de pronostic sur le  
-mois. Sa voix compte double aux votes MVP et DOFD.
+- **Pronostic** : le pari d'un spectateur, dans Discord, sur la prochaine game d'une  
+série : l'équipe gagnante, le MVP et le DOFD, chacun facultatif. Les joueurs de la  
+série ne pronostiquent pas. Verrouillé au lancement de la game. Chaque choix est jugé  
+séparément dès que son résultat est connu (le vainqueur à la fin de la game, le MVP et  
+le DOFD à la clôture des votes ; un joueur à égalité parmi les gagnants rend le choix  
+juste). Les pronostics justes se lisent dans le récap. Ni points, ni classement, ni  
+titre : il n'y a pas de Doyen, et aucune voix ne compte double aux votes.
 
 ## Modes de jeu
 
