@@ -36,6 +36,7 @@ public class AppDbContext : DbContext
     public DbSet<EvenementBot> EvenementsBot => Set<EvenementBot>();
     public DbSet<BulletinDeVote> BulletinsDeVote => Set<BulletinDeVote>();
     public DbSet<SpectateurDeGame> SpectateursDeGame => Set<SpectateurDeGame>();
+    public DbSet<Pronostic> Pronostics => Set<Pronostic>();
     public DbSet<Clip> Clips => Set<Clip>();
 
     /// <summary>
@@ -192,6 +193,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EvenementBotConfiguration());
         modelBuilder.ApplyConfiguration(new BulletinDeVoteConfiguration());
         modelBuilder.ApplyConfiguration(new SpectateurDeGameConfiguration());
+        modelBuilder.ApplyConfiguration(new PronosticConfiguration());
         modelBuilder.ApplyConfiguration(new ClipConfiguration());
     }
 }

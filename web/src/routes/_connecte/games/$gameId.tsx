@@ -4,6 +4,7 @@ import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PronosticsDeLaGame } from "@/components/pronostics-de-la-game";
 import { VotesDeLaGame } from "@/components/votes-de-la-game";
 import { dureeLabel, kdaLabel } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
@@ -82,6 +83,7 @@ function Recit({ game }: { game: Recap }) {
         />
       </div>
       <VotesDeLaGame gameId={game.id} />
+      <PronosticsDeLaGame gameId={game.id} />
       <GameClips gameId={game.id} />
     </>
   );
