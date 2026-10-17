@@ -63,7 +63,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
             .Any(e => e.Metadata.GetMetadata<Microsoft.AspNetCore.Http.Metadata.IAcceptsMetadata>()?.ContentTypes.Contains("multipart/form-data") == true);
 
     [Fact]
-    public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_et_code_companion_demande_une_session()
+    public async Task Toute_route_hors_connexion_callback_sante_liens_d_acces_code_companion_et_routes_du_bot_demande_une_session()
     {
         var client = Factory.CreateAnonymousClient();
         var endpoints = Endpoints(Ouverture.Session);

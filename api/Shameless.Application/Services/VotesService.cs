@@ -57,7 +57,7 @@ public sealed class VotesService
             _votes.AddSpectateur(new SpectateurDeGame { GameId = gameId, DiscordId = id });
 
         if (!await _votes.TrySaveChangesAsync())
-            return CommandResult<SpectateursDeLaGame>.Conflict("Les Spectateurs de cette game ont changé entre-temps, réessaie.");
+            return CommandResult<SpectateursDeLaGame>.Conflict("Les Spectateurs de cette game ont changé entre-temps : réessayez.");
         return CommandResult<SpectateursDeLaGame>.Ok(new SpectateursDeLaGame(
             gameId,
             ids.Order().Select(DiscordId.Texte).ToList()));
@@ -107,7 +107,7 @@ public sealed class VotesService
             });
 
         if (!await _votes.TrySaveChangesAsync())
-            return CommandResult<BulletinDuVotant>.Conflict("Ce bulletin a changé entre-temps, réessaie.");
+            return CommandResult<BulletinDuVotant>.Conflict("Ce bulletin a changé entre-temps : réessayez.");
         return CommandResult<BulletinDuVotant>.Ok(new BulletinDuVotant(gameId, votantDiscordId, mvpPlayerId, dofdPlayerId));
     }
 

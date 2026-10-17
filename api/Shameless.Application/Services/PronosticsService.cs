@@ -90,7 +90,7 @@ public sealed class PronosticsService
             });
 
         if (!await _pronostics.TrySaveChangesAsync())
-            return CommandResult<PronosticDuSpectateur>.Conflict("Ce pronostic a changé entre-temps, réessaie.");
+            return CommandResult<PronosticDuSpectateur>.Conflict("Ce pronostic a changé entre-temps : réessayez.");
         return CommandResult<PronosticDuSpectateur>.Ok(new PronosticDuSpectateur(
             seriesId, gameNumber, pronostiqueurDiscordId, nom, equipeGagnante, mvpPlayerId, dofdPlayerId));
     }

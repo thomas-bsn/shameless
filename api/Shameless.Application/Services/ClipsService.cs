@@ -84,7 +84,7 @@ public sealed class ClipsService
         _stockage.Supprimer(fichier);
         return await _clips.GetByAttachmentIdAsync(depot.AttachmentId) is { } premier
             ? CommandResult<(ClipDuBot, bool)>.Ok((ClipDuBot.From(premier), false))
-            : CommandResult<(ClipDuBot, bool)>.Conflict("Le clip n'a pas pu être enregistré, réessayer.");
+            : CommandResult<(ClipDuBot, bool)>.Conflict("Le clip n'a pas pu être enregistré : réessayez.");
     }
 
     /// <summary>Les clips rattachés à la game, ou null si elle n'existe pas.</summary>
@@ -135,7 +135,7 @@ public sealed class ClipsService
     private async Task<CommandResult<ClipResponse>> EnregistrerAsync(Clip clip) =>
         await _clips.TrySaveChangesAsync()
             ? CommandResult<ClipResponse>.Ok(ClipResponse.From(clip))
-            : CommandResult<ClipResponse>.Conflict("Le rattachement du clip n'a pas pu être enregistré, réessayer.");
+            : CommandResult<ClipResponse>.Conflict("Le rattachement du clip n'a pas pu être enregistré : réessayez.");
 
     /// <summary>La vidéo du clip, ou null si le clip ou son fichier n'existe pas.</summary>
     public async Task<FichierDeClip?> GetFichierAsync(int clipId)
