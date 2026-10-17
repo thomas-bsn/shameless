@@ -10,6 +10,7 @@ import { dureeLabel, kdaLabel } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { dateHeureLabel } from "@/lib/dates";
 
 /** La page d'une Game : c'est le lien de récap posté par le bot Discord. */
 export const Route = createFileRoute("/_connecte/games/$gameId")({
@@ -32,9 +33,6 @@ function GamePage() {
   );
 }
 
-const dateLabel = (iso: string) =>
-  new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
 function Recit({ game }: { game: Recap }) {
   const winner = gameWinner(game);
   const aOnBlue = game.teamASide !== "red";
@@ -44,7 +42,7 @@ function Recit({ game }: { game: Recap }) {
     <>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-muted-foreground">{dateLabel(game.playedAt)}</p>
+          <p className="text-sm text-muted-foreground">{dateHeureLabel(game.playedAt)}</p>
           <h1 className="text-2xl font-bold">{title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">

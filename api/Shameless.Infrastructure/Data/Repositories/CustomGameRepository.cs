@@ -16,6 +16,21 @@ public class CustomGameRepository : ICustomGameRepository
 
     public void Add(CustomGame game) => _db.CustomGames.Add(game);
 
+    public Task<bool> ExisteAsync(int id) => _db.CustomGames.AnyAsync(g => g.Id == id);
+
+    public Task<List<int>> GetIdsLanceesEntreAsync(DateTime debut, DateTime fin) =>
+        _db.CustomGames
+            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
+            .Select(g => g.Id)
+            .ToListAsync();
+
+    public Task<List<CustomGame>> GetLanceesEntreAsync(DateTime debut, DateTime fin) =>
+        _db.CustomGames.AsNoTrackingWithIdentityResolution()
+            .Include(g => g.Series).ThenInclude(s => s!.Games)
+            .Where(g => g.CreatedAt >= debut && g.CreatedAt <= fin)
+            .OrderByDescending(g => g.CreatedAt).ThenByDescending(g => g.Id)
+            .ToListAsync();
+
     public Task<RapportCompanion?> GetRapportAsync(int id) =>
         _db.RapportsCompanion.Include(r => r.Game).SingleOrDefaultAsync(r => r.Id == id);
 

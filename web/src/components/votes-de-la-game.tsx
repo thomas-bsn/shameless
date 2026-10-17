@@ -31,13 +31,21 @@ function Resultats({ votes }: { votes: Schemas["ResultatsDesVotes"] }) {
     return <p className="text-sm text-muted-foreground">Les votes ouvriront dans Discord à la fin de la Game.</p>;
 
   const votants = `${votes.votants} votant${votes.votants > 1 ? "s" : ""}`;
+  if (votes.statut === "ouverts")
+    return (
+      <>
+        <p className="text-sm text-muted-foreground">
+          {votes.fermetureLe
+            ? `Votes ouverts dans Discord jusqu'à ${heureLabel(votes.fermetureLe)} · ${votants}`
+            : `Votes ouverts dans Discord · ${votants}`}
+        </p>
+        <p className="text-sm text-muted-foreground">Les gagnants et le décompte des voix seront dévoilés à la clôture.</p>
+      </>
+    );
+
   return (
     <>
-      <p className="text-sm text-muted-foreground">
-        {votes.statut === "ouverts" && votes.fermetureLe
-          ? `Votes ouverts dans Discord jusqu'à ${heureLabel(votes.fermetureLe)} · ${votants}`
-          : `Votes clos · ${votants}`}
-      </p>
+      <p className="text-sm text-muted-foreground">{`Votes clos · ${votants}`}</p>
       <div className="grid gap-4 md:grid-cols-2">
         <Titre titre="MVP" resultat={votes.mvp} />
         <Titre titre="DOFD" resultat={votes.dofd} />

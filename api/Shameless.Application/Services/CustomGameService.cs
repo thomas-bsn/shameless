@@ -14,13 +14,16 @@ namespace Shameless.Application.Services;
 public class CustomGameService
 {
     private readonly ICustomGameRepository _gameRepo;
+    private readonly VotesService _votes;
     private readonly TimeProvider _clock;
 
     public CustomGameService(
         ICustomGameRepository gameRepo,
+        VotesService votes,
         TimeProvider clock)
     {
         _gameRepo = gameRepo;
+        _votes = votes;
         _clock = clock;
     }
 
@@ -45,6 +48,7 @@ public class CustomGameService
     public async Task<List<SeriesHistoryResponse>> GetHistoryAsync(int year, int month)
     {
         var games = await _gameRepo.GetByYearMonthAsync(year, month);
+        var votes = await _votes.GetResultatsDesGamesAsync(games);
 
         return games
             .GroupBy(g => g.SeriesId)
@@ -75,7 +79,9 @@ public class CustomGameService
                             RiotMatchId: g.RiotMatchId,
                             Match: DonneesDuMatch.Lire(g.RiotMatchData),
                             TeamA: Equipe(Equipes.A),
-                            TeamB: Equipe(Equipes.B));
+                            TeamB: Equipe(Equipes.B),
+                            Mvp: votes[g.Id].Mvp.Gagnants,
+                            Dofd: votes[g.Id].Dofd.Gagnants);
                     }).ToList()
                 );
             })

@@ -95,6 +95,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
 
         Assert.Equal(serie.TeamA[0], bulletin.GetProperty("mvpPlayerId").GetInt32());
         Assert.Equal(JsonValueKind.Null, bulletin.GetProperty("dofdPlayerId").ValueKind);
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var votes = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/games/{gameId}/votes", Ct));
         Assert.Equal(1, Voix(votes, "mvp", serie.TeamA[0]));
     }
@@ -177,8 +178,8 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: null));
         var ouverts = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
         Assert.Equal("ouverts", ouverts.GetProperty("statut").GetString());
+        Assert.Equal(1, ouverts.GetProperty("votants").GetInt32());
         Assert.Empty(Gagnants(ouverts, "mvp"));
-        Assert.Equal(1, Voix(ouverts, "mvp", serie.TeamA[1]));
         Assert.Equal(
             ouverts.GetProperty("ouvertureLe").GetDateTime().AddMinutes(10),
             ouverts.GetProperty("fermetureLe").GetDateTime());
@@ -187,6 +188,55 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
 
         await AssertRefusAsync(await VoterAsync(gameId, DiscordA2, mvp: serie.TeamA[0], dofd: null), HttpStatusCode.Conflict);
         await AssertRefusAsync(await SignalerSpectateursAsync(gameId, Spectateur), HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Le_decompte_des_voix_reste_cache_au_site_et_au_bot_tant_que_les_votes_sont_ouverts()
+    {
+        var (serie, gameId, client) = await GameTermineeAsync();
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: serie.TeamB[2]));
+
+        foreach (var lecteur in new[] { client, Factory.CreateBotClient() })
+        {
+            var prefixe = lecteur == client ? "" : "/bot";
+            var votes = await ReadJsonAsync(await lecteur.GetAsync($"{prefixe}/games/{gameId}/votes", Ct));
+            Assert.Equal("ouverts", votes.GetProperty("statut").GetString());
+            Assert.Equal(1, votes.GetProperty("votants").GetInt32());
+            Assert.Equal(0, votes.GetProperty("mvp").GetProperty("decompte").GetArrayLength());
+            Assert.Equal(0, votes.GetProperty("dofd").GetProperty("decompte").GetArrayLength());
+        }
+
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
+        var clos = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
+        Assert.Equal(1, Voix(clos, "mvp", serie.TeamA[1]));
+    }
+
+    [Fact]
+    public async Task L_historique_donne_le_mvp_et_le_dofd_de_chaque_game_une_fois_les_votes_clos()
+    {
+        var (serie, gameId, client) = await GameTermineeAsync();
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, mvp: serie.TeamB[2], dofd: serie.TeamB[3]));
+
+        async Task<JsonElement> GameDeLHistoriqueAsync()
+        {
+            var now = Factory.Clock.GetUtcNow();
+            var history = await ReadJsonAsync(await client.GetAsync($"/games/history/{now.Year}/{now.Month}", Ct));
+            return history.GetProperty("games").EnumerateArray()
+                .SelectMany(s => s.GetProperty("games").EnumerateArray())
+                .Single(g => g.GetProperty("id").GetInt32() == gameId);
+        }
+        static List<int> Ids(JsonElement game, string titre) =>
+            game.GetProperty(titre).EnumerateArray().Select(i => i.GetInt32()).Order().ToList();
+
+        var ouverts = await GameDeLHistoriqueAsync();
+        Assert.Empty(Ids(ouverts, "mvp"));
+        Assert.Empty(Ids(ouverts, "dofd"));
+
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
+        var clos = await GameDeLHistoriqueAsync();
+        Assert.Equal(new[] { serie.TeamA[2], serie.TeamB[2] }.Order(), Ids(clos, "mvp"));
+        Assert.Equal([serie.TeamB[3]], Ids(clos, "dofd"));
     }
 
     [Fact]

@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { ClipVideo } from "@/components/clip-video";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RattacherClip, RetirerClip } from "@/components/rattachement-de-clip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-/** L'URL de la vidéo d'un clip, servie par l'API (même origine : le cookie de session suffit). */
-export const clipVideoUrl = (clipId: number) => `/api/clips/${clipId}/fichier`;
-
-const publieLeLabel = (iso: string) =>
-  new Date(iso).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+import { dateHeureLabel } from "@/lib/dates";
 
 /** Les Clips rattachés à une Game, lisibles sur place (ADR 0014). */
 export function GameClips({ gameId }: { gameId: number }) {
@@ -48,9 +44,9 @@ function Clip({ clip }: { clip: Schemas["ClipResponse"] }) {
 
   return (
     <figure aria-label={clip.nomFichier} className="flex flex-col gap-2">
-      <video controls preload="metadata" src={clipVideoUrl(clip.id)} className="aspect-video w-full rounded-md bg-black" />
+      <ClipVideo clipId={clip.id} />
       <figcaption className="text-xs text-muted-foreground">
-        {clip.auteurNom} · {publieLeLabel(clip.publieLe)}
+        {clip.auteurNom} · {dateHeureLabel(clip.publieLe)}
         {clip.rattachement === "manuel" && " · rattaché à la main"}
       </figcaption>
       <div className="flex flex-wrap gap-1">

@@ -18,17 +18,6 @@ public interface IClipRepository
     /// <summary>Les clips sans Game, du plus ancien au plus récent publié.</summary>
     Task<List<Clip>> GetSansGameAsync();
 
-    /// <summary>Les games (id, lancée le) lancées dans l'intervalle [debut, fin] (UTC).</summary>
-    Task<List<(int Id, DateTime LanceeLe)>> GetGamesLanceesEntreAsync(DateTime debut, DateTime fin);
-
-    /// <summary>
-    /// Les games lancées dans l'intervalle [debut, fin] (UTC), avec leur Série et ses games, de la plus
-    /// récente à la plus ancienne.
-    /// </summary>
-    Task<List<CustomGame>> GetGamesCandidatesAsync(DateTime debut, DateTime fin);
-
-    Task<bool> GameExisteAsync(int gameId);
-
     /// <summary>Enregistre ; false si une autre commande a déposé la même pièce jointe entre-temps.</summary>
     Task<bool> TrySaveChangesAsync();
 }

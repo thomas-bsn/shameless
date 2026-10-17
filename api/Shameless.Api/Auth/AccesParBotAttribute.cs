@@ -46,8 +46,9 @@ public sealed class AccesParBotAttribute : Attribute, IAllowAnonymous, IAuthoriz
         var header = request.Headers.Authorization.ToString();
         const string prefixe = "Bearer ";
         if (!header.StartsWith(prefixe, StringComparison.OrdinalIgnoreCase)) return false;
+        // Comparer des empreintes de longueur fixe : ni le contenu ni la longueur de la clé ne fuitent par le temps.
         return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(header[prefixe.Length..].Trim()),
-            Encoding.UTF8.GetBytes(cle));
+            SHA256.HashData(Encoding.UTF8.GetBytes(header[prefixe.Length..].Trim())),
+            SHA256.HashData(Encoding.UTF8.GetBytes(cle)));
     }
 }

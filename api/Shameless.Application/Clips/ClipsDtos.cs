@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Clips;
 
@@ -46,7 +47,7 @@ public sealed record ClipResponse(
         clip.GameId,
         clip.RattachementEffectif,
         clip.AuteurNom,
-        clip.AuteurDiscordId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        DiscordId.Texte(clip.AuteurDiscordId),
         clip.PublieLe,
         clip.NomFichier,
         clip.ContentType,

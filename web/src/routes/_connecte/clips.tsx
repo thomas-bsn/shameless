@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
-import { clipVideoUrl } from "@/components/game-clips";
+import { ClipVideo } from "@/components/clip-video";
 import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RattacherClip } from "@/components/rattachement-de-clip";
 import { Card, CardContent } from "@/components/ui/card";
+import { dateHeureLabel } from "@/lib/dates";
 
 /** Les clips de #clips sans Game (aucune ou plusieurs Games plausibles), à rattacher à la main (ADR 0014). */
 export const Route = createFileRoute("/_connecte/clips")({
   component: ClipsARattacher,
 });
-
-const publieLeLabel = (iso: string) =>
-  new Date(iso).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 function ClipsARattacher() {
   const clips = $api.useQuery("get", "/clips/sans-game");
@@ -46,9 +44,9 @@ function ClipSansGame({ clip }: { clip: Schemas["ClipResponse"] }) {
   return (
     <Card role="article" aria-label={clip.nomFichier}>
       <CardContent className="flex flex-col gap-3">
-        <video controls preload="metadata" src={clipVideoUrl(clip.id)} className="aspect-video w-full rounded-md bg-black" />
+        <ClipVideo clipId={clip.id} />
         <p className="text-xs text-muted-foreground">
-          {clip.auteurNom} · {publieLeLabel(clip.publieLe)}
+          {clip.auteurNom} · {dateHeureLabel(clip.publieLe)}
         </p>
         <RattacherClip clip={clip} />
       </CardContent>

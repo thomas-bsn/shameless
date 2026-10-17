@@ -8,6 +8,17 @@ public interface ICustomGameRepository
     void Add(CustomGame game);
 
     Task<CustomGame?> GetByIdAsync(int id);
+
+    Task<bool> ExisteAsync(int id);
+
+    /// <summary>Les ids des games lancées (<c>CreatedAt</c>) dans l'intervalle [debut, fin] (UTC).</summary>
+    Task<List<int>> GetIdsLanceesEntreAsync(DateTime debut, DateTime fin);
+
+    /// <summary>
+    /// Les games lancées (<c>CreatedAt</c>) dans l'intervalle [debut, fin] (UTC), avec leur Série et ses
+    /// games, de la plus récente à la plus ancienne.
+    /// </summary>
+    Task<List<CustomGame>> GetLanceesEntreAsync(DateTime debut, DateTime fin);
     Task<CustomGame?> GetByIdWithParticipantsAsync(int id);
 
     /// <summary>

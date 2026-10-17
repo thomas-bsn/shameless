@@ -1,5 +1,5 @@
-using System.Globalization;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Discord;
 
 namespace Shameless.Application.Services;
 
@@ -32,7 +32,7 @@ public sealed class CandidatsVocauxService
 
         var joueurs = vocal.MemberIds
             .Where(parDiscordId.ContainsKey)
-            .Select(id => new CandidatVocal(parDiscordId[id].Id, parDiscordId[id].Prenom, id.ToString(CultureInfo.InvariantCulture)))
+            .Select(id => new CandidatVocal(parDiscordId[id].Id, parDiscordId[id].Prenom, DiscordId.Texte(id)))
             .ToList();
         return new CandidatsVocaux(vocal.ChannelId, joueurs, vocal.MemberIds.Count - joueurs.Count);
     }

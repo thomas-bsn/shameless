@@ -4862,6 +4862,8 @@ export interface components {
             match: null | components["schemas"]["DonneesDuMatch"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
+            mvp: number[];
+            dofd: number[];
         };
         GameParticipantDto: {
             prenom: string;

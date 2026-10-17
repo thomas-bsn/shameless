@@ -6,15 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { dateHeureLabel } from "@/lib/dates";
 
 type Candidate = Schemas["GameCandidateDuClip"];
 
-const heureLabel = (iso: string) =>
-  new Date(iso).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
 /** Le libellé d'une Game proposée : « Game 2 · BO3 · ven. 16 oct., 22:40 ». */
 export const candidateLabel = (game: Candidate) =>
-  [game.seriesId == null ? `Game #${game.gameId}` : `Game ${game.gameNumber}`, game.bestOf != null && `BO${game.bestOf}`, heureLabel(game.lanceeLe)]
+  [game.seriesId == null ? `Game #${game.gameId}` : `Game ${game.gameNumber}`, game.bestOf != null && `BO${game.bestOf}`, dateHeureLabel(game.lanceeLe)]
     .filter(Boolean)
     .join(" · ");
 

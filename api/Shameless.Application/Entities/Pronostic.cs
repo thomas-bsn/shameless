@@ -12,7 +12,7 @@ public class Pronostic
     public BestOfSeries Series { get; set; } = null!;
 
     /// <summary>Le numéro de la Game dans la Série, à partir de 1.</summary>
-    public int NumeroGame { get; set; }
+    public int NumeroDansLaSerie { get; set; }
 
     /// <summary>L'ID Discord (snowflake) du Spectateur.</summary>
     public long PronostiqueurDiscordId { get; set; }

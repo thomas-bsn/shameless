@@ -11,7 +11,7 @@ public sealed class PronosticConfiguration : IEntityTypeConfiguration<Pronostic>
     {
         entity.ToTable("pronostics", t =>
             t.HasCheckConstraint("ck_pronostics_equipe_gagnante", "equipe_gagnante IS NULL OR equipe_gagnante IN ('A', 'B')"));
-        entity.HasKey(p => new { p.SeriesId, p.NumeroGame, p.PronostiqueurDiscordId });
+        entity.HasKey(p => new { p.SeriesId, p.NumeroDansLaSerie, p.PronostiqueurDiscordId });
         entity.Property(p => p.PronostiqueurNom).HasMaxLength(100);
         entity.Property(p => p.EquipeGagnante).HasMaxLength(1);
         entity.Property(p => p.PronostiqueLe).HasColumnType("timestamp without time zone");

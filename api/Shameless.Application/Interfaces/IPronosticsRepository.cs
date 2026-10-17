@@ -6,9 +6,9 @@ namespace Shameless.Application.Interfaces;
 public interface IPronosticsRepository
 {
     /// <summary>Les pronostics sur la Game de ce numéro dans la Série.</summary>
-    Task<List<Pronostic>> GetDeLaGameAsync(int seriesId, int numeroGame);
+    Task<List<Pronostic>> GetDeLaGameAsync(int seriesId, int numeroDansLaSerie);
 
-    Task<Pronostic?> GetAsync(int seriesId, int numeroGame, long pronostiqueurDiscordId);
+    Task<Pronostic?> GetAsync(int seriesId, int numeroDansLaSerie, long pronostiqueurDiscordId);
 
     /// <summary>La Série (lecture seule) avec sa composition courante (comptes liés) et ses games.</summary>
     Task<BestOfSeries?> GetSerieAsync(int seriesId);

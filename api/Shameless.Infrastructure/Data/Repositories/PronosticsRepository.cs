@@ -10,16 +10,16 @@ public sealed class PronosticsRepository : IPronosticsRepository
 
     public PronosticsRepository(AppDbContext db) => _db = db;
 
-    public Task<List<Pronostic>> GetDeLaGameAsync(int seriesId, int numeroGame) =>
+    public Task<List<Pronostic>> GetDeLaGameAsync(int seriesId, int numeroDansLaSerie) =>
         _db.Pronostics.AsNoTracking()
             .Include(p => p.Mvp)
             .Include(p => p.Dofd)
-            .Where(p => p.SeriesId == seriesId && p.NumeroGame == numeroGame)
+            .Where(p => p.SeriesId == seriesId && p.NumeroDansLaSerie == numeroDansLaSerie)
             .ToListAsync();
 
-    public Task<Pronostic?> GetAsync(int seriesId, int numeroGame, long pronostiqueurDiscordId) =>
+    public Task<Pronostic?> GetAsync(int seriesId, int numeroDansLaSerie, long pronostiqueurDiscordId) =>
         _db.Pronostics.SingleOrDefaultAsync(p =>
-            p.SeriesId == seriesId && p.NumeroGame == numeroGame && p.PronostiqueurDiscordId == pronostiqueurDiscordId);
+            p.SeriesId == seriesId && p.NumeroDansLaSerie == numeroDansLaSerie && p.PronostiqueurDiscordId == pronostiqueurDiscordId);
 
     public Task<BestOfSeries?> GetSerieAsync(int seriesId) =>
         _db.BestOfSeries

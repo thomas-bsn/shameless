@@ -779,9 +779,9 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("series_id");
 
-                    b.Property<int>("NumeroGame")
+                    b.Property<int>("NumeroDansLaSerie")
                         .HasColumnType("integer")
-                        .HasColumnName("numero_game");
+                        .HasColumnName("numero_dans_la_serie");
 
                     b.Property<long>("PronostiqueurDiscordId")
                         .HasColumnType("bigint")
@@ -809,7 +809,7 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("pronostiqueur_nom");
 
-                    b.HasKey("SeriesId", "NumeroGame", "PronostiqueurDiscordId")
+                    b.HasKey("SeriesId", "NumeroDansLaSerie", "PronostiqueurDiscordId")
                         .HasName("pk_pronostics");
 
                     b.HasIndex("DofdPlayerId")

@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Shameless.Application.Bot;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Discord;
 
 namespace Shameless.Infrastructure.Integrations.Bot;
 
@@ -59,9 +60,7 @@ public sealed class BotDiscordClient : IBotDiscord
                        ?? throw new BotIndisponibleException("Le bot Discord a répondu une liste illisible.");
             return new CandidatsVocauxDuBot(
                 body.ChannelId,
-                (body.MemberIds ?? []).Select(id => long.TryParse(id, NumberStyles.None, CultureInfo.InvariantCulture, out var v) ? v : 0)
-                    .Where(v => v > 0)
-                    .ToList());
+                (body.MemberIds ?? []).Select(DiscordId.Lire).OfType<DiscordId>().Select(id => id.Valeur).ToList());
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
