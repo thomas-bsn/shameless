@@ -1,7 +1,7 @@
 # Shameless — Roadmap
 
 Source de vérité des phases. Une phase = une spec (grill-me → spec → plan → implémentation).
-Quand une phase est finie : cocher ici, mettre à jour "Phase en cours" dans CLAUDE.md, tag git.
+Quand une phase est finie : cocher ici, tag git.
 
 Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 
@@ -14,6 +14,8 @@ Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 - [x] OpenAPI + client TypeScript généré
 - [x] CI GitHub Actions + premiers tests d'intégration (Testcontainers)
 - [ ] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible) (compose fait, déploiement NAS à confirmer)
+- [x] Images publiées sur GHCR à chaque tag `vX.Y.Z` (api, migrate, proxy, wizard) (#69)
+- [x] Wizard d'installation Docker Compose : Discord, options, bot facultatif, un seul `compose.yaml` pour Docker Compose et Forgeyard (#70, #71, #72)
 - [x] Migration des données depuis le dump de lol_customs (migration Baseline à la place des migrations legacy, voir api/database/BASELINE.md)
 - [x] Front Vite + React + TanStack + Tailwind + shadcn/ui, écrans existants repris sans styles inline
 
@@ -70,3 +72,6 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion
+- Nom du bot lu depuis Forgeyard (aujourd'hui saisi dans le wizard)
+- Wizard : générer ou expliquer `INTERNAL_API_KEY` du bot
+- Forgeyard : suivre l'issue thomas-bsn/forgeyard#3 (compatibilité Compose, `user` et `ports`)
