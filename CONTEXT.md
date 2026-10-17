@@ -16,7 +16,8 @@ connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl).
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
 joueur ; un joueur peut exister sans utilisateur lié.
 - **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
-des pronostics.
+des pronostics ; identifié par le bot comme présent en vocal pendant la game, il vote  
+aussi pour son MVP et son DOFD.
 - **Instance** : un déploiement de Shameless pour une communauté, avec son serveur  
 Discord, sa base de données et sa propre clé Riot.
 
@@ -117,10 +118,14 @@ classé dans une file y figure, en fin de liste.
 
 ## Votes et titres
 
-- **MVP** : le meilleur joueur d'une game, élu par les dix joueurs. Titre affiché :  
-Roi ou Reine.
+- **Vote** : à la fin d'une game, ses dix joueurs et les spectateurs présents en vocal  
+votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par titre  
+(MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
+voix remportent le titre, tous en cas d'égalité. Résultats dans le récap, titres  
+comptés sur la fiche du joueur.
+- **MVP** : le meilleur joueur d'une game, élu par vote. Titre affiché : Roi ou Reine.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
-élu par les dix joueurs. Illustré par une bouse de cheval.
+élu par vote. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
 - **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
