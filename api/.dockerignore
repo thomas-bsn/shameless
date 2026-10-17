@@ -2,3 +2,5 @@
 **/obj/
 Shameless.Tests.*/
 database/
+**/.env
+**/.env.*
