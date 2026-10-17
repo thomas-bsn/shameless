@@ -48,3 +48,14 @@ Les données réelles ont été contrôlées le 2026-10-15 sur un dump complet f
    ```
 
 3. Lancer le bundle de migration (service `migrate` du compose) : il ne doit rien appliquer.
+
+## Importer le dump sur une Instance neuve
+
+Pour reprendre les données de l'ancien site sur une Instance installée par le wizard (schéma à jour, tables vides), sans repasser par les étapes ci-dessus à la main :
+
+1. Arrêter le service `api`, puis sauvegarder les volumes de l'Instance.
+2. Dans un terminal du conteneur `postgres`, déposer le dump complet (`/tmp/dump.sql`) et [`import-legacy.sh`](import-legacy.sh), puis lancer `sh /tmp/import-legacy.sh /tmp/dump.sql`. Le script refuse de s'exécuter si l'Instance contient déjà des données (`FORCE=1` pour tout effacer). Il charge le dump, applique l'étape 1 et l'étape 2, et affiche le nombre de lignes par table.
+3. Relancer le service `migrate` : il rejoue les migrations suivantes et convertit les données.
+4. Redémarrer l'`api`.
+
+Répété en local le 2026-10-18 sur le dump complet : 28 joueurs, 15 séries, 34 games et 340 participants conservés, 24 migrations appliquées, les 15 séries avec un code Companion, l'API démarre.
