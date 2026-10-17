@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Shameless.Api.Extensions;
+using Shameless.Api.Models.Requests.Clips;
 using Shameless.Application.Clips;
 using Shameless.Application.Services;
 
@@ -23,6 +25,50 @@ public sealed class ClipsController : ControllerBase
         await _clips.GetDeLaGameAsync(gameId) is { } clips
             ? clips
             : Problem(statusCode: StatusCodes.Status404NotFound, detail: "Cette game n'existe pas.");
+
+    /// <summary>Les clips sans Game, à rattacher à la main, du plus ancien au plus récent publié.</summary>
+    [HttpGet("clips/sans-game")]
+    [ProducesResponseType<List<ClipResponse>>(StatusCodes.Status200OK)]
+    public async Task<List<ClipResponse>> GetSansGame() => await _clips.GetSansGameAsync();
+
+    /// <summary>
+    /// Les games à proposer pour rattacher le clip : lancées la veille ou le jour de sa publication
+    /// (fuseau de l'Instance), avant lui, de la plus récente à la plus ancienne.
+    /// </summary>
+    [HttpGet("clips/{id:int}/games-candidates")]
+    [ProducesResponseType<List<GameCandidateDuClip>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<List<GameCandidateDuClip>>> GetGamesCandidates(int id) =>
+        await _clips.GetGamesCandidatesAsync(id) is { } games
+            ? games
+            : Problem(statusCode: StatusCodes.Status404NotFound, detail: "Ce clip n'existe pas.");
+
+    /// <summary>
+    /// Rattache le clip à une Game, à la main (rattachement « manuel ») : un clip sans Game, ou dont la
+    /// Game était fausse.
+    /// </summary>
+    [HttpPut("clips/{id:int}/game")]
+    [ProducesResponseType<ClipResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<ClipResponse>> Rattacher(int id, RattacherClipRequest request)
+    {
+        var result = await _clips.RattacherAsync(id, request.GameId);
+        if (!result.IsOk) return this.Refusal(result);
+        return result.Value!;
+    }
+
+    /// <summary>Retire le clip de sa Game : il revient parmi les clips sans Game.</summary>
+    [HttpDelete("clips/{id:int}/game")]
+    [ProducesResponseType<ClipResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<ClipResponse>> Detacher(int id)
+    {
+        var result = await _clips.DetacherAsync(id);
+        if (!result.IsOk) return this.Refusal(result);
+        return result.Value!;
+    }
 
     /// <summary>
     /// La vidéo d'un clip, avec les requêtes de plage (<c>Range</c>) pour se déplacer dans la lecture.

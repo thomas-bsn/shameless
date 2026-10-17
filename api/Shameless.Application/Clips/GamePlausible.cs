@@ -26,6 +26,18 @@ public static class GamePlausible
         return plausibles.Count == 1 ? plausibles[0] : null;
     }
 
+    /// <summary>
+    /// Les bornes UTC [Debut, Fin] des games à proposer pour rattacher un clip à la main : lancées la veille
+    /// ou le jour de publication (fuseau de l'Instance), au plus tard à l'instant de la publication. La
+    /// veille couvre un clip publié après minuit pour une game de la soirée.
+    /// </summary>
+    public static (DateTime Debut, DateTime Fin) FenetreDesCandidates(DateTime publieLeUtc, TimeZoneInfo fuseau)
+    {
+        var (jour, _) = JourDePublication(publieLeUtc, fuseau);
+        var (veille, _) = JourDePublication(jour.AddTicks(-1), fuseau);
+        return (veille, publieLeUtc);
+    }
+
     // Minuit n'est jamais dans un trou de changement d'heure en Europe ; ailleurs, on prend l'heure valide suivante.
     private static DateTime EnUtc(DateTime local, TimeZoneInfo fuseau)
     {
