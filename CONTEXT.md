@@ -128,7 +128,8 @@ comptés sur la fiche du joueur.
 élu par vote. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
-- **Hall de la Honte** : classement du cumul des DOFD (et des Hontes, si validées).
+- **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
+les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).
 - **Pronostic** : le pari d'un spectateur, dans Discord, sur la prochaine game d'une  
 série : l'équipe gagnante, le MVP et le DOFD, chacun facultatif. Les joueurs de la  
 série ne pronostiquent pas. Verrouillé au lancement de la game. Chaque choix est jugé  
@@ -182,8 +183,13 @@ webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les ro
 sa Draft de champions. C'est là que part `game_started` et que les pronostics se closent  
 (ADR 0013).
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
-- **Clip** : une vidéo d'un moment de game, postée par un joueur dans le salon `#clips`  
-de Discord, puis rattachée à la game par le bot.
+- **Clip** : une vidéo d'un moment de game, postée dans le salon `#clips` de Discord.  
+Le bot la télécharge et la dépose à l'API, qui la conserve sur l'Instance (le lien  
+Discord n'est pas la source durable). Elle est rattachée automatiquement à sa Game  
+seulement s'il existe une unique **Game plausible** : une Game lancée le jour de  
+publication du clip, dans le fuseau de l'Instance, avant sa publication. Sinon le clip  
+reste **sans Game**, jusqu'à ce qu'un Utilisateur connecté le rattache. Les clips  
+rattachés se lisent sur la page de leur Game (ADR 0014). Entité `Clip`.
 
 ## Données Riot
 

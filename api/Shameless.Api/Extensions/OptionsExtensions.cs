@@ -1,5 +1,6 @@
 using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Bot;
+using Shameless.Application.Clips;
 using Shameless.Infrastructure.Options;
 
 namespace Shameless.Api.Extensions;
@@ -33,6 +34,24 @@ public static class OptionsExtensions
         services.AddOptions<PublicationWebhooksBotOptions>()
             .Bind(configuration.GetSection(PublicationWebhooksBotOptions.Section));
 
+        services.AddOptions<ClipsOptions>()
+            .Bind(configuration.GetSection(ClipsOptions.Section));
+
+        // Un fuseau inconnu fait échouer le démarrage plutôt que le premier dépôt de clip.
+        services.AddOptions<InstanceOptions>()
+            .Bind(configuration.GetSection(InstanceOptions.Section))
+            .Validate(Fuseau.Existe, "Instance:TimeZone n'est pas un fuseau IANA connu (ex. Europe/Paris).")
+            .ValidateOnStart();
+
         return services;
+    }
+}
+internal static class Fuseau
+{
+    public static bool Existe(InstanceOptions instance)
+    {
+        try { instance.Fuseau(); return true; }
+        catch (TimeZoneNotFoundException) { return false; }
+        catch (InvalidTimeZoneException) { return false; }
     }
 }

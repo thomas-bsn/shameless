@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
+import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +84,7 @@ function Recit({ game }: { game: Recap }) {
       </div>
       <VotesDeLaGame gameId={game.id} />
       <PronosticsDeLaGame gameId={game.id} />
+      <GameClips gameId={game.id} />
     </>
   );
 }

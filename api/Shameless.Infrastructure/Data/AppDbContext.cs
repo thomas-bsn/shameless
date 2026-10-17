@@ -37,6 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<BulletinDeVote> BulletinsDeVote => Set<BulletinDeVote>();
     public DbSet<SpectateurDeGame> SpectateursDeGame => Set<SpectateurDeGame>();
     public DbSet<Pronostic> Pronostics => Set<Pronostic>();
+    public DbSet<Clip> Clips => Set<Clip>();
 
     /// <summary>
     /// Les dates sont stockées en heure UTC sans fuseau : relues, elles repartent en
@@ -193,5 +194,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new BulletinDeVoteConfiguration());
         modelBuilder.ApplyConfiguration(new SpectateurDeGameConfiguration());
         modelBuilder.ApplyConfiguration(new PronosticConfiguration());
+        modelBuilder.ApplyConfiguration(new ClipConfiguration());
     }
 }
