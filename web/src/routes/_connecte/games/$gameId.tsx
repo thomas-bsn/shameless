@@ -3,6 +3,7 @@ import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { VotesDeLaGame } from "@/components/votes-de-la-game";
 import { dureeLabel, kdaLabel } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
 import { sideTextClass } from "@/lib/tier-styles";
@@ -79,6 +80,7 @@ function Recit({ game }: { game: Recap }) {
           won={winner === (aOnBlue ? "B" : "A")}
         />
       </div>
+      <VotesDeLaGame gameId={game.id} />
     </>
   );
 }
