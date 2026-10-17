@@ -1,6 +1,12 @@
-# Adresse du site : ":80" en local (HTTP), un nom de domaine en production (HTTPS automatique).
+# Cette configuration n'est chargée qu'une fois l'Instance installée (voir entrypoint.sh).
+# Adresse du site, écrite par le wizard : ":80" en local (HTTP), un nom de domaine en production (HTTPS automatique).
 {$SHAMELESS_SITE_ADDRESS::80} {
 	encode gzip
+
+	# Le wizard d'installation reste joignable le temps de confirmer son état final, puis s'arrête.
+	handle /_setup/* {
+		reverse_proxy wizard:8080
+	}
 
 	# L'API est servie sous /api ; le préfixe est retiré avant de la joindre.
 	handle_path /api/* {

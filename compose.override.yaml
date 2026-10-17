@@ -1,0 +1,32 @@
+# Surcharge de dev : chargée automatiquement par `docker compose` depuis un clone du dépôt.
+# Elle construit les images depuis les sources au lieu de les tirer de GHCR.
+# Pour déployer avec les images publiées, utiliser uniquement compose.yaml :
+#   docker compose -f compose.yaml up -d
+name: shameless
+
+services:
+  migrate:
+    image: shameless-migrate:local
+    build:
+      context: ./api
+      target: migrate
+
+  api:
+    image: shameless-api:local
+    build:
+      context: ./api
+      target: api
+
+  proxy:
+    image: shameless-proxy:local
+    build:
+      context: ./deploy/caddy
+      additional_contexts:
+        web: ./web
+
+  wizard:
+    image: shameless-wizard:local
+    build:
+      context: ./wizard
+      additional_contexts:
+        web: ./web
