@@ -340,6 +340,20 @@ describe("étape Options (#71)", () => {
     expect(screen.queryByText(/voice-candidates/)).not.toBeInTheDocument();
   });
 
+  it("désigne le bot par le nom saisi, « Bot Discord » sinon", async () => {
+    const serveur = fauxServeur();
+    serveur.recap = RECAP_UCHUU;
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versOptions(user);
+    await activerUchuu(user);
+    await user.type(screen.getByLabelText(/Nom du bot/), "Harceleur");
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(await screen.findByText("Harceleur")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Installer" }));
+    expect(await screen.findByRole("region", { name: "Harceleur" })).toBeInTheDocument();
+  });
+
   it("garde la relecture des secrets repliée sur l'écran de fin", async () => {
     fauxServeur({ phase: "done", publicUrl: "https://shameless.example.org", uchuu: RECAP_UCHUU });
     render(<WizardApp />);

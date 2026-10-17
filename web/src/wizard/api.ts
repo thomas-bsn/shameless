@@ -29,6 +29,8 @@ export type Values = {
   timezone: string;
   uchuu: boolean;
   botUrl: string;
+  /** Facultatif, affiché seulement par le wizard : « Bot Discord » quand il est vide. */
+  botName: string;
 };
 export type FieldErrors = Partial<Record<keyof Values, string>>;
 
