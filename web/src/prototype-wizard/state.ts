@@ -19,6 +19,7 @@ export interface Values {
   riot: boolean;
   riotKey: string;
   uchuu: boolean;
+  botUrl: string;
   timezone: string;
 }
 
@@ -31,6 +32,7 @@ export const EMPTY: Values = {
   riot: false,
   riotKey: "",
   uchuu: false,
+  botUrl: "",
   timezone: "Europe/Paris",
 };
 
@@ -43,12 +45,35 @@ export const EXAMPLE: Values = {
   riot: false,
   riotKey: "",
   uchuu: true,
+  botUrl: "https://bot.example.org",
   timezone: "Europe/Paris",
 };
 
 export const TIMEZONES = ["Europe/Paris", "Europe/London", "America/New_York", "America/Montreal", "Asia/Tokyo", "UTC"];
 
 const snowflake = /^\d{17,20}$/;
+
+/** Règles de #72 : https, sans chemin, sans « / » final, sans identifiants ; http seulement en local/privé (avertissement, pas de blocage). */
+export function checkBotUrl(raw: string): { error?: string; warning?: string } {
+  if (!raw) return { error: "Indique l'adresse de ton bot, ou désactive l'intégration." };
+  let u: URL;
+  try { u = new URL(raw); } catch { return { error: "Adresse invalide : commence par https:// (ex. https://bot.example.org)." }; }
+  if (u.username || u.password) return { error: "Retire les identifiants de l'adresse." };
+  if (raw.endsWith("/") ) return { error: "Retire le « / » final." };
+  if (u.pathname !== "/" || u.search || u.hash) return { error: "L'adresse ne doit pas contenir de chemin : seulement le domaine." };
+  const local = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(u.hostname);
+  if (u.protocol === "http:" && !local) return { error: "L'adresse doit commencer par https:// (http:// n'est accepté qu'en réseau privé)." };
+  if (u.protocol !== "https:" && u.protocol !== "http:") return { error: "Adresse invalide : commence par https://." };
+  if (/^(localhost|127\.)/.test(u.hostname)) return { warning: "localhost est injoignable depuis le conteneur de l'API Shameless. Utilise l'adresse publique du bot." };
+  if (local) return { warning: "Adresse privée : vérifie qu'elle est joignable depuis le conteneur de l'API." };
+  return {};
+}
+
+/** Secrets factices du prototype (le vrai wizard les génère côté serveur, 256 bits, distincts). */
+export const FAKE_SECRETS = {
+  botApiKey: "9f2c71d4a0b8e35f6c1d7a92b4e08f3d5a6c1e7b9d204f8a3c5e7b1d9f60a2c4",
+  webhookSecret: "4be87a1c93d05f2e6a8b0c7d1e4f93a5b2c6d8e0f1a37b9c5d2e4f6a8b0c1d3e",
+};
 
 export type Errors = Partial<Record<keyof Values, string>>;
 
@@ -63,6 +88,7 @@ export function validate(v: Values, step: StepKey): Errors {
     if (!snowflake.test(v.adminId)) e.adminId = "Il faut au moins un administrateur (identifiant Discord, 17 à 20 chiffres).";
   }
   if (step === "options" || step === "recap") {
+    if (v.uchuu) { const r = checkBotUrl(v.botUrl); if (r.error) e.botUrl = r.error; }
     if (v.riot && !/^RGAPI-[\w-]{20,}$/.test(v.riotKey)) e.riotKey = "Une clé Riot commence par « RGAPI- ».";
   }
   return e;
@@ -75,7 +101,7 @@ export const mask = (s: string) => (s ? "•".repeat(Math.min(s.length, 24)) : "
 export const FIELDS_BY_STEP: Record<StepKey, (keyof Values)[]> = {
   intro: [],
   discord: ["url", "clientId", "clientSecret", "guildId", "adminId"],
-  options: ["riot", "riotKey", "uchuu", "timezone"],
+  options: ["riot", "riotKey", "uchuu", "botUrl", "timezone"],
   recap: [],
   fin: [],
 };

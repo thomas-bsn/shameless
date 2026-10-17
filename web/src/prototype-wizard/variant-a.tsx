@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { cn } from "@/lib/utils";
 import { INSTALL_STEPS, STEPS, TIMEZONES, callbackUrl, mask, type Wizard } from "./state";
 import { CopyBox, Field, HELP, Toggle } from "./ui";
+import { UchuuEnd, UchuuOptions, recapUchuu, type UchuuVariant } from "./uchuu";
 
 function Help({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -19,7 +20,7 @@ function Help({ children }: { children: ReactNode }) {
   );
 }
 
-export function VariantA({ w }: { w: Wizard }) {
+export function VariantA({ w, uchuu = "1" }: { w: Wizard; uchuu?: UchuuVariant }) {
   const v = w.values;
   return (
     <div className="mx-auto flex min-h-full max-w-xl flex-col gap-6 px-4 py-8 pb-24">
@@ -107,7 +108,7 @@ export function VariantA({ w }: { w: Wizard }) {
           <CardContent className="space-y-4">
             <Toggle checked={v.riot} onChange={(x) => w.set("riot", x)} label="API Riot" desc={HELP.riot} />
             {v.riot && <Field id="a-riot" label="Clé API Riot" secret value={v.riotKey} onChange={(x) => w.set("riotKey", x)} onBlur={() => w.touch("riotKey")} error={w.shown("riotKey", "options")} placeholder="RGAPI-…" />}
-            <Toggle checked={v.uchuu} onChange={(x) => w.set("uchuu", x)} label="Bot Uchuu" desc={HELP.uchuu} />
+            <UchuuOptions w={w} variant={uchuu} />
             <div className="space-y-1.5">
               <label htmlFor="a-tz" className="text-sm font-medium">Fuseau horaire</label>
               <select id="a-tz" value={v.timezone} onChange={(e) => w.set("timezone", e.target.value)} className="h-9 w-full rounded-md border bg-transparent px-3 text-sm dark:bg-input/30">
@@ -136,7 +137,7 @@ export function VariantA({ w }: { w: Wizard }) {
               {[
                 ["Adresse", v.url || "—"], ["Client ID", v.clientId || "—"], ["Client Secret", mask(v.clientSecret)],
                 ["Serveur Discord", v.guildId || "—"], ["Administrateur", v.adminId || "—"],
-                ["API Riot", v.riot ? "Activée" : "Ignorée"], ["Bot Uchuu", v.uchuu ? "Activé" : "Ignoré"], ["Fuseau", v.timezone],
+                ["API Riot", v.riot ? "Activée" : "Ignorée"], ["Bot Discord (Uchuu)", recapUchuu(w)], ["Fuseau", v.timezone],
                 ["Clés internes", "Générées automatiquement"],
               ].map(([k, val]) => (
                 <div key={k} className="flex justify-between gap-4 py-2"><dt className="text-muted-foreground">{k}</dt><dd className="break-all text-right font-mono text-xs">{val}</dd></div>
@@ -179,6 +180,7 @@ export function VariantA({ w }: { w: Wizard }) {
             {w.phase === "ok" && (
               <div className="flex items-center gap-2 rounded-md bg-emerald-500/10 p-3 text-sm"><PartyPopper className="size-4" /> Ton Instance répond à {v.url}.</div>
             )}
+            {w.phase === "ok" && <UchuuEnd w={w} variant={uchuu} />}
           </CardContent>
           <CardFooter className="justify-end gap-2">
             {w.phase === "error" && <><Button variant="outline" onClick={() => w.go("discord")}>Corriger Discord</Button><Button onClick={w.retry}>Réessayer</Button></>}
