@@ -8,6 +8,7 @@ import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/l
 import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { dateHeureLabel } from "@/lib/dates";
 
 const currentMonth = (): Month => {
   const now = new Date();
@@ -78,9 +79,6 @@ function Historique() {
   );
 }
 
-const dateLabel = (iso: string) =>
-  new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
 function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
   // seriesId 0 : games enregistrées sans Série.
   const title = series.seriesId === 0 ? "Games hors série" : `Série BO${series.format}`;
@@ -91,7 +89,7 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle>
-            {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateLabel(series.playedAt)}</span>
+            {title} <span className="ml-2 text-sm font-normal text-muted-foreground">{dateHeureLabel(series.playedAt)}</span>
           </CardTitle>
           {series.seriesId !== 0 && (
             <div className="flex items-center gap-3">
@@ -129,7 +127,7 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
           <Link to="/games/$gameId" params={{ gameId: String(game.id) }} className="hover:text-foreground">
             Game {index}
           </Link>{" "}
-          · #{game.id} · {dateLabel(game.playedAt)}
+          · #{game.id} · {dateHeureLabel(game.playedAt)}
         </span>
         {winner ? (
           <Badge variant="secondary">Équipe {winner} gagne</Badge>
