@@ -328,8 +328,16 @@ describe("HTTPS terminé par un proxy en amont (Forgeyard, Traefik)", () => {
     assert.ok(r.json.warnings.some((m: string) => /proxy en amont/.test(m)));
   });
 
+  it("détecte le HTTPS en amont par l'Origin quand X-Forwarded-Proto n'est pas transmis", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    const r = await w.appel("POST", "/_setup/api/install", saisie, { "x-shameless-entry": "http", origin: "https://shameless.example.org" });
+    assert.equal(r.status, 202);
+    assert.equal(adresseServie(w), ":80");
+  });
+
   it("laisse Caddy gérer le HTTPS d'un domaine joint directement", async () => {
-    for (const entetes of [{} as Record<string, string>, { "x-shameless-entry": "https", "x-forwarded-proto": "https" }, { "x-shameless-entry": "http" }]) {
+    for (const entetes of [{} as Record<string, string>, { "x-shameless-entry": "https", "x-forwarded-proto": "https" }, { "x-shameless-entry": "http" }, { "x-shameless-entry": "http", origin: "http://shameless.example.org" }]) {
       const w = await demarrer();
       await w.ouvrirSession();
       assert.equal((await w.appel("POST", "/_setup/api/install", saisie, entetes)).status, 202);
