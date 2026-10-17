@@ -13,7 +13,7 @@ verifier "le workflow de publication existe" test -f "$WF"
 verifier "il se déclenche sur les tags vX.Y.Z" grep -Eq "^\s*-\s*['\"]?v\*\.\*\.\*['\"]?" "$WF"
 verifier "il ne se déclenche pas sur une branche" bash -c "! grep -Eq '^\s*branches:' $WF"
 verifier "il publie sur ghcr.io avec GITHUB_TOKEN" bash -c "grep -q 'ghcr.io' $WF && grep -q 'secrets.GITHUB_TOKEN' $WF && grep -q 'packages: write' $WF"
-for img in api migrate proxy; do
+for img in api migrate proxy wizard; do
   verifier "la matrice contient l'image $img" grep -Eq "name:\s*$img\s*$" "$WF"
 done
 verifier "le tag latest est posé (versions stables)" grep -q 'latest' "$WF"
@@ -22,20 +22,21 @@ verifier "les tags de version sont reproductibles (semver)" grep -q '{{version}}
 # Compose de déploiement : uniquement des images, aucun build.
 verifier "compose.yaml ne contient aucun build:" bash -c "! grep -Eq '^\s*(build|additional_contexts):' compose.yaml"
 verifier "compose.yaml tire les images depuis ghcr.io par défaut" grep -q 'SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless' compose.yaml
-verifier "compose.override.yaml porte les build: de dev" bash -c "grep -c 'build:' compose.override.yaml | grep -q 3"
+verifier "compose.override.yaml porte les build: de dev" bash -c "grep -c 'build:' compose.override.yaml | grep -q 4"
 
 # Pas de secret dans les images.
 verifier "api/.dockerignore exclut .env" grep -Eq '^\*\*/\.env|^\.env' api/.dockerignore
 verifier "web/.dockerignore exclut .env" grep -Eq '^\*\*/\.env|^\.env' web/.dockerignore
-verifier "les Dockerfile n'embarquent aucun secret" bash -c "! grep -Ein 'password|secret|api_?key' api/Dockerfile deploy/caddy/Dockerfile"
+verifier "wizard/.dockerignore exclut .env" grep -Eq '^\*\*/\.env|^\.env' wizard/.dockerignore
+verifier "les Dockerfile n'embarquent aucun secret" bash -c "! grep -Ein 'password|secret|api_?key' api/Dockerfile deploy/caddy/Dockerfile wizard/Dockerfile"
 
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
-  export POSTGRES_PASSWORD=x DISCORD_CLIENT_ID=x DISCORD_CLIENT_SECRET=x DISCORD_GUILD_ID=x DISCORD_REDIRECT_URI=http://localhost/cb
+  # Aucune variable d'Instance ne doit être requise : le wizard la collecte.
   unset SHAMELESS_IMAGE_PREFIX SHAMELESS_VERSION
   verifier "compose de déploiement valide (docker compose config)" docker compose -f compose.yaml config
   verifier "compose de dev valide (avec override)" docker compose config
   verifier "le déploiement n'a aucun build (config résolue)" bash -c "! docker compose -f compose.yaml config | grep -q '^\s*build:'"
-  verifier "le dev construit les 3 images" bash -c "docker compose config | grep -c '^\s*build:' | grep -q 3"
+  verifier "le dev construit les 4 images" bash -c "docker compose config | grep -c '^\s*build:' | grep -q 4"
   verifier "le déploiement cible ghcr.io/thomas-bsn/shameless-api:latest" bash -c "docker compose -f compose.yaml config | grep -q 'image: ghcr.io/thomas-bsn/shameless-api:latest'"
 else
   echo "skip docker indisponible : validation du compose ignorée"

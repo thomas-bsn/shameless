@@ -81,11 +81,41 @@ jobs:
       - name: Vérifier la publication et le compose de déploiement
         run: tests/deploy/verifier-publication.sh
 
+      # Aucune variable d'Instance n'est requise : le wizard les collecte au premier démarrage.
       - name: Build
-        run: docker compose --env-file .env.example build
-        env:
-          # Valeurs factices : seules les variables requises par l'interpolation sont nécessaires au build.
-          POSTGRES_PASSWORD: ci
-          DISCORD_CLIENT_ID: ci
-          DISCORD_CLIENT_SECRET: ci
-          DISCORD_GUILD_ID: ci
+        run: docker compose build
+
+  wizard:
+    name: Wizard (typecheck et tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wizard
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: wizard/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  compose-acceptance:
+    name: Acceptation Compose (installation par le wizard)
+    runs-on: ubuntu-latest
+    needs: images
+    steps:
+      - uses: actions/checkout@v5
+
+      # Compose vierge -> wizard -> site accessible et connexion Discord possible (images construites ici).
+      - name: Parcours d'installation
+        run: tests/compose/acceptance.sh
