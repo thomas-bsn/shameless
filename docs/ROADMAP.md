@@ -49,14 +49,14 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Communication par API HTTP authentifiée + webhooks
 
 ## Phase 2 — V2 : votes, spectateurs, clips
-- [ ] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
+- [x] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
 - [x] Votes en base (remplace /polls), badges sur fiche joueur et historique
 - [x] Hall de la Honte (cumul DOFD) ~~+ mention Honte automatique par les stats~~
-- [ ] Spectateurs : pronostics avant la game (vainqueur, MVP, DOFD), ~~points, titre de Doyen~~
-- [ ] Clips : postés dans #clips, téléchargés par le bot, rattachés à la game
+- [x] Spectateurs : pronostics avant la game (vainqueur, MVP, DOFD), ~~points, titre de Doyen~~
+- [x] Clips : postés dans #clips, téléchargés par le bot, rattachés à la game
 
-Votes, pronostics et clips : côté API et site livrés (#59) ; reste l'interaction Discord du bot
-(thomas-bsn/harceleur_bot#13).
+Votes, pronostics et clips : côté API et site livrés (#59), intégration Discord du bot
+livrée dans Uchuu (#13, PR #23).
 
 Hors périmètre de la Phase 2 (#59), plus tard s'ils sont validés : mention Honte automatique
 par les stats ; points, classement des pronostics et titre de Doyen (voix double).
