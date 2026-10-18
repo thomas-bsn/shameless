@@ -48,3 +48,12 @@ export function ajouterCandidats(selected: number[], candidats: number[], max = 
   const ajoutes = candidats.filter((id, i) => !selected.includes(id) && candidats.indexOf(id) === i);
   return [...selected, ...ajoutes].slice(0, Math.max(max, selected.length));
 }
+
+/** Où en est le Picker, en une phrase : ce que la Soirée affiche pour le reprendre. */
+export function pickerProgress(picker: Picker): string {
+  if (picker.players.length < 10) return `Sélection, ${picker.players.length} joueurs sur 10`;
+  if (picker.canValidate) return "Équipes formées, prêtes à valider";
+  if (picker.methode === "Draft" && picker.equipeAuTrait)
+    return `Draft, ${picker.teamA.length + picker.teamB.length} joueurs sur 10 choisis`;
+  return "Méthode à choisir";
+}
