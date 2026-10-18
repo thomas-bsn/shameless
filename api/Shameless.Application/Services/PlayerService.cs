@@ -2,6 +2,7 @@
 using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
+using Shameless.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Shameless.Application.Services;
@@ -12,21 +13,34 @@ public class PlayerService : IPlayerService
     private readonly IRiotService _riot;
     private readonly IUserRepository _users;
     private readonly ILogger<PlayerService> _logger;
+    private readonly IPlayerMonthlyCostRepository _monthlyCosts;
+    private readonly TimeProvider _clock;
 
     public PlayerService(
         IPlayerRepository players, 
+        IPlayerMonthlyCostRepository monthlyCosts,
+        TimeProvider clock,
         IRiotService riot, 
         IUserRepository users,
         ILogger<PlayerService> logger)
     {
         _players = players;
+        _monthlyCosts = monthlyCosts;
+        _clock = clock;
         _users = users;
         _riot = riot;
         _logger = logger;
     }
 
-    public Task<List<PlayerDto>> GetPlayersAsync() =>
-        _players.GetAllAsync();
+    public async Task<List<PlayerDto>> GetPlayersAsync()
+    {
+        var players = await _players.GetAllAsync();
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        var precedents = await _monthlyCosts.GetCostsFinauxAvantAsync(new DateOnly(maintenant.Year, maintenant.Month, 1));
+        foreach (var player in players)
+            player.CostEvolution = precedents.TryGetValue(player.Id, out var avant) ? player.CurrentCost - avant : null;
+        return players;
+    }
 
     public Task<PlayerDto?> GetPlayerAsync(int playerId) =>
         _players.GetDtoByIdAsync(playerId);

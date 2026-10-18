@@ -5110,6 +5110,8 @@ export interface components {
             peakLp: number;
             /** Format: double */
             currentCost: number;
+            /** Format: double */
+            costEvolution: null | number;
         };
         PlayerLinkResponse: {
             success: boolean;
