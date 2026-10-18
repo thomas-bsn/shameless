@@ -1,5 +1,5 @@
 import type { Schemas } from "@/api/client";
-import { ajouterCandidats, joueursLibres, parRole, pickerStep } from "./picker";
+import { ajouterCandidats, joueursLibres, parRole, pickerProgress, pickerStep } from "./picker";
 
 type Picker = Schemas["PickerResponse"];
 type Participant = Schemas["GameParticipantDto"];
@@ -103,5 +103,23 @@ describe("ajouterCandidats", () => {
   it("s'arrête à dix joueurs cochés", () => {
     const neuf = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     expect(ajouterCandidats(neuf, [20, 21])).toEqual([...neuf, 20]);
+  });
+});
+
+describe("pickerProgress", () => {
+  it("counts the players chosen so far during a Draft", () => {
+    const draft = picker({ methode: "Draft", equipeAuTrait: "A", teamA: ten.slice(0, 3), teamB: ten.slice(3, 6) });
+    expect(pickerProgress(draft)).toBe("Draft, 6 joueurs sur 10 choisis");
+  });
+
+  it("asks for the ten players, then the method", () => {
+    expect(pickerProgress(picker({ players: ten.slice(0, 4) }))).toBe("Sélection, 4 joueurs sur 10");
+    expect(pickerProgress(picker())).toBe("Méthode à choisir");
+  });
+
+  it("says the teams are ready to validate", () => {
+    expect(pickerProgress(picker({ canValidate: true, teamA: ten.slice(0, 5), teamB: ten.slice(5) }))).toBe(
+      "Équipes formées, prêtes à valider",
+    );
   });
 });

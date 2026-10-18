@@ -186,7 +186,7 @@ function Lecteur({
           </DialogDescription>
         </DialogHeader>
         <ClipVideo key={clip.id} clipId={clip.id} />
-        <DialogFooter className="justify-between">
+        <DialogFooter className="sm:justify-between">
           <Button size="icon" variant="outline" aria-label="Clip précédent" disabled={!precedent} onClick={() => precedent && onChoisir(precedent)}>
             <ChevronLeftIcon />
           </Button>
