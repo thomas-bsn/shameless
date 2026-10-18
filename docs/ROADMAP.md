@@ -14,7 +14,7 @@ Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 - [x] OpenAPI + client TypeScript généré
 - [x] CI GitHub Actions + premiers tests d'intégration (Testcontainers)
 - [ ] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible) (compose fait, déploiement NAS à confirmer)
-- [x] Images publiées sur GHCR à chaque tag `vX.Y.Z` (api, migrate, proxy, wizard) (#69)
+- [x] Images publiées sur GHCR à chaque tag `vX.Y.Z` (api, migrate, proxy, wizard) (#69) ; un seul workflow `publier.yml` (auto après la CI, ou bouton Run workflow)
 - [x] Publication automatique des images à chaque commit sur `main` (CI verte), avec bump de version et tag `vX.Y.Z` (#107)
 - [x] Wizard d'installation Docker Compose : Discord, options, bot facultatif, un seul `compose.yaml` pour Docker Compose et Forgeyard (#70, #71, #72)
 - [x] Migration des données depuis le dump de lol_customs (migration Baseline à la place des migrations legacy, voir api/database/BASELINE.md)

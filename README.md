@@ -58,10 +58,11 @@ Une préversion (`vX.Y.Z-rc.1`) ne pose que son tag exact. Les images sont multi
 
 #### Publication automatique et manuelle
 
-- **Automatique** : après chaque CI verte sur `main` (workflow `.github/workflows/publication-auto.yml`), la version suivante est calculée à partir du dernier tag `vX.Y.Z` (les préversions sont ignorées ; sans tag, on part de `0.0.0`), le tag `vX.Y.Z` est posé sur le commit testé, puis les quatre images sont publiées dans le même run. Une CI en échec ne publie rien.
+- **Parcours** : merge sur `main` => CI => publication automatique. Tout est dans un seul workflow, `.github/workflows/publier.yml` (« Publier les images »), qui ne se déclenche ni sur un tag ni sur une branche : le tag qu'il pose ne relance rien.
+- **Automatique** : après chaque CI verte sur `main`, la version suivante est calculée à partir du dernier tag `vX.Y.Z` (les préversions sont ignorées ; sans tag, on part de `0.0.0`), le tag `vX.Y.Z` est posé sur le commit testé, puis les quatre images sont publiées dans le même run. Une CI en échec ne publie rien.
 - **Niveau de bump** : patch par défaut. Le label `minor` ou `major` sur la PR mergée, ou `[minor]` / `[major]` dans son titre, passe au niveau supérieur (`major` l'emporte sur `minor`). Le label doit être posé avant le merge ; il se lit sur la PR du commit, donc un push direct sur `main` donne toujours un patch. Si deux merges se suivent de près, la publication en attente remplace la précédente : le label de la PR ignorée est alors perdu, la version suivante part du dernier tag.
-- **Manuelle** (préversion, ou publier à la demande en cas de besoin) : `git tag vX.Y.Z && git push origin vX.Y.Z` (ou `vX.Y.Z-rc.1`). Le workflow `.github/workflows/release.yml` publie alors les images. Le tag posé par la publication automatique ne le relance pas (un tag poussé avec le `GITHUB_TOKEN` ne déclenche pas de workflow).
-- La construction des images est factorisée dans `.github/workflows/publier-images.yml`, appelé par les deux workflows. Le calcul de version est dans `.github/scripts/prochaine-version.sh`, testé par `tests/deploy/prochaine-version.test.sh` (lancé dans la CI).
+- **Manuelle** (préversion, ou version précise) : onglet Actions de GitHub, workflow « Publier les images », bouton **Run workflow** : choisir la branche, saisir la version sans le `v` (`0.2.0-rc.1` ou `0.2.0`). Les images sont publiées avec ce tag exact, et le tag `vX.Y.Z` est posé sur le commit de la branche choisie, sans calcul automatique. Une préversion ne pose ni `latest` ni `X.Y`. Un tag déjà posé sur un autre commit est refusé.
+- Le calcul de version est dans `.github/scripts/prochaine-version.sh`, testé par `tests/deploy/prochaine-version.test.sh` (lancé dans la CI).
 
 ### Application Discord
 
@@ -174,4 +175,4 @@ Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `f
 - type-check et teste le serveur du wizard (`wizard/`) ;
 - joue le test d'acceptation `tests/compose/acceptance.sh` (job `compose-acceptance`) : Compose vierge, wizard, site accessible, connexion Discord possible, redémarrage. Localement : `tests/compose/acceptance.sh` (Docker requis).
 
-Après une CI verte sur `main`, `publication-auto.yml` pose le tag `vX.Y.Z` suivant et publie les images dans GHCR ; sur un tag `vX.Y.Z` poussé à la main, `release.yml` les publie (voir « Publication automatique et manuelle »).
+Après une CI verte sur `main`, `publier.yml` pose le tag `vX.Y.Z` suivant et publie les images dans GHCR ; une préversion ou une version précise se publie à la main avec le bouton **Run workflow** (voir « Publication automatique et manuelle »).
