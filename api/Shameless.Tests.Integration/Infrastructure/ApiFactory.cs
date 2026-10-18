@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Testing;
+using Microsoft.Extensions.Options;
 using Shameless.Api.Interfaces;
+using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Data;
 using Shameless.Infrastructure.Integrations.Bot;
@@ -60,8 +62,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     /// <summary>Taille maximale d'un clip en test, petite pour exercer le refus.</summary>
     public const long TailleMaxDesClips = 64 * 1024;
 
+    /// <summary>Simule la présence d'une clé Riot (le job de 24 h, lui, reste arrêté : il a démarré sans clé).</summary>
+    public bool CleRiotConfiguree
+    {
+        get => Services.GetRequiredService<IOptions<RefreshRanksJobOptions>>().Value.Enabled;
+        set => Services.GetRequiredService<IOptions<RefreshRanksJobOptions>>().Value.Enabled = value;
+    }
+
     public async Task ResetAsync()
     {
+        CleRiotConfiguree = false;
         if (Directory.Exists(DossierDesClips)) Directory.Delete(DossierDesClips, recursive: true);
         Riot.Reset();
         Discord.Reset();

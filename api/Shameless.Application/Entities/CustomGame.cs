@@ -18,6 +18,12 @@ public class CustomGame
 
     /// <summary>Quand le résultat a été saisi, null tant que la game n'est pas terminée.</summary>
     public DateTime? CompletedAt { get; set; }
+
+    /// <summary>
+    /// Quand un Administrateur a corrigé (vainqueur, composition) cette game terminée ; null si elle est
+    /// telle que saisie. La game garde ainsi la trace que ses données ne sont plus celles d'origine.
+    /// </summary>
+    public DateTime? ModifieeParAdminLe { get; set; }
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }
 
