@@ -5283,7 +5283,8 @@
           "id",
           "key",
           "name",
-          "imageUrl"
+          "imageUrl",
+          "voies"
         ],
         "type": "object",
         "properties": {
@@ -5298,6 +5299,12 @@
           },
           "imageUrl": {
             "type": "string"
+          },
+          "voies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

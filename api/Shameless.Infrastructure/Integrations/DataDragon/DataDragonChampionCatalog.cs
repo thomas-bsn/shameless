@@ -14,6 +14,13 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
 {
     public const string HttpClientName = "DataDragon";
     public static readonly Uri BaseAddress = new("https://ddragon.leagueoflegends.com/");
+
+    /// <summary>Meraki Analytics : les voies (positions) de chaque champion, que Data Dragon ne donne pas.</summary>
+    public const string MerakiHttpClientName = "Meraki";
+    public static readonly Uri MerakiBaseAddress = new("https://cdn.merakianalytics.com/");
+    private const string MerakiChemin = "riot/lol/resources/latest/en-US/champions.json";
+    // Sans les voies, on réessaie bientôt plutôt que d'attendre six heures.
+    private static readonly TimeSpan DureeSansVoies = TimeSpan.FromMinutes(5);
     private const string Langue = "fr_FR";
     private static readonly TimeSpan DureeDuCache = TimeSpan.FromHours(6);
 
@@ -38,8 +45,12 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
         {
             if (_champions is { } dejaCharges && _clock.GetUtcNow() < _expiration) return dejaCharges;
 
-            _champions = await LoadOrThrowIndisponibleAsync(cancellationToken);
-            _expiration = _clock.GetUtcNow() + DureeDuCache;
+            var champions = await LoadOrThrowIndisponibleAsync(cancellationToken);
+            var voies = await LoadVoiesAsync(cancellationToken);
+            _champions = champions
+                .Select(c => c with { Voies = voies.GetValueOrDefault(c.Key, []) })
+                .ToList();
+            _expiration = _clock.GetUtcNow() + (voies.Count > 0 ? DureeDuCache : DureeSansVoies);
             return _champions;
         }
         finally
@@ -79,10 +90,53 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
                 c.Id,
                 c.Key,
                 c.Name,
-                new Uri(http.BaseAddress ?? BaseAddress, $"cdn/{version}/img/champion/{c.Image.Full}").ToString()))
+                new Uri(http.BaseAddress ?? BaseAddress, $"cdn/{version}/img/champion/{c.Image.Full}").ToString(),
+                []))
             .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("fr-FR"), ignoreCase: true))
             .ToList();
     }
+
+    /// <summary>
+    /// Les voies de Meraki par clé Riot du champion. Toute panne de Meraki (réseau, délai, réponse illisible)
+    /// donne un dictionnaire vide : le catalogue reste servi, les champions sont alors visibles sous toutes les voies.
+    /// </summary>
+    private async Task<Dictionary<string, IReadOnlyList<string>>> LoadVoiesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var http = _httpClientFactory.CreateClient(MerakiHttpClientName);
+            var fichier = await http.GetFromJsonAsync<Dictionary<string, MerakiEntry>>(
+                new Uri(http.BaseAddress ?? MerakiBaseAddress, MerakiChemin), cancellationToken);
+
+            var voies = new Dictionary<string, IReadOnlyList<string>>();
+            foreach (var entree in fichier?.Values.AsEnumerable() ?? [])
+            {
+                var noms = (entree.Positions ?? [])
+                    .Select(NomDeVoie).OfType<string>().Distinct().ToList();
+                if (noms.Count > 0) voies[entree.Id.ToString()] = noms;
+            }
+            return voies;
+        }
+        catch (Exception e) when (e is HttpRequestException or System.Text.Json.JsonException or NotSupportedException
+                                      || (e is TaskCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            return [];
+        }
+    }
+
+    private static string? NomDeVoie(string position) => position.ToUpperInvariant() switch
+    {
+        "TOP" => Voies.Top,
+        "JUNGLE" => Voies.Jungle,
+        "MIDDLE" => Voies.Mid,
+        "BOTTOM" => Voies.Adc,
+        "SUPPORT" => Voies.Support,
+        _ => null
+    };
+
+    private sealed record MerakiEntry(
+        [property: JsonPropertyName("id")] int Id,
+        [property: JsonPropertyName("positions")] List<string>? Positions);
 
     private sealed record ChampionFile([property: JsonPropertyName("data")] Dictionary<string, ChampionEntry>? Data);
 
