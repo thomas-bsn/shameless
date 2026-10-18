@@ -2,17 +2,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { ActualisationRiotPanel, BoutonActualiserJoueur } from "@/components/administration/actualisation-riot";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
+import { SelecteurDePeak } from "@/components/selecteur-de-peak";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { costText } from "@/lib/cost";
-import { isMasterPlus, rankLabel, SOLOQ_TIERS, tierName } from "@/lib/ranks";
+import { rankLabel } from "@/lib/ranks";
 
 const COST_MIN = 1;
 const COST_MAX = 6;
 const arrondi = (cost: number) => Math.round(cost * 10) / 10;
-const classeSelect = "h-9 rounded-md border bg-background px-2 text-sm";
 
 function CostDeDepart({ player }: { player: Schemas["PlayerDto"] }) {
   const queryClient = useQueryClient();
@@ -76,9 +77,6 @@ function Peak({ player }: { player: Schemas["PlayerDto"] }) {
   const path = { playerId: player.id };
   const rafraichir = () => queryClient.invalidateQueries({ queryKey: ["get", "/players"] });
   const [saisie, setSaisie] = useState(false);
-  const [tier, setTier] = useState("DIAMOND");
-  const [division, setDivision] = useState(1);
-  const [lp, setLp] = useState(0);
   const renseigner = $api.useMutation("post", "/players/{playerId}/peak", {
     onSuccess: async () => {
       setSaisie(false);
@@ -91,6 +89,7 @@ function Peak({ player }: { player: Schemas["PlayerDto"] }) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <span>{rankLabel(player.peakTier, player.peakDivision, player.peakLp)}</span>
+        {player.peakSeason && <Badge variant="outline">{player.peakSeason}</Badge>}
         <Button variant="ghost" size="xs" disabled={effacer.isPending} onClick={() => effacer.mutate({ params: { path } })}>
           Effacer le peak
         </Button>
@@ -106,45 +105,12 @@ function Peak({ player }: { player: Schemas["PlayerDto"] }) {
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <select aria-label="Tier du peak" className={classeSelect} value={tier} onChange={(e) => setTier(e.target.value)}>
-        {SOLOQ_TIERS.filter((t) => t !== "UNRANKED").map((t) => (
-          <option key={t} value={t}>
-            {tierName(t)}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Division du peak"
-        className={classeSelect}
-        value={division}
-        disabled={isMasterPlus(tier)}
-        onChange={(e) => setDivision(Number(e.target.value))}
-      >
-        {[1, 2, 3, 4].map((d) => (
-          <option key={d} value={d}>
-            {["I", "II", "III", "IV"][d - 1]}
-          </option>
-        ))}
-      </select>
-      <Input aria-label="LP du peak" type="number" min={0} className="h-9 w-20" value={lp} onChange={(e) => setLp(Number(e.target.value))} />
-      <Button
-        size="sm"
-        disabled={renseigner.isPending}
-        onClick={() =>
-          renseigner.mutate({
-            params: { path },
-            body: { peakTier: tier, peakDivision: isMasterPlus(tier) ? null : division, peakSeason: null, peakLp: lp },
-          })
-        }
-      >
-        Enregistrer le peak
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => setSaisie(false)}>
-        Annuler
-      </Button>
-      {renseigner.isError && <ErrorAlert error={renseigner.error} />}
-    </div>
+    <SelecteurDePeak
+      enCours={renseigner.isPending}
+      erreur={renseigner.error}
+      onAnnuler={() => setSaisie(false)}
+      onValider={(peak) => renseigner.mutate({ params: { path }, body: peak })}
+    />
   );
 }
 
@@ -156,14 +122,17 @@ export function JoueursAdmin() {
   if (players.data.length === 0) return <p className="text-sm text-muted-foreground">Aucun joueur.</p>;
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card">
-      <table className="w-full min-w-[680px] text-sm">
+    <div className="flex flex-col gap-4">
+      <ActualisationRiotPanel />
+      <div className="overflow-x-auto rounded-xl border bg-card">
+      <table className="w-full min-w-[820px] text-sm">
         <thead>
           <tr className="border-b text-left text-xs tracking-wide text-muted-foreground uppercase">
             <th className="p-3 font-medium">Joueur</th>
             <th className="p-3 font-medium">Cost de départ</th>
             <th className="p-3 font-medium">Source</th>
             <th className="p-3 font-medium">Peak</th>
+            <th className="p-3 font-medium">Riot</th>
           </tr>
         </thead>
         <tbody>
@@ -179,10 +148,14 @@ export function JoueursAdmin() {
               <td className="p-3">
                 <Peak player={player} />
               </td>
+              <td className="p-3">
+                <BoutonActualiserJoueur playerId={player.id} prenom={player.prenom} />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

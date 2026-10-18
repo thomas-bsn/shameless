@@ -20,6 +20,191 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/riot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtatActualisationRiot"];
+                        "application/json": components["schemas"]["EtatActualisationRiot"];
+                        "text/json": components["schemas"]["EtatActualisationRiot"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/riot/joueurs/{playerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultatActualisationJoueur"];
+                        "application/json": components["schemas"]["ResultatActualisationJoueur"];
+                        "text/json": components["schemas"]["ResultatActualisationJoueur"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/riot/tous": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtatActualisationRiot"];
+                        "application/json": components["schemas"]["EtatActualisationRiot"];
+                        "text/json": components["schemas"]["EtatActualisationRiot"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/discord/login": {
         parameters: {
             query?: never;
@@ -3171,12 +3356,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -3223,6 +3410,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/peak/saisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeakSaisonsResponse"];
+                        "application/json": components["schemas"]["PeakSaisonsResponse"];
+                        "text/json": components["schemas"]["PeakSaisonsResponse"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/peak": {
         parameters: {
             query?: never;
@@ -3247,12 +3480,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -5156,6 +5391,12 @@ export interface components {
             playerId: number;
             equipe: string;
         };
+        EchecActualisation: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            message: string;
+        };
         EntityTagHeaderValue: {
             tag: components["schemas"]["StringSegment"];
             isWeak: boolean;
@@ -5163,6 +5404,20 @@ export interface components {
         EquipePronostiquee: {
             equipe: string;
             correct: null | boolean;
+        };
+        EtatActualisationRiot: {
+            disponible: boolean;
+            enCours: boolean;
+            nature: null | string;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            termines: number;
+            echecs: components["schemas"]["EchecActualisation"][];
+            /** Format: date-time */
+            demarreeLe: null | string;
+            /** Format: date-time */
+            termineeLe: null | string;
         };
         FicheJoueur: {
             /** Format: int32 */
@@ -5429,6 +5684,10 @@ export interface components {
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
         };
+        PeakSaisonsResponse: {
+            saisons: string[];
+            courante: string;
+        };
         PendingGameParticipant: {
             /** Format: int32 */
             playerId: number;
@@ -5667,6 +5926,14 @@ export interface components {
             replacedPlayerId: number;
             /** Format: int32 */
             replacementPlayerId: number;
+        };
+        ResultatActualisationJoueur: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            rangsActualises: boolean;
+            roleActualise: boolean;
+            echecs: string[];
         };
         ResultatDuTitre: {
             gagnants: number[];
