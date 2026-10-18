@@ -1,5 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchClient } from "@/api/client";
+import { fetchClient, type Schemas } from "@/api/client";
+import { roleLabel } from "./ranks";
+import { rankScore } from "./soloq";
 
 /** Le Joueur lié au compte Discord connecté, ou null s'il n'y en a pas. */
 export const myPlayerQuery = queryOptions({
@@ -22,4 +24,49 @@ const fold = (text: string) =>
 export function matchesPlayer(player: { prenom: string; riotId: string }, search: string): boolean {
   const needle = fold(search.trim());
   return fold(player.prenom).includes(needle) || fold(player.riotId).includes(needle);
+}
+
+/** Recherche par prénom, RiotId ou rôle (« adc », « jungle »). */
+export function matchesPlayerOrRole(player: { prenom: string; riotId: string; mainRole: string | null }, search: string): boolean {
+  const needle = fold(search.trim());
+  return matchesPlayer(player, search) || fold(roleLabel(player.mainRole) ?? "").includes(needle);
+}
+
+export type PlayerSortKey = "joueur" | "cost" | "role" | "rang" | "peak" | "winrate";
+export type SortDirection = "asc" | "desc";
+
+/**
+ * Trie les Joueurs du tableau. Les valeurs absentes (peak non renseigné, aucune game en customs)
+ * restent en bas quel que soit le sens.
+ */
+export function sortPlayers(
+  players: Schemas["PlayerDto"][],
+  key: PlayerSortKey,
+  direction: SortDirection,
+  winrates: ReadonlyMap<number, number>,
+): Schemas["PlayerDto"][] {
+  const value = (p: Schemas["PlayerDto"]): number | string | null => {
+    switch (key) {
+      case "joueur":
+        return fold(p.prenom);
+      case "cost":
+        return p.currentCost;
+      case "role":
+        return roleLabel(p.mainRole);
+      case "rang":
+        return rankScore(p.rankTier ?? "UNRANKED", p.rankDivision, p.lp);
+      case "peak":
+        return p.peakTier ? rankScore(p.peakTier, p.peakDivision, p.peakLp) : null;
+      case "winrate":
+        return winrates.get(p.id) ?? null;
+    }
+  };
+  const sign = direction === "asc" ? 1 : -1;
+  return [...players].sort((a, b) => {
+    const va = value(a);
+    const vb = value(b);
+    if (va === null || vb === null) return va === vb ? 0 : va === null ? 1 : -1;
+    const order = typeof va === "string" ? va.localeCompare(vb as string, "fr") : va - (vb as number);
+    return sign * order || a.prenom.localeCompare(b.prenom, "fr");
+  });
 }
