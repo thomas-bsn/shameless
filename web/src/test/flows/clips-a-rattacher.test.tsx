@@ -28,6 +28,23 @@ const candidate = (gameId: number, gameNumber: number, lanceeLe: string): Schema
 });
 
 describe("Clips à rattacher", () => {
+  it("permet à un Administrateur de masquer un clip du Fond depuis sa carte", async () => {
+    const api = mockApi({
+      "GET /auth/me": user({ isAdmin: true }),
+      "GET /clips/fond": [],
+      "GET /clips": [clip(7)],
+      "PUT /clips/7/fond": json(clip(7, { masqueDuFond: true })),
+    });
+
+    renderApp("/clips");
+
+    const carte = await screen.findByRole("article", { name: "pentakill.mp4" });
+    await userEvent.click(within(carte).getByRole("switch", { name: "Dans le Fond" }));
+
+    const put = api.mock.calls.map(([request]) => request).find((request) => request.method === "PUT");
+    expect(await put?.clone().json()).toEqual({ masque: true });
+  });
+
   it("liste les clips sans Game et en rattache un à une des Games proposées", async () => {
     let sansGame = [clip(7), clip(8, { nomFichier: "baron.webm", auteurNom: "Léa" })];
     const api = mockApi({
