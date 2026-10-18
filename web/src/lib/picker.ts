@@ -3,14 +3,13 @@ import type { Schemas } from "@/api/client";
 type Picker = Schemas["PickerResponse"];
 
 /**
- * L'étape de la session de Picker, déduite de l'état de l'API : sélection des dix, choix de la
- * méthode, Draft en cours, puis Équipes formées (Autorole et validation).
+ * Étape du Picker déduite de l'état persistant des joueurs, de la méthode et des équipes.
  */
-export type PickerStep = "selection" | "methode" | "draft" | "equipes";
+export type PickerStep = "selection" | "methode" | "draft" | "equipes" | "autorole" | "serie";
 
 export function pickerStep(picker: Picker | null): PickerStep {
   if (!picker) return "selection";
-  if (picker.canValidate) return "equipes";
+  if (picker.canValidate) return [...picker.teamA, ...picker.teamB].some((p) => p.role) ? "serie" : "equipes";
   if (picker.methode === "Draft" && picker.equipeAuTrait) return "draft";
   return "methode";
 }

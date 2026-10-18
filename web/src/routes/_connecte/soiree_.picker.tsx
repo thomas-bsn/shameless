@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { points } from "@/lib/cost";
 import { ajouterCandidats, joueursLibres, type PickerStep, pickerStep } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
@@ -32,10 +33,12 @@ type Equipe = "A" | "B";
 const SELECTION_SIZE = 10;
 
 const stepDescriptions: Record<PickerStep, string> = {
-  selection: "Coche les dix joueurs de la prochaine série.",
-  methode: "Forme les deux Équipes par Draft ou par Roulette.",
+  selection: "Choisis les dix joueurs de la prochaine Série.",
+  methode: "Choisis la Draft ou la Roulette pour former les Équipes.",
   draft: "Les capitaines choisissent leurs joueurs à tour de rôle.",
-  equipes: "Les Équipes sont formées : Autorole facultatif, puis valide pour créer la Série.",
+  equipes: "Vérifie les Équipes et leur écart de cost.",
+  autorole: "Attribue un rôle à chaque joueur ou passe cette étape.",
+  serie: "Choisis le format et Fearless pour créer la Série.",
 };
 
 /** Toute commande du Picker renvoie l'état à jour : on relit la Soirée ouverte qui le porte. */
@@ -70,7 +73,12 @@ function PickerPage() {
 function PickerSession({ picker }: { picker: Picker | null }) {
   const [editingSelection, setEditingSelection] = useState(false);
   const [changingMethode, setChangingMethode] = useState(false);
-  const step = editingSelection ? "selection" : pickerStep(picker);
+  const [finalStep, setFinalStep] = useState<"equipes" | "autorole" | "serie">(() => {
+    if (picker?.canValidate && [...picker.teamA, ...picker.teamB].some((p) => p.role)) return "serie";
+    return "equipes";
+  });
+  const inferredStep = editingSelection ? "selection" : pickerStep(picker);
+  const step = inferredStep === "equipes" ? finalStep : inferredStep;
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,6 +89,7 @@ function PickerSession({ picker }: { picker: Picker | null }) {
           onDone={() => {
             setEditingSelection(false);
             setChangingMethode(false);
+            setFinalStep("equipes");
           }}
           onCancel={picker ? () => setEditingSelection(false) : undefined}
         />
@@ -90,12 +99,23 @@ function PickerSession({ picker }: { picker: Picker | null }) {
           {(step === "methode" || changingMethode) && (
             <Methode
               picker={picker}
-              onDone={() => setChangingMethode(false)}
+              onDone={() => {
+                setChangingMethode(false);
+                setFinalStep("equipes");
+              }}
               onCancel={step === "methode" ? undefined : () => setChangingMethode(false)}
             />
           )}
           {step === "draft" && <DraftEnCours picker={picker} />}
-          {step === "equipes" && <EquipesFormees picker={picker} />}
+          {step === "equipes" && <EquipesFormees picker={picker} onContinue={() => setFinalStep("autorole")} />}
+          {step === "autorole" && (
+            <AutoroleEtape
+              picker={picker}
+              onDone={() => setFinalStep("serie")}
+              onSkip={() => setFinalStep("serie")}
+            />
+          )}
+          {step === "serie" && <SerieEtape picker={picker} onEditAutorole={() => setFinalStep("autorole")} />}
           {step !== "methode" && !changingMethode && (
             <div>
               <Button variant="outline" onClick={() => setChangingMethode(true)}>
@@ -110,10 +130,12 @@ function PickerSession({ picker }: { picker: Picker | null }) {
 }
 
 const stepLabels: [PickerStep, string][] = [
-  ["selection", "Sélection"],
+  ["selection", "Joueurs"],
   ["methode", "Méthode"],
   ["draft", "Draft"],
   ["equipes", "Équipes"],
+  ["autorole", "Autorole"],
+  ["serie", "Série"],
 ];
 
 function Steps({ current }: { current: PickerStep }) {
@@ -269,12 +291,30 @@ function SelectedPlayers({ picker, onEdit }: { picker: Picker; onEdit: () => voi
 // --- Méthode : Draft ou Roulette ---------------------------------------------------------------
 
 function Methode({ picker, onDone, onCancel }: { picker: Picker; onDone: () => void; onCancel?: () => void }) {
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [rouletteOpen, setRouletteOpen] = useState(false);
+  const refresh = usePickerRefresh();
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <LancerDraft picker={picker} onDone={onDone} />
-        <TirerRoulette onDone={onDone} />
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={() => setDraftOpen(true)}>Choisir la Draft</Button>
+        <Button variant="secondary" onClick={() => setRouletteOpen(true)}>Choisir la Roulette</Button>
       </div>
+      <Dialog open={draftOpen} onOpenChange={setDraftOpen}>
+        <DialogContent aria-describedby="draft-description">
+          <DialogTitle>Configurer la Draft</DialogTitle>
+          <DialogDescription id="draft-description">Désigne les capitaines et choisis qui sélectionne en premier.</DialogDescription>
+          <LancerDraft picker={picker} onDone={async () => { await refresh(); setDraftOpen(false); onDone(); }} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={rouletteOpen} onOpenChange={setRouletteOpen}>
+        <DialogContent aria-describedby="roulette-description">
+          <DialogTitle>Tirage de la Roulette</DialogTitle>
+          <DialogDescription id="roulette-description">Tire les deux Équipes au hasard ou cherche un tirage équilibré.</DialogDescription>
+          <TirerRoulette onDone={async () => { await refresh(); setRouletteOpen(false); onDone(); }} />
+        </DialogContent>
+      </Dialog>
       {onCancel && (
         <div>
           <Button variant="ghost" onClick={onCancel}>
@@ -299,23 +339,24 @@ function LancerDraft({ picker, onDone }: { picker: Picker; onDone: () => void })
   const [capitaineA, setCapitaineA] = useState<string>("");
   const [capitaineB, setCapitaineB] = useState<string>("");
   const [premierPick, setPremierPick] = useState<string>(PILE_OU_FACE);
-  const refresh = usePickerRefresh();
-  const draft = $api.useMutation("post", "/soirees/open/picker/draft", {
-    onSuccess: async () => {
-      await refresh();
-      onDone();
-    },
-  });
+  const [result, setResult] = useState<Picker | null>(null);
+  const draft = $api.useMutation("post", "/soirees/open/picker/draft", { onSuccess: setResult });
 
   const manuels = designation === "Manuels";
   const ready = !manuels || (capitaineA !== "" && capitaineB !== "");
 
+  if (result) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="font-medium">{result.premierPick ? `L'Équipe ${result.premierPick} choisit en premier.` : "La Draft est prête."}</p>
+        {result.premierPick && <p aria-label="Résultat du pile ou face" className="rounded-lg border p-4 text-center text-2xl font-semibold">Équipe {result.premierPick} choisit en premier</p>}
+        <Button onClick={onDone}>Continuer la Draft</Button>
+      </div>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Draft</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Field label="Capitaines">
           <Select value={designation} onValueChange={(v) => setDesignation(v as Schemas["DesignationCapitaines"])}>
             <SelectTrigger aria-label="Capitaines" className="w-full">
@@ -363,11 +404,10 @@ function LancerDraft({ picker, onDone }: { picker: Picker; onDone: () => void })
               })
             }
           >
-            Lancer la Draft
+            {premierPick === PILE_OU_FACE ? "Lancer le pile ou face" : "Lancer la Draft"}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
 }
 
@@ -401,25 +441,18 @@ function CapitaineSelect({
 }
 
 function TirerRoulette({ onDone }: { onDone: () => void }) {
-  const refresh = usePickerRefresh();
-  const roulette = $api.useMutation("post", "/soirees/open/picker/roulette", {
-    onSuccess: async () => {
-      await refresh();
-      onDone();
-    },
-  });
+  const [result, setResult] = useState<Picker | null>(null);
+  const roulette = $api.useMutation("post", "/soirees/open/picker/roulette", { onSuccess: setResult });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Roulette</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
           Aléatoire : deux équipes au pur hasard. Équilibrée : au hasard parmi les tirages dont l'écart de cost est
           d'au plus 1 point.
         </p>
+        {roulette.isPending && <p aria-live="polite" className="flex items-center gap-2 text-sm"><span aria-hidden="true" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent motion-reduce:animate-none" />Tirage en cours…</p>}
         {roulette.isError && <ErrorAlert error={roulette.error} />}
+        {result && <><Teams picker={result} /><p className="text-sm text-muted-foreground">Cost A : {points(result.teamACost)} · Cost B : {points(result.teamBCost)} · Écart : {points(result.ecartCost)}</p><Button onClick={onDone}>Continuer avec ces Équipes</Button></>}
         <div className="flex flex-wrap gap-2">
           <Button
             disabled={roulette.isPending}
@@ -435,8 +468,7 @@ function TirerRoulette({ onDone }: { onDone: () => void }) {
             Roulette Aléatoire
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
 }
 
@@ -444,9 +476,16 @@ function TirerRoulette({ onDone }: { onDone: () => void }) {
 
 function DraftEnCours({ picker }: { picker: Picker }) {
   const refresh = usePickerRefresh();
-  const pick = $api.useMutation("post", "/soirees/open/picker/draft/picks", { onSuccess: () => refresh() });
+  const [selected, setSelected] = useState<Participant | null>(null);
+  const pick = $api.useMutation("post", "/soirees/open/picker/draft/picks", {
+    onSuccess: async () => {
+      await refresh();
+      setSelected(null);
+    },
+  });
   const auTrait = picker.equipeAuTrait as Equipe;
   const capitaine = picker.players.find((p) => p.playerId === (auTrait === "A" ? picker.capitaineA : picker.capitaineB));
+  const teamCost = auTrait === "A" ? picker.teamACost : picker.teamBCost;
 
   return (
     <div className="flex flex-col gap-4">
@@ -459,15 +498,13 @@ function DraftEnCours({ picker }: { picker: Picker }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {pick.isError && <ErrorAlert error={pick.error} />}
           <ul aria-label="Joueurs libres" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {joueursLibres(picker).map((p) => (
               <li key={p.playerId}>
                 <Button
                   variant="outline"
                   className="h-auto w-full justify-between py-2"
-                  disabled={pick.isPending}
-                  onClick={() => pick.mutate({ body: { equipe: auTrait, playerId: p.playerId } })}
+                  onClick={() => setSelected(p)}
                   aria-label={`Prendre ${p.prenom} dans l'Équipe ${auTrait}`}
                 >
                   <span className="truncate">{p.prenom}</span>
@@ -478,21 +515,62 @@ function DraftEnCours({ picker }: { picker: Picker }) {
           </ul>
         </CardContent>
       </Card>
+      <Dialog open={selected !== null} onOpenChange={(open) => { if (!open && !pick.isPending) setSelected(null); }}>
+        <DialogContent aria-describedby="pick-description">
+          <DialogTitle>{selected ? `Confirmer le choix de ${selected.prenom}` : "Confirmer le choix"}</DialogTitle>
+          <DialogDescription id="pick-description">
+            L'Équipe {auTrait} choisit ce joueur. Vérifie le cost avant de confirmer.
+          </DialogDescription>
+          {selected && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border p-4 text-sm">
+              <p>Cost de l'Équipe {auTrait} avant : <strong>{points(teamCost)}</strong></p>
+              <p>Cost de l'Équipe {auTrait} après : <strong>{points(teamCost + (selected.cost ?? 0))}</strong></p>
+            </div>
+          )}
+          {pick.isError && <ErrorAlert error={pick.error} />}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={pick.isPending} onClick={() => setSelected(null)}>Annuler</Button>
+            <Button
+              disabled={!selected || pick.isPending}
+              onClick={() => selected && pick.mutate({ body: { equipe: auTrait, playerId: selected.playerId } })}
+            >
+              Confirmer le choix
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 // --- Équipes formées : Autorole et validation ---------------------------------------------------
 
-function EquipesFormees({ picker }: { picker: Picker }) {
+function EquipesFormees({ picker, onContinue }: { picker: Picker; onContinue: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <Teams picker={picker} />
       {picker.methode === "Roulette" && picker.variante && <RelancerRoulette variante={picker.variante} />}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Autorole picker={picker} />
-        <Valider />
-      </div>
+      <Button className="self-start" onClick={onContinue}>Continuer vers l'Autorole</Button>
+    </div>
+  );
+}
+
+function AutoroleEtape({ picker, onDone, onSkip }: { picker: Picker; onDone: () => void; onSkip: () => void }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Teams picker={picker} />
+      <Autorole picker={picker} onDone={onDone} />
+      <Button variant="outline" className="self-start" onClick={onSkip}>Passer l'Autorole</Button>
+    </div>
+  );
+}
+
+function SerieEtape({ picker, onEditAutorole }: { picker: Picker; onEditAutorole: () => void }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Teams picker={picker} />
+      <Button variant="outline" className="self-start" onClick={onEditAutorole}>Revenir à l'Autorole</Button>
+      <Valider />
     </div>
   );
 }
@@ -524,10 +602,15 @@ function RelancerRoulette({ variante }: { variante: NonNullable<Schemas["Roulett
   );
 }
 
-function Autorole({ picker }: { picker: Picker }) {
+function Autorole({ picker, onDone }: { picker: Picker; onDone: () => void }) {
   const [variante, setVariante] = useState<Schemas["AutoroleVariante"]>("HorsRole");
   const refresh = usePickerRefresh();
-  const autorole = $api.useMutation("post", "/soirees/open/picker/autorole", { onSuccess: () => refresh() });
+  const autorole = $api.useMutation("post", "/soirees/open/picker/autorole", {
+    onSuccess: async () => {
+      await refresh();
+      onDone();
+    },
+  });
   const done = [...picker.teamA, ...picker.teamB].some((p) => p.role);
 
   return (

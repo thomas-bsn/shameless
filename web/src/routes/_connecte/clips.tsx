@@ -14,6 +14,8 @@ import { dateHeureLabel } from "@/lib/dates";
 
 export const Route = createFileRoute("/_connecte/clips")({ component: Clips });
 
+const EMPTY_CLIPS: Schemas["ClipResponse"][] = [];
+
 function Clips() {
   const [sansGame, setSansGame] = useState(false);
   const [auteur, setAuteur] = useState("");
@@ -22,7 +24,7 @@ function Clips() {
   const [selected, setSelected] = useState<number | null>(null);
   const session = useQuery(sessionQuery);
   const clips = $api.useQuery("get", "/clips", { params: { query: { sansGame, auteur: auteur || undefined, soireeId: soireeId ? Number(soireeId) : undefined, page, pageSize: 30 } } });
-  const items = clips.data ?? [];
+  const items = clips.data ?? EMPTY_CLIPS;
   const selectedIndex = items.findIndex((c) => c.id === selected);
   const groups = useMemo(() => {
     const group = new Map<string, Map<string, Schemas["ClipResponse"][]>>();

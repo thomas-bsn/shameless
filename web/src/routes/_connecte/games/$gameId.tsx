@@ -135,7 +135,7 @@ function Equipe({
           <tbody className="divide-y divide-border/60">{players.map((p) => { const stats = p.stats; const damage = stats?.damageToChampions ?? null; const titles = [mvp.has(p.playerId) ? "MVP" : null, dofd.has(p.playerId) ? "DOFD" : null].filter(Boolean); return <tr key={p.playerId} className={cn("h-11", titles.length > 0 && "outline outline-1 outline-primary/70 outline-offset-[-2px]")}>
             <th scope="row" className="pr-2 font-medium"><span>{p.prenom}</span>{titles.map((title) => <Badge key={title} aria-label={`${title} ${p.prenom}`} className="ml-1" variant="outline">{title}</Badge>)}</th><td>{p.championId ?? "—"}{stats?.champLevel != null && <span className="ml-1 text-muted-foreground">· {stats.champLevel}</span>}</td>
             <td className="font-mono">{stats ? kdaLabel(stats) : "—"}</td><td className="font-mono">{stats ? valeur((stats.minionsKilled ?? 0) + (stats.neutralMinionsKilled ?? 0)) : "—"}</td>
-            <td className="font-mono">{valeur(stats?.goldEarned)}</td><td><span className="font-mono">{valeur(damage)}</span><span className="ml-2 inline-block h-1.5 rounded bg-primary/70 align-middle" style={{ width: `${damage == null ? 0 : Math.max(4, damage / maxDamage * 48)}px` }} /></td>
+            <td className="font-mono">{valeur(stats?.goldEarned)}</td><td><span className="font-mono">{valeur(damage)}</span>{damage != null && <progress className="ml-2 h-1.5 w-12 align-middle accent-primary" aria-label={`Dégâts de ${p.prenom}`} value={damage} max={maxDamage} />}</td>
             <td>{p.performance ? <Badge variant="outline">{p.performance.note}/100</Badge> : "—"}</td>
           </tr>; })}</tbody>
         </table>
