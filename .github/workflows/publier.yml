@@ -1,0 +1,200 @@
+name: Publier les images
+
+# Publie les quatre images Shameless (api, migrate, proxy, wizard) dans GHCR. Deux déclencheurs :
+#
+# 1. Automatique : à chaque CI verte sur main (workflow_run), calcule la version suivante
+#    (+patch par défaut ; +minor / +major si la PR mergée porte le label ou « [minor] » / « [major] »
+#    dans son titre, voir .github/scripts/prochaine-version.sh), pose le tag vX.Y.Z sur le commit
+#    testé par la CI et publie. Un commit déjà tagué est republié sans nouveau bump.
+# 2. Manuel : bouton « Run workflow » avec une version (0.2.0-rc.1 ou 0.2.0, sans le v). Publie
+#    avec ce tag exact et pose le tag git vX.Y.Z sur le commit de la branche choisie, sans calcul.
+#
+# Tags d'image : X.Y.Z, puis X.Y et latest pour les versions stables (jamais pour une préversion).
+# Aucun déclencheur sur « push: tags » : le tag posé ici ne relance rien.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version à publier, sans le v (ex. 0.2.0-rc.1 ou 0.2.0). Le tag git vX.Y.Z est posé sur le commit de la branche choisie."
+        required: true
+        type: string
+
+# Une publication à la fois, sans annuler celle en cours : deux merges rapprochés ne se disputent
+# pas le même numéro de version.
+concurrency:
+  group: publier-images
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Version et tag
+    # Manuel, ou push sur main dont la CI est verte (jamais une PR, jamais une CI en échec).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      version: ${{ steps.calcul.outputs.version }}
+      sha: ${{ steps.calcul.outputs.sha }}
+    steps:
+      # Auto : le commit testé par la CI, pas la pointe actuelle de main. Manuel : la branche choisie.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Calculer la version et poser le tag
+        id: calcul
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          REPO: ${{ github.repository }}
+          # Saisie utilisateur : par l'environnement, jamais interpolée dans le script.
+          VERSION_SAISIE: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+          if [[ $EVENT == workflow_dispatch ]]; then
+            version=$VERSION_SAISIE
+            if [[ ! $version =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Version invalide « $version » : attendu X.Y.Z ou X.Y.Z-rc.N, sans le v."
+              exit 1
+            fi
+            # Le tag existe déjà : accepté seulement s'il pointe sur ce commit (republication).
+            if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+              if [[ $(git rev-list -n 1 "v$version") != "$SHA" ]]; then
+                echo "::error::Le tag v$version existe déjà sur un autre commit."
+                exit 1
+              fi
+              echo "Le tag v$version est déjà sur ce commit : republication."
+            else
+              git tag -a "v$version" "$SHA" -m "Version $version"
+              git push origin "refs/tags/v$version"
+            fi
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Commit déjà tagué (relance du workflow) : on republie cette version, sans nouveau bump.
+          existant=$(git tag --points-at "$SHA" --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [[ -n $existant ]]; then
+            echo "Le commit porte déjà $existant : republication sans bump."
+            echo "version=${existant#v}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # PR mergée qui a produit ce commit (titre et labels).
+          pr=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+            --jq '[.[] | select(.merge_commit_sha == env.SHA)] | (.[0] // empty)')
+          [[ -n $pr ]] || pr='{}'
+          titre=$(jq -r '.title // ""' <<<"$pr")
+          labels=$(jq -r '[.labels[]?.name] | join("\n")' <<<"$pr")
+          echo "PR : ${titre:-aucune (push direct)} ; labels : ${labels//$'\n'/, }"
+
+          version=$(.github/scripts/prochaine-version.sh "$titre" "$labels")
+          echo "Version suivante : v$version"
+
+          git tag -a "v$version" "$SHA" -m "Version $version"
+          git push origin "refs/tags/v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: Image ${{ matrix.name }}
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            context: api
+            target: api
+          - name: migrate
+            context: api
+            target: migrate
+          - name: proxy
+            context: deploy/caddy
+            build-contexts: web=./web
+          - name: wizard
+            context: wizard
+            build-contexts: web=./web
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+
+      # La version passe par l'environnement, jamais interpolée dans le script.
+      - name: Versions à publier
+        id: versions
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          version=${VERSION#v}
+          if [[ ! $version =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version invalide : $VERSION"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "serie=${BASH_REMATCH[1]}.${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          if [[ -z ${BASH_REMATCH[4]} ]]; then
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags et labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # GHCR exige des minuscules : github.repository_owner peut en contenir.
+          images: ghcr.io/${{ github.repository_owner }}/shameless-${{ matrix.name }}
+          tags: |
+            type=raw,value=${{ steps.versions.outputs.version }}
+            type=raw,value=${{ steps.versions.outputs.serie }},enable=${{ steps.versions.outputs.stable }}
+            type=raw,value=latest,enable=${{ steps.versions.outputs.stable }}
+          flavor: |
+            latest=false
+
+      - name: Construire et publier
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          build-contexts: ${{ matrix.build-contexts }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
