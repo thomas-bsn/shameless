@@ -16,7 +16,9 @@ import {
   peutJouer,
   secondesRestantes,
   toursDeLaDraft,
+  VOIES,
   type TourDeLaDraft,
+  type Voie,
 } from "@/lib/draft-champions";
 import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
 import { problemStatus } from "@/lib/problem";
@@ -395,6 +397,7 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
 function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour }) {
   const tour = draft.tourCourant!;
   const [recherche, setRecherche] = useState("");
+  const [voie, setVoie] = useState<Voie | null>(null);
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
   const dejaJoues = new Set(draft.championsDejaJoues ?? []);
@@ -421,8 +424,22 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
         />
+        <div role="group" aria-label="Filtrer par voie" className="flex flex-wrap gap-2">
+          {[{ id: null, libelle: "Tous" }, ...VOIES].map((v) => (
+            <Button
+              key={v.libelle}
+              type="button"
+              size="sm"
+              variant={voie === v.id ? "default" : "outline"}
+              aria-pressed={voie === v.id}
+              onClick={() => setVoie(v.id)}
+            >
+              {v.libelle}
+            </Button>
+          ))}
+        </div>
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
-          {filtrerChampions(champions, recherche).map((c) => {
+          {filtrerChampions(champions, recherche, voie).map((c) => {
             const indisponible = pris.has(c.id);
             const dejaJoue = dejaJoues.has(c.id);
             return (
@@ -448,6 +465,11 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                     )}
                   </span>
                   <span className="w-full truncate text-center">{c.name}</span>
+                  {dejaJoue && (
+                    <Badge variant="outline" className="border-amber-500/60 px-1 py-0 text-[10px]">
+                      Joué
+                    </Badge>
+                  )}
                   {dejaJoue && <span className="sr-only">(déjà joué dans la Série)</span>}
                   {indisponible && <span className="sr-only">(indisponible)</span>}
                 </button>

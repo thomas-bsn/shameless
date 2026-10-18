@@ -26,6 +26,29 @@ public sealed class ClipsController : ControllerBase
             ? clips
             : Problem(statusCode: StatusCodes.Status404NotFound, detail: "Cette game n'existe pas.");
 
+    /// <summary>
+    /// Tous les clips, du plus récent au plus ancien publié, par pages. Filtres facultatifs : <c>auteur</c>
+    /// (un morceau du nom), <c>soiree</c> (un jour, <c>AAAA-MM-JJ</c>, dans le fuseau de l'Instance) et
+    /// <c>sansGame</c>.
+    /// </summary>
+    [HttpGet("clips")]
+    [ProducesResponseType<ClipsPage>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public async Task<ActionResult<ClipsPage>> Lister(
+        string? auteur, string? soiree, bool? sansGame, int page = 1, int taille = 50)
+    {
+        DateOnly? jour = null;
+        if (!string.IsNullOrWhiteSpace(soiree))
+        {
+            if (!DateOnly.TryParseExact(soiree, "yyyy-MM-dd", out var lu))
+                return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "La soirée est un jour au format AAAA-MM-JJ.");
+            jour = lu;
+        }
+        var result = await _clips.ListerAsync(auteur, jour, sansGame, page, taille);
+        if (!result.IsOk) return this.Refusal(result);
+        return result.Value!;
+    }
+
     /// <summary>Les clips sans Game, à rattacher à la main, du plus ancien au plus récent publié.</summary>
     [HttpGet("clips/sans-game")]
     [ProducesResponseType<List<ClipResponse>>(StatusCodes.Status200OK)]

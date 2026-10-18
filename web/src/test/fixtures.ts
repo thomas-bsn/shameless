@@ -26,5 +26,6 @@ export const player = (overrides: Partial<Schemas["PlayerDto"]> = {}): Schemas["
   peakSeason: null,
   peakLp: 0,
   currentCost: 3,
+  costEvolution: null,
   ...overrides,
 });

@@ -9,11 +9,12 @@ import {
   toursDeLaDraft,
 } from "./draft-champions";
 
-const champion = (id: string, name: string = id): Schemas["ChampionResponse"] => ({
+const champion = (id: string, name: string = id, voies: string[] = []): Schemas["ChampionResponse"] => ({
   id,
   key: id,
   name,
   imageUrl: `https://ddragon.example/${id}.png`,
+  voies,
 });
 
 const action = (numero: number, championId: string): Schemas["ActionDraftResponse"] => ({
@@ -148,5 +149,30 @@ describe("filtrerChampions", () => {
 
   it("cherche aussi dans l'identifiant Data Dragon", () => {
     expect(filtrerChampions(catalogue, "monkey").map((c) => c.id)).toEqual(["MonkeyKing"]);
+  });
+
+  describe("par voie", () => {
+    const parVoie = [
+      champion("Garen", "Garen", ["top"]),
+      champion("LeeSin", "Lee Sin", ["jungle"]),
+      champion("Teemo", "Teemo", ["top", "support"]),
+      champion("Zyra", "Zyra"),
+    ];
+
+    it("ne garde que les champions de la voie, ceux à plusieurs voies sous chacune", () => {
+      expect(filtrerChampions(parVoie, "", "top").map((c) => c.id)).toEqual(["Garen", "Teemo", "Zyra"]);
+      expect(filtrerChampions(parVoie, "", "support").map((c) => c.id)).toEqual(["Teemo", "Zyra"]);
+    });
+
+    it("garde un champion sans donnée de voie sous toutes les voies", () => {
+      for (const voie of ["top", "jungle", "mid", "adc", "support"] as const) {
+        expect(filtrerChampions(parVoie, "", voie).map((c) => c.id)).toContain("Zyra");
+      }
+    });
+
+    it("sans voie choisie, ne filtre rien ; combine avec la recherche", () => {
+      expect(filtrerChampions(parVoie, "", null)).toHaveLength(4);
+      expect(filtrerChampions(parVoie, "e", "top").map((c) => c.id)).toEqual(["Garen", "Teemo"]);
+    });
   });
 });

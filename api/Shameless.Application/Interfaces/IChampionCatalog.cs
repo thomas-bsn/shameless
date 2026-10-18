@@ -1,7 +1,21 @@
 namespace Shameless.Application.Interfaces;
 
-/// <summary>Un champion du catalogue : identifiant Data Dragon (ex. "LeeSin"), clé numérique Riot, nom affiché, image.</summary>
-public sealed record Champion(string Id, string Key, string Name, string ImageUrl);
+/// <summary>Les voies, nommées comme dans le client LoL.</summary>
+public static class Voies
+{
+    public const string Top = "top";
+    public const string Jungle = "jungle";
+    public const string Mid = "mid";
+    public const string Adc = "adc";
+    public const string Support = "support";
+}
+
+/// <summary>
+/// Un champion du catalogue : identifiant Data Dragon (ex. "LeeSin"), clé numérique Riot, nom affiché, image,
+/// et les voies où il se joue (<see cref="Voies"/>). Une liste vide veut dire « voie inconnue » : le champion
+/// reste proposé sous toutes les voies.
+/// </summary>
+public sealed record Champion(string Id, string Key, string Name, string ImageUrl, IReadOnlyList<string> Voies);
 
 /// <summary>Le catalogue des champions jouables, pour la Draft de champions. Données statiques publiques.</summary>
 public interface IChampionCatalog
