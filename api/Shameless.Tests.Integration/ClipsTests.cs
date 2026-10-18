@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -57,51 +56,6 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         Factory.Clock.SetUtcNow(Soir);
         return client;
-    }
-
-    [Fact]
-    public async Task Liste_et_Fond_excluent_les_clips_masques_et_restreignent_les_actions_aux_admins_connectes()
-    {
-        var admin = Factory.CreateAdminClient();
-        var client = OrganisateurLeSoir();
-        var depose = await ReadJsonAsync(await DeposerAsync(Clip("1300000000000000199", Soir.AddMinutes(40))));
-        var clipId = depose.GetProperty("clipId").GetInt32();
-
-        var dansLeFond = await ReadJsonAsync(await client.GetAsync("/clips/fond", Ct));
-        Assert.Contains(dansLeFond.EnumerateArray(), c => c.GetProperty("id").GetInt32() == clipId);
-
-        var refus = await client.PutAsJsonAsync($"/clips/{clipId}/fond", new { masque = true }, Ct);
-        Assert.Equal(HttpStatusCode.Forbidden, refus.StatusCode);
-        var profilAdmin = await admin.GetFromJsonAsync<JsonElement>("/auth/me", Ct);
-        Assert.True(profilAdmin.GetProperty("isAdmin").GetBoolean());
-        var masque = await admin.PutAsJsonAsync($"/clips/{clipId}/fond", new { masque = true }, Ct);
-        Assert.True(masque.StatusCode == HttpStatusCode.OK, $"Masquer le clip a renvoyé {(int)masque.StatusCode} : {await masque.Content.ReadAsStringAsync(Ct)}");
-        var fondApres = await ReadJsonAsync(await client.GetAsync("/clips/fond", Ct));
-        Assert.DoesNotContain(fondApres.EnumerateArray(), c => c.GetProperty("id").GetInt32() == clipId);
-        var fil = await ReadJsonAsync(await client.GetAsync("/clips", Ct));
-        Assert.Contains(fil.EnumerateArray(), c => c.GetProperty("id").GetInt32() == clipId && c.GetProperty("masqueDuFond").GetBoolean());
-
-        var anonyme = Factory.CreateClient();
-        Assert.Equal(HttpStatusCode.Unauthorized, (await anonyme.GetAsync("/clips/fond", Ct)).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await anonyme.PutAsJsonAsync($"/clips/{clipId}/fond", new { masque = false }, Ct)).StatusCode);
-    }
-
-    [Fact]
-    public async Task Le_fil_des_clips_expose_la_soiree_et_le_score_de_la_serie_de_la_game()
-    {
-        var client = OrganisateurLeSoir();
-        var serie = await CreateSerieAsync(client, format: 3);
-        var soireeId = (await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct))).GetProperty("soiree").GetProperty("id").GetInt32();
-        var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await DeposerAsync(Clip("1300000000000000299", Soir.AddMinutes(50)));
-
-        var clips = await ReadJsonAsync(await client.GetAsync("/clips", Ct));
-        var clip = Assert.Single(clips.EnumerateArray());
-
-        Assert.Equal(gameId, clip.GetProperty("gameId").GetInt32());
-        Assert.Equal(soireeId, clip.GetProperty("soireeId").GetInt32());
-        Assert.Equal(1, clip.GetProperty("scoreEquipeA").GetInt32());
-        Assert.Equal(0, clip.GetProperty("scoreEquipeB").GetInt32());
     }
 
     [Fact]
@@ -217,8 +171,6 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
         public Task<Clip?> GetByAttachmentIdAsync(long discordAttachmentId) => _reel.GetByAttachmentIdAsync(discordAttachmentId);
         public Task<List<Clip>> GetDeLaGameAsync(int gameId) => _reel.GetDeLaGameAsync(gameId);
         public Task<List<Clip>> GetSansGameAsync() => _reel.GetSansGameAsync();
-        public Task<List<Clip>> GetTousAsync(bool? sansGame, bool? masques, string? auteur, int? soireeId, int page, int pageSize) => _reel.GetTousAsync(sansGame, masques, auteur, soireeId, page, pageSize);
-        public Task<List<Clip>> GetEligiblesAuFondAsync(int take) => _reel.GetEligiblesAuFondAsync(take);
         public Task<bool> TrySaveChangesAsync() => throw new InvalidOperationException("La base est en panne.");
     }
 

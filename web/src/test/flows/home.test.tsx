@@ -5,7 +5,6 @@ import { user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const ouverte: Schemas["OpenSoireeResponse"] = {
-  pickerInterrompu: false,
   soiree: { id: 7, status: "Open", openedAt: "2026-10-16T19:00:00Z", closedAt: null, picker: null },
 };
 
@@ -20,7 +19,7 @@ describe("Accueil", () => {
   });
 
   it("invites a signed-in user to open a Soirée when none is open", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /health": new Response("Healthy"), "GET /soirees/open": { soiree: null, pickerInterrompu: false } });
+    mockApi({ "GET /auth/me": user(), "GET /health": new Response("Healthy"), "GET /soirees/open": { soiree: null } });
 
     renderApp("/");
 

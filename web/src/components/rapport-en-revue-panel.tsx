@@ -35,7 +35,7 @@ export function RapportEnRevuePanel({
 
   return (
     <section aria-labelledby="rapport-en-revue">
-      <Card className="border-amber-600/60 dark:border-amber-500/60">
+      <Card className="border-amber-500/60">
         <CardHeader>
           <CardTitle id="rapport-en-revue">Rapport de la game {numero} en revue</CardTitle>
         </CardHeader>

@@ -470,161 +470,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/clips": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    sansGame?: boolean;
-                    masques?: boolean;
-                    auteur?: string;
-                    soireeId?: number;
-                    page?: number;
-                    pageSize?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ClipResponse"][];
-                        "application/json": components["schemas"]["ClipResponse"][];
-                        "text/json": components["schemas"]["ClipResponse"][];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/clips/fond": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    take?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ClipResponse"][];
-                        "application/json": components["schemas"]["ClipResponse"][];
-                        "text/json": components["schemas"]["ClipResponse"][];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/clips/{id}/fond": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["FondClipRequest"];
-                    "text/json": components["schemas"]["FondClipRequest"];
-                    "application/*+json": components["schemas"]["FondClipRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ClipResponse"];
-                        "application/json": components["schemas"]["ClipResponse"];
-                        "text/json": components["schemas"]["ClipResponse"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/games/{gameId}/clips": {
         parameters: {
             query?: never;
@@ -4784,7 +4629,6 @@ export interface components {
             key: string;
             name: string;
             imageUrl: string;
-            classes: string[];
         };
         Classement5v5: {
             joueurs: components["schemas"]["LigneClassement5v5"][];
@@ -4814,14 +4658,6 @@ export interface components {
             contentType: string;
             /** Format: int64 */
             taille: number;
-            /** @default false */
-            masqueDuFond: boolean;
-            /** Format: int32 */
-            soireeId: null | number;
-            /** Format: int32 */
-            scoreEquipeA: null | number;
-            /** Format: int32 */
-            scoreEquipeB: null | number;
         };
         CodeCompanionResponse: {
             /** Format: int32 */
@@ -4855,8 +4691,6 @@ export interface components {
             victoires: number;
             /** Format: double */
             noteMoyenne: null | number;
-            /** Format: double */
-            evolution: null | number;
         };
         CreatePlayerRequest: {
             prenom: string;
@@ -4950,9 +4784,6 @@ export interface components {
             lastModified: null | string;
             entityTag: null | components["schemas"]["EntityTagHeaderValue"];
             enableRangeProcessing: boolean;
-        };
-        FondClipRequest: {
-            masque: boolean;
         };
         GameCandidateDuClip: {
             /** Format: int32 */
@@ -5173,8 +5004,6 @@ export interface components {
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
-            /** @default false */
-            pickerInterrompu: boolean;
         };
         PendingGameParticipant: {
             /** Format: int32 */

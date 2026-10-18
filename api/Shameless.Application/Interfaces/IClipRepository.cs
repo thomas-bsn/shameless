@@ -18,10 +18,6 @@ public interface IClipRepository
     /// <summary>Les clips sans Game, du plus ancien au plus récent publié.</summary>
     Task<List<Clip>> GetSansGameAsync();
 
-    Task<List<Clip>> GetTousAsync(bool? sansGame, bool? masques, string? auteur, int? soireeId, int page, int pageSize);
-
-    Task<List<Clip>> GetEligiblesAuFondAsync(int take);
-
     /// <summary>Enregistre ; false si une autre commande a déposé la même pièce jointe entre-temps.</summary>
     Task<bool> TrySaveChangesAsync();
 }

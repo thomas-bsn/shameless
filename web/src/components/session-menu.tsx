@@ -24,28 +24,22 @@ export function SessionMenu() {
   const user = session.data;
   if (!user) {
     return (
-      <Button asChild size="sm" className="w-full">
+      <Button asChild size="sm">
         <a href={loginUrl(location.href)}>Se connecter</a>
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <Link to="/compte" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+    <div className="flex items-center gap-2">
+      <Link to="/compte" className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
         <Avatar className="size-7">
           {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
           <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         {user.username}
       </Link>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="justify-start"
-        disabled={logout.isPending}
-        onClick={() => logout.mutate({})}
-      >
+      <Button variant="ghost" size="sm" disabled={logout.isPending} onClick={() => logout.mutate({})}>
         Déconnexion
       </Button>
     </div>

@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RankBadge } from "@/components/rank";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
 import { outcomeLabel } from "@/lib/series";
@@ -29,7 +27,6 @@ export const Route = createFileRoute("/_connecte/historique")({
 const toSearch = ({ year, month }: Month) => ({ annee: year, mois: month });
 
 function Historique() {
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const search = Route.useSearch();
   const shown: Month = search.annee && search.mois ? { year: search.annee, month: search.mois } : currentMonth();
   const previous = shiftMonth(shown, -1);
@@ -43,12 +40,6 @@ function Historique() {
 
   const series = history.data?.games ?? [];
   const gameCount = series.reduce((sum, s) => sum + s.games.length, 0);
-  const playedByDay = new Map<string, number>();
-  for (const s of series) for (const g of s.games) { const key = new Date(g.playedAt).toLocaleDateString("sv-SE"); playedByDay.set(key, (playedByDay.get(key) ?? 0) + 1); }
-  const monthKey = `${shown.year}-${String(shown.month).padStart(2, "0")}`;
-  const selection = selectedDay?.startsWith(`${monthKey}-`) ? selectedDay : null;
-  const daysInMonth = new Date(shown.year, shown.month, 0).getDate();
-  const firstOffset = (new Date(shown.year, shown.month - 1, 1).getDay() + 6) % 7;
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
@@ -76,24 +67,22 @@ function Historique() {
         <p className="py-12 text-center text-muted-foreground">Aucune game ce mois-ci.</p>
       ) : (
         <>
-          <section aria-label={`Calendrier ${monthLabel(shown)}`} className="rounded-xl border border-border/70 bg-card/60 p-4 backdrop-blur"><div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">{["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => <span key={day} className="py-2">{day}</span>)}{Array.from({ length: firstOffset }, (_, i) => <span key={`empty-${i}`} />)}{Array.from({ length: daysInMonth }, (_, i) => { const date = `${monthKey}-${String(i + 1).padStart(2, "0")}`; const count = playedByDay.get(date) ?? 0; return <Button key={date} type="button" variant={selection === date ? "default" : count ? "secondary" : "ghost"} aria-pressed={selection === date} disabled={!count} className="h-12 flex-col gap-0 p-1" onClick={() => setSelectedDay(selection === date ? null : date)}><span>{i + 1}</span>{count > 0 && <span className="text-[9px] opacity-75">{count} game{count === 1 ? "" : "s"}</span>}</Button>; })}</div><p className="mt-2 text-center text-xs text-muted-foreground">{selection ? `Games du ${new Date(`${selection}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}` : "Sélectionne un jour pour filtrer les soirées."}</p></section>
           <p className="text-sm text-muted-foreground">
             {series.length} série{series.length > 1 ? "s" : ""} · {gameCount} game{gameCount > 1 ? "s" : ""}
           </p>
-          {series.map((s) => {
-            const games = selection ? s.games.filter((g) => new Date(g.playedAt).toLocaleDateString("sv-SE") === selection) : s.games;
-            return games.length > 0 && <SeriesCard key={s.seriesId} series={s} games={games} />;
-          })}
+          {series.map((s) => (
+            <SeriesCard key={s.seriesId} series={s} />
+          ))}
         </>
       )}
     </div>
   );
 }
 
-function SeriesCard({ series, games = series.games }: { series: Schemas["SeriesHistoryResponse"]; games?: Schemas["GameHistoryResponse"][] }) {
+function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
   // seriesId 0 : games enregistrées sans Série.
   const title = series.seriesId === 0 ? "Games hors série" : `Série BO${series.format}`;
-  const score = seriesScore(games);
+  const score = seriesScore(series.games);
 
   return (
     <article aria-label={title}>
@@ -117,7 +106,7 @@ function SeriesCard({ series, games = series.games }: { series: Schemas["SeriesH
         </CardHeader>
         <CardContent>
           <ol className="flex flex-col gap-4">
-            {games.map((g, index) => (
+            {series.games.map((g, index) => (
               <GameRow key={g.id} game={g} index={index + 1} />
             ))}
           </ol>
@@ -187,7 +176,7 @@ function TeamColumn({
   const cost = players.reduce((sum, p) => sum + (p.cost ?? 0), 0);
 
   return (
-    <div role="group" aria-label={label} className={cn("flex flex-col gap-2 p-3", won && "bg-emerald-600/5 dark:bg-emerald-400/5")}>
+    <div role="group" aria-label={label} className={cn("flex flex-col gap-2 p-3", won && "bg-emerald-400/5")}>
       <div className="flex items-center justify-between text-xs font-semibold">
         <span className={sideTextClass(side)}>{label}</span>
         <span className="text-muted-foreground">{cost} pts</span>

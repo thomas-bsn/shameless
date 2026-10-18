@@ -134,7 +134,7 @@ function CapitaineForm({ series, equipe, onDesigne }: { series: Series; equipe: 
         Équipe {equipe} :
         {capitaine ? (
           <span className="flex items-center gap-1">
-            <Crown className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />
+            <Crown className="size-4 text-amber-400" aria-hidden />
             {capitaine.prenom}
           </span>
         ) : (

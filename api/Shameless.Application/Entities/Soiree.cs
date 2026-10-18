@@ -7,7 +7,6 @@ public class Soiree
     public SoireeStatus Status { get; set; } = SoireeStatus.Open;
     public DateTime OpenedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
-    public bool FermetureAutomatique { get; set; }
 
     public ICollection<BestOfSeries> Series { get; set; } = new List<BestOfSeries>();
 

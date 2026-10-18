@@ -15,10 +15,6 @@ const clip = (id: number, overrides: Partial<Schemas["ClipResponse"]> = {}): Sch
   nomFichier: "pentakill.mp4",
   contentType: "video/mp4",
   taille: 12_000_000,
-  masqueDuFond: false,
-  soireeId: id === 42 ? 7 : null,
-  scoreEquipeA: id === 42 ? 1 : null,
-  scoreEquipeB: id === 42 ? 0 : null,
   ...overrides,
 });
 
@@ -31,46 +27,10 @@ const candidate = (gameId: number, gameNumber: number, lanceeLe: string): Schema
 });
 
 describe("Clips à rattacher", () => {
-  it("range les clips par Soirée puis Game et montre le score de la Série", async () => {
-    mockApi({
-      "GET /auth/me": user(),
-      "GET /clips/fond": [],
-      "GET /clips": [
-        clip(7, { gameId: 42, soireeId: 9, scoreEquipeA: 2, scoreEquipeB: 1 }),
-        clip(8, { gameId: 43, soireeId: 9, scoreEquipeA: 2, scoreEquipeB: 1 }),
-      ],
-    });
-
-    renderApp("/clips");
-
-    const soiree = await screen.findByRole("region", { name: "Soirée #9" });
-    expect(within(soiree).getByRole("heading", { name: "Game #42 · 2–1" })).toBeInTheDocument();
-    expect(within(soiree).getByRole("heading", { name: "Game #43 · 2–1" })).toBeInTheDocument();
-  });
-
-  it("permet à un Administrateur de masquer un clip du Fond depuis sa carte", async () => {
-    const api = mockApi({
-      "GET /auth/me": user({ isAdmin: true }),
-      "GET /clips/fond": [],
-      "GET /clips": [clip(7)],
-      "PUT /clips/7/fond": json(clip(7, { masqueDuFond: true })),
-    });
-
-    renderApp("/clips");
-
-    const carte = await screen.findByRole("article", { name: "pentakill.mp4" });
-    await userEvent.click(within(carte).getByRole("switch", { name: "Dans le Fond" }));
-
-    const put = api.mock.calls.map(([request]) => request).find((request) => request.method === "PUT");
-    expect(await put?.clone().json()).toEqual({ masque: true });
-  });
-
   it("liste les clips sans Game et en rattache un à une des Games proposées", async () => {
     let sansGame = [clip(7), clip(8, { nomFichier: "baron.webm", auteurNom: "Léa" })];
     const api = mockApi({
       "GET /auth/me": user(),
-      "GET /clips/fond": [],
-      "GET /clips": () => json(sansGame),
       "GET /clips/sans-game": () => json(sansGame),
       "GET /clips/7/games-candidates": [
         candidate(43, 2, "2026-10-16T20:40:00Z"),
@@ -86,7 +46,7 @@ describe("Clips à rattacher", () => {
 
     renderApp("/clips");
 
-    expect(await screen.findByRole("heading", { name: "Clips" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Clips à rattacher" })).toBeInTheDocument();
     const premier = await screen.findByRole("article", { name: "pentakill.mp4" });
     expect(premier.querySelector("video")).toHaveAttribute("src", "/api/clips/7/fichier");
     expect(within(premier).getByText(/Sam/)).toBeInTheDocument();
@@ -104,8 +64,6 @@ describe("Clips à rattacher", () => {
     let sansGame = [clip(7)];
     const api = mockApi({
       "GET /auth/me": user(),
-      "GET /clips/fond": [],
-      "GET /clips": () => json(sansGame),
       "GET /clips/sans-game": () => json(sansGame),
       "GET /clips/7/games-candidates": [],
       "PUT /clips/7/game": () => {
@@ -120,17 +78,17 @@ describe("Clips à rattacher", () => {
     await userEvent.type(within(premier).getByLabelText("N° de Game"), "12");
     await userEvent.click(within(premier).getByRole("button", { name: "Rattacher" }));
 
-    expect(await screen.findByText(/Aucun clip pour l'instant/)).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun clip à rattacher/)).toBeInTheDocument();
     const put = api.mock.calls.map(([r]) => r).find((r) => r.method === "PUT");
     expect(await put?.clone().json()).toEqual({ gameId: 12 });
   });
 
   it("est dans la navigation", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /clips/fond": [], "GET /clips": [], "GET /clips/sans-game": [] });
+    mockApi({ "GET /auth/me": user(), "GET /clips/sans-game": [] });
 
     renderApp("/clips");
 
     expect(await screen.findByRole("link", { name: "Clips" })).toHaveAttribute("href", "/clips");
-    expect(await screen.findByText(/Aucun clip pour l'instant/)).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun clip à rattacher/)).toBeInTheDocument();
   });
 });

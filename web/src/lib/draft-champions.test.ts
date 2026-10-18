@@ -14,7 +14,6 @@ const champion = (id: string, name: string = id): Schemas["ChampionResponse"] =>
   key: id,
   name,
   imageUrl: `https://ddragon.example/${id}.png`,
-  classes: [],
 });
 
 const action = (numero: number, championId: string): Schemas["ActionDraftResponse"] => ({

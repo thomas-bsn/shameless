@@ -48,12 +48,6 @@ clip publié après minuit. N'importe quelle Game reste choisissable par son num
 `PUT /clips/{id}/game` rattache ou corrige (rattachement `manuel`), `DELETE /clips/{id}/game`
 retire : le clip redevient sans Game. Le dernier qui enregistre l'emporte.
 
-**Fond (spec #84).** Chaque clip porte `masque_du_fond` (faux par défaut). Un
-Administrateur peut le modifier ; un clip masqué reste dans le fil et sur sa Game, mais
-est exclu de `GET /clips/fond`. Cette route et `GET /clips` exigent une session. Le fil
-est paginé et peut filtrer les clips sans Game et les clips masqués. Les clips du Fond
-sont tirés au hasard côté serveur.
-
 Alternatives écartées :
 - Garder le lien Discord : il expire, et la spec exclut d'héberger les vidéos ailleurs
   que sur l'Instance.

@@ -25,7 +25,7 @@ public sealed class SoireesController : ControllerBase
     public async Task<ActionResult<OpenSoireeResponse>> GetOpen()
     {
         var soiree = await _soireeService.GetOpenAsync();
-        if (soiree == null) return new OpenSoireeResponse(null, await _soireeService.PickerInterrompuAsync());
+        if (soiree == null) return new OpenSoireeResponse(null);
 
         return new OpenSoireeResponse(SoireeResponse.From(soiree, await _pickerService.GetAsync(soiree.Id)));
     }

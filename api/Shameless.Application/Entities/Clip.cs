@@ -48,9 +48,6 @@ public class Clip
     /// </summary>
     public string? Rattachement { get; set; }
 
-    /// <summary>Un clip masqué reste accessible dans la liste et sa Game, mais ne joue plus dans le Fond.</summary>
-    public bool MasqueDuFond { get; set; }
-
     /// <summary>Le rattachement effectif : null dès que le clip n'a plus de Game.</summary>
     public string? RattachementEffectif => GameId == null ? null : Rattachement;
 

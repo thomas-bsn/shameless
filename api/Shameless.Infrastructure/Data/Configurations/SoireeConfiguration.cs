@@ -19,7 +19,6 @@ public sealed class SoireeConfiguration : IEntityTypeConfiguration<Soiree>
                   value => value == "open" ? SoireeStatus.Open : SoireeStatus.Closed);
         entity.Property(e => e.OpenedAt).HasColumnType("timestamp without time zone");
         entity.Property(e => e.ClosedAt).HasColumnType("timestamp without time zone");
-        entity.Property(e => e.FermetureAutomatique).HasDefaultValue(false);
 
         // Au plus une Soirée ouverte par instance, garanti par la base.
         entity.HasIndex(e => e.Status)

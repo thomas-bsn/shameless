@@ -81,10 +81,10 @@ function SerieView({ series }: { series: Series }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{outcomeLabel(series)}</p>
         </div>
-        <p aria-label="Score" className="text-3xl font-bold chiffres">
-          <span className={cn(series.winningTeam === "A" && "text-emerald-600 dark:text-emerald-400")}>A {series.teamAWins}</span>
+        <p aria-label="Score" className="text-3xl font-bold tabular-nums">
+          <span className={cn(series.winningTeam === "A" && "text-emerald-400")}>A {series.teamAWins}</span>
           <span className="mx-3 text-muted-foreground">–</span>
-          <span className={cn(series.winningTeam === "B" && "text-emerald-600 dark:text-emerald-400")}>{series.teamBWins} B</span>
+          <span className={cn(series.winningTeam === "B" && "text-emerald-400")}>{series.teamBWins} B</span>
         </p>
       </div>
 

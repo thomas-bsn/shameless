@@ -1,72 +1,49 @@
-/* Design « Verre nuit » : palette sombre par défaut (classe .dark sur <html>), thème clair au choix,
-   Geist embarquée avec le front et surfaces en verre dépoli. */
 @import "tailwindcss";
-
-@import "@fontsource/geist-sans/latin-400.css";
-@import "@fontsource/geist-sans/latin-500.css";
-@import "@fontsource/geist-sans/latin-600.css";
-@import "@fontsource/geist-sans/latin-700.css";
-@import "@fontsource/geist-mono/latin-400.css";
-@import "@fontsource/geist-mono/latin-500.css";
-@import "@fontsource/geist-mono/latin-600.css";
-
-.fond { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 20% 15%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 48%), linear-gradient(145deg, var(--background), color-mix(in srgb, var(--primary) 7%, var(--background))); }
-.fond-video { position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px); object-fit: cover; filter: blur(12px); opacity: .24; }
-.fond-credit { position: absolute; right: 1rem; bottom: 1rem; display: flex; align-items: center; gap: .5rem; border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); border-radius: .75rem; padding: .35rem .5rem .35rem .75rem; background: color-mix(in srgb, var(--background) 78%, transparent); color: var(--foreground); font-size: .75rem; backdrop-filter: blur(12px); pointer-events: auto; }
-@media (max-width: 767px), (prefers-reduced-motion: reduce) { .fond-video, .fond-credit { display: none; } }
 
 @custom-variant dark (&:is(.dark *));
 
-/* Thème clair : le verre se pose sur un fond papier froid, l'accent violet reste le même. */
+/* Thème shadcn/ui (zinc), sombre par défaut : la classe .dark est posée sur <html>. */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.97 0.008 285);
-  --foreground: oklch(0.24 0.03 285);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 285);
+  --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 285);
-  --primary: oklch(0.52 0.23 293);
-  --primary-foreground: oklch(0.99 0.005 293);
-  --secondary: oklch(0.93 0.015 293);
-  --secondary-foreground: oklch(0.3 0.05 293);
-  --muted: oklch(0.94 0.01 285);
-  --muted-foreground: oklch(0.5 0.03 285);
-  --accent: oklch(0.93 0.02 293);
-  --accent-foreground: oklch(0.3 0.05 293);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.24 0.03 285 / 12%);
-  --input: oklch(0.24 0.03 285 / 16%);
-  --ring: oklch(0.52 0.23 293 / 55%);
-  --verre-fond: oklch(1 0 0 / 72%);
-  --verre-bord: oklch(0.24 0.03 285 / 14%);
-  --verre-ombre: 0 12px 32px oklch(0.3 0.05 285 / 10%);
-  --verre-flou: 12px;
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
 }
 
-/* Thème sombre : la nuit, seul le violet sort du bleu nuit. */
 .dark {
-  --background: oklch(0.17 0.025 285);
-  --foreground: oklch(0.97 0.01 285);
-  --card: oklch(0.22 0.03 285);
-  --card-foreground: oklch(0.97 0.01 285);
-  --popover: oklch(0.22 0.03 285);
-  --popover-foreground: oklch(0.97 0.01 285);
-  --primary: oklch(0.68 0.2 293);
-  --primary-foreground: oklch(0.16 0.03 293);
-  --secondary: oklch(0.28 0.035 285);
-  --secondary-foreground: oklch(0.97 0.01 285);
-  --muted: oklch(0.28 0.035 285);
-  --muted-foreground: oklch(0.74 0.02 285);
-  --accent: oklch(1 0 0 / 8%);
-  --accent-foreground: oklch(0.97 0.01 285);
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 14%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.68 0.2 293 / 60%);
-  --verre-fond: oklch(0.21 0.03 285 / 62%);
-  --verre-bord: oklch(1 0 0 / 12%);
-  --verre-ombre: 0 12px 32px oklch(0 0 0 / 40%);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
 }
 
 @theme inline {
@@ -74,8 +51,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -94,10 +69,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-verre-fond: var(--verre-fond);
-  --color-verre-bord: var(--verre-bord);
-  --shadow-verre: var(--verre-ombre);
-  --blur-verre: var(--verre-flou);
 }
 
 @layer base {
@@ -107,16 +78,4 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
-}
-
-/* Les chiffres (scores, costs, K/D/A) : Geist Mono et chiffres alignés. */
-@utility chiffres {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Cible tactile minimale de 44 px, pour les commandes des écrans étroits. */
-@utility cible-tactile {
-  min-height: 2.75rem;
-  min-width: 2.75rem;
 }

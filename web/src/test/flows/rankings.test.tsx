@@ -57,21 +57,4 @@ describe("Classements", () => {
 
     expect(await screen.findByRole("tab", { name: "Cost", selected: true })).toBeInTheDocument();
   });
-
-  it("shows cost tiers and API supplied movement on the cost podium and list", async () => {
-    const fetch = mockApi({
-      "GET /auth/me": user(), "GET /players": players,
-      "GET /players/1/cost/historique": { playerId: 1, mois: [{ mois: "2026-08-01", cost: 1, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: null }, { mois: "2026-09-01", cost: 1.5, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: 0.5 }] },
-      "GET /players/2/cost/historique": { playerId: 2, mois: [{ mois: "2026-08-01", cost: 3, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: null }, { mois: "2026-09-01", cost: 3, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: 0 }] },
-      "GET /players/3/cost/historique": { playerId: 3, mois: [{ mois: "2026-08-01", cost: 6, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: null }, { mois: "2026-09-01", cost: 5.5, costDeDepart: null, gamesTerminees: 5, victoires: 2, noteMoyenne: 55, evolution: -0.5 }] },
-      "GET /players/4/cost/historique": { playerId: 4, mois: [] },
-    });
-    renderApp("/classements?vue=cost");
-    expect(await screen.findByRole("region", { name: "Tier SS" })).toBeInTheDocument();
-    expect(fetch.mock.calls.some(([request]) => (request as Request).url.endsWith("/api/players/1/cost/historique"))).toBe(true);
-    expect(await screen.findAllByRole("img", { name: "Évolution du cost plus 0.5" })).toHaveLength(2);
-    expect(screen.getAllByRole("img", { name: "Évolution du cost stable 0.0" })).toHaveLength(2);
-    expect(screen.getAllByRole("img", { name: "Évolution du cost moins 0.5" })).toHaveLength(2);
-    expect(within(screen.getByRole("region", { name: "Tier SS" })).getAllByText("SS")).toHaveLength(2);
-  });
 });
