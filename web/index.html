@@ -6,6 +6,14 @@
     <title>Shameless</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // Applique le thème choisi avant le premier rendu, pour ne pas clignoter : même clé que lib/theme.ts.
+      try {
+        if (localStorage.getItem("shameless-theme") === "light") document.documentElement.classList.remove("dark");
+      } catch {
+        // Stockage refusé (mode privé) : le thème sombre par défaut reste en place.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

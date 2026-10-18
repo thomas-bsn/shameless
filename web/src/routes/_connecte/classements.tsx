@@ -83,7 +83,7 @@ function SoloQRanking({ players }: { players: Schemas["PlayerDto"][] }) {
                 rank={rank}
                 tag={
                   rank.isPeak && (
-                    <Badge variant="outline" className="text-[10px] text-amber-400">
+                    <Badge variant="outline" className="text-[10px] text-amber-600 dark:text-amber-400">
                       Peak{p.peakSeason && ` ${p.peakSeason}`}
                     </Badge>
                   )

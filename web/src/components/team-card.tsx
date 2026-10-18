@@ -54,7 +54,7 @@ export function TeamCard({
                     </Badge>
                   )}
                   {p.prenom}
-                  {p.playerId === capitaine && <Crown aria-label="Capitaine" className="size-4 text-amber-400" />}
+                  {p.playerId === capitaine && <Crown aria-label="Capitaine" className="size-4 text-amber-600 dark:text-amber-400" />}
                 </span>
                 <span className="flex items-center gap-2">
                   <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />

@@ -246,7 +246,7 @@ function TempsRestant({ tour }: { tour: Schemas["TourCourantResponse"] }) {
   return (
     <span
       aria-label="Temps restant"
-      className={cn("flex items-center gap-2 text-2xl font-bold tabular-nums", secondes <= 10 && "text-destructive")}
+      className={cn("flex items-center gap-2 text-2xl font-bold chiffres", secondes <= 10 && "text-destructive")}
     >
       <Timer className="size-5" />
       {secondes} s
@@ -352,7 +352,7 @@ function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<s
             {championIds.map((id) => {
               const champion = parId.get(id);
               return (
-                <li key={id} className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm">
+                <li key={id} className="flex items-center gap-2 rounded-md border border-amber-600/60 dark:border-amber-500/60 py-1 pr-2 pl-1 text-sm">
                   {champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}
                   <span>{champion?.name ?? id}</span>
                 </li>
@@ -434,7 +434,7 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                   onClick={() => setChoisi(c.id)}
                   className={cn(
                     "flex w-full flex-col items-center gap-1 rounded-md border p-1 text-xs hover:bg-accent disabled:cursor-not-allowed disabled:opacity-30 disabled:grayscale",
-                    dejaJoue && "border-amber-500/60",
+                    dejaJoue && "border-amber-600/60 dark:border-amber-500/60",
                     choisi === c.id && "border-primary bg-accent",
                   )}
                 >
@@ -443,7 +443,7 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                     {dejaJoue && (
                       <History
                         aria-hidden
-                        className="absolute -top-1 -right-1 size-4 rounded-full bg-background text-amber-500"
+                        className="absolute -top-1 -right-1 size-4 rounded-full bg-background text-amber-600 dark:text-amber-500"
                       />
                     )}
                   </span>
