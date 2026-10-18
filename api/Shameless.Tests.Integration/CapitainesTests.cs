@@ -95,6 +95,21 @@ public class CapitainesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_capitaine_d_une_equipe_ne_peut_pas_etre_celui_de_l_autre_equipe()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        await ReadJsonAsync(await DesignerAsync(client, serie.SeriesId, "B", new { designation = "Manuel", playerId = serie.TeamB[0] }));
+
+        var response = await DesignerAsync(client, serie.SeriesId, "A", new { designation = "Manuel", playerId = serie.TeamB[0] });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var lue = await SerieAsync(client, serie.SeriesId);
+        Assert.Null(Capitaine(lue, "A"));
+        Assert.Equal(serie.TeamB[0], Capitaine(lue, "B"));
+    }
+
+    [Fact]
     public async Task Designer_le_capitaine_d_une_serie_inconnue_repond_404()
     {
         var client = Factory.CreateSignedInClient();

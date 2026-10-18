@@ -6979,6 +6979,7 @@
       "JoueurInattenduResponse": {
         "required": [
           "puuid",
+          "riotId",
           "side",
           "championId",
           "joueur"
@@ -6987,6 +6988,12 @@
         "properties": {
           "puuid": {
             "type": "string"
+          },
+          "riotId": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "side": {
             "type": "string"

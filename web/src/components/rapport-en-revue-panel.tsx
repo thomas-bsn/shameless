@@ -62,7 +62,7 @@ export function RapportEnRevuePanel({
               <Ecart titre="Joueurs détectés inattendus">
                 {revue.inattendus.map((j) => (
                   <li key={j.puuid} className="flex flex-col">
-                    <span className="truncate font-medium">{j.joueur?.prenom ?? j.puuid}</span>
+                    <span className="truncate font-medium">{j.joueur?.prenom ?? j.riotId ?? j.puuid}</span>
                     <span className="text-xs text-muted-foreground">
                       <span className={sideTextClass(j.side)}>{sideLabel(j.side)}</span> ·{" "}
                       <span>{nomDuChampion(j.championId)}</span>
