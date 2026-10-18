@@ -54,6 +54,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: "Top",
       stats: { kills: 9, deaths: 2, assists: 7 } as Schemas["StatsDuParticipant"],
       performance: { note: 86, role: "Top", sourceDuRole: "Position", composantes: [] } as unknown as Schemas["NoteDePerformance"],
+      mvp: false,
+      dofd: false,
     },
     {
       gameId: 30,
@@ -66,6 +68,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: null,
       stats: null,
       performance: null,
+      mvp: false,
+      dofd: false,
     },
   ],
   titres: { mvp: 3, dofd: 1 },

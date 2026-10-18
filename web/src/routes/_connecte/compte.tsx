@@ -234,12 +234,19 @@ function JoueurLie({ player }: { player: Player }) {
   const [changement, setChangement] = useState(false);
   const [delier, setDelier] = useState(false);
   const [peakOuvert, setPeakOuvert] = useState(false);
+  const [effacerPeak, setEffacerPeak] = useState(false);
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: myPlayerQuery.queryKey });
   const unlink = $api.useMutation("delete", "/players/link", {
     onSuccess: async () => {
       await refresh();
       setDelier(false);
+    },
+  });
+  const peakEfface = $api.useMutation("delete", "/players/peak", {
+    onSuccess: async () => {
+      await refresh();
+      setEffacerPeak(false);
     },
   });
   const peak = $api.useMutation("post", "/players/peak", {
@@ -296,6 +303,11 @@ function JoueurLie({ player }: { player: Player }) {
                   Régler mon peak
                 </Button>
               )}
+              {!peakOuvert && aUnPeak && (
+                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setEffacerPeak(true)}>
+                  Effacer mon peak
+                </Button>
+              )}
             </dd>
           </div>
         </dl>
@@ -310,6 +322,27 @@ function JoueurLie({ player }: { player: Player }) {
         )}
       </Bloc>
       {changement && <FormulaireDeLiaison joueurLieId={player.id} onLie={() => setChangement(false)} />}
+      <Dialog open={effacerPeak} onOpenChange={setEffacerPeak}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Effacer mon peak ?</DialogTitle>
+            <DialogDescription>Ton peak manuel disparaît. Tu pourras en saisir un autre ensuite.</DialogDescription>
+          </DialogHeader>
+          {peakEfface.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>{problemMessage(peakEfface.error)}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEffacerPeak(false)}>
+              Annuler
+            </Button>
+            <Button variant="destructive" disabled={peakEfface.isPending} onClick={() => peakEfface.mutate({})}>
+              Effacer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={delier} onOpenChange={setDelier}>
         <DialogContent>
           <DialogHeader>

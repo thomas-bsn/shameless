@@ -7454,7 +7454,9 @@
           "championId",
           "role",
           "stats",
-          "performance"
+          "performance",
+          "mvp",
+          "dofd"
         ],
         "type": "object",
         "properties": {
@@ -7521,6 +7523,14 @@
                 "$ref": "#/components/schemas/NoteDePerformance"
               }
             ]
+          },
+          "mvp": {
+            "type": "boolean",
+            "default": false
+          },
+          "dofd": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

@@ -5866,6 +5866,10 @@ export interface components {
             role: null | components["schemas"]["Role"];
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+            /** @default false */
+            mvp: boolean;
+            /** @default false */
+            dofd: boolean;
         };
         GameDeLaListeDeClips: {
             /** Format: int32 */

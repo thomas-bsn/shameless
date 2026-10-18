@@ -299,4 +299,29 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(1, (await TitresAsync(serie.TeamA[1])).GetProperty("dofd").GetInt32());
         Assert.Equal(0, (await TitresAsync(serie.TeamA[4])).GetProperty("mvp").GetInt32());
     }
+
+    [Fact]
+    public async Task La_fiche_marque_les_games_ou_le_joueur_a_ete_mvp_ou_dofd_une_fois_les_votes_clos()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 5);
+        await LierADiscordAsync(serie.TeamA[0], DiscordA1);
+        var game1 = await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await ReadJsonAsync(await VoterAsync(game1, DiscordA1, mvp: serie.TeamB[2], dofd: serie.TeamB[1]));
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
+        var game2 = await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await ReadJsonAsync(await VoterAsync(game2, DiscordA1, mvp: serie.TeamB[2], dofd: serie.TeamB[1]));
+
+        async Task<Dictionary<int, (bool Mvp, bool Dofd)>> GamesAsync(int playerId) =>
+            (await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/fiche", Ct))).GetProperty("games").EnumerateArray()
+            .ToDictionary(g => g.GetProperty("gameId").GetInt32(), g => (g.GetProperty("mvp").GetBoolean(), g.GetProperty("dofd").GetBoolean()));
+
+        // La game 1 est close, la game 2 a encore ses votes ouverts : son titre n'est pas dévoilé.
+        var b3 = await GamesAsync(serie.TeamB[2]);
+        Assert.Equal((true, false), b3[game1]);
+        Assert.Equal((false, false), b3[game2]);
+        var b2 = await GamesAsync(serie.TeamB[1]);
+        Assert.Equal((false, true), b2[game1]);
+        Assert.Equal((false, false), (await GamesAsync(serie.TeamA[4]))[game1]);
+    }
 }
