@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Clips;
 using Shameless.Application.Clips;
@@ -96,6 +98,27 @@ public sealed class ClipsController : ControllerBase
     public async Task<ActionResult<ClipResponse>> Detacher(int id)
     {
         var result = await _clips.DetacherAsync(id);
+        if (!result.IsOk) return this.Refusal(result);
+        return result.Value!;
+    }
+
+    /// <summary>Masque le clip du Fond (Administrateur) : il reste dans la liste des clips et sur sa Game.</summary>
+    [HttpPut("clips/{id:int}/masque-du-fond")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<MasqueDuFondDuClip>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<MasqueDuFondDuClip>> Masquer(int id) => await Masquer(id, true);
+
+    /// <summary>Réaffiche le clip dans le Fond (Administrateur).</summary>
+    [HttpDelete("clips/{id:int}/masque-du-fond")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<MasqueDuFondDuClip>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<MasqueDuFondDuClip>> Reafficher(int id) => await Masquer(id, false);
+
+    private async Task<ActionResult<MasqueDuFondDuClip>> Masquer(int id, bool masque)
+    {
+        var result = await _clips.MasquerDuFondAsync(id, masque);
         if (!result.IsOk) return this.Refusal(result);
         return result.Value!;
     }

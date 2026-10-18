@@ -161,6 +161,18 @@ public sealed class ClipsService
         return await EnregistrerAsync(clip);
     }
 
+    /// <summary>Masque le clip du Fond (<paramref name="masque"/> vrai) ou le réaffiche. Idempotent.</summary>
+    public async Task<CommandResult<MasqueDuFondDuClip>> MasquerDuFondAsync(int clipId, bool masque)
+    {
+        if (await _clips.GetAsync(clipId) is not { } clip)
+            return CommandResult<MasqueDuFondDuClip>.NotFound("Ce clip n'existe pas.");
+
+        clip.MasqueDuFond = masque;
+        return await _clips.TrySaveChangesAsync()
+            ? CommandResult<MasqueDuFondDuClip>.Ok(new MasqueDuFondDuClip(clip.Id, clip.MasqueDuFond))
+            : CommandResult<MasqueDuFondDuClip>.Conflict("Le clip n'a pas pu être mis à jour : réessayez.");
+    }
+
     private async Task<CommandResult<ClipResponse>> EnregistrerAsync(Clip clip) =>
         await _clips.TrySaveChangesAsync()
             ? CommandResult<ClipResponse>.Ok(ClipResponse.From(clip))

@@ -1,14 +1,17 @@
 import { ChevronLeftIcon, ChevronRightIcon, CircleCheckIcon, PlayIcon, VideoIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { ClipVideo } from "@/components/clip-video";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
-import { RattacherClip, RetirerClip } from "@/components/rattachement-de-clip";
+import { RattacherClip, RetirerClip, useRelireLesClips } from "@/components/rattachement-de-clip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dateHeureLabel } from "@/lib/dates";
+import { sessionQuery } from "@/lib/session";
 import { grouperParSoiree, libelleDeGame, soireeLabel, tailleLabel } from "@/lib/clips";
 
 type Clip = Schemas["ClipDeLaListe"];
@@ -186,6 +189,7 @@ function Lecteur({
           </DialogDescription>
         </DialogHeader>
         <ClipVideo key={clip.id} clipId={clip.id} />
+        <InterrupteurDuFond clip={clip} />
         <DialogFooter className="sm:justify-between">
           <Button size="icon" variant="outline" aria-label="Clip précédent" disabled={!precedent} onClick={() => precedent && onChoisir(precedent)}>
             <ChevronLeftIcon />
@@ -209,6 +213,33 @@ function Lecteur({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** L'interrupteur « Dans le Fond / Masqué » d'un clip, réservé aux Administrateurs. */
+function InterrupteurDuFond({ clip }: { clip: Clip }) {
+  const session = useQuery(sessionQuery);
+  const relire = useRelireLesClips();
+  const masquer = $api.useMutation("put", "/clips/{id}/masque-du-fond", { onSuccess: relire });
+  const reafficher = $api.useMutation("delete", "/clips/{id}/masque-du-fond", { onSuccess: relire });
+  if (!session.data?.isAdmin) return null;
+
+  const enCours = masquer.isPending || reafficher.isPending;
+  const basculer = (dansLeFond: boolean) => {
+    const params = { params: { path: { id: clip.id } } };
+    if (dansLeFond) reafficher.mutate(params);
+    else masquer.mutate(params);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-sm">
+        <Switch aria-label="Clip dans le Fond" checked={!clip.masqueDuFond} disabled={enCours} onCheckedChange={basculer} />
+        <span>{clip.masqueDuFond ? "Masqué" : "Dans le Fond"}</span>
+      </div>
+      {masquer.isError && <ErrorAlert error={masquer.error} />}
+      {reafficher.isError && <ErrorAlert error={reafficher.error} />}
+    </div>
   );
 }
 

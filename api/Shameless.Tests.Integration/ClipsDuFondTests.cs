@@ -92,4 +92,54 @@ public class ClipsDuFondTests(ApiFactory factory) : IntegrationTest(factory)
 
         Assert.Equal(HttpStatusCode.Unauthorized, reponse.StatusCode);
     }
+
+    [Fact]
+    public async Task Masquer_et_reafficher_exigent_une_session()
+    {
+        var anonyme = Factory.CreateClient();
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonyme.PutAsync("/clips/1/masque-du-fond", null, Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonyme.DeleteAsync("/clips/1/masque-du-fond", Ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Masquer_et_reafficher_sont_reserves_aux_administrateurs()
+    {
+        var joueur = Factory.CreateSignedInClient();
+        Factory.Clock.SetUtcNow(Soir);
+        var clip = await DeposerAsync("1300000000000000501");
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await joueur.PutAsync($"/clips/{clip}/masque-du-fond", null, Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await joueur.DeleteAsync($"/clips/{clip}/masque-du-fond", Ct)).StatusCode);
+        Assert.Single(await FondAsync(joueur));
+    }
+
+    [Fact]
+    public async Task Un_clip_masque_sort_du_fond_mais_reste_dans_la_liste_puis_revient_une_fois_reaffiche()
+    {
+        var admin = Factory.CreateAdminClient();
+        Factory.Clock.SetUtcNow(Soir);
+        var clip = await DeposerAsync("1300000000000000502");
+
+        var masque = await admin.PutAsync($"/clips/{clip}/masque-du-fond", null, Ct);
+        Assert.Equal(HttpStatusCode.OK, masque.StatusCode);
+        Assert.True((await ReadJsonAsync(masque)).GetProperty("masqueDuFond").GetBoolean());
+        Assert.Empty(await FondAsync(admin));
+        var liste = (await ReadJsonAsync(await admin.GetAsync("/clips", Ct))).GetProperty("items").EnumerateArray().Single();
+        Assert.True(liste.GetProperty("masqueDuFond").GetBoolean());
+
+        var reaffiche = await admin.DeleteAsync($"/clips/{clip}/masque-du-fond", Ct);
+        Assert.Equal(HttpStatusCode.OK, reaffiche.StatusCode);
+        Assert.False((await ReadJsonAsync(reaffiche)).GetProperty("masqueDuFond").GetBoolean());
+        Assert.Single(await FondAsync(admin));
+    }
+
+    [Fact]
+    public async Task Masquer_un_clip_inconnu_repond_404()
+    {
+        var admin = Factory.CreateAdminClient();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.PutAsync("/clips/9999/masque-du-fond", null, Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync("/clips/9999/masque-du-fond", Ct)).StatusCode);
+    }
 }
