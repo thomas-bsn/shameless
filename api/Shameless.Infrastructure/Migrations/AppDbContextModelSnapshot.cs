@@ -514,6 +514,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("portee");
 
+                    b.Property<DateTime?>("RejointLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("rejoint_le");
+
                     b.Property<string>("Secret")
                         .IsRequired()
                         .HasColumnType("text")

@@ -13,6 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { lienCapitaineUrl, lienSpectateurUrl } from "@/lib/liens";
 
+/** Fréquence de lecture de l'écran : « capitaine rejoint » et échecs de DM, comme la Draft de champions. */
+const POLLING_PREPARATION_MS = 3000;
+
+const heureLabel = (iso: string) => new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
 type Series = Schemas["SeriesResponse"];
 type Equipe = "A" | "B";
 
@@ -25,8 +30,13 @@ const equipes = ["A", "B"] as const;
 export function PreparationDeSerie({ series }: { series: Series }) {
   const queryClient = useQueryClient();
   const params = { params: { path: { id: series.seriesId } } };
-  // Relu régulièrement : le bot rapporte un DM raté quelques secondes après la création de la Série.
-  const liens = $api.useQuery("get", "/series/{id}/liens", params, { refetchInterval: 5000 });
+  // Relu toutes les 3 s : l'état « rejoint » des Capitaines et les DM que le bot n'a pas pu envoyer.
+  const liens = $api.useQuery("get", "/series/{id}/liens", params, { refetchInterval: POLLING_PREPARATION_MS });
+  const lancer = $api.useMutation("post", "/series/{id}/games", {
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get", "/series/{id}"] }),
+  });
+  const lesDeuxOntRejoint = liens.data?.capitaineARejointLe != null && liens.data.capitaineBRejointLe != null;
+  const dejaLancee = series.games.length > 0;
   const renouveler = $api.useMutation("post", "/series/{id}/liens/{equipe}/renouveler", {
     onSuccess: (data: Schemas["LiensSerieResponse"]) =>
       queryClient.setQueryData(["get", "/series/{id}/liens", params], data),
@@ -56,6 +66,12 @@ export function PreparationDeSerie({ series }: { series: Series }) {
             {equipes.map((equipe) => (
               <div key={equipe} className="flex flex-col gap-4">
                 <CapitaineSelect series={series} equipe={equipe} />
+                {liens.isSuccess && (
+                  <EtatCapitaine
+                    equipe={equipe}
+                    rejointLe={equipe === "A" ? liens.data.capitaineARejointLe : liens.data.capitaineBRejointLe}
+                  />
+                )}
                 {liens.isPending ? (
                   <LoadingRows />
                 ) : liens.isError ? (
@@ -105,7 +121,36 @@ export function PreparationDeSerie({ series }: { series: Series }) {
       </section>
 
       <CodeCompanionPanel seriesId={series.seriesId} />
+
+      {!dejaLancee && (
+        <div className="flex flex-col gap-2">
+          <Button
+            size="lg"
+            disabled={!lesDeuxOntRejoint || lancer.isPending}
+            onClick={() => lancer.mutate({ params: { path: { id: series.seriesId } } })}
+          >
+            Lancer la draft
+          </Button>
+          {!lesDeuxOntRejoint && (
+            <p className="text-sm text-muted-foreground">Les deux Capitaines doivent avoir ouvert leur lien.</p>
+          )}
+          {lancer.isError && <ErrorAlert error={lancer.error} />}
+        </div>
+      )}
     </div>
+  );
+}
+
+/** Le Capitaine a-t-il ouvert son lien ? L'heure de sa première ouverture, ou « Pas encore rejoint ». */
+function EtatCapitaine({ equipe, rejointLe }: { equipe: Equipe; rejointLe: string | null }) {
+  return (
+    <p
+      role="status"
+      aria-label={`État du Capitaine de l'Équipe ${equipe}`}
+      className={rejointLe ? "text-sm font-medium text-emerald-600 dark:text-emerald-400" : "text-sm text-muted-foreground"}
+    >
+      {rejointLe ? `Rejoint à ${heureLabel(rejointLe)}` : "Pas encore rejoint"}
+    </p>
   );
 }
 
@@ -118,8 +163,11 @@ function CapitaineSelect({ series, equipe }: { series: Series; equipe: Equipe })
   const players = equipe === "A" ? series.teamA : series.teamB;
   const capitaineId = equipe === "A" ? series.capitaineA : series.capitaineB;
   const designer = $api.useMutation("put", "/series/{id}/capitaines/{equipe}", {
-    onSuccess: (data: Series) =>
-      queryClient.setQueryData(["get", "/series/{id}", { params: { path: { id: series.seriesId } } }], data),
+    onSuccess: (data: Series) => {
+      queryClient.setQueryData(["get", "/series/{id}", { params: { path: { id: series.seriesId } } }], data);
+      // Changer de Capitaine remet son état à « pas rejoint ».
+      void queryClient.invalidateQueries({ queryKey: ["get", "/series/{id}/liens"] });
+    },
   });
 
   return (

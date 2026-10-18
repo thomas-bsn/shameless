@@ -7136,7 +7136,9 @@
           "lienCapitaineB",
           "lienSpectateur",
           "echecDmA",
-          "echecDmB"
+          "echecDmB",
+          "capitaineARejointLe",
+          "capitaineBRejointLe"
         ],
         "type": "object",
         "properties": {
@@ -7172,6 +7174,20 @@
                 "$ref": "#/components/schemas/EchecDmResponse"
               }
             ]
+          },
+          "capitaineARejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "capitaineBRejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

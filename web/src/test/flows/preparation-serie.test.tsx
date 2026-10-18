@@ -45,7 +45,18 @@ const liens: Schemas["LiensSerieResponse"] = {
   lienSpectateur: "secret-spectateur",
   echecDmA: null,
   echecDmB: null,
+  capitaineARejointLe: null,
+  capitaineBRejointLe: null,
 };
+
+const rejoint = (equipes: { a?: string; b?: string }): Schemas["LiensSerieResponse"] => ({
+  ...liens,
+  capitaineARejointLe: equipes.a ?? null,
+  capitaineBRejointLe: equipes.b ?? null,
+});
+
+const heure = (iso: string) =>
+  new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 const routes = (series: Series = serie()) => ({
   "GET /auth/me": user(),
@@ -185,8 +196,61 @@ describe("Écran de préparation", () => {
     expect(await screen.findByDisplayValue("code-companion-2")).toBeInTheDocument();
   });
 
-  it("n'a pas encore de bouton « Lancer la draft »", async () => {
-    mockApi(routes());
+  it("montre l'état de chaque Capitaine : pas encore rejoint, ou l'heure de sa première ouverture", async () => {
+    const quand = "2026-10-19T21:04:00Z";
+    mockApi({ ...routes(), "GET /series/5/liens": rejoint({ a: quand }) });
+    renderApp("/series/5/preparation");
+
+    const a = await screen.findByLabelText("État du Capitaine de l'Équipe A");
+    expect(a).toHaveTextContent(`Rejoint à ${heure(quand)}`);
+    expect(screen.getByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Pas encore rejoint");
+  });
+
+  it("grise « Lancer la draft » tant que les deux Capitaines n'ont pas rejoint", async () => {
+    mockApi({ ...routes(), "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z" }) });
+    renderApp("/series/5/preparation");
+
+    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
+  });
+
+  it("active « Lancer la draft » sans recharger la page dès que le deuxième Capitaine a rejoint", async () => {
+    let reponse = rejoint({ a: "2026-10-19T21:04:00Z" });
+    mockApi({ ...routes(), "GET /series/5/liens": () => json(reponse) });
+    renderApp("/series/5/preparation");
+    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
+
+    reponse = rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" });
+
+    await vi.waitFor(() => expect(screen.getByRole("button", { name: "Lancer la draft" })).toBeEnabled(), {
+      timeout: 8000,
+    });
+    expect(screen.getByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Rejoint à");
+  }, 10000);
+
+  it("crée la game au clic sur « Lancer la draft », puis ne propose plus le bouton", async () => {
+    let lancee = false;
+    mockApi({
+      ...routes(),
+      "GET /series/5": () => json(lancee ? serie({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] }) : serie()),
+      "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }),
+      "POST /series/5/games": () => {
+        lancee = true;
+        return json({ id: 12 }, 201);
+      },
+    });
+    renderApp("/series/5/preparation");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Lancer la draft" }));
+
+    await vi.waitFor(() => expect(screen.queryByRole("button", { name: "Lancer la draft" })).not.toBeInTheDocument());
+    expect(lancee).toBe(true);
+  });
+
+  it("ne propose pas « Lancer la draft » quand la draft est déjà lancée (Liens et code)", async () => {
+    mockApi({
+      ...routes(serie({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] })),
+      "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }),
+    });
     renderApp("/series/5/preparation");
 
     await screen.findByRole("heading", { name: "Prépare la série" });

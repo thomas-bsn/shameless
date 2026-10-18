@@ -131,6 +131,9 @@ public sealed class SeriesService
         if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
 
+        if (!series.CapitainesOntRejoint)
+            return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
+
         var side = Sides.ProchainDeLEquipeA(series.Games.LastOrDefault()?.TeamASide, _random);
 
         var now = _clock.GetUtcNow().UtcDateTime;

@@ -22,6 +22,12 @@ public class LienAcces
 
     public string Secret { get; set; } = SecretAleatoire.Nouveau();
 
+    /// <summary>
+    /// Quand le Capitaine a ouvert son lien pour la première fois (ADR 0017) ; null tant qu'il n'a pas
+    /// rejoint, et pour le Lien spectateur. Changer de Capitaine ou renouveler le lien le remet à null.
+    /// </summary>
+    public DateTime? RejointLe { get; set; }
+
     public static LienAcces Capitaine(string equipe) => new() { Portee = PorteeLien.Capitaine, Equipe = equipe };
 
     public static LienAcces Spectateur() => new() { Portee = PorteeLien.Spectateur };
@@ -34,10 +40,11 @@ public class LienAcces
     public DateTime? EchecDmLe { get; set; }
     public int? EchecDmPlayerId { get; set; }
 
-    /// <summary>Remplace le secret : l'ancien lien ne donne plus accès à rien, et l'échec de DM est oublié.</summary>
+    /// <summary>Remplace le secret : l'ancien lien ne donne plus accès à rien, l'échec de DM est oublié et le Capitaine n'a plus rejoint.</summary>
     public void Renouveler()
     {
         Secret = SecretAleatoire.Nouveau();
+        RejointLe = null;
         EchecDmRaison = null;
         EchecDmLe = null;
         EchecDmPlayerId = null;
@@ -52,6 +59,12 @@ public class LienAcces
 
     /// <summary>Les raisons d'échec d'un DM que le bot peut rapporter.</summary>
     public static readonly IReadOnlyList<string> RaisonsEchecDm = ["compte_non_lie", "dm_ferme", "autre"];
+
+    /// <summary>Mémorise la première ouverture du Lien capitaine ; les suivantes ne changent rien.</summary>
+    public void Rejoindre(DateTime maintenant)
+    {
+        if (Portee == PorteeLien.Capitaine) RejointLe ??= maintenant;
+    }
 }
 
 /// <summary>Le secret d'un lien d'accès ou d'un code Companion.</summary>

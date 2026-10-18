@@ -150,6 +150,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 1);
         for (var i = 0; i < 12 && sides.Count < 2; i++)
         {
+            await RejoindreLesCapitainesAsync(client, serie.SeriesId);
             var game = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
             sides.Add(game.GetProperty("teamASide").GetString());
             await client.PutAsJsonAsync($"/games/{game.GetProperty("id").GetInt32()}/result", new { winner = "A" }, Ct);
@@ -164,6 +165,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
+        await RejoindreLesCapitainesAsync(client, serie.SeriesId);
         Factory.Random.ImposerLeProchainTirage(0);
 
         var game = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));

@@ -75,6 +75,19 @@ public sealed class LiensAccesService
         return lien == null ? null : lien.Series.AccesPar(lien);
     }
 
+    /// <summary>
+    /// Le Capitaine ouvre son lien : sa première ouverture est mémorisée (ADR 0017), les suivantes ne
+    /// changent rien. Le Lien spectateur ne fait rejoindre personne.
+    /// </summary>
+    public async Task MarquerRejointAsync(string secret)
+    {
+        var lien = await _series.GetLienAsync(secret);
+        if (lien is not { Portee: PorteeLien.Capitaine, RejointLe: null }) return;
+
+        lien.Rejoindre(_clock.GetUtcNow().UtcDateTime);
+        await _series.TrySaveChangesAsync();
+    }
+
     private async Task<CommandResult<BestOfSeries>> SaveAsync(BestOfSeries series)
     {
         series.Touch();

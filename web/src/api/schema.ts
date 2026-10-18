@@ -5234,6 +5234,10 @@ export interface components {
             lienSpectateur: string;
             echecDmA: null | components["schemas"]["EchecDmResponse"];
             echecDmB: null | components["schemas"]["EchecDmResponse"];
+            /** Format: date-time */
+            capitaineARejointLe: null | string;
+            /** Format: date-time */
+            capitaineBRejointLe: null | string;
         };
         LigneClassement5v5: {
             /** Format: int32 */

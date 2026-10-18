@@ -11,6 +11,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
+        await RejoindreLesCapitainesAsync(client, serie.SeriesId);
 
         Factory.Random.ImposerLeProchainTirage(1); // pile ou face : l'Équipe A joue red
         var created = await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);

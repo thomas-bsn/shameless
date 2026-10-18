@@ -49,6 +49,10 @@ public sealed class LiensController : ControllerBase
     [AccesParLien]
     [ProducesResponseType<AccesParLienResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    public ActionResult<AccesParLienResponse> Resoudre(string lien) =>
-        AccesParLienResponse.From(this.AccesParLien());
+    public async Task<ActionResult<AccesParLienResponse>> Resoudre(string lien)
+    {
+        // Ouvrir un Lien capitaine, c'est rejoindre la Série (ADR 0017).
+        await _liens.MarquerRejointAsync(lien);
+        return AccesParLienResponse.From(this.AccesParLien());
+    }
 }

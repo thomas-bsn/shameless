@@ -13,7 +13,9 @@ public sealed record LiensSerieResponse(
     string LienCapitaineB,
     string LienSpectateur,
     EchecDmResponse? EchecDmA,
-    EchecDmResponse? EchecDmB)
+    EchecDmResponse? EchecDmB,
+    DateTime? CapitaineARejointLe,
+    DateTime? CapitaineBRejointLe)
 {
     public static LiensSerieResponse From(BestOfSeries series) => new(
         SeriesId: series.Id,
@@ -21,7 +23,9 @@ public sealed record LiensSerieResponse(
         LienCapitaineB: series.LienCapitaine(Equipes.B).Secret,
         LienSpectateur: series.LienSpectateur.Secret,
         EchecDmA: EchecDmResponse.From(series.LienEnEchecDm(Equipes.A)),
-        EchecDmB: EchecDmResponse.From(series.LienEnEchecDm(Equipes.B)));
+        EchecDmB: EchecDmResponse.From(series.LienEnEchecDm(Equipes.B)),
+        CapitaineARejointLe: series.LienCapitaine(Equipes.A).RejointLe,
+        CapitaineBRejointLe: series.LienCapitaine(Equipes.B).RejointLe);
 }
 
 /// <summary>Un DM de Lien capitaine non parti : <c>Raison</c> vaut <c>compte_non_lie</c>, <c>dm_ferme</c> ou <c>autre</c>.</summary>

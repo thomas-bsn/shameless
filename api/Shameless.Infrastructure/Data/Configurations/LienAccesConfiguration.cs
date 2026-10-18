@@ -21,6 +21,7 @@ public sealed class LienAccesConfiguration : IEntityTypeConfiguration<LienAcces>
         entity.Property(e => e.Secret).IsRequired();
         entity.Property(e => e.EchecDmRaison).HasMaxLength(20);
         entity.Property(e => e.EchecDmLe).HasColumnType("timestamp without time zone");
+        entity.Property(e => e.RejointLe).HasColumnType("timestamp without time zone");
 
         entity.HasOne(e => e.Series)
               .WithMany(s => s.Liens)
