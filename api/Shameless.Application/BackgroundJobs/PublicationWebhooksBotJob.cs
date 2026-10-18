@@ -75,7 +75,15 @@ public sealed class PublicationWebhooksBotJob : BackgroundService
 
         foreach (var evenement in await evenements.GetALivrerAsync(Maintenant()))
         {
-            var webhook = new WebhookDuBot(evenement.EventId, evenement.TypeDuContrat, evenement.OccurredAt, Snapshot(evenement));
+            if (Snapshot(evenement) is not { } snapshot)
+            {
+                // Lien capitaine d'une Équipe sans Capitaine : il attend sa désignation (ou ses 24 h).
+                evenement.Reporter(Maintenant(), "Aucun Capitaine désigné");
+                if (!await evenements.TrySaveChangesAsync()) return;
+                continue;
+            }
+
+            var webhook = new WebhookDuBot(evenement.EventId, evenement.TypeDuContrat, evenement.OccurredAt, snapshot);
             var resultat = await bot.EnvoyerWebhookAsync(webhook, ct);
             switch (resultat.Issue)
             {
@@ -103,9 +111,11 @@ public sealed class PublicationWebhooksBotJob : BackgroundService
         }
     }
 
-    private object Snapshot(EvenementBot evenement) => evenement.Type switch
+    private object? Snapshot(EvenementBot evenement) => evenement.Type switch
     {
         TypeEvenementBot.TeamsFormed => SnapshotsDuBot.TeamsFormed(evenement.Series!),
+        TypeEvenementBot.CaptainLink => SnapshotsDuBot.CaptainLink(evenement.Series!, evenement.Equipe!, _bot.Value.WebUrl),
+        TypeEvenementBot.SpectatorLink => SnapshotsDuBot.SpectatorLink(evenement.Series!, _bot.Value.WebUrl),
         TypeEvenementBot.GameStarted => SnapshotsDuBot.GameStarted(evenement.Game!, _bot.Value.WebUrl),
         _ => SnapshotsDuBot.GameCompleted(evenement.Game!, _bot.Value.WebUrl)
     };

@@ -414,6 +414,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("derniere_erreur");
 
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
                     b.Property<int?>("GameId")
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
@@ -468,7 +473,12 @@ namespace Shameless.Infrastructure.Migrations
                     b.HasIndex("Type", "SeriesId")
                         .IsUnique()
                         .HasDatabaseName("ix_evenements_bot_type_series_id")
-                        .HasFilter("series_id IS NOT NULL");
+                        .HasFilter("series_id IS NOT NULL AND equipe IS NULL");
+
+                    b.HasIndex("Type", "SeriesId", "Equipe")
+                        .IsUnique()
+                        .HasDatabaseName("ix_evenements_bot_type_series_id_equipe")
+                        .HasFilter("series_id IS NOT NULL AND equipe IS NOT NULL");
 
                     b.ToTable("evenements_bot", null, t =>
                         {
