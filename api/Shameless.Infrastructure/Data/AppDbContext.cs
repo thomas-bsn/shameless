@@ -130,6 +130,7 @@ public class AppDbContext : DbContext
                   .HasDefaultValueSql("now()");
 
             entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
+            entity.Property(e => e.ModifieeParAdminLe).HasColumnType(Timestamp);
 
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)

@@ -12,6 +12,7 @@ const recap: Schemas["GameRecapResponse"] = {
   status: "completed",
   playedAt: "2026-10-16T20:30:00Z",
   completedAt: "2026-10-16T21:05:00Z",
+  modifieeParAdminLe: null,
   teamASide: "blue",
   teamBSide: "red",
   winner: "A",

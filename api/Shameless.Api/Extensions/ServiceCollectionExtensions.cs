@@ -46,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CostCalculationService>();
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();
+        services.AddScoped<CorrectionDeGameService>();
         services.AddScoped<PickerService>();
         services.AddScoped<LiensAccesService>();
         services.AddScoped<CodeCompanionService>();

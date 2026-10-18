@@ -276,6 +276,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<DateTime?>("ModifieeParAdminLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("modifiee_par_admin_le");
+
                     b.Property<DateTime>("PlayedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("played_at");
