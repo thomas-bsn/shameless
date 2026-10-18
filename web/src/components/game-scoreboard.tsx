@@ -1,15 +1,11 @@
 import { $api, type Schemas } from "@/api/client";
+import { type Participant, type Side, sideName, TableauEquipe } from "@/components/game-equipe-table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useChampions } from "@/lib/draft-champions-queries";
-import { csTotal, kdaLabel, millierLabel, noteTone, posteLabel, statLabel } from "@/lib/game";
-import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
+import { csTotal, kdaLabel, millierLabel, noteTone, statLabel } from "@/lib/game";
+import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
-type Participant = Schemas["GameHistoryParticipantDto"];
-type Side = "blue" | "red";
-
-const sideName = (side: Side) => (side === "blue" ? "Blue" : "Red");
 
 /** Le MVP (or) et le DOFD (rouge) sont entourés : une bordure sur les cellules de leur ligne. */
 const ENTOURE_MVP =
@@ -57,90 +53,45 @@ export function ScoreboardEquipe({
   players: Participant[];
 }) {
   const titres = useTitres(game.id);
-  const champions = useChampions();
-  const label = `Équipe ${team} · ${sideName(side)} side`;
-  const issue = game.winner === team ? "Victoire" : "Défaite";
   const maxDegats = Math.max(1, ...sidesOf(game).flatMap((s) => s.players.map((p) => p.stats?.damageToChampions ?? 0)));
-  const catalogue = champions.data ?? [];
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-2">
-        <CardTitle className={cn("text-sm", sideTextClass(side))}>{label}</CardTitle>
-        <span className="text-sm font-medium text-muted-foreground">{issue}</span>
-      </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table aria-label={label} className="w-full min-w-[640px] border-separate border-spacing-y-1 text-sm">
-          <thead className="text-xs text-muted-foreground">
-            <tr>
-              <th scope="col" className="px-2 text-left font-medium">
-                Joueur
-              </th>
-              <th scope="col" className="px-2 text-left font-medium">
-                K/D/A
-              </th>
-              <th scope="col" className="px-2 text-right font-medium">
-                CS
-              </th>
-              <th scope="col" className="px-2 text-right font-medium">
-                Or
-              </th>
-              <th scope="col" className="px-2 text-left font-medium">
-                Dégâts
-              </th>
-              <th scope="col" className="px-2 text-right font-medium">
-                Note
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {players.map((p) => {
-              const champion = catalogue.find((c) => c.id === p.championId);
-              const estMvp = titres.mvp.includes(p.playerId);
-              const estDofd = titres.dofd.includes(p.playerId);
-              return (
-                <tr
-                  key={p.playerId}
-                  aria-label={p.prenom}
-                  className={cn(
-                    "[&>td]:bg-muted/30 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg",
-                    estMvp && ENTOURE_MVP,
-                    estDofd && !estMvp && ENTOURE_DOFD,
-                  )}
-                >
-                  <td className="px-2 py-2">
-                    <div className="flex items-center gap-3">
-                      <ChampionCarre championId={p.championId} nom={champion?.name} image={champion?.imageUrl} niveau={p.stats?.champLevel} side={side} />
-                      <div className="flex min-w-0 flex-col">
-                        <span className="flex flex-wrap items-center gap-1 font-medium">
-                          <span className="truncate">{p.prenom}</span>
-                          {estMvp && <Badge className="bg-yellow-400 text-black">MVP</Badge>}
-                          {estDofd && <Badge variant="destructive">DOFD</Badge>}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {[champion?.name ?? p.championId, posteLabel(p.stats?.position)]
-                            .filter(Boolean)
-                            .join(" · ") || "Champion inconnu"}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-2 font-mono tabular-nums">{p.stats ? kdaLabel(p.stats) : "–"}</td>
-                  <td className="px-2 text-right font-mono tabular-nums">{statLabel(p.stats ? csTotal(p.stats) : null)}</td>
-                  <td className="px-2 text-right font-mono tabular-nums">{millierLabel(p.stats?.goldEarned ?? null)}</td>
-                  <td className="px-2">
-                    <Degats value={p.stats?.damageToChampions ?? null} max={maxDegats} side={side} />
-                  </td>
-                  <td className={cn("px-2 text-right font-mono tabular-nums", p.performance && toneClass[noteTone(p.performance.note)])}>
-                    {p.performance ? `${p.performance.note}/100` : "–"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </CardContent>
-    </Card>
+    <TableauEquipe
+      team={team}
+      side={side}
+      resume={game.winner === team ? "Victoire" : "Défaite"}
+      colonnes={[
+        { titre: "K/D/A" },
+        { titre: "CS", droite: true },
+        { titre: "Or", droite: true },
+        { titre: "Dégâts" },
+        { titre: "Note", droite: true },
+      ]}
+      players={players}
+      ligne={(p) => {
+        const estMvp = titres.mvp.includes(p.playerId);
+        const estDofd = titres.dofd.includes(p.playerId);
+        const mono = "font-mono tabular-nums";
+        return {
+          className: cn(estMvp && ENTOURE_MVP, estDofd && !estMvp && ENTOURE_DOFD),
+          badges: (
+            <>
+              {estMvp && <Badge className="bg-yellow-400 text-black">MVP</Badge>}
+              {estDofd && <Badge variant="destructive">DOFD</Badge>}
+            </>
+          ),
+          cellules: [
+            <span className={mono}>{p.stats ? kdaLabel(p.stats) : "–"}</span>,
+            <span className={mono}>{statLabel(p.stats ? csTotal(p.stats) : null)}</span>,
+            <span className={mono}>{millierLabel(p.stats?.goldEarned ?? null)}</span>,
+            <Degats value={p.stats?.damageToChampions ?? null} max={maxDegats} side={side} />,
+            <span className={cn(mono, p.performance && toneClass[noteTone(p.performance.note)])}>
+              {p.performance ? `${p.performance.note}/100` : "–"}
+            </span>,
+          ],
+        };
+      }}
+    />
   );
 }
 
@@ -161,35 +112,6 @@ function Degats({ value, max, side }: { value: number | null; max: number; side:
         />
       )}
     </div>
-  );
-}
-
-/** L'illustration du champion (image du jeu), sinon un carré avec son initiale ; le niveau en coin. */
-export function ChampionCarre({
-  championId,
-  nom,
-  image,
-  niveau,
-  side,
-}: {
-  championId: string | null;
-  nom?: string;
-  image?: string;
-  niveau?: number | null;
-  side: Side;
-}) {
-  return (
-    <span className={cn("relative flex size-10 shrink-0 items-center justify-center rounded-md border-2 bg-muted text-sm font-semibold", sideBorderClass(side))}>
-      {image ? <img src={image} alt="" className="size-full rounded-sm object-cover" /> : <span aria-hidden>{(nom ?? championId ?? "?").charAt(0)}</span>}
-      {niveau != null && (
-        <span
-          data-slot="niveau"
-          className="absolute -right-1 -bottom-1 rounded bg-background px-1 font-mono text-[10px] leading-4 tabular-nums"
-        >
-          {niveau}
-        </span>
-      )}
-    </span>
   );
 }
 

@@ -1,15 +1,14 @@
 import type { ReactNode } from "react";
 import type { Schemas } from "@/api/client";
-import { ChampionCarre, sidesOf } from "@/components/game-scoreboard";
+import { type Participant, TableauEquipe } from "@/components/game-equipe-table";
+import { sidesOf } from "@/components/game-scoreboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useChampions } from "@/lib/draft-champions-queries";
 import {
   millierLabel,
   nombreLabel,
   parMinute,
   parMinuteLabel,
   partLabel,
-  posteLabel,
   sommeConnue,
   statLabel,
 } from "@/lib/game";
@@ -17,9 +16,7 @@ import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
 type Recap = Schemas["GameRecapResponse"];
-type Participant = Schemas["GameHistoryParticipantDto"];
 type Stats = Schemas["StatsDuParticipant"];
-type Side = "blue" | "red";
 
 /** Un indicateur lu sur les stats d'un joueur ; absent (null) quand le Companion ne l'a pas envoyé. */
 type Mesure = (s: Stats) => number | null | undefined;
@@ -174,8 +171,6 @@ function BarreValeur({
 
 /** Un onglet de stats : trois tuiles de totaux par équipe (bleu puis rouge), puis un tableau par équipe. */
 export function OngletStats({ game, onglet }: { game: Recap; onglet: NomOnglet }) {
-  const champions = useChampions();
-  const catalogue = champions.data ?? [];
   const { tuiles, colonnes, meta }: Onglet = ONGLETS[onglet];
   const cotes = sidesOf(game);
   const durationSeconds = game.match?.durationSeconds ?? null;
@@ -219,94 +214,13 @@ export function OngletStats({ game, onglet }: { game: Recap; onglet: NomOnglet }
             team={c.team}
             side={c.side}
             players={c.players}
+            resume={meta((m) => sommeDe(c.players, m))}
             colonnes={colonnes}
-            ctx={ctx}
-            meta={meta((m) => sommeDe(c.players, m))}
-            catalogue={catalogue}
+            ligne={(p) => ({ cellules: colonnes.map((col) => col.cell(p, ctx)) })}
           />
         );
       })}
     </div>
-  );
-}
-
-function TableauEquipe({
-  team,
-  side,
-  players,
-  colonnes,
-  ctx,
-  meta,
-  catalogue,
-}: {
-  team: string;
-  side: Side;
-  players: Participant[];
-  colonnes: Colonne[];
-  ctx: Contexte;
-  meta: string;
-  catalogue: Array<{ id: string; name: string; imageUrl: string }>;
-}) {
-  const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-2">
-        <CardTitle className={cn("text-sm", sideTextClass(side))}>{label}</CardTitle>
-        <span className="text-sm text-muted-foreground">{meta}</span>
-      </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table aria-label={label} className="w-full min-w-[640px] border-separate border-spacing-y-1 text-sm">
-          <thead className="text-xs text-muted-foreground">
-            <tr>
-              <th scope="col" className="px-2 text-left font-medium">
-                Joueur
-              </th>
-              {colonnes.map((c) => (
-                <th key={c.titre} scope="col" className="px-2 text-left font-medium">
-                  {c.titre}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {players.map((p) => {
-              const champion = catalogue.find((c) => c.id === p.championId);
-              return (
-                <tr
-                  key={p.playerId}
-                  aria-label={p.prenom}
-                  className="[&>td]:bg-muted/30 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg"
-                >
-                  <td className="px-2 py-2">
-                    <div className="flex items-center gap-3">
-                      <ChampionCarre
-                        championId={p.championId}
-                        nom={champion?.name}
-                        image={champion?.imageUrl}
-                        niveau={p.stats?.champLevel}
-                        side={side}
-                      />
-                      <div className="flex min-w-0 flex-col">
-                        <span className="truncate font-medium">{p.prenom}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {[champion?.name ?? p.championId, posteLabel(p.stats?.position)].filter(Boolean).join(" · ") ||
-                            "Champion inconnu"}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  {colonnes.map((c) => (
-                    <td key={c.titre} className="px-2">
-                      {c.cell(p, ctx)}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </CardContent>
-    </Card>
   );
 }
 
