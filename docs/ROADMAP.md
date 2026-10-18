@@ -69,6 +69,10 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 - [ ] Replay 3D react-three-fiber : déplacements, kills, objectifs
 - [ ] Positions : proxchat + Companion ; timeline match-v5 si clé Production obtenue
 
+## Hors phases
+Ce qui n'entre dans aucune phase :
+- Refonte du front « Verre nuit » : thèmes sombre et clair, polices embarquées, sidebar et redessin des pages (#84)
+
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion
