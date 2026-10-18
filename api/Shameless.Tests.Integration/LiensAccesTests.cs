@@ -223,7 +223,7 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     private async Task<HttpResponseMessage> LancerAsync(HttpClient client, int seriesId) =>
-        await client.PostAsJsonAsync($"/series/{seriesId}/games", new { teamASide = "blue" }, Ct);
+        await client.PostAsync($"/series/{seriesId}/games", null, Ct);
 
     [Fact]
     public async Task Aucun_capitaine_n_a_rejoint_a_la_creation_de_la_serie()

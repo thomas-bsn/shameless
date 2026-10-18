@@ -27,22 +27,25 @@ public sealed class SeriesController : ControllerBase
     public async Task<ActionResult<CreateSeriesResponse>> Create([FromBody] CreateSeriesRequest request)
     {
         var result = await _seriesService.CreateAsync(
-            request.TeamA, request.TeamB, request.Format, request.Fearless, request.AlternateSides);
+            request.TeamA, request.TeamB, request.Format, request.Fearless);
         if (!result.IsOk) return this.Refusal(result);
 
         var id = result.Value!.Id;
         return Created($"/series/{id}", new CreateSeriesResponse(id));
     }
 
-    /// <summary>Lance la prochaine game d'une Série en cours, avec le Side de chaque Équipe.</summary>
+    /// <summary>
+    /// Lance la prochaine game d'une Série en cours. Le Side n'est pas choisi : tiré à pile ou face pour
+    /// la première game, alterné ensuite ; le Rapport du Companion le corrige s'il diffère.
+    /// </summary>
     [HttpPost("{id:int}/games")]
     [ProducesResponseType<SeriesGameResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<SeriesGameResponse>> PlayGame(int id, [FromBody] PlayGameRequest request)
+    public async Task<ActionResult<SeriesGameResponse>> PlayGame(int id)
     {
-        var result = await _seriesService.PlayNextGameAsync(id, request.TeamASide);
+        var result = await _seriesService.PlayNextGameAsync(id);
         if (!result.IsOk) return this.Refusal(result);
 
         // Une game qui vient d'être lancée n'a pas de rapport en revue : aucun joueur à reconnaître.
@@ -95,7 +98,7 @@ public sealed class SeriesController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     public async Task<ActionResult<CreateSeriesResponse>> Rematch(int id, [FromBody] RematchRequest request)
     {
-        var result = await _seriesService.CreateRevancheAsync(id, request.Format, request.Fearless, request.AlternateSides);
+        var result = await _seriesService.CreateRevancheAsync(id, request.Format, request.Fearless);
         if (!result.IsOk) return this.Refusal(result);
 
         var revancheId = result.Value!.Id;

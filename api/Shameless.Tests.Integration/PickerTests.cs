@@ -222,7 +222,7 @@ public class PickerTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync(Selection, new { playerIds = dix }, Ct));
         var tirage = await ReadJsonAsync(await client.PostAsJsonAsync(RouletteUrl, new { variante = "Aleatoire" }, Ct));
 
-        var response = await client.PostAsJsonAsync(Validation, new { format = 5, fearless = true, alternateSides = true }, Ct);
+        var response = await client.PostAsJsonAsync(Validation, new { format = 5, fearless = true }, Ct);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var seriesId = (await ReadJsonAsync(response)).GetProperty("seriesId").GetInt32();
@@ -230,7 +230,6 @@ public class PickerTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(soireeId, serie.GetProperty("soireeId").GetInt32());
         Assert.Equal(5, serie.GetProperty("format").GetInt32());
         Assert.True(serie.GetProperty("fearless").GetBoolean());
-        Assert.True(serie.GetProperty("alternateSides").GetBoolean());
         Assert.Equal("EnCours", serie.GetProperty("outcome").GetString());
         Assert.Equal(Ids(tirage.GetProperty("teamA")).Order(), Ids(serie.GetProperty("teamA")).Order());
         Assert.Equal(Ids(tirage.GetProperty("teamB")).Order(), Ids(serie.GetProperty("teamB")).Order());

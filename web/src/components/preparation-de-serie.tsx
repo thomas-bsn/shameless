@@ -47,7 +47,6 @@ export function PreparationDeSerie({ series }: { series: Series }) {
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant="outline">BO{series.format}</Badge>
           {series.fearless && <Badge variant="outline">Fearless</Badge>}
-          {series.alternateSides && <Badge variant="outline">Sides alternés</Badge>}
         </div>
       </div>
 
@@ -125,12 +124,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
           <Button
             size="lg"
             disabled={!lesDeuxOntRejoint || lancer.isPending}
-            onClick={() =>
-              lancer.mutate({
-                params: { path: { id: series.seriesId } },
-                body: { teamASide: series.alternateSides ? null : "blue" },
-              })
-            }
+            onClick={() => lancer.mutate({ params: { path: { id: series.seriesId } } })}
           >
             Lancer la draft
           </Button>

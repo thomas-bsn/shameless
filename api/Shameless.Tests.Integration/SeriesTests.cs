@@ -24,7 +24,6 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(soireeId, serie.GetProperty("soireeId").GetInt32());
         Assert.Equal(2, serie.GetProperty("format").GetInt32());
         Assert.True(serie.GetProperty("fearless").GetBoolean());
-        Assert.False(serie.GetProperty("alternateSides").GetBoolean());
         Assert.Equal("EnCours", serie.GetProperty("outcome").GetString());
         Assert.Equal(JsonValueKind.Null, serie.GetProperty("winningTeam").ValueKind);
         Assert.Equal(["A1", "A2", "A3", "A4", "A5"], Prenoms(serie.GetProperty("teamA")));
@@ -87,7 +86,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
         foreach (var winner in winners)
             await PlayAndWinAsync(client, serie.SeriesId, winner);
 
-        var response = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "blue" }, Ct);
+        var response = await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -114,81 +113,64 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId);
 
-        var response = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
+        var response = await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Le_side_de_chaque_game_se_choisit_a_la_main_et_le_score_suit_les_equipes()
+    [Theory]
+    [InlineData("blue", new[] { "blue", "red", "blue", "red" })]
+    [InlineData("red", new[] { "red", "blue", "red", "blue" })]
+    public async Task Le_side_de_la_premiere_game_est_tire_a_pile_ou_face_puis_les_sides_alternent(string tirage, string[] attendus)
     {
         var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 3);
+        var serie = await CreateSerieAsync(client, format: 5);
 
-        await PlayAndWinAsync(client, serie.SeriesId, "B", teamASide: "red");
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: "red");
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: "blue");
+        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: tirage);
+        await PlayAndWinAsync(client, serie.SeriesId, "B", teamASide: null);
+        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: null);
+        var pendingGame = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
 
+        Assert.Equal(attendus[3], pendingGame.GetProperty("teamASide").GetString());
         var result = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
-        var games = result.GetProperty("games").EnumerateArray().ToList();
-        Assert.Equal([("red", "blue", "B"), ("red", "blue", "A"), ("blue", "red", "A")], games.Select(Sides));
-        Assert.All(games, g =>
+        Assert.Equal(attendus, result.GetProperty("games").EnumerateArray().Select(g => g.GetProperty("teamASide").GetString()));
+        Assert.All(result.GetProperty("games").EnumerateArray(), g =>
         {
             Assert.Equal(["A1", "A2", "A3", "A4", "A5"], Prenoms(g.GetProperty("teamA")));
             Assert.Equal(["B1", "B2", "B3", "B4", "B5"], Prenoms(g.GetProperty("teamB")));
         });
-        Assert.Equal("A", result.GetProperty("winningTeam").GetString());
-
-        var pending = await ReadJsonAsync(await client.GetAsync("/games/pending", Ct));
-        Assert.Empty(pending.EnumerateArray());
+        Assert.Equal((2, 1), (result.GetProperty("teamAWins").GetInt32(), result.GetProperty("teamBWins").GetInt32()));
     }
 
     [Fact]
-    public async Task Sans_alternance_le_side_de_la_game_est_obligatoire()
+    public async Task La_premiere_game_tire_son_side_au_hasard_de_l_api()
+    {
+        var client = Factory.CreateSignedInClient();
+        var sides = new HashSet<string?>();
+        var serie = await CreateSerieAsync(client, format: 1);
+        for (var i = 0; i < 12 && sides.Count < 2; i++)
+        {
+            await RejoindreLesCapitainesAsync(client, serie.SeriesId);
+            var game = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
+            sides.Add(game.GetProperty("teamASide").GetString());
+            await client.PutAsJsonAsync($"/games/{game.GetProperty("id").GetInt32()}/result", new { winner = "A" }, Ct);
+            serie = serie with { SeriesId = (await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{serie.SeriesId}/rematch", new { format = 1 }, Ct))).GetProperty("seriesId").GetInt32() };
+        }
+
+        Assert.Equal(["blue", "red"], sides.Order());
+    }
+
+    [Fact]
+    public async Task Un_side_envoye_a_la_creation_de_la_game_est_ignore()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await RejoindreLesCapitainesAsync(client, serie.SeriesId);
+        Factory.Random.ImposerLeProchainTirage(0);
 
-        var missing = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = (string?)null }, Ct);
-        var invalid = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "A" }, Ct);
+        var game = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
 
-        Assert.Equal(HttpStatusCode.BadRequest, missing.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
-        Assert.Equal("application/problem+json", invalid.Content.Headers.ContentType?.MediaType);
-    }
-
-    [Fact]
-    public async Task Avec_l_alternance_automatique_les_sides_s_inversent_a_chaque_game()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 5, alternateSides: true);
-
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: null);
-        await PlayAndWinAsync(client, serie.SeriesId, "B", teamASide: null);
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: null);
-        var pendingGame = await ReadJsonAsync(await client.PostAsJsonAsync(
-            $"/series/{serie.SeriesId}/games", new { teamASide = (string?)null }, Ct));
-        Assert.Equal("red", pendingGame.GetProperty("teamASide").GetString());
-
-        var result = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
-        Assert.True(result.GetProperty("alternateSides").GetBoolean());
-        Assert.Equal(["blue", "red", "blue", "red"],
-            result.GetProperty("games").EnumerateArray().Select(g => g.GetProperty("teamASide").GetString()));
-    }
-
-    [Fact]
-    public async Task Avec_l_alternance_un_side_choisi_a_la_main_l_emporte_et_l_alternance_repart_de_lui()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 5, alternateSides: true);
-
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: "red");
-        await PlayAndWinAsync(client, serie.SeriesId, "A", teamASide: null);
-
-        var result = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
-        Assert.Equal(["red", "blue"],
-            result.GetProperty("games").EnumerateArray().Select(g => g.GetProperty("teamASide").GetString()));
+        Assert.Equal("blue", game.GetProperty("teamASide").GetString());
     }
 
     [Fact]

@@ -13,7 +13,8 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 3);
         await RejoindreLesCapitainesAsync(client, serie.SeriesId);
 
-        var created = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
+        Factory.Random.ImposerLeProchainTirage(1); // pile ou face : l'Équipe A joue red
+        var created = await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var gameId = (await ReadJsonAsync(created)).GetProperty("id").GetInt32();
 
@@ -77,7 +78,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         var gagnee = await CreateSerieAsync(client, format: 1);
         await PlayAndWinAsync(client, gagnee.SeriesId, "B");
         var interrompue = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{gagnee.SeriesId}/rematch",
-            new { format = 3, fearless = false, alternateSides = true }, Ct));
+            new { format = 3, fearless = false }, Ct));
         var interrompueId = interrompue.GetProperty("seriesId").GetInt32();
         await PlayAndWinAsync(client, interrompueId, "A");
         await ReadJsonAsync(await client.PostAsync($"/series/{interrompueId}/stop", null, Ct));

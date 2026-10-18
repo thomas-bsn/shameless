@@ -289,7 +289,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         var create = await anonymous.PostAsJsonAsync("/series",
             new { teamA = serie.TeamA, teamB = serie.TeamB, format = 3 }, Ct);
         var result = await anonymous.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct);
-        var next = await anonymous.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
+        var next = await anonymous.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, create.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
