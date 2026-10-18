@@ -213,7 +213,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
 
         await ReadJsonAsync(await admin.PutAsJsonAsync($"/players/{playerId}/cost", new { cost = 5 }, Ct));
         await ReadJsonAsync(await admin.PostAsJsonAsync($"/players/{playerId}/peak",
-            new { peakTier = "MASTER", peakDivision = (int?)null, peakSeason = "S2025", peakLp = 120 }, Ct));
+            new { peakTier = "MASTER", peakDivision = (int?)null, peakSeason = "S25", peakLp = 120 }, Ct));
 
         var players = await admin.GetFromJsonAsync<JsonElement>("/players", Ct);
         var player = Assert.Single(players.EnumerateArray());
@@ -319,7 +319,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
                 "DELETE" => null,
                 _ when url.EndsWith("/result") => JsonContent.Create(new { winner = "A" }),
                 _ when url.EndsWith("/cost") => JsonContent.Create(new { cost = 3 }),
-                _ when url.EndsWith("/peak") => JsonContent.Create(new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S2025", peakLp = 10 }),
+                _ when url.EndsWith("/peak") => JsonContent.Create(new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S25", peakLp = 10 }),
                 _ => null
             }
         };

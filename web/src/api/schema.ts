@@ -3356,12 +3356,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -3408,6 +3410,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/peak/saisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeakSaisonsResponse"];
+                        "application/json": components["schemas"]["PeakSaisonsResponse"];
+                        "text/json": components["schemas"]["PeakSaisonsResponse"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/peak": {
         parameters: {
             query?: never;
@@ -3432,12 +3480,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -5470,6 +5520,10 @@ export interface components {
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
+        };
+        PeakSaisonsResponse: {
+            saisons: string[];
+            courante: string;
         };
         PendingGameParticipant: {
             /** Format: int32 */

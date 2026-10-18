@@ -100,6 +100,7 @@ const open = (
       peakTier: "DIAMOND",
       peakDivision: 1,
       peakLp: 0,
+      peakSeason: "S25",
       mainRole: "TOP",
     }),
     "GET /players/7/fiche": f,
@@ -118,6 +119,7 @@ describe("Fiche d'un joueur", () => {
     expect(await screen.findByText("Diamond II · 45 LP")).toBeInTheDocument();
     expect(screen.getByText("Platinum I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("Diamond I · 0 LP")).toBeInTheDocument();
+    expect(screen.getByText("S25")).toBeInTheDocument();
     expect(await screen.findByText("3 MVP")).toBeInTheDocument();
     expect(screen.getByText("1 DOFD")).toBeInTheDocument();
     expect(screen.getByText("SS")).toBeInTheDocument();

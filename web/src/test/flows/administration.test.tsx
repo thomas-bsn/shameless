@@ -190,8 +190,9 @@ describe("Administration", () => {
         ...calme,
         "GET /players": [player({ id: 1, prenom: "Alice", peakTier: null, peakLp: 0 })],
         "GET /players/1/cost": cost(),
+        "GET /players/peak/saisons": { saisons: ["S24", "S25", "S26"], courante: "S26" },
         "POST /players/1/peak": async (request) => {
-          expect(await request.json()).toMatchObject({ peakTier: "DIAMOND", peakDivision: 2, peakLp: 45 });
+          expect(await request.json()).toMatchObject({ peakTier: "DIAMOND", peakDivision: 2, peakSeason: "S25", peakLp: 45 });
           return new Response(null, { status: 200 });
         },
       });
@@ -199,8 +200,9 @@ describe("Administration", () => {
 
       const ligne = (await screen.findByText("Alice")).closest("tr") as HTMLElement;
       await userEvent.click(within(ligne).getByRole("button", { name: "Renseigner le peak" }));
-      await userEvent.selectOptions(within(ligne).getByLabelText("Tier du peak"), "DIAMOND");
+      await userEvent.selectOptions(await within(ligne).findByLabelText("Tier du peak"), "DIAMOND");
       await userEvent.selectOptions(within(ligne).getByLabelText("Division du peak"), "2");
+      await userEvent.selectOptions(await within(ligne).findByLabelText("Saison du peak"), "S25");
       await userEvent.clear(within(ligne).getByLabelText("LP du peak"));
       await userEvent.type(within(ligne).getByLabelText("LP du peak"), "45");
       await userEvent.click(within(ligne).getByRole("button", { name: "Enregistrer le peak" }));
@@ -212,7 +214,7 @@ describe("Administration", () => {
       const api = mockApi({
         "GET /auth/me": admin(),
         ...calme,
-        "GET /players": [player({ id: 1, prenom: "Alice", peakTier: "DIAMOND", peakDivision: 1, peakLp: 45 })],
+        "GET /players": [player({ id: 1, prenom: "Alice", peakTier: "DIAMOND", peakDivision: 1, peakLp: 45, peakSeason: "S25" })],
         "GET /players/1/cost": cost(),
         "DELETE /players/1/peak": new Response(null, { status: 200 }),
       });
@@ -220,6 +222,7 @@ describe("Administration", () => {
 
       const ligne = (await screen.findByText("Alice")).closest("tr") as HTMLElement;
       expect(within(ligne).getByText(/Diamond I · 45 LP/)).toBeInTheDocument();
+      expect(within(ligne).getByText("S25")).toBeInTheDocument();
       await userEvent.click(within(ligne).getByRole("button", { name: "Effacer le peak" }));
 
       await waitFor(() => expect(api.mock.calls.some(([req]) => (req as Request).method === "DELETE")).toBe(true));
