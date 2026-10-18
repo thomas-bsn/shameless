@@ -45,5 +45,8 @@ public sealed class ClipRepository : IClipRepository
         return (clips, total);
     }
 
+    public Task<List<Clip>> GetDuFondAuHasardAsync() =>
+        _db.Clips.AsNoTracking().Where(c => !c.MasqueDuFond).OrderBy(_ => EF.Functions.Random()).ToListAsync();
+
     public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

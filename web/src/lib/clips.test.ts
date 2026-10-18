@@ -22,6 +22,7 @@ const clip = (id: number, g: Schemas["GameDeLaListeDeClips"]): Schemas["ClipDeLa
   nomFichier: "a.mp4",
   contentType: "video/mp4",
   taille: 1,
+  masqueDuFond: false,
   game: g,
 });
 

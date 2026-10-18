@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { MenuIcon, MoonIcon, SunIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { Fond } from "@/components/fond";
 import { SessionMenu } from "@/components/session-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { sessionQuery } from "@/lib/session";
@@ -78,7 +79,8 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [ouvert, setOuvert] = useState(false);
   return (
-    <div className="min-h-screen md:flex">
+    <div className="relative isolate min-h-screen md:flex">
+      <Fond />
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r bg-card p-4 md:block">
         <NavContent />
       </aside>

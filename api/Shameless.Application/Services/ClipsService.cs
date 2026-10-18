@@ -122,6 +122,10 @@ public sealed class ClipsService
         return CommandResult<ClipsPage>.Ok(new ClipsPage(clips.Select(ClipDeLaListe.From).ToList(), total, page, taille));
     }
 
+    /// <summary>Les clips éligibles au Fond (non masqués), dans un ordre aléatoire.</summary>
+    public async Task<List<ClipDuFond>> GetDuFondAsync() =>
+        (await _clips.GetDuFondAuHasardAsync()).Select(ClipDuFond.From).ToList();
+
     /// <summary>
     /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou
     /// null si le clip n'existe pas (<see cref="GamePlausible.FenetreDesCandidates"/>).

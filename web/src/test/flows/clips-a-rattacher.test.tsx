@@ -28,6 +28,7 @@ const clip = (id: number, overrides: Partial<Clip> = {}): Clip => ({
   nomFichier: "pentakill.mp4",
   contentType: "video/mp4",
   taille: 12_000_000,
+  masqueDuFond: false,
   game: null,
   ...overrides,
 });

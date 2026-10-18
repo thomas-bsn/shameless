@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -52,6 +53,23 @@ public class ClipsListeTests(ApiFactory factory) : IntegrationTest(factory)
         var reponse = await Factory.CreateClient().GetAsync("/clips", Ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, reponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task La_liste_expose_l_etat_masque_du_fond_de_chaque_clip()
+    {
+        var client = OrganisateurLeSoir();
+        var visible = await DeposerAsync("1300000000000000401", Soir.AddMinutes(10));
+        var masque = await DeposerAsync("1300000000000000402", Soir.AddMinutes(20));
+        await using (var db = Factory.CreateDbContext())
+            await db.Clips.Where(c => c.Id == masque).ExecuteUpdateAsync(s => s.SetProperty(c => c.MasqueDuFond, true), Ct);
+
+        var page = await ListerAsync(client);
+
+        var etats = page.GetProperty("items").EnumerateArray()
+            .ToDictionary(c => c.GetProperty("id").GetInt32(), c => c.GetProperty("masqueDuFond").GetBoolean());
+        Assert.False(etats[visible]);
+        Assert.True(etats[masque]);
     }
 
     [Fact]
