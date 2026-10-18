@@ -12,6 +12,16 @@ mots, avec ce sens-là. Un terme nouveau ou qui change de sens est ajouté ici.
 
 - **Utilisateur** : une personne connectée avec son compte Discord. Seul moyen de  
 connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl).
+- **Compte Discord** : ce qu'un Utilisateur présente de lui : pseudo, photo, bannière.  
+Ils sont relus depuis Discord à chaque connexion, et à la demande depuis le Profil.
+- **Compte Riot** : le compte LoL d'un Joueur, identifié par son RiotId et son PUUID.
+- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot.  
+**Délier** retire l'association ; le Joueur et ses stats restent.
+- **Profil** : la page où un Utilisateur voit et gère son Compte Discord et son Joueur  
+lié.
+- **Administrateur** : un Utilisateur dont l'identifiant Discord figure dans la  
+configuration de l'Instance. Il corrige les games, fixe les costs et les peaks, gère les  
+clips du Fond et relance l'actualisation des rangs.
 - **Joueur** : une personne qui joue les customs, identifiée par son compte Riot  
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
 joueur ; un joueur peut exister sans utilisateur lié.
@@ -92,6 +102,9 @@ champions d'une Série.
 ## Niveau des joueurs
 
 - **Rang SoloQ** : le rang classé d'un joueur en solo, lu via l'API Riot.
+- **Rôle principal** : la voie qu'un joueur a le plus jouée sur ses 15 dernières parties  
+de SoloQ, lue via l'API Riot. Un Administrateur peut relancer son calcul et celui des  
+Rangs, pour un joueur ou pour tous.
 - **Flex** : la file classée en groupe (`RANKED_FLEX_SR`), distincte de la SoloQ. Son  
 rang actuel est lu via l'API Riot et affiché à part ; il n'entre ni dans le cost ni  
 dans le MMR.
