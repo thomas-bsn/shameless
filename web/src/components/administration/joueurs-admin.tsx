@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { ActualisationRiotPanel, BoutonActualiserJoueur } from "@/components/administration/actualisation-riot";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SelecteurDePeak } from "@/components/selecteur-de-peak";
 import { Badge } from "@/components/ui/badge";
@@ -121,14 +122,17 @@ export function JoueursAdmin() {
   if (players.data.length === 0) return <p className="text-sm text-muted-foreground">Aucun joueur.</p>;
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card">
-      <table className="w-full min-w-[680px] text-sm">
+    <div className="flex flex-col gap-4">
+      <ActualisationRiotPanel />
+      <div className="overflow-x-auto rounded-xl border bg-card">
+      <table className="w-full min-w-[820px] text-sm">
         <thead>
           <tr className="border-b text-left text-xs tracking-wide text-muted-foreground uppercase">
             <th className="p-3 font-medium">Joueur</th>
             <th className="p-3 font-medium">Cost de départ</th>
             <th className="p-3 font-medium">Source</th>
             <th className="p-3 font-medium">Peak</th>
+            <th className="p-3 font-medium">Riot</th>
           </tr>
         </thead>
         <tbody>
@@ -144,10 +148,14 @@ export function JoueursAdmin() {
               <td className="p-3">
                 <Peak player={player} />
               </td>
+              <td className="p-3">
+                <BoutonActualiserJoueur playerId={player.id} prenom={player.prenom} />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

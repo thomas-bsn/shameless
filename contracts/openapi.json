@@ -45,6 +45,184 @@
         }
       }
     },
+    "/admin/riot": {
+      "get": {
+        "tags": [
+          "ActualisationRiot"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/riot/joueurs/{playerId}": {
+      "post": {
+        "tags": [
+          "ActualisationRiot"
+        ],
+        "parameters": [
+          {
+            "name": "playerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatActualisationJoueur"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatActualisationJoueur"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatActualisationJoueur"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/riot/tous": {
+      "post": {
+        "tags": [
+          "ActualisationRiot"
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatActualisationRiot"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/discord/login": {
       "get": {
         "tags": [
@@ -6228,6 +6406,26 @@
           }
         }
       },
+      "EchecActualisation": {
+        "required": [
+          "playerId",
+          "prenom",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "EntityTagHeaderValue": {
         "required": [
           "tag",
@@ -6258,6 +6456,61 @@
               "null",
               "boolean"
             ]
+          }
+        }
+      },
+      "EtatActualisationRiot": {
+        "required": [
+          "disponible",
+          "enCours",
+          "nature",
+          "total",
+          "termines",
+          "echecs",
+          "demarreeLe",
+          "termineeLe"
+        ],
+        "type": "object",
+        "properties": {
+          "disponible": {
+            "type": "boolean"
+          },
+          "enCours": {
+            "type": "boolean"
+          },
+          "nature": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "termines": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "echecs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EchecActualisation"
+            }
+          },
+          "demarreeLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "termineeLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -8318,6 +8571,37 @@
           }
         }
       },
+      "ResultatActualisationJoueur": {
+        "required": [
+          "playerId",
+          "prenom",
+          "rangsActualises",
+          "roleActualise",
+          "echecs"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "rangsActualises": {
+            "type": "boolean"
+          },
+          "roleActualise": {
+            "type": "boolean"
+          },
+          "echecs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "ResultatDuTitre": {
         "required": [
           "gagnants",
@@ -9431,6 +9715,9 @@
   "tags": [
     {
       "name": "Shameless.Api"
+    },
+    {
+      "name": "ActualisationRiot"
     },
     {
       "name": "Auth"
