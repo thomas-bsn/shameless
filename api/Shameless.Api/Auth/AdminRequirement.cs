@@ -1,7 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
-using Shameless.Infrastructure.Options;
+using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
 
 namespace Shameless.Api.Auth;
 
@@ -10,17 +9,17 @@ public static class Policies
     public const string Admin = "Admin";
 }
 
-/// <summary>Admin = ID Discord présent dans Auth:AdminDiscordIds, relu à chaque requête.</summary>
+/// <summary>Admin = Administrateur ou Superadministrateur en base, relu à chaque requête (ADR 0017).</summary>
 public sealed class AdminRequirement : IAuthorizationRequirement;
 
-public sealed class AdminHandler(IOptionsMonitor<AuthOptions> options) : AuthorizationHandler<AdminRequirement>
+public sealed class AdminHandler(IUserRepository users) : AuthorizationHandler<AdminRequirement>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, AdminRequirement requirement)
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AdminRequirement requirement)
     {
-        var discordId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (discordId is not null && options.CurrentValue.AdminIds.Contains(discordId))
-            context.Succeed(requirement);
+        if (context.User.DiscordIdOrNull() is not { } discordId) return;
 
-        return Task.CompletedTask;
+        var user = await users.GetByDiscordIdAsync(discordId);
+        if (user is { Role: UserRole.Administrateur or UserRole.Superadministrateur })
+            context.Succeed(requirement);
     }
 }

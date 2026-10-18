@@ -6,6 +6,7 @@ export const user = (overrides: Partial<Schemas["AuthUserResponse"]> = {}): Sche
   username: "Thomas",
   avatarUrl: "https://cdn.discordapp.com/embed/avatars/1.png",
   isAdmin: false,
+  role: "Utilisateur",
   ...overrides,
 });
 

@@ -104,6 +104,18 @@ Le wizard écrit lui-même la configuration de base (adresse, Discord, administr
 | `SHAMELESS_HTTP_PORT`, `SHAMELESS_HTTPS_PORT` | Ports publiés par Caddy (8080 et 8443 par défaut ; 80 et 443 pour un domaine). |
 | `WIZARD_CODE_TTL_SECONDS`, `WIZARD_INSTALL_TIMEOUT_SECONDS` | Validité du code d'accès (1800) et délai de démarrage de l'API avant d'annoncer un échec (300). |
 
+## Rôles et Superadministrateur
+
+Trois rôles sont stockés en base : utilisateur, Administrateur, Superadministrateur ([ADR 0017](docs/adr/0017-roles-et-superadministrateur.md)). Les identifiants de `Auth__AdminDiscordIds` ne servent qu'une fois : au premier démarrage qui suit l'arrivée des rôles, tant qu'aucun Superadministrateur n'existe, ils le deviennent. Ensuite la configuration n'est plus lue pour les droits. Les Administrateurs se nomment depuis le site ; les Superadministrateurs, uniquement par la commande de l'image de l'API :
+
+```sh
+docker compose exec api dotnet Shameless.Api.dll superadmin lister
+docker compose exec api dotnet Shameless.Api.dll superadmin ajouter <identifiant Discord>
+docker compose exec api dotnet Shameless.Api.dll superadmin retirer <identifiant Discord>
+```
+
+La commande relit la connexion à la base dans `/instance/instance.env` et ne démarre pas le site. Elle refuse de retirer le dernier Superadministrateur (code de sortie 1) ; un usage incorrect donne le code 2.
+
 Aucun secret ni identifiant d'environnement n'est versionné : `.env` est ignoré par Git et la configuration du wizard vit dans un volume.
 
 ## Structure du monorepo

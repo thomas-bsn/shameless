@@ -1036,6 +1036,22 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying")
                         .HasColumnName("discord_username");
 
+                    b.Property<DateTime?>("PromotedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("promoted_at");
+
+                    b.Property<string>("PromotedBy")
+                        .HasColumnType("character varying")
+                        .HasColumnName("promoted_by");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Utilisateur")
+                        .HasColumnName("role");
+
                     b.HasKey("Id")
                         .HasName("users_pk");
 
