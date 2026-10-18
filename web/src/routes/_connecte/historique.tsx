@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RankBadge } from "@/components/rank";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
+import { calendarCells, daysPlayed, gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
 import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
@@ -39,23 +42,30 @@ function Historique() {
   });
 
   const series = history.data?.games ?? [];
-  const gameCount = series.reduce((sum, s) => sum + s.games.length, 0);
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
+    <div className="flex max-w-5xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">Historique</p>
           <h1 className="text-2xl font-bold">{monthLabel(shown)}</h1>
         </div>
-        <nav aria-label="Mois" className="flex items-center gap-4 text-sm">
-          <Link to="." search={toSearch(previous)} className="text-muted-foreground hover:text-foreground">
-            ← {monthLabel(previous)}
-          </Link>
-          {hasNext && (
-            <Link to="." search={toSearch(next)} className="text-muted-foreground hover:text-foreground">
-              {monthLabel(next)} →
+        <nav aria-label="Mois" className="flex items-center gap-2">
+          <Button asChild variant="outline" size="icon" className="rounded-full">
+            <Link to="." search={toSearch(previous)} aria-label="Mois précédent">
+              <ChevronLeft />
             </Link>
+          </Button>
+          {hasNext ? (
+            <Button asChild variant="outline" size="icon" className="rounded-full">
+              <Link to="." search={toSearch(next)} aria-label="Mois suivant">
+                <ChevronRight />
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="icon" className="rounded-full" disabled aria-label="Mois suivant">
+              <ChevronRight />
+            </Button>
           )}
         </nav>
       </div>
@@ -66,20 +76,99 @@ function Historique() {
       ) : series.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">Aucune game ce mois-ci.</p>
       ) : (
-        <>
-          <p className="text-sm text-muted-foreground">
-            {series.length} série{series.length > 1 ? "s" : ""} · {gameCount} game{gameCount > 1 ? "s" : ""}
-          </p>
-          {series.map((s) => (
-            <SeriesCard key={s.seriesId} series={s} />
-          ))}
-        </>
+        <MonthView key={`${shown.year}-${shown.month}`} month={shown} series={series} />
       )}
     </div>
   );
 }
 
-function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
+const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+
+function MonthView({ month, series }: { month: Month; series: Schemas["SeriesHistoryResponse"][] }) {
+  const days = daysPlayed(series);
+  const lastDay = Math.max(...days.keys());
+  const [picked, setPicked] = useState<number | null>(null);
+  const selected = picked !== null && days.has(picked) ? picked : lastDay;
+  const day = days.get(selected)!;
+  const dayLabel = (d: number) =>
+    new Date(month.year, month.month - 1, d).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  const dayTitle = new Date(month.year, month.month - 1, selected).toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const realSeries = day.series.filter((g) => g.series.seriesId !== 0).length;
+
+  return (
+    <div className="grid items-start gap-6 md:grid-cols-[minmax(0,22rem)_1fr]">
+      <Card>
+        <CardContent>
+          <div
+            role="group"
+            aria-label={`Calendrier d'${monthLabel(month).toLowerCase()}`}
+            className="grid grid-cols-7 gap-1.5"
+          >
+            {WEEKDAYS.map((w, i) => (
+              <span key={i} aria-hidden className="pb-1 text-center text-xs text-muted-foreground">
+                {w}
+              </span>
+            ))}
+            {calendarCells(month).map((d, i) => {
+              if (d === null) return <span key={`vide-${i}`} />;
+              const played = days.get(d);
+              if (!played) {
+                return (
+                  <span
+                    key={d}
+                    className="flex aspect-square items-center justify-center rounded-md text-sm text-muted-foreground"
+                  >
+                    {d}
+                  </span>
+                );
+              }
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={d === selected}
+                  aria-label={`${dayLabel(d)}, ${played.count} game${played.count > 1 ? "s" : ""}`}
+                  onClick={() => setPicked(d)}
+                  className={cn(
+                    "flex aspect-square flex-col items-center justify-center rounded-md border text-sm font-medium transition-colors",
+                    d === selected ? "border-primary bg-primary text-primary-foreground" : "bg-muted hover:bg-accent",
+                  )}
+                >
+                  {d}
+                  <span className="font-mono text-[10px] tabular-nums opacity-80">{played.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+      <section aria-label={dayTitle} className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold capitalize">{dayTitle}</h2>
+          <p className="text-sm text-muted-foreground">
+            {realSeries > 0 && `${realSeries} série${realSeries > 1 ? "s" : ""} · `}
+            {day.count} game{day.count > 1 ? "s" : ""}
+          </p>
+        </div>
+        {day.series.map(({ series: s, games }) => (
+          <SeriesCard key={s.seriesId} series={s} games={games} />
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function SeriesCard({
+  series,
+  games,
+}: {
+  series: Schemas["SeriesHistoryResponse"];
+  games: Schemas["GameHistoryResponse"][];
+}) {
   // seriesId 0 : games enregistrées sans Série.
   const title = series.seriesId === 0 ? "Games hors série" : `Série BO${series.format}`;
   const score = seriesScore(series.games);
@@ -106,8 +195,8 @@ function SeriesCard({ series }: { series: Schemas["SeriesHistoryResponse"] }) {
         </CardHeader>
         <CardContent>
           <ol className="flex flex-col gap-4">
-            {series.games.map((g, index) => (
-              <GameRow key={g.id} game={g} index={index + 1} />
+            {games.map((g) => (
+              <GameRow key={g.id} game={g} index={series.games.indexOf(g) + 1} />
             ))}
           </ol>
         </CardContent>

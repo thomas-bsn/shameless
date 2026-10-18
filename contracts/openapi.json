@@ -7247,7 +7247,8 @@
           "peakDivision",
           "peakSeason",
           "peakLp",
-          "currentCost"
+          "currentCost",
+          "costEvolution"
         ],
         "type": "object",
         "properties": {
@@ -7338,6 +7339,13 @@
           },
           "currentCost": {
             "type": "number",
+            "format": "double"
+          },
+          "costEvolution": {
+            "type": [
+              "null",
+              "number"
+            ],
             "format": "double"
           }
         }

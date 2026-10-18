@@ -64,8 +64,7 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
       <div className="mt-auto flex flex-col gap-2 border-t pt-4">
         {session.data?.isAdmin && (
-          // La page Administration arrive avec son propre ticket : la route n'est pas encore typée.
-          <Link to={"/administration" as never} onClick={onNavigate} className={lienClasse} activeProps={{ className: lienActif }}>
+          <Link to="/administration" onClick={onNavigate} className={lienClasse} activeProps={{ className: lienActif }}>
             Administration
           </Link>
         )}

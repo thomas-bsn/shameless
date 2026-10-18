@@ -24,3 +24,28 @@ export function groupByCostTier<P extends { prenom: string; currentCost: number 
     (group) => group.players.length > 0,
   );
 }
+
+/** Les Joueurs du plus gros cost au plus petit, à égalité par prénom. */
+export function rankByCost<P extends { prenom: string; currentCost: number }>(players: P[]) {
+  return [...players].sort((a, b) => b.currentCost - a.currentCost || a.prenom.localeCompare(b.prenom, "fr"));
+}
+
+/** Un cost à une décimale, à la française (« 4,5 »). */
+export const costText = (cost: number) => cost.toFixed(1).replace(".", ",");
+
+/** Le rang en toutes lettres : « 1er », « 2e »… */
+export const placeText = (rang: number) => (rang === 1 ? "1er" : `${rang}e`);
+
+/**
+ * L'évolution du cost depuis le mois précédent, prête à afficher ; null quand l'API ne la connaît
+ * pas (aucun mois précédent). Le sens ne dépend que de la valeur arrondie au dixième.
+ */
+export function evolutionDuCost(evolution: number | null) {
+  if (evolution === null) return null;
+  const arrondie = Math.round(evolution * 10) / 10;
+  const sens = arrondie > 0 ? "hausse" : arrondie < 0 ? "baisse" : "stable";
+  const valeur = costText(Math.abs(arrondie));
+  const signe = sens === "hausse" ? "▲" : sens === "baisse" ? "▼" : "=";
+  const dit = sens === "hausse" ? `+${valeur}` : sens === "baisse" ? `-${valeur}` : "stable";
+  return { sens, texte: `${signe} ${valeur}`, label: `Évolution du cost : ${dit}` } as const;
+}
