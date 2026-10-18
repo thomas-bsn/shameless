@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import type { Schemas } from "@/api/client";
+import { Initiale, Marche, PlayerLink } from "@/components/podium";
 import { Card } from "@/components/ui/card";
 import { placeText } from "@/lib/cost";
 import { cn } from "@/lib/utils";
@@ -23,41 +23,19 @@ function Bouse({ className }: { className?: string }) {
   );
 }
 
-function Initiale({ ligne, className }: { ligne: Ligne; className: string }) {
-  return (
-    <span aria-hidden className={cn("flex items-center justify-center rounded-full bg-muted font-semibold uppercase", className)}>
-      {ligne.prenom.charAt(0)}
-    </span>
-  );
-}
-
-function PlayerLink({ ligne, className }: { ligne: Ligne; className?: string }) {
-  return (
-    <Link
-      to="/joueurs/$playerId"
-      params={{ playerId: String(ligne.playerId) }}
-      className={cn("font-semibold hover:underline", className)}
-    >
-      {ligne.prenom}
-    </Link>
-  );
-}
-
 /** Une marche du podium ; le premier est plus haut, avec une bouse plus grosse. */
-function Marche({ ligne, exAequo }: { ligne: Ligne; exAequo: boolean }) {
+function MarcheDofd({ ligne, exAequo }: { ligne: Ligne; exAequo: boolean }) {
   const premier = ligne.rang === 1;
   const libelle = exAequo ? `${placeText(ligne.rang)} ex æquo` : placeText(ligne.rang);
   return (
-    <li aria-label={`${libelle} : ${ligne.prenom}`} className={cn("flex flex-1 flex-col", premier && "sm:-mt-4")}>
-      <Card className={cn("items-center gap-2 px-3 py-5 text-center", premier && "border-amber-700/70 py-7 ring-1 ring-amber-700/40")}>
-        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{libelle}</span>
-        <Bouse className={premier ? "size-16" : "size-12"} />
-        <Initiale ligne={ligne} className="size-10 text-lg" />
-        <PlayerLink ligne={ligne} className="max-w-full truncate" />
-        <span className={cn("font-mono font-bold tabular-nums", premier ? "text-3xl" : "text-2xl")}>{ligne.dofd}</span>
-        <span className="text-xs text-muted-foreground">DOFD</span>
-      </Card>
-    </li>
+    <Marche label={`${libelle} : ${ligne.prenom}`} premier={premier} bordure="border-amber-700/70 ring-amber-700/40">
+      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{libelle}</span>
+      <Bouse className={premier ? "size-16" : "size-12"} />
+      <Initiale prenom={ligne.prenom} className="size-10 text-lg" />
+      <PlayerLink playerId={ligne.playerId} prenom={ligne.prenom} className="max-w-full truncate" />
+      <span className={cn("font-mono font-bold tabular-nums", premier ? "text-3xl" : "text-2xl")}>{ligne.dofd}</span>
+      <span className="text-xs text-muted-foreground">DOFD</span>
+    </Marche>
   );
 }
 
@@ -72,9 +50,9 @@ export function DofdRanking({ joueurs }: { joueurs: Ligne[] }) {
   return (
     <div className="flex flex-col gap-6">
       <ol aria-label="Podium des DOFD" className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        {deuxieme && <Marche ligne={deuxieme} exAequo={exAequo(deuxieme)} />}
-        <Marche ligne={premier!} exAequo={exAequo(premier!)} />
-        {troisieme && <Marche ligne={troisieme} exAequo={exAequo(troisieme)} />}
+        {deuxieme && <MarcheDofd ligne={deuxieme} exAequo={exAequo(deuxieme)} />}
+        <MarcheDofd ligne={premier!} exAequo={exAequo(premier!)} />
+        {troisieme && <MarcheDofd ligne={troisieme} exAequo={exAequo(troisieme)} />}
       </ol>
       {suivants.length > 0 && (
         <Card className="py-2">
@@ -87,8 +65,8 @@ export function DofdRanking({ joueurs }: { joueurs: Ligne[] }) {
                   </span>
                   {exAequo(ligne) && <span className="text-[10px] text-muted-foreground">ex æquo</span>}
                 </span>
-                <Initiale ligne={ligne} className="size-8 text-sm" />
-                <PlayerLink ligne={ligne} className="flex-1 truncate" />
+                <Initiale prenom={ligne.prenom} className="size-8 text-sm" />
+                <PlayerLink playerId={ligne.playerId} prenom={ligne.prenom} className="flex-1 truncate" />
                 <span className="font-mono font-semibold tabular-nums">{ligne.dofd} DOFD</span>
               </li>
             ))}

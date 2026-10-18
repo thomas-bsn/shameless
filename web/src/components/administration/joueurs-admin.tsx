@@ -6,12 +6,12 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { costText } from "@/lib/cost";
 import { isMasterPlus, rankLabel, SOLOQ_TIERS, tierName } from "@/lib/ranks";
 
 const COST_MIN = 1;
 const COST_MAX = 6;
 const arrondi = (cost: number) => Math.round(cost * 10) / 10;
-const formatCost = (cost: number) => cost.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const classeSelect = "h-9 rounded-md border bg-background px-2 text-sm";
 
 function CostDeDepart({ player }: { player: Schemas["PlayerDto"] }) {
@@ -39,13 +39,13 @@ function CostDeDepart({ player }: { player: Schemas["PlayerDto"] }) {
       <Button variant="outline" size="icon-sm" aria-label="Diminuer le cost" disabled={valeur <= COST_MIN} onClick={() => regler(-0.1)}>
         <MinusIcon />
       </Button>
-      <Input aria-label="Cost de départ" readOnly value={formatCost(valeur)} className="h-8 w-16 text-center font-mono" />
+      <Input aria-label="Cost de départ" readOnly value={costText(valeur)} className="h-8 w-16 text-center font-mono" />
       <Button variant="outline" size="icon-sm" aria-label="Augmenter le cost" disabled={valeur >= COST_MAX} onClick={() => regler(0.1)}>
         <PlusIcon />
       </Button>
       {modifie && (
         <>
-          <span className="text-xs text-muted-foreground">{formatCost(depart)} avant</span>
+          <span className="text-xs text-muted-foreground">{costText(depart)} avant</span>
           <Button size="sm" disabled={enregistrer.isPending} onClick={() => enregistrer.mutate({ params: { path }, body: { cost: valeur } })}>
             Enregistrer
           </Button>

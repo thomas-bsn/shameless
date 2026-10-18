@@ -12,26 +12,21 @@ const TAILLE_DE_PAGE = 50;
 
 /**
  * L'onglet Clips du Fond : tous les clips en vignettes avec l'interrupteur « Dans le Fond / Masqué »,
- * et un filtre pour ne voir que les masqués.
+ * et un filtre (côté serveur) pour ne voir que les masqués.
  */
 export function ClipsAdmin() {
+  const [seulementMasques, setSeulementMasques] = useState(false);
   const clips = $api.useInfiniteQuery(
     "get",
     "/clips",
-    { params: { query: { taille: TAILLE_DE_PAGE } } },
+    { params: { query: { taille: TAILLE_DE_PAGE, ...(seulementMasques ? { masques: true } : {}) } } },
     {
       initialPageParam: 1,
       pageParamName: "page",
       getNextPageParam: (page) => (page.page * page.taille < page.total ? page.page + 1 : undefined),
     },
   );
-  const [seulementMasques, setSeulementMasques] = useState(false);
-
-  if (clips.isPending) return <LoadingRows />;
-  if (clips.isError) return <ErrorAlert error={clips.error} />;
-
-  const tous = clips.data.pages.flatMap((page) => page.items);
-  const affiches = seulementMasques ? tous.filter((c) => c.masqueDuFond) : tous;
+  const affiches = clips.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,7 +34,11 @@ export function ClipsAdmin() {
         <Switch aria-label="Masqués" checked={seulementMasques} onCheckedChange={setSeulementMasques} />
         Masqués
       </label>
-      {affiches.length === 0 ? (
+      {clips.isPending ? (
+        <LoadingRows />
+      ) : clips.isError ? (
+        <ErrorAlert error={clips.error} />
+      ) : affiches.length === 0 ? (
         <p className="text-sm text-muted-foreground">{seulementMasques ? "Aucun clip masqué." : "Aucun clip pour l'instant."}</p>
       ) : (
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">

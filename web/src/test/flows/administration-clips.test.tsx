@@ -63,16 +63,22 @@ describe("Administration : onglet Clips du Fond", () => {
   });
 
   it("n'affiche que les clips masqués avec le filtre « Masqués »", async () => {
-    mockApi({
+    const api = mockApi({
       ...calme,
-      "GET /clips": liste(() => [clip({ id: 1, nomFichier: "pentakill.mp4" }), clip({ id: 2, nomFichier: "baron.mp4", masqueDuFond: true })]),
+      "GET /clips": (req) => {
+        const masques = new URL(req.url).searchParams.get("masques") === "true";
+        const tous = [clip({ id: 1, nomFichier: "pentakill.mp4" }), clip({ id: 2, nomFichier: "baron.mp4", masqueDuFond: true })];
+        const items = masques ? tous.filter((c) => c.masqueDuFond) : tous;
+        return json({ items, total: items.length, page: 1, taille: 50 });
+      },
     });
     renderApp("/administration?onglet=clips");
 
     await screen.findByText("pentakill.mp4");
     await userEvent.click(screen.getByRole("switch", { name: "Masqués" }));
 
-    expect(screen.queryByText("pentakill.mp4")).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.queryByText("pentakill.mp4")).not.toBeInTheDocument());
     expect(screen.getByText("baron.mp4")).toBeInTheDocument();
+    expect(api.mock.calls.some(([r]) => new URL(r.url).searchParams.get("masques") === "true")).toBe(true);
   });
 });
