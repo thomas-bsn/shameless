@@ -570,6 +570,13 @@
             }
           },
           {
+            "name": "masques",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {

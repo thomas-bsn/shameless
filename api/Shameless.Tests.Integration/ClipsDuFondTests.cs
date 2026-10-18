@@ -86,6 +86,19 @@ public class ClipsDuFondTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_fond_ne_rend_qu_une_liste_limitee_de_clips()
+    {
+        var client = Factory.CreateSignedInClient();
+        Factory.Clock.SetUtcNow(Soir);
+        for (var i = 0; i < 32; i++) await DeposerAsync($"13000000000000005{i:00}");
+
+        var fond = (await FondAsync(client)).Select(c => c.GetProperty("id").GetInt32()).ToList();
+
+        Assert.Equal(30, fond.Count);
+        Assert.Equal(fond.Count, fond.Distinct().Count());
+    }
+
+    [Fact]
     public async Task Le_fond_exige_une_session()
     {
         var reponse = await Factory.CreateClient().GetAsync("/clips/fond", Ct);
@@ -132,6 +145,23 @@ public class ClipsDuFondTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.OK, reaffiche.StatusCode);
         Assert.False((await ReadJsonAsync(reaffiche)).GetProperty("masqueDuFond").GetBoolean());
         Assert.Single(await FondAsync(admin));
+    }
+
+    [Fact]
+    public async Task La_liste_des_clips_se_filtre_sur_les_masques_cote_serveur()
+    {
+        var admin = Factory.CreateAdminClient();
+        Factory.Clock.SetUtcNow(Soir);
+        await DeposerAsync("1300000000000000601");
+        var masque = await DeposerAsync("1300000000000000602");
+        await MasquerAsync(masque);
+
+        var reponse = await ReadJsonAsync(await admin.GetAsync("/clips?masques=true", Ct));
+
+        var clip = reponse.GetProperty("items").EnumerateArray().Single();
+        Assert.Equal(masque, clip.GetProperty("id").GetInt32());
+        Assert.Equal(1, reponse.GetProperty("total").GetInt32());
+        Assert.Equal(2, (await ReadJsonAsync(await admin.GetAsync("/clips", Ct))).GetProperty("total").GetInt32());
     }
 
     [Fact]

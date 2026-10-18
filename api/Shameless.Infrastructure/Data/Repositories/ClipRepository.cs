@@ -31,6 +31,8 @@ public sealed class ClipRepository : IClipRepository
             requete = requete.Where(c => EF.Functions.ILike(c.AuteurNom, $"%{filtre.Auteur.Trim()}%"));
         if (filtre.SansGame is { } sansGame)
             requete = requete.Where(c => (c.GameId == null) == sansGame);
+        if (filtre.Masques is { } masques)
+            requete = requete.Where(c => c.MasqueDuFond == masques);
         if (filtre is { SoireeDebut: { } debut, SoireeFin: { } fin })
             requete = requete.Where(c =>
                 (c.Game != null ? c.Game.CreatedAt : c.PublieLe) >= debut &&
@@ -45,8 +47,8 @@ public sealed class ClipRepository : IClipRepository
         return (clips, total);
     }
 
-    public Task<List<Clip>> GetDuFondAuHasardAsync() =>
-        _db.Clips.AsNoTracking().Where(c => !c.MasqueDuFond).OrderBy(_ => EF.Functions.Random()).ToListAsync();
+    public Task<List<Clip>> GetDuFondAuHasardAsync(int limite) =>
+        _db.Clips.AsNoTracking().Where(c => !c.MasqueDuFond).OrderBy(_ => EF.Functions.Random()).Take(limite).ToListAsync();
 
     public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

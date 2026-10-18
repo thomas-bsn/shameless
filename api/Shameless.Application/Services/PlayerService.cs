@@ -2,7 +2,6 @@
 using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
-using Shameless.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Shameless.Application.Services;
@@ -36,7 +35,7 @@ public class PlayerService : IPlayerService
     {
         var players = await _players.GetAllAsync();
         var maintenant = _clock.GetUtcNow().UtcDateTime;
-        var precedents = await _monthlyCosts.GetCostsFinauxAvantAsync(new DateOnly(maintenant.Year, maintenant.Month, 1));
+        var precedents = await _monthlyCosts.GetCostsFinauxDuMoisAsync(new DateOnly(maintenant.Year, maintenant.Month, 1).AddMonths(-1));
         foreach (var player in players)
             player.CostEvolution = precedents.TryGetValue(player.Id, out var avant) ? player.CurrentCost - avant : null;
         return players;

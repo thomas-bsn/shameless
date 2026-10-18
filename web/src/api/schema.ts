@@ -540,6 +540,7 @@ export interface paths {
                     auteur?: string;
                     soiree?: string;
                     sansGame?: boolean;
+                    masques?: boolean;
                     page?: number;
                     taille?: number;
                 };

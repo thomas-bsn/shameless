@@ -31,13 +31,13 @@ public sealed class ClipsController : ControllerBase
     /// <summary>
     /// Tous les clips, du plus récent au plus ancien publié, par pages. Filtres facultatifs : <c>auteur</c>
     /// (un morceau du nom), <c>soiree</c> (un jour, <c>AAAA-MM-JJ</c>, dans le fuseau de l'Instance) et
-    /// <c>sansGame</c>.
+    /// <c>sansGame</c> et <c>masques</c> (masqués du Fond ou non).
     /// </summary>
     [HttpGet("clips")]
     [ProducesResponseType<ClipsPage>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     public async Task<ActionResult<ClipsPage>> Lister(
-        string? auteur, string? soiree, bool? sansGame, int page = 1, int taille = 50)
+        string? auteur, string? soiree, bool? sansGame, bool? masques, int page = 1, int taille = 50)
     {
         DateOnly? jour = null;
         if (!string.IsNullOrWhiteSpace(soiree))
@@ -46,7 +46,7 @@ public sealed class ClipsController : ControllerBase
                 return Problem(statusCode: StatusCodes.Status400BadRequest, detail: "La soirée est un jour au format AAAA-MM-JJ.");
             jour = lu;
         }
-        var result = await _clips.ListerAsync(auteur, jour, sansGame, page, taille);
+        var result = await _clips.ListerAsync(auteur, jour, sansGame, masques, page, taille);
         if (!result.IsOk) return this.Refusal(result);
         return result.Value!;
     }
@@ -57,7 +57,7 @@ public sealed class ClipsController : ControllerBase
     public async Task<List<ClipResponse>> GetSansGame() => await _clips.GetSansGameAsync();
 
     /// <summary>
-    /// Les clips du Fond : tous ceux qui ne sont pas masqués du Fond, tirés dans un ordre aléatoire.
+    /// Les clips du Fond : au plus 30 clips non masqués du Fond, tirés au hasard côté serveur.
     /// </summary>
     [HttpGet("clips/fond")]
     [ProducesResponseType<List<ClipDuFond>>(StatusCodes.Status200OK)]

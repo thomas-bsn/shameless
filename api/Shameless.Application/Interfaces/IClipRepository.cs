@@ -26,8 +26,8 @@ public interface IClipRepository
     /// </summary>
     Task<(List<Clip> Clips, int Total)> ListerAsync(FiltreDesClips filtre, int page, int taille);
 
-    /// <summary>Les clips non masqués du Fond, dans un ordre tiré au hasard par la base.</summary>
-    Task<List<Clip>> GetDuFondAuHasardAsync();
+    /// <summary>Au plus <paramref name="limite"/> clips non masqués du Fond, tirés au hasard par la base.</summary>
+    Task<List<Clip>> GetDuFondAuHasardAsync(int limite);
 
     /// <summary>Enregistre ; false si une autre commande a déposé la même pièce jointe entre-temps.</summary>
     Task<bool> TrySaveChangesAsync();

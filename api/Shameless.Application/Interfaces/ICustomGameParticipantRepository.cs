@@ -1,6 +1,6 @@
 using Shameless.Application.Entities;
 
-namespace Shameless.Infrastructure.Repositories;
+namespace Shameless.Application.Interfaces;
 
 public interface ICustomGameParticipantRepository
 {

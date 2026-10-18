@@ -99,12 +99,15 @@ public sealed class ClipsService
 
     public const int TailleMaxDePage = 200;
 
+    /// <summary>Le nombre de clips que le Fond reçoit à chaque tirage.</summary>
+    public const int TailleDuFond = 30;
+
     /// <summary>
     /// Une page de tous les clips, du plus récent au plus ancien publié. <paramref name="soiree"/> est un
     /// jour calendaire dans le fuseau de l'Instance : la soirée d'un clip est le jour de lancement de sa
     /// Game, ou celui de sa publication sans Game.
     /// </summary>
-    public async Task<CommandResult<ClipsPage>> ListerAsync(string? auteur, DateOnly? soiree, bool? sansGame, int page, int taille)
+    public async Task<CommandResult<ClipsPage>> ListerAsync(string? auteur, DateOnly? soiree, bool? sansGame, bool? masques, int page, int taille)
     {
         if (page < 1) return CommandResult<ClipsPage>.Invalid("La page commence à 1.");
         if (taille is < 1 or > TailleMaxDePage)
@@ -118,13 +121,13 @@ public sealed class ClipsService
             (debut, fin) = GamePlausible.JourDePublication(midi, _fuseau);
         }
 
-        var (clips, total) = await _clips.ListerAsync(new FiltreDesClips(auteur, debut, fin, sansGame), page, taille);
+        var (clips, total) = await _clips.ListerAsync(new FiltreDesClips(auteur, debut, fin, sansGame, masques), page, taille);
         return CommandResult<ClipsPage>.Ok(new ClipsPage(clips.Select(ClipDeLaListe.From).ToList(), total, page, taille));
     }
 
-    /// <summary>Les clips éligibles au Fond (non masqués), dans un ordre aléatoire.</summary>
+    /// <summary>Au plus <see cref="TailleDuFond"/> clips éligibles au Fond (non masqués), tirés au hasard.</summary>
     public async Task<List<ClipDuFond>> GetDuFondAsync() =>
-        (await _clips.GetDuFondAuHasardAsync()).Select(ClipDuFond.From).ToList();
+        (await _clips.GetDuFondAuHasardAsync(TailleDuFond)).Select(ClipDuFond.From).ToList();
 
     /// <summary>
     /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou

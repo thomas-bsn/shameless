@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { pickerProgress } from "@/lib/picker";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ function SoireePage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["get", "/soirees/open"] });
   const ouvrir = $api.useMutation("post", "/soirees", { onSuccess: refresh });
   const fermer = $api.useMutation("post", "/soirees/{id}/close", { onSuccess: refresh });
+  const [confirmation, setConfirmation] = useState(false);
 
   if (open.isPending) return <LoadingRows />;
   if (open.isError) return <ErrorAlert error={open.error} />;
@@ -53,19 +56,34 @@ function SoireePage() {
         title="Ce soir"
         description={`Soirée · ouverte à ${openedLabel(soiree.openedAt)}`}
         actions={
-          <Button
-            variant="ghost"
-            disabled={fermer.isPending}
-            onClick={() => {
-              if (window.confirm("Fermer la soirée ? Les séries en cours resteront telles quelles."))
-                fermer.mutate({ params: { path: { id: soiree.id } } });
-            }}
-          >
+          <Button variant="ghost" disabled={fermer.isPending} onClick={() => setConfirmation(true)}>
             Fermer la soirée
           </Button>
         }
       />
       {fermer.isError && <ErrorAlert error={fermer.error} />}
+      <Dialog open={confirmation} onOpenChange={setConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fermer la soirée ?</DialogTitle>
+            <DialogDescription>Les séries en cours resteront telles quelles.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmation(false)}>
+              Annuler
+            </Button>
+            <Button
+              disabled={fermer.isPending}
+              onClick={() => {
+                setConfirmation(false);
+                fermer.mutate({ params: { path: { id: soiree.id } } });
+              }}
+            >
+              Fermer la soirée
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <SoireeEnCours soireeId={soiree.id} picker={soiree.picker} />
     </div>
   );

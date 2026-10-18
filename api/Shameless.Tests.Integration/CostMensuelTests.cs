@@ -110,6 +110,21 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task L_evolution_du_cost_est_inconnue_quand_le_mois_precedent_n_a_pas_de_ligne()
+    {
+        var client = Factory.CreateSignedInClient();
+        Factory.Clock.SetUtcNow(Mars);
+        var serie = await CreateSerieAsync(client, format: 5);
+        foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
+            await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante);
+
+        // En mai, le mois précédent est avril, sans ligne : mars ne sert pas de repli.
+        Factory.Clock.SetUtcNow(new DateTimeOffset(2026, 5, 12, 20, 0, 0, TimeSpan.Zero));
+
+        Assert.Equal(JsonValueKind.Null, (await JoueurDeLaListeAsync(client, serie.TeamA[0])).GetProperty("costEvolution").ValueKind);
+    }
+
+    [Fact]
     public async Task Le_cost_de_depart_est_le_dernier_cost_final_conserve_meme_apres_un_mois_sans_game()
     {
         var client = Factory.CreateSignedInClient();
