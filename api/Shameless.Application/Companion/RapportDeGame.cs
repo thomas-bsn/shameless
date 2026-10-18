@@ -82,7 +82,8 @@ public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnl
 }
 
 /// <param name="Stats">Les stats brutes du joueur pour la partie, en JSON ; null si absentes (rapport invalide).</param>
-public sealed record JoueurDuRapport(string Puuid, string Side, string ChampionId, bool Victoire, string? Stats);
+/// <param name="RiotId">Le RiotId (Nom#TAG) d'un joueur inconnu de l'Instance, retrouvé par Shameless à la mise en revue du rapport ; null sinon.</param>
+public sealed record JoueurDuRapport(string Puuid, string Side, string ChampionId, bool Victoire, string? Stats, string? RiotId = null);
 
 /// <summary>
 /// L'écart entre les joueurs détectés par un rapport et la composition d'une game. Vide, le rapport
