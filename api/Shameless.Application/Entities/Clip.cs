@@ -48,6 +48,12 @@ public class Clip
     /// </summary>
     public string? Rattachement { get; set; }
 
+    /// <summary>
+    /// Écarté du Fond (spec #104) sans être supprimé : le clip reste dans la liste des clips et sur la
+    /// page de sa Game. Faux par défaut.
+    /// </summary>
+    public bool MasqueDuFond { get; set; }
+
     /// <summary>Le rattachement effectif : null dès que le clip n'a plus de Game.</summary>
     public string? RattachementEffectif => GameId == null ? null : Rattachement;
 

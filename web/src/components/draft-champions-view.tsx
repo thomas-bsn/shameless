@@ -16,7 +16,9 @@ import {
   peutJouer,
   secondesRestantes,
   toursDeLaDraft,
+  VOIES,
   type TourDeLaDraft,
+  type Voie,
 } from "@/lib/draft-champions";
 import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
 import { problemStatus } from "@/lib/problem";
@@ -53,6 +55,9 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   });
 
   const titre = portee === "Capitaine" ? "Draft de champions — capitaine" : "Draft de champions — spectateur";
+  const meta = draft.data
+    ? `Série ${draft.data.seriesId} · Game ${draft.data.gameId}${draft.data.fearless ? " · Fearless" : ""}`
+    : undefined;
 
   if (acces.isError) {
     return (
@@ -73,7 +78,11 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   const equipe = portee === "Capitaine" && acces.data.portee === "Capitaine" ? acces.data.equipe : null;
 
   return (
-    <Page titre={titre} sousTitre={equipe ? `Capitaine de l'Équipe ${equipe}` : "Lecture seule"}>
+    <Page
+      titre={titre}
+      meta={meta}
+      badge={equipe ? `Tu es le capitaine de l'Équipe ${equipe}` : "En direct · lecture seule"}
+    >
       {draft.isPending ? (
         <LoadingRows />
       ) : draft.isError && !draft.data ? (
@@ -89,6 +98,7 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
           draft={draft.data!}
           champions={champions.data ?? []}
           equipe={equipe}
+          spectateur={equipe === null}
           jeu={
             equipe && peutJouer(draft.data!, equipe)
               ? {
@@ -105,12 +115,25 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   );
 }
 
-function Page({ titre, sousTitre, children }: { titre: string; sousTitre?: string; children: ReactNode }) {
+function Page({
+  titre,
+  meta,
+  badge,
+  children,
+}: {
+  titre: string;
+  meta?: string;
+  badge?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">{titre}</h1>
-        {sousTitre && <p className="mt-1 text-sm text-muted-foreground">{sousTitre}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">{titre}</h1>
+          {meta && <p className="mt-1 text-sm text-muted-foreground">{meta}</p>}
+        </div>
+        {badge && <Badge variant="outline">{badge}</Badge>}
       </div>
       {children}
     </div>
@@ -159,6 +182,7 @@ export function DraftChampionsView({
   jeu,
   consigne,
   avecEquipes = true,
+  spectateur = false,
 }: {
   draft: Draft;
   champions: Champion[];
@@ -170,6 +194,8 @@ export function DraftChampionsView({
   consigne?: string;
   /** Affiche les Équipes et leurs rôles sous la Draft. */
   avecEquipes?: boolean;
+  /** Vue en lecture seule du lien public : le tour annoncé en grand, sans grille de champions. */
+  spectateur?: boolean;
 }) {
   const parId = useMemo(() => new Map(champions.map((c) => [c.id, c])), [champions]);
   const tours = toursDeLaDraft(draft);
@@ -178,18 +204,26 @@ export function DraftChampionsView({
 
   return (
     <div className="flex flex-col gap-6">
-      <EtatDuTour draft={draft} equipe={equipe} consigne={consigne} />
+      <EtatDuTour draft={draft} equipe={equipe} consigne={consigne} spectateur={spectateur} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <CoteDraft side="blue" equipe={blue} tours={tours} parId={parId} />
-        <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
-      </div>
+      {spectateur ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <CoteDraft side="blue" equipe={blue} tours={tours} parId={parId} />
+          <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)]">
+          <CoteDraft side="blue" equipe={blue} tours={tours} parId={parId} />
+          <div className="order-last flex flex-col gap-4 lg:order-none">
+            {(jeu || equipe !== null) && !draft.terminee && draft.tourCourant && (
+              <ChoixChampion key={draft.tourCourant.numero} draft={draft} champions={champions} jeu={jeu} />
+            )}
+          </div>
+          <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
+        </div>
+      )}
 
       {draft.championsDejaJoues && <DejaJoues championIds={draft.championsDejaJoues} parId={parId} />}
-
-      {jeu && draft.tourCourant && (
-        <ChoixChampion key={draft.tourCourant.numero} draft={draft} champions={champions} jeu={jeu} />
-      )}
 
       <OrdreTournament tours={tours} parId={parId} />
 
@@ -208,7 +242,17 @@ export function DraftChampionsView({
   );
 }
 
-function EtatDuTour({ draft, equipe, consigne }: { draft: Draft; equipe: string | null; consigne?: string }) {
+function EtatDuTour({
+  draft,
+  equipe,
+  consigne,
+  spectateur,
+}: {
+  draft: Draft;
+  equipe: string | null;
+  consigne?: string;
+  spectateur: boolean;
+}) {
   const tour = draft.tourCourant;
   if (draft.terminee || !tour) {
     return (
@@ -220,18 +264,27 @@ function EtatDuTour({ draft, equipe, consigne }: { draft: Draft; equipe: string 
   }
 
   const aToi = equipe !== null && tour.equipe === equipe;
+  const verbe = tour.action === "ban" ? "bannir" : "choisir";
   return (
     <Card className={cn(aToi && "border-primary")}>
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col gap-1">
+          {aToi && (
+            <span className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
+              <span aria-hidden className="size-2 rounded-full bg-primary-foreground motion-safe:animate-pulse" />
+              À toi de {verbe}
+            </span>
+          )}
+          {spectateur && (
+            <h2 className="text-2xl font-bold">
+              L'Équipe {tour.equipe} {tour.action === "ban" ? "bannit" : "choisit"}
+            </h2>
+          )}
           <p aria-label="Tour courant" className="text-lg font-semibold">
             Tour {tour.numero}/20 · <span className={sideTextClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            {consigne ??
-              (aToi
-                ? `À toi de ${tour.action === "ban" ? "bannir" : "choisir"} pour l'Équipe ${tour.equipe}`
-                : `Au tour de l'Équipe ${tour.equipe}`)}
+            {consigne ?? (aToi ? `Équipe ${tour.equipe}, c'est ton tour` : `Au tour de l'Équipe ${tour.equipe}`)}
           </p>
         </div>
         <TempsRestant tour={tour} />
@@ -392,9 +445,10 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
 }
 
 /** Le champion du tour courant, choisi parmi ceux encore disponibles. */
-function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour }) {
+function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour | null }) {
   const tour = draft.tourCourant!;
   const [recherche, setRecherche] = useState("");
+  const [voie, setVoie] = useState<Voie | null>(null);
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
   const dejaJoues = new Set(draft.championsDejaJoues ?? []);
@@ -402,18 +456,23 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
   const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
 
   return (
-    <Card className="border-primary">
+    <Card className={cn(jeu && "border-primary")}>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
-        <CardTitle>{jeu.titre ?? (tour.action === "ban" ? "Bannir un champion" : "Choisir un champion")}</CardTitle>
-        <Button
-          disabled={!choisi || pris.has(choisi) || jeu.pending}
-          onClick={() => choisi && jeu.onJouer(tour.numero, choisi)}
-        >
-          {nomChoisi ? `${verbe} ${nomChoisi}` : verbe}
-        </Button>
+        <CardTitle>
+          {jeu ? (jeu.titre ?? (tour.action === "ban" ? "Bannir un champion" : "Choisir un champion")) : "Champions"}
+        </CardTitle>
+        {jeu && (
+          <Button
+            variant={tour.action === "ban" ? "destructive" : "default"}
+            disabled={!choisi || pris.has(choisi) || jeu.pending}
+            onClick={() => choisi && jeu.onJouer(tour.numero, choisi)}
+          >
+            {nomChoisi ? `${verbe} ${nomChoisi}` : verbe}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {jeu.error != null && <ErrorAlert error={jeu.error} />}
+        {jeu?.error != null && <ErrorAlert error={jeu.error} />}
         <Input
           type="search"
           aria-label="Rechercher un champion"
@@ -421,15 +480,32 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
         />
+        <div role="group" aria-label="Filtrer par voie" className="flex flex-wrap gap-2">
+          {[{ id: null, libelle: "Tous" }, ...VOIES].map((v) => (
+            <Button
+              key={v.libelle}
+              type="button"
+              size="sm"
+              variant={voie === v.id ? "default" : "outline"}
+              aria-pressed={voie === v.id}
+              onClick={() => setVoie(v.id)}
+            >
+              {v.libelle}
+            </Button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Les champions grisés sont bannis. Ceux marqués « Joué » le sont par Fearless : ils restent affichés.
+        </p>
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
-          {filtrerChampions(champions, recherche).map((c) => {
+          {filtrerChampions(champions, recherche, voie).map((c) => {
             const indisponible = pris.has(c.id);
             const dejaJoue = dejaJoues.has(c.id);
             return (
               <li key={c.id}>
                 <button
                   type="button"
-                  disabled={indisponible}
+                  disabled={indisponible || !jeu}
                   aria-pressed={choisi === c.id}
                   onClick={() => setChoisi(c.id)}
                   className={cn(
@@ -448,6 +524,11 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                     )}
                   </span>
                   <span className="w-full truncate text-center">{c.name}</span>
+                  {dejaJoue && (
+                    <Badge variant="outline" className="border-amber-500/60 px-1 py-0 text-[10px]">
+                      Joué
+                    </Badge>
+                  )}
                   {dejaJoue && <span className="sr-only">(déjà joué dans la Série)</span>}
                   {indisponible && <span className="sr-only">(indisponible)</span>}
                 </button>

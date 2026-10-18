@@ -10,6 +10,7 @@ const champion = (id: string, name = id): Schemas["ChampionResponse"] => ({
   key: id,
   name,
   imageUrl: `https://ddragon.test/${id}.png`,
+  voies: [],
 });
 
 const champions = [champion("Ahri"), champion("Garen"), champion("LeeSin", "Lee Sin"), champion("Zed")];

@@ -63,3 +63,4 @@ Alternatives écartées :
   reste sans Game jusqu'au rattachement manuel.
 - Côté `harceleur_bot` : écouter `#clips`, télécharger les pièces jointes vidéo et les
   déposer avec la clé du bot, en rejouant le dépôt en cas d'échec.
+- Un clip porte un état « masqué du Fond » (faux par défaut) : il sort du Fond (`GET /clips/fond`, tirage au hasard côté serveur, session requise) mais reste dans la liste des clips et sur la page de sa Game. Seuls les Administrateurs le changent : `PUT /clips/{id}/masque-du-fond` masque, `DELETE` réaffiche (403 à un non-admin, 401 sans session), depuis l'interrupteur « Dans le Fond / Masqué » du lecteur de l'onglet Clips.

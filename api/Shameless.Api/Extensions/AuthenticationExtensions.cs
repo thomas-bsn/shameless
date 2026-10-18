@@ -93,6 +93,14 @@ public static class AuthenticationExtensions
         services.AddHttpClient(DataDragonChampionCatalog.HttpClientName,
                 client => client.BaseAddress = DataDragonChampionCatalog.BaseAddress)
             .AddPolicyHandler(GetRetryPolicy());
+        // Meraki Analytics : les voies des champions. Sa panne ne casse pas le catalogue.
+        services.AddHttpClient(DataDragonChampionCatalog.MerakiHttpClientName,
+                client =>
+                {
+                    client.BaseAddress = DataDragonChampionCatalog.MerakiBaseAddress;
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                })
+            .AddPolicyHandler(GetRetryPolicy());
         services.AddSingleton<IChampionCatalog, DataDragonChampionCatalog>();
 
         // Bot Discord : pas de retry ici, les webhooks sont retentés par leur job de publication.

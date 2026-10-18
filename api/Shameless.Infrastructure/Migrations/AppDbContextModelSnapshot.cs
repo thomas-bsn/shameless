@@ -213,6 +213,12 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
 
+                    b.Property<bool>("MasqueDuFond")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("masque_du_fond");
+
                     b.Property<string>("NomFichier")
                         .IsRequired()
                         .HasMaxLength(255)

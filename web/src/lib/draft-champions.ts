@@ -49,14 +49,30 @@ const normaliser = (texte: string) =>
     .replace(/[^a-zA-Z0-9]/g, "")
     .toLowerCase();
 
-/** Les champions dont le nom ou l'identifiant contient la recherche (casse, accents et ponctuation ignorés), par nom. */
-export function filtrerChampions<C extends Pick<Schemas["ChampionResponse"], "id" | "name">>(
+/** Les voies du filtre, dans l'ordre du client LoL, avec les valeurs de l'API. */
+export const VOIES = [
+  { id: "top", libelle: "Top" },
+  { id: "jungle", libelle: "Jungle" },
+  { id: "mid", libelle: "Mid" },
+  { id: "adc", libelle: "ADC" },
+  { id: "support", libelle: "Support" },
+] as const;
+
+export type Voie = (typeof VOIES)[number]["id"];
+
+/**
+ * Les champions dont le nom ou l'identifiant contient la recherche (casse, accents et ponctuation ignorés),
+ * par nom. Avec une `voie`, seulement ceux qui s'y jouent ; un champion sans donnée de voie reste visible partout.
+ */
+export function filtrerChampions<C extends Pick<Schemas["ChampionResponse"], "id" | "name" | "voies">>(
   champions: C[],
   recherche: string,
+  voie: Voie | null = null,
 ): C[] {
   const cherche = normaliser(recherche);
   return champions
     .filter((c) => normaliser(c.name).includes(cherche) || normaliser(c.id).includes(cherche))
+    .filter((c) => voie === null || c.voies.length === 0 || c.voies.includes(voie))
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
 

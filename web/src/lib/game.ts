@@ -14,3 +14,72 @@ interface Kda {
 export function kdaLabel({ kills, deaths, assists }: Kda): string {
   return [kills, deaths, assists].map((v) => (v == null ? "–" : String(v))).join("/");
 }
+
+/** Une stat chiffrée ; une stat absente s'écrit « – », jamais 0. */
+export const statLabel = (value: number | null): string => (value == null ? "–" : String(value));
+
+/** Un total en milliers à la française (« 14,2 k ») ; « – » s'il est absent. */
+export function millierLabel(value: number | null): string {
+  if (value == null) return "–";
+  return `${(value / 1000).toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} k`;
+}
+
+/** Les CS : sbires + monstres connus ; null quand aucun des deux n'est connu. */
+export function csTotal({
+  minionsKilled,
+  neutralMinionsKilled,
+}: {
+  minionsKilled: number | null;
+  neutralMinionsKilled: number | null;
+}): number | null {
+  if (minionsKilled == null && neutralMinionsKilled == null) return null;
+  return (minionsKilled ?? 0) + (neutralMinionsKilled ?? 0);
+}
+
+/** Le poste joué tel que l'API le donne (Top, Jungle, Mid, Adc, Support) ; souvent absent en custom. */
+export const posteLabel = (role: string | null | undefined): string | null =>
+  role ? (role === "Adc" ? "ADC" : role) : null;
+
+/** Le ton d'une note sur 100 : 75 et plus bonne, 50 et plus moyenne, sinon mauvaise. */
+export function noteTone(note: number): "good" | "mid" | "bad" {
+  return note >= 75 ? "good" : note >= 50 ? "mid" : "bad";
+}
+
+interface Participant {
+  stats: unknown;
+  performance: unknown;
+}
+
+/** Une Game terminée dont aucun joueur n'a de stats : son résultat a été saisi à la main. */
+export function estSaisieAMain(game: { winner: string | null; teamA: Participant[]; teamB: Participant[] }): boolean {
+  if (game.winner == null) return false;
+  return [...game.teamA, ...game.teamB].every((p) => p.stats == null && p.performance == null);
+}
+
+/** La somme des valeurs connues ; null quand aucune ne l'est (jamais un faux 0). */
+export function sommeConnue(values: Array<number | null | undefined>): number | null {
+  const connues = values.filter((v): v is number => v != null);
+  return connues.length === 0 ? null : connues.reduce((a, b) => a + b, 0);
+}
+
+/** Une valeur par minute ; null sans valeur ou sans durée connue (plutôt que fausse). */
+export function parMinute(value: number | null, durationSeconds: number | null | undefined): number | null {
+  if (value == null || durationSeconds == null || durationSeconds <= 0) return null;
+  return value / (durationSeconds / 60);
+}
+
+/** Un nombre à la française, avec le nombre de décimales demandé ; « – » s'il est absent. */
+export function nombreLabel(value: number | null, decimales = 0): string {
+  if (value == null) return "–";
+  return value.toLocaleString("fr-FR", { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+}
+
+/** Une valeur par minute écrite (« 667 /min ») ; « – » si elle est absente. */
+export const parMinuteLabel = (value: number | null, decimales = 0): string =>
+  value == null ? "–" : `${nombreLabel(value, decimales)} /min`;
+
+/** La part d'un total en pourcentage entier (« 67 % ») ; « – » si l'un des deux est absent ou le total nul. */
+export function partLabel(value: number | null, total: number | null): string {
+  if (value == null || total == null || total <= 0) return "–";
+  return `${Math.round((value / total) * 100)} %`;
+}

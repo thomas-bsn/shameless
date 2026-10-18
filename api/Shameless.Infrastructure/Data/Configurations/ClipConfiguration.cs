@@ -19,6 +19,7 @@ public sealed class ClipConfiguration : IEntityTypeConfiguration<Clip>
         entity.Property(c => c.Rattachement).HasColumnType("text");
         entity.Property(c => c.PublieLe).HasColumnType("timestamp without time zone");
         entity.Property(c => c.RecuLe).HasColumnType("timestamp without time zone");
+        entity.Property(c => c.MasqueDuFond).HasDefaultValue(false);
         entity.Ignore(c => c.RattachementEffectif);
 
         // Le clip survit à sa Game (game en attente d'une Série arrêtée, ADR 0009) : il redevient sans Game.

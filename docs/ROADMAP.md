@@ -69,6 +69,26 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 - [ ] Replay 3D react-three-fiber : déplacements, kills, objectifs
 - [ ] Positions : proxchat + Companion ; timeline match-v5 si clé Production obtenue
 
+## Refonte du front (hors phases 0 à 3)
+- [ ] Refonte du front : thème sombre natif shadcn, sidebar, Fond vidéo, pages redessinées (spec #104)
+  - [x] Socle : thèmes, Geist embarquée, sidebar et tiroir mobile (#85)
+  - [x] Fond : les clips de #clips en arrière-plan (#86)
+  - [x] Clips : onglet en fil par soirée et vue « Tous » filtrable (#87)
+  - [x] Masquer et réafficher un clip du Fond, Administrateur (#88)
+  - [x] Soirée : en cours, aucune soirée, soirée fermée (#89)
+  - [x] Picker : joueurs, Roulette, équipes, autorole, série (#90)
+  - [x] Picker : la Draft avec ses fenêtres (#91)
+  - [x] Joueurs : tableau et ajout d'un joueur (#93)
+  - [x] Joueurs : la fiche d'un joueur (#94)
+  - [x] Classements : vues Cost et SoloQ (#95)
+  - [x] Classements : vue DOFD et retrait du Hall de la Honte (#96)
+  - [x] Historique : le calendrier du mois (#97)
+  - [x] Page d'une game : scoreboard, votes, pronostics, clips (#98)
+  - [x] Page d'une game : onglets Dégâts, Objectifs, Vision, Replay (#99)
+  - [x] Administration : à traiter, cost et peak (#100)
+  - [x] Administration : l'onglet Clips du Fond (#101)
+  - [x] Capitaines, liens et draft de champions, avec le filtre de voie via Meraki (#105)
+
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion

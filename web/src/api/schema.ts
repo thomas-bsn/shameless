@@ -527,6 +527,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    auteur?: string;
+                    soiree?: string;
+                    sansGame?: boolean;
+                    masques?: boolean;
+                    page?: number;
+                    taille?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipsPage"];
+                        "application/json": components["schemas"]["ClipsPage"];
+                        "text/json": components["schemas"]["ClipsPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clips/sans-game": {
         parameters: {
             query?: never;
@@ -552,6 +614,52 @@ export interface paths {
                         "text/plain": components["schemas"]["ClipResponse"][];
                         "application/json": components["schemas"]["ClipResponse"][];
                         "text/json": components["schemas"]["ClipResponse"][];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clips/fond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipDuFond"][];
+                        "application/json": components["schemas"]["ClipDuFond"][];
+                        "text/json": components["schemas"]["ClipDuFond"][];
                     };
                 };
                 /** @description Erreur */
@@ -729,6 +837,104 @@ export interface paths {
                 };
                 /** @description Conflict */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clips/{id}/masque-du-fond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MasqueDuFondDuClip"];
+                        "application/json": components["schemas"]["MasqueDuFondDuClip"];
+                        "text/json": components["schemas"]["MasqueDuFondDuClip"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MasqueDuFondDuClip"];
+                        "application/json": components["schemas"]["MasqueDuFondDuClip"];
+                        "text/json": components["schemas"]["MasqueDuFondDuClip"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -4629,6 +4835,7 @@ export interface components {
             key: string;
             name: string;
             imageUrl: string;
+            voies: string[];
         };
         Classement5v5: {
             joueurs: components["schemas"]["LigneClassement5v5"][];
@@ -4637,12 +4844,36 @@ export interface components {
             solo: components["schemas"]["LigneClassementSoloQ"][];
             flex: components["schemas"]["LigneClassementSoloQ"][];
         };
+        ClipDeLaListe: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            gameId: null | number;
+            rattachement: null | string;
+            auteurNom: string;
+            auteurDiscordId: string;
+            /** Format: date-time */
+            publieLe: string;
+            nomFichier: string;
+            contentType: string;
+            /** Format: int64 */
+            taille: number;
+            masqueDuFond: boolean;
+            game: null | components["schemas"]["GameDeLaListeDeClips"];
+        };
         ClipDuBot: {
             /** Format: int32 */
             clipId: number;
             /** Format: int32 */
             gameId: null | number;
             rattachement: null | string;
+        };
+        ClipDuFond: {
+            /** Format: int32 */
+            id: number;
+            auteurNom: string;
+            /** Format: int32 */
+            gameId: null | number;
         };
         ClipResponse: {
             /** Format: int32 */
@@ -4657,6 +4888,15 @@ export interface components {
             nomFichier: string;
             contentType: string;
             /** Format: int64 */
+            taille: number;
+        };
+        ClipsPage: {
+            items: components["schemas"]["ClipDeLaListe"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
             taille: number;
         };
         CodeCompanionResponse: {
@@ -4812,6 +5052,22 @@ export interface components {
             role: null | components["schemas"]["Role"];
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+        };
+        GameDeLaListeDeClips: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: int32 */
+            gameNumber: number;
+            /** Format: int32 */
+            bestOf: null | number;
+            /** Format: date-time */
+            lanceeLe: string;
+            /** Format: int32 */
+            scoreA: number;
+            /** Format: int32 */
+            scoreB: number;
         };
         GameDuBot: {
             /** Format: int32 */
@@ -4995,6 +5251,11 @@ export interface components {
             /** Format: int32 */
             playerId: number;
         };
+        MasqueDuFondDuClip: {
+            /** Format: int32 */
+            id: number;
+            masqueDuFond: boolean;
+        };
         NoteDePerformance: {
             /** Format: int32 */
             note: number;
@@ -5110,6 +5371,8 @@ export interface components {
             peakLp: number;
             /** Format: double */
             currentCost: number;
+            /** Format: double */
+            costEvolution: null | number;
         };
         PlayerLinkResponse: {
             success: boolean;
