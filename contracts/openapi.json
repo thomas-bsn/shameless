@@ -7691,6 +7691,7 @@
           "id",
           "seriesId",
           "playedAt",
+          "modifieeParAdminLe",
           "teamASide",
           "teamBSide",
           "winner",
@@ -7716,6 +7717,13 @@
           },
           "playedAt": {
             "type": "string",
+            "format": "date-time"
+          },
+          "modifieeParAdminLe": {
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date-time"
           },
           "teamASide": {

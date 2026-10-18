@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VotesDeLaGame } from "@/components/votes-de-la-game";
 import { dureeLabel, estSaisieAMain } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
-import { dateHeureLabel } from "@/lib/dates";
+import { dateHeureLabel, dateLabel } from "@/lib/dates";
 
 /** La page d'une Game : c'est le lien de récap posté par le bot Discord. */
 export const Route = createFileRoute("/_connecte/games/$gameId")({
@@ -90,6 +90,11 @@ function Banniere({ game }: { game: Recap }) {
             {dateHeureLabel(game.playedAt)}
           </p>
           <h1 className="text-2xl font-bold">{titre}</h1>
+          {game.modifieeParAdminLe && (
+            <Badge variant="secondary" className="mt-2">
+              modifiée par un admin le {dateLabel(game.modifieeParAdminLe)}
+            </Badge>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {game.seriesId != null && (
