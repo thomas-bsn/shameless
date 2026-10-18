@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { PageHeader } from "@/components/page-header";
+import { ChoixCapitaineDialog, PileOuFaceDialog } from "@/components/picker-draft";
 import { reduireLesAnimations, TirageDialog } from "@/components/picker-tirage";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { SeriesOptionsForm } from "@/components/series-options-form";
@@ -16,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { points } from "@/lib/cost";
-import { ajouterCandidats, joueursLibres, PICKER_STEPS, type PickerStep, pickerStep } from "@/lib/picker";
+import { ajouterCandidats, PICKER_STEPS, type PickerStep, pickerStep } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
 import { cn } from "@/lib/utils";
 
@@ -88,6 +89,7 @@ function PickerSession({ picker }: { picker: Picker | null }) {
   // Autorole et Série ne se lisent pas dans l'état de l'API : l'écran s'en souvient.
   const [apresEquipes, setApresEquipes] = useState<"equipes" | "autorole" | "serie">("equipes");
   const [tirage, setTirage] = useState(false);
+  const [pileOuFace, setPileOuFace] = useState(false);
   const base = editingSelection ? "selection" : pickerStep(picker);
   const step: PickerStep = base === "equipes" ? apresEquipes : base;
 
@@ -116,7 +118,8 @@ function PickerSession({ picker }: { picker: Picker | null }) {
           {(step === "methode" || changingMethode) && (
             <Methode
               picker={picker}
-              onDraft={() => {
+              onDraft={(tirageAuSort) => {
+                setPileOuFace(tirageAuSort);
                 setApresEquipes("equipes");
                 setChangingMethode(false);
               }}
@@ -127,7 +130,9 @@ function PickerSession({ picker }: { picker: Picker | null }) {
               onCancel={step === "methode" ? undefined : () => setChangingMethode(false)}
             />
           )}
-          {step === "draft" && <DraftEnCours picker={picker} />}
+          {step === "draft" && (
+            <DraftEnCours picker={picker} pileOuFace={pileOuFace} onPileOuFaceDone={() => setPileOuFace(false)} />
+          )}
           {step === "equipes" && (
             <EquipesFormees
               picker={picker}
@@ -334,7 +339,7 @@ function Methode({
   onCancel,
 }: {
   picker: Picker;
-  onDraft: () => void;
+  onDraft: (tirageAuSort: boolean) => void;
   onRoulette: () => void;
   onCancel?: () => void;
 }) {
@@ -363,7 +368,7 @@ const designations: [Schemas["DesignationCapitaines"], string][] = [
 
 const PILE_OU_FACE = "pile-ou-face";
 
-function LancerDraft({ picker, onDone }: { picker: Picker; onDone: () => void }) {
+function LancerDraft({ picker, onDone }: { picker: Picker; onDone: (tirageAuSort: boolean) => void }) {
   const [designation, setDesignation] = useState<Schemas["DesignationCapitaines"]>("PlusGrosCosts");
   const [capitaineA, setCapitaineA] = useState<string>("");
   const [capitaineB, setCapitaineB] = useState<string>("");
@@ -372,7 +377,7 @@ function LancerDraft({ picker, onDone }: { picker: Picker; onDone: () => void })
   const draft = $api.useMutation("post", "/soirees/open/picker/draft", {
     onSuccess: async () => {
       await refresh();
-      onDone();
+      onDone(premierPick === PILE_OU_FACE);
     },
   });
 
@@ -511,42 +516,33 @@ function TirerRoulette({ onDone }: { onDone: () => void }) {
 
 // --- Draft en cours ------------------------------------------------------------------------------
 
-function DraftEnCours({ picker }: { picker: Picker }) {
-  const refresh = usePickerRefresh();
-  const pick = $api.useMutation("post", "/soirees/open/picker/draft/picks", { onSuccess: () => refresh() });
+/** La Draft : le capitaine au trait choisit dans une fenêtre ; le pile ou face la précède. */
+function DraftEnCours({
+  picker,
+  pileOuFace,
+  onPileOuFaceDone,
+}: {
+  picker: Picker;
+  pileOuFace: boolean;
+  onPileOuFaceDone: () => void;
+}) {
+  const [choixOuvert, setChoixOuvert] = useState(true);
   const auTrait = picker.equipeAuTrait as Equipe;
   const capitaine = picker.players.find((p) => p.playerId === (auTrait === "A" ? picker.capitaineA : picker.capitaineB));
 
   return (
     <div className="flex flex-col gap-4">
       <Teams picker={picker} highlight={auTrait} />
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Au tour de l'Équipe {auTrait}
-            {capitaine && <span className="ml-2 font-normal text-muted-foreground">({capitaine.prenom} choisit)</span>}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {pick.isError && <ErrorAlert error={pick.error} />}
-          <ul aria-label="Joueurs libres" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {joueursLibres(picker).map((p) => (
-              <li key={p.playerId}>
-                <Button
-                  variant="outline"
-                  className="h-auto w-full justify-between py-2"
-                  disabled={pick.isPending}
-                  onClick={() => pick.mutate({ body: { equipe: auTrait, playerId: p.playerId } })}
-                  aria-label={`Prendre ${p.prenom} dans l'Équipe ${auTrait}`}
-                >
-                  <span className="truncate">{p.prenom}</span>
-                  <span className="text-xs text-muted-foreground">{points(p.cost ?? 0)}</span>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div>
+        <Button onClick={() => setChoixOuvert(true)}>
+          {capitaine ? `${capitaine.prenom}, choisis un joueur` : `Équipe ${auTrait}, choisis un joueur`}
+        </Button>
+      </div>
+      {pileOuFace ? (
+        <PileOuFaceDialog picker={picker} onClose={onPileOuFaceDone} />
+      ) : (
+        choixOuvert && <ChoixCapitaineDialog picker={picker} onClose={() => setChoixOuvert(false)} />
+      )}
     </div>
   );
 }
