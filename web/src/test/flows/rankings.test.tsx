@@ -33,7 +33,7 @@ describe("Classements", () => {
     renderApp("/classements");
 
     const tabs = await screen.findAllByRole("tab");
-    expect(tabs.map((t) => t.textContent)).toEqual(["Cost", "SoloQ"]);
+    expect(tabs.map((t) => t.textContent)).toEqual(["Cost", "SoloQ", "DOFD"]);
     expect(screen.getByRole("tab", { name: "Cost", selected: true })).toBeInTheDocument();
   });
 
