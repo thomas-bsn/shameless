@@ -48,21 +48,34 @@ function PickerPage() {
   if (soiree.isPending) return <LoadingRows />;
   if (soiree.isError) return <ErrorAlert error={soiree.error} />;
   if (!soiree.data.soiree) {
-    return (
-      <>
-        <PageHeader title="Picker" />
-        <Card>
-          <CardContent className="flex flex-col items-start gap-3">
-            <p className="text-muted-foreground">Aucune Soirée n'est ouverte : ouvre-en une pour lancer le Picker.</p>
-            <Button asChild variant="outline">
-              <Link to="/soiree">Aller à la Soirée</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </>
-    );
+    return <SoireeFermee />;
   }
   return <PickerSession picker={soiree.data.soiree.picker} />;
+}
+
+/** La Soirée s'est fermée (toute seule, ou à la main) pendant le Picker : on l'explique. */
+function SoireeFermee() {
+  const refresh = usePickerRefresh();
+  const ouvrir = $api.useMutation("post", "/soirees", { onSuccess: () => refresh() });
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+        <h1 className="text-2xl font-bold">La soirée s'est fermée</h1>
+        <p className="max-w-md text-muted-foreground">
+          Une soirée se ferme toute seule après un moment sans game, et le Picker qui y était rattaché n'est plus.
+          Ouvre une nouvelle soirée pour reformer les équipes.
+        </p>
+        {ouvrir.isError && <ErrorAlert error={ouvrir.error} />}
+        <Button size="lg" disabled={ouvrir.isPending} onClick={() => ouvrir.mutate({})}>
+          Ouvrir une nouvelle soirée
+        </Button>
+        <Button asChild variant="ghost">
+          <Link to="/soiree">Retour à la Soirée</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function PickerSession({ picker }: { picker: Picker | null }) {
