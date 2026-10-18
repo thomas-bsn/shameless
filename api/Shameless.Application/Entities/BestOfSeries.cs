@@ -56,6 +56,10 @@ public class BestOfSeries
     public LienAcces LienCapitaine(string equipe) =>
         Liens.Single(l => l.Portee == PorteeLien.Capitaine && l.Equipe == equipe);
 
+    /// <summary>Les deux Capitaines ont ouvert leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
+    public bool CapitainesOntRejoint =>
+        Liens.Where(l => l.Portee == PorteeLien.Capitaine).All(l => l.RejointLe != null);
+
     public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
 
     /// <summary>L'accès que donne ce lien de la Série (ADR 0017 : le Lien spectateur vaut dès la création).</summary>
@@ -112,6 +116,8 @@ public class BestOfSeries
     /// <summary>Fait du joueur le Capitaine de son Équipe, à la place du précédent.</summary>
     public void DesignerCapitaine(SeriesPlayer capitaine)
     {
+        if (!capitaine.Capitaine)
+            LienCapitaine(capitaine.Equipe).RejointLe = null;
         foreach (var player in PlayersOf(capitaine.Equipe))
             player.Capitaine = player == capitaine;
     }

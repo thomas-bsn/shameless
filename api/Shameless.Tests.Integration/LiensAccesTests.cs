@@ -215,4 +215,108 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.DoesNotContain(Lien(liens, "lienCapitaineA"), corps);
         Assert.DoesNotContain(Lien(liens, "lienCapitaineB"), corps);
     }
+
+    private static DateTime? RejointLe(JsonElement liens, string equipe)
+    {
+        var valeur = liens.GetProperty($"capitaine{equipe}RejointLe");
+        return valeur.ValueKind == JsonValueKind.Null ? null : valeur.GetDateTime();
+    }
+
+    private async Task<HttpResponseMessage> LancerAsync(HttpClient client, int seriesId) =>
+        await client.PostAsJsonAsync($"/series/{seriesId}/games", new { teamASide = "blue" }, Ct);
+
+    [Fact]
+    public async Task Aucun_capitaine_n_a_rejoint_a_la_creation_de_la_serie()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+
+        var liens = await LiensAsync(client, serie.SeriesId);
+
+        Assert.Null(RejointLe(liens, "A"));
+        Assert.Null(RejointLe(liens, "B"));
+    }
+
+    [Fact]
+    public async Task La_premiere_ouverture_d_un_lien_capitaine_est_memorisee_et_un_rechargement_ne_change_rien()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        var lien = Lien(await LiensAsync(client, serie.SeriesId), "lienCapitaineA");
+        var premiere = new DateTimeOffset(2026, 10, 19, 21, 4, 0, TimeSpan.Zero);
+        Factory.Clock.SetUtcNow(premiere);
+
+        await ResoudreAsync(lien);
+        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
+        await ResoudreAsync(lien);
+
+        var liens = await LiensAsync(client, serie.SeriesId);
+        Assert.Equal(premiere.UtcDateTime, RejointLe(liens, "A"));
+        Assert.Null(RejointLe(liens, "B"));
+    }
+
+    [Fact]
+    public async Task Ouvrir_le_lien_spectateur_ne_fait_rejoindre_personne()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+
+        await ResoudreAsync(Lien(await LiensAsync(client, serie.SeriesId), "lienSpectateur"));
+
+        var liens = await LiensAsync(client, serie.SeriesId);
+        Assert.Null(RejointLe(liens, "A"));
+        Assert.Null(RejointLe(liens, "B"));
+    }
+
+    [Fact]
+    public async Task La_game_ne_se_cree_que_quand_les_deux_capitaines_ont_rejoint()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        var liens = await LiensAsync(client, serie.SeriesId);
+
+        Assert.Equal(HttpStatusCode.Conflict, (await LancerAsync(client, serie.SeriesId)).StatusCode);
+
+        await ResoudreAsync(Lien(liens, "lienCapitaineA"));
+        Assert.Equal(HttpStatusCode.Conflict, (await LancerAsync(client, serie.SeriesId)).StatusCode);
+
+        await ResoudreAsync(Lien(liens, "lienCapitaineB"));
+        Assert.Equal(HttpStatusCode.Created, (await LancerAsync(client, serie.SeriesId)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Renouveler_un_lien_capitaine_remet_son_equipe_a_pas_rejoint()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        var liens = await LiensAsync(client, serie.SeriesId);
+        await ResoudreAsync(Lien(liens, "lienCapitaineA"));
+        await ResoudreAsync(Lien(liens, "lienCapitaineB"));
+
+        await client.PostAsync($"/series/{serie.SeriesId}/liens/A/renouveler", null, Ct);
+
+        var apres = await LiensAsync(client, serie.SeriesId);
+        Assert.Null(RejointLe(apres, "A"));
+        Assert.NotNull(RejointLe(apres, "B"));
+        Assert.Equal(HttpStatusCode.Conflict, (await LancerAsync(client, serie.SeriesId)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Changer_de_capitaine_remet_son_equipe_a_pas_rejoint_mais_pas_le_designer_a_nouveau()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A", new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct);
+        var liens = await LiensAsync(client, serie.SeriesId);
+        await ResoudreAsync(Lien(liens, "lienCapitaineA"));
+        await ResoudreAsync(Lien(liens, "lienCapitaineB"));
+
+        await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A", new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct);
+        Assert.NotNull(RejointLe(await LiensAsync(client, serie.SeriesId), "A"));
+
+        await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A", new { designation = "Manuel", playerId = serie.TeamA[1] }, Ct);
+        var apres = await LiensAsync(client, serie.SeriesId);
+        Assert.Null(RejointLe(apres, "A"));
+        Assert.NotNull(RejointLe(apres, "B"));
+    }
 }

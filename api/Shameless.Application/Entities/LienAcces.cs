@@ -22,12 +22,28 @@ public class LienAcces
 
     public string Secret { get; set; } = SecretAleatoire.Nouveau();
 
+    /// <summary>
+    /// Quand le Capitaine a ouvert son lien pour la première fois (ADR 0017) ; null tant qu'il n'a pas
+    /// rejoint, et pour le Lien spectateur. Changer de Capitaine ou renouveler le lien le remet à null.
+    /// </summary>
+    public DateTime? RejointLe { get; set; }
+
     public static LienAcces Capitaine(string equipe) => new() { Portee = PorteeLien.Capitaine, Equipe = equipe };
 
     public static LienAcces Spectateur() => new() { Portee = PorteeLien.Spectateur };
 
     /// <summary>Remplace le secret : l'ancien lien ne donne plus accès à rien.</summary>
-    public void Renouveler() => Secret = SecretAleatoire.Nouveau();
+    public void Renouveler()
+    {
+        Secret = SecretAleatoire.Nouveau();
+        RejointLe = null;
+    }
+
+    /// <summary>Mémorise la première ouverture du Lien capitaine ; les suivantes ne changent rien.</summary>
+    public void Rejoindre(DateTime maintenant)
+    {
+        if (Portee == PorteeLien.Capitaine) RejointLe ??= maintenant;
+    }
 }
 
 /// <summary>Le secret d'un lien d'accès ou d'un code Companion.</summary>

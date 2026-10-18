@@ -35,6 +35,7 @@ public class ConcurrenceTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
+        await RejoindreLesCapitainesAsync(client, serie.SeriesId);
 
         var responses = await Task.WhenAll(Enumerable.Range(0, Simultanees).Select(_ =>
             client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "blue" }, Ct)));

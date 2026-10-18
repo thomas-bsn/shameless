@@ -136,6 +136,9 @@ public sealed class SeriesService
         if (teamASide != null && teamASide is not (Sides.Blue or Sides.Red))
             return CommandResult<CustomGame>.Invalid("Le Side d'une Équipe est « blue » ou « red ».");
 
+        if (!series.CapitainesOntRejoint)
+            return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
+
         var previous = series.Games.LastOrDefault();
         var side = teamASide ?? (series.AlternateSides
             ? previous == null ? Sides.Blue : Sides.Other(previous.TeamASide)

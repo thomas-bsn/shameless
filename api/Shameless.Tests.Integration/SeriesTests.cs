@@ -148,6 +148,7 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
+        await RejoindreLesCapitainesAsync(client, serie.SeriesId);
 
         var missing = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = (string?)null }, Ct);
         var invalid = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "A" }, Ct);

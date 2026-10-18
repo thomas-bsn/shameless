@@ -11,6 +11,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
+        await RejoindreLesCapitainesAsync(client, serie.SeriesId);
 
         var created = await client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "red" }, Ct);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);

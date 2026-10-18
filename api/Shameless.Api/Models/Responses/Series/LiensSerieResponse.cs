@@ -10,13 +10,17 @@ public sealed record LiensSerieResponse(
     int SeriesId,
     string LienCapitaineA,
     string LienCapitaineB,
-    string LienSpectateur)
+    string LienSpectateur,
+    DateTime? CapitaineARejointLe,
+    DateTime? CapitaineBRejointLe)
 {
     public static LiensSerieResponse From(BestOfSeries series) => new(
         SeriesId: series.Id,
         LienCapitaineA: series.LienCapitaine(Equipes.A).Secret,
         LienCapitaineB: series.LienCapitaine(Equipes.B).Secret,
-        LienSpectateur: series.LienSpectateur.Secret);
+        LienSpectateur: series.LienSpectateur.Secret,
+        CapitaineARejointLe: series.LienCapitaine(Equipes.A).RejointLe,
+        CapitaineBRejointLe: series.LienCapitaine(Equipes.B).RejointLe);
 }
 
 /// <summary>Ce que donne un lien : sa Série, sa portée et, pour un Lien capitaine, son Équipe ("A" | "B").</summary>

@@ -7031,7 +7031,9 @@
           "seriesId",
           "lienCapitaineA",
           "lienCapitaineB",
-          "lienSpectateur"
+          "lienSpectateur",
+          "capitaineARejointLe",
+          "capitaineBRejointLe"
         ],
         "type": "object",
         "properties": {
@@ -7047,6 +7049,20 @@
           },
           "lienSpectateur": {
             "type": "string"
+          },
+          "capitaineARejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "capitaineBRejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

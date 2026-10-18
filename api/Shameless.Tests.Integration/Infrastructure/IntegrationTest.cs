@@ -65,8 +65,18 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     /// <summary>Lance la prochaine game de la Série et renvoie son id.</summary>
     protected async Task<int> PlayGameAsync(HttpClient client, int seriesId, string? teamASide = "blue")
     {
+        await RejoindreLesCapitainesAsync(client, seriesId);
         var game = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{seriesId}/games", new { teamASide }, Ct));
         return game.GetProperty("id").GetInt32();
+    }
+
+    /// <summary>Les deux Capitaines ouvrent leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
+    protected async Task RejoindreLesCapitainesAsync(HttpClient client, int seriesId)
+    {
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+        foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB" })
+            (await Factory.CreateAnonymousClient()
+                .GetAsync($"/liens/{Uri.EscapeDataString(liens.GetProperty(nom).GetString()!)}", Ct)).EnsureSuccessStatusCode();
     }
 
     /// <summary>Lance la prochaine game de la Série et saisit l'Équipe gagnante.</summary>

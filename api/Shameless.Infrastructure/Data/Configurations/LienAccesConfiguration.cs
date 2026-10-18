@@ -19,6 +19,7 @@ public sealed class LienAccesConfiguration : IEntityTypeConfiguration<LienAcces>
                   value => value == "capitaine" ? PorteeLien.Capitaine : PorteeLien.Spectateur);
         entity.Property(e => e.Equipe).HasMaxLength(1);
         entity.Property(e => e.Secret).IsRequired();
+        entity.Property(e => e.RejointLe).HasColumnType("timestamp without time zone");
 
         entity.HasOne(e => e.Series)
               .WithMany(s => s.Liens)
