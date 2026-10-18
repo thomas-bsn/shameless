@@ -68,6 +68,65 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(0, me.GetProperty("peakLp").GetInt32());
     }
 
+    [Fact]
+    public async Task Delier_retire_seulement_l_association_et_on_peut_se_relier_ensuite()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2020");
+        var playerId = await CreatePlayerAsync(client, "Fanny");
+        await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+
+        var unlink = await client.DeleteAsync("/players/link", Ct);
+
+        Assert.Equal(HttpStatusCode.OK, unlink.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/players/me", Ct)).StatusCode);
+        // Le Joueur et ses données restent ; l'Utilisateur reste connecté et peut se relier.
+        var player = Assert.Single((await client.GetFromJsonAsync<JsonElement>("/players", Ct)).EnumerateArray());
+        Assert.Equal("Fanny", player.GetProperty("prenom").GetString());
+        Assert.True((await client.GetFromJsonAsync<JsonElement>("/auth/me", Ct)).GetProperty("valid").GetBoolean());
+
+        var relink = await client.PostAsJsonAsync("/players/link", new { playerId }, Ct);
+        Assert.Equal(HttpStatusCode.OK, relink.StatusCode);
+        var me = await ReadJsonAsync(await client.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
+    [Fact]
+    public async Task Delier_sans_joueur_lie_renvoie_404()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2021");
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync("/players/link", Ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delier_ne_touche_pas_au_joueur_lie_a_quelqu_un_d_autre()
+    {
+        var owner = Factory.CreateSignedInClient(discordId: "2022");
+        var playerId = await CreatePlayerAsync(owner, "Gilles");
+        await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+        var other = Factory.CreateSignedInClient(discordId: "2023");
+
+        var response = await other.DeleteAsync("/players/link", Ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var me = await ReadJsonAsync(await owner.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
+    [Fact]
+    public async Task Delier_n_est_pas_une_action_d_administrateur_sur_les_autres()
+    {
+        var owner = Factory.CreateSignedInClient(discordId: "2024");
+        var playerId = await CreatePlayerAsync(owner, "Hugo");
+        await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+        var admin = Factory.CreateAdminClient();
+
+        // Sans joueur lié lui-même, l'administrateur n'a rien à délier ; le lien de Hugo reste.
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync("/players/link", Ct)).StatusCode);
+        var me = await ReadJsonAsync(await owner.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
     private string SaisonCourante => SaisonsDePeak.Courante(Factory.Clock.GetUtcNow().Year);
 
     [Fact]

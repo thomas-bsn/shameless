@@ -15,6 +15,8 @@ public interface IPlayerService
     Task RefreshAllRanksAsync();
     Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId);
     Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver);
+    /// <summary>Retire seulement l'association entre l'Utilisateur et son Joueur ; false s'il n'en avait pas.</summary>
+    Task<bool> UnlinkPlayerAsync(string discordUserId);
     Task<PeakResult> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task<PeakResult> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task RefreshAllMainRolesAsync();

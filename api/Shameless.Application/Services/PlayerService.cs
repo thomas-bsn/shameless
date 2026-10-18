@@ -151,6 +151,12 @@ public class PlayerService : IPlayerService
         return LinkResult.Linked;
     }
     
+    public async Task<bool> UnlinkPlayerAsync(string discordUserId)
+    {
+        var user = await _users.GetByDiscordIdAsync(long.Parse(discordUserId));
+        return user is not null && await _players.UnlinkUserAsync(user.Id);
+    }
+
     public async Task<PeakResult> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
     {
         if (!SaisonValide(peakTier, peakSeason)) return PeakResult.InvalidSeason;
