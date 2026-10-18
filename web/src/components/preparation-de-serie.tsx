@@ -39,7 +39,6 @@ export function PreparationDeSerie({ series }: { series: Series }) {
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant="outline">BO{series.format}</Badge>
           {series.fearless && <Badge variant="outline">Fearless</Badge>}
-          {series.alternateSides && <Badge variant="outline">Sides alternés</Badge>}
         </div>
       </div>
 

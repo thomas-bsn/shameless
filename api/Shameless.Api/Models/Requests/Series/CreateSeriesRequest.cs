@@ -5,24 +5,16 @@ public sealed record CreateSeriesRequest(
     List<int> TeamA,
     List<int> TeamB,
     int Format,
-    bool Fearless = false,
-    bool AlternateSides = false
+    bool Fearless = false
 );
 
 /// <summary>
-/// La prochaine game : Side de l'Équipe A ("blue" | "red"). Facultatif avec l'alternance
-/// automatique, qui inverse alors le Side de la game précédente.
-/// </summary>
-public sealed record PlayGameRequest(string? TeamASide);
-
-/// <summary>
 /// Revanche : les mêmes Équipes rejouent une nouvelle Série, au format 1, 2, 3 ou 5 choisi ici,
-/// avec ou sans Fearless et alternance automatique des Sides.
+/// avec ou sans Fearless.
 /// </summary>
 public sealed record RematchRequest(
     int Format,
-    bool Fearless = false,
-    bool AlternateSides = false
+    bool Fearless = false
 );
 
 /// <summary>Remplacement : le joueur remplacé quitte son Équipe, le remplaçant prend sa place pour la prochaine game.</summary>

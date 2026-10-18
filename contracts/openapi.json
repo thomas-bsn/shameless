@@ -4214,26 +4214,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "201": {
             "description": "Created",
@@ -5968,8 +5948,7 @@
           "teamA",
           "teamB",
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -5992,10 +5971,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }
@@ -7867,20 +7842,6 @@
           }
         }
       },
-      "PlayGameRequest": {
-        "required": [
-          "teamASide"
-        ],
-        "type": "object",
-        "properties": {
-          "teamASide": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
       "PorteeLien": {
         "enum": [
           "Capitaine",
@@ -8291,8 +8252,7 @@
       "RematchRequest": {
         "required": [
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -8301,10 +8261,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }
@@ -8647,7 +8603,6 @@
           "soireeId",
           "format",
           "fearless",
-          "alternateSides",
           "outcome",
           "winningTeam",
           "teamAWins",
@@ -8676,9 +8631,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean"
-          },
-          "alternateSides": {
             "type": "boolean"
           },
           "outcome": {
@@ -9368,8 +9320,7 @@
       "ValidatePickerRequest": {
         "required": [
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -9378,10 +9329,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }

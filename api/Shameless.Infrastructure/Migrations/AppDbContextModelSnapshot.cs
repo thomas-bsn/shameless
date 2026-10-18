@@ -67,10 +67,6 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseSerialColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AlternateSides")
-                        .HasColumnType("boolean")
-                        .HasColumnName("alternate_sides");
-
                     b.Property<string>("CodeCompanion")
                         .IsRequired()
                         .HasColumnType("text")

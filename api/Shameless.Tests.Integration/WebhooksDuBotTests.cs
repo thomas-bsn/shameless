@@ -159,7 +159,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds = dix }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/roulette", new { variante = "Aleatoire" }, Ct));
         var serie = await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/validate",
-            new { format = 3, fearless = false, alternateSides = true }, Ct));
+            new { format = 3, fearless = false }, Ct));
 
         await PublierAsync();
 

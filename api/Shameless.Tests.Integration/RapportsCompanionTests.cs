@@ -73,13 +73,32 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
     }
 
     [Fact]
+    public async Task Un_rapport_conforme_dont_le_side_differe_corrige_le_side_de_la_game_et_l_alternance_repart_de_lui()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+
+        // Le pile ou face prévoyait A en blue ; le Companion a vu A en red, et gagnant.
+        var recu = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000060", teamASide: "red", gagnante: "A")));
+
+        Assert.Equal("Accepte", recu.GetProperty("statut").GetString());
+        var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
+        Assert.Equal(gameId, game.GetProperty("id").GetInt32());
+        Assert.Equal(("red", "blue", "A"), (game.GetProperty("teamASide").GetString(), game.GetProperty("teamBSide").GetString(), game.GetProperty("winner").GetString()));
+        var suivante = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
+        Assert.Equal("blue", suivante.GetProperty("teamASide").GetString());
+    }
+
+    [Fact]
     public async Task Les_rapports_successifs_d_un_bo_terminent_des_games_distinctes_jusqu_a_l_issue_de_la_serie()
     {
         var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 3, alternateSides: true);
+        var serie = await CreateSerieAsync(client, format: 3);
         var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        var game1 = await PlayGameAsync(client, serie.SeriesId, teamASide: null);
+        var game1 = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
         var recu1 = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000010", teamASide: "blue", gagnante: "A")));
         var game2 = await PlayGameAsync(client, serie.SeriesId, teamASide: null);
         var recu2 = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000011", teamASide: "red", gagnante: "A")));

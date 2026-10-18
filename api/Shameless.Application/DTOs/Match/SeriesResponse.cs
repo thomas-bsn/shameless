@@ -12,7 +12,6 @@ public record SeriesResponse(
     int? SoireeId,
     int Format,
     bool Fearless,
-    bool AlternateSides,
     SeriesOutcome Outcome,
     string? WinningTeam, // "A" | "B" quand la Série est gagnée
     int TeamAWins,

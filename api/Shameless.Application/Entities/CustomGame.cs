@@ -52,6 +52,14 @@ public class CustomGame
     /// </summary>
     public void AppliquerRapport(RapportDeGame rapport)
     {
+        // Le Rapport fait foi sur le Side : s'il diffère de celui prévu, la game garde le camp réellement joué.
+        if (rapport.InverseLesSidesDe(this))
+        {
+            TeamASide = Sides.Other(TeamASide);
+            foreach (var participant in Participants)
+                participant.Side = Sides.Other(participant.Side);
+        }
+
         RiotMatchId = rapport.RiotMatchId;
         RiotMatchData = rapport.Donnees;
         var joueurs = rapport.Joueurs.ToDictionary(j => j.Puuid);
