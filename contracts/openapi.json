@@ -3682,8 +3682,15 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -3729,6 +3736,45 @@
         }
       }
     },
+    "/players/peak/saisons": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeakSaisonsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeakSaisonsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeakSaisonsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/players/peak": {
       "post": {
         "tags": [
@@ -3755,8 +3801,15 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "default": {
             "description": "Erreur",
@@ -7508,6 +7561,24 @@
                 "$ref": "#/components/schemas/SoireeResponse"
               }
             ]
+          }
+        }
+      },
+      "PeakSaisonsResponse": {
+        "required": [
+          "saisons",
+          "courante"
+        ],
+        "type": "object",
+        "properties": {
+          "saisons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "courante": {
+            "type": "string"
           }
         }
       },
