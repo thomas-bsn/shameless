@@ -93,6 +93,42 @@ public class CorrectionDeStatsTests(ApiFactory factory) : IntegrationTest(factor
     }
 
     [Fact]
+    public async Task Annuler_la_derniere_correction_retire_la_marque_modifiee_par_un_admin()
+    {
+        var client = Factory.CreateSignedInClient();
+        var admin = Factory.CreateAdminClient();
+        var serie = await CreateSerieAsync(client);
+        var gameId = await JouerUneGameAsync(client, serie.SeriesId);
+        var a1 = serie.TeamA[0];
+        await ReadJsonAsync(await CorrigerAsync(admin, gameId, a1, new { kills = 12, deaths = 2 }));
+
+        await ReadJsonAsync(await AnnulerAsync(admin, gameId, a1, "kills"));
+        var game = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}", Ct));
+        Assert.NotEqual(JsonValueKind.Null, game.GetProperty("modifieeParAdminLe").ValueKind);
+
+        await ReadJsonAsync(await AnnulerAsync(admin, gameId, a1, "deaths"));
+        game = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}", Ct));
+        Assert.Equal(JsonValueKind.Null, game.GetProperty("modifieeParAdminLe").ValueKind);
+    }
+
+    [Fact]
+    public async Task Annuler_une_stat_garde_la_marque_quand_le_vainqueur_a_ete_corrige()
+    {
+        var client = Factory.CreateSignedInClient();
+        var admin = Factory.CreateAdminClient();
+        var serie = await CreateSerieAsync(client);
+        var gameId = await JouerUneGameAsync(client, serie.SeriesId);
+        var a1 = serie.TeamA[0];
+        await ReadJsonAsync(await admin.PutAsJsonAsync($"/games/{gameId}/correction", new { winner = "B" }, Ct));
+        await ReadJsonAsync(await CorrigerAsync(admin, gameId, a1, new { kills = 12 }));
+
+        await ReadJsonAsync(await AnnulerAsync(admin, gameId, a1, "kills"));
+
+        var game = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}", Ct));
+        Assert.NotEqual(JsonValueKind.Null, game.GetProperty("modifieeParAdminLe").ValueKind);
+    }
+
+    [Fact]
     public async Task Annuler_une_correction_retablit_la_valeur_d_origine()
     {
         var client = Factory.CreateSignedInClient();

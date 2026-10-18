@@ -346,6 +346,12 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("team_a_side");
 
+                    b.Property<bool>("VainqueurOuCompositionCorriges")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("vainqueur_ou_composition_corriges");
+
                     b.Property<string>("WinningTeam")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")

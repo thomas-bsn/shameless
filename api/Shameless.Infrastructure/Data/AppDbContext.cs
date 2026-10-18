@@ -133,6 +133,7 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
             entity.Property(e => e.ModifieeParAdminLe).HasColumnType(Timestamp);
+            entity.Property(e => e.VainqueurOuCompositionCorriges).HasDefaultValue(false);
 
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)

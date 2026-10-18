@@ -84,6 +84,8 @@ public sealed class CorrectionDeStatsService
         if (participant.Corrections.FirstOrDefault(c => c.Champ == champ) is not { } correction)
             return CommandResult<CustomGame>.NotFound("Ce champ n'a pas de correction à annuler.");
         participant.Corrections.Remove(correction);
+        if (!game.VainqueurOuCompositionCorriges && game.Participants.All(p => p.Corrections.Count == 0))
+            return await EnregistrerAsync(game, playerId, change: true, marque: false);
         return await EnregistrerAsync(game, playerId, change: true);
     }
 
@@ -101,11 +103,11 @@ public sealed class CorrectionDeStatsService
         return (game, participant, null);
     }
 
-    private async Task<CommandResult<CustomGame>> EnregistrerAsync(CustomGame game, int playerId, bool change)
+    private async Task<CommandResult<CustomGame>> EnregistrerAsync(CustomGame game, int playerId, bool change, bool marque = true)
     {
         if (!change) return CommandResult<CustomGame>.Ok(game);
 
-        game.ModifieeParAdminLe = _clock.GetUtcNow().UtcDateTime;
+        game.ModifieeParAdminLe = marque ? _clock.GetUtcNow().UtcDateTime : null;
         if (!await _games.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict("Cette game vient d'être modifiée par une autre commande : rechargez-la et réessayez.");
 
