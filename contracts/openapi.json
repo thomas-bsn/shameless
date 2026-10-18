@@ -5600,7 +5600,10 @@
           "nomFichier",
           "contentType",
           "taille",
-          "masqueDuFond"
+          "masqueDuFond",
+          "soireeId",
+          "scoreEquipeA",
+          "scoreEquipeB"
         ],
         "type": "object",
         "properties": {
@@ -5644,6 +5647,27 @@
           "masqueDuFond": {
             "type": "boolean",
             "default": false
+          },
+          "soireeId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "scoreEquipeA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "scoreEquipeB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },

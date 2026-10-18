@@ -4815,6 +4815,12 @@ export interface components {
             taille: number;
             /** @default false */
             masqueDuFond: boolean;
+            /** Format: int32 */
+            soireeId: null | number;
+            /** Format: int32 */
+            scoreEquipeA: null | number;
+            /** Format: int32 */
+            scoreEquipeB: null | number;
         };
         CodeCompanionResponse: {
             /** Format: int32 */
