@@ -89,24 +89,21 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Des_sides_inverses_sont_en_revue_et_l_equipe_gagnante_suit_ses_joueurs()
+    public async Task Un_seul_joueur_de_chaque_equipe_sur_l_autre_side_met_le_rapport_en_revue()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
         var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        // L'Équipe A a en fait joué red, et gagné.
-        var recu = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000004", teamASide: "red", gagnante: "A")));
+        // A5 a été vu côté red et B5 côté blue : ce n'est pas un Side corrigé, les Équipes sont mêlées.
+        var recu = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000004", teamASide: "blue", gagnante: "A",
+            equipeA: ["A1", "A2", "A3", "A4", "B5"], equipeB: ["B1", "B2", "B3", "B4", "A5"])));
 
         Assert.Equal("EnRevue", recu.GetProperty("statut").GetString());
         var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("rapportEnRevue");
-        Assert.Equal(10, revue.GetProperty("mauvaisSide").GetArrayLength());
+        Assert.Equal(2, revue.GetProperty("mauvaisSide").GetArrayLength());
         Assert.Empty(revue.GetProperty("absents").EnumerateArray());
-        Assert.Equal("A", revue.GetProperty("equipeGagnante").GetString());
-
-        var accepte = await ReadJsonAsync(await client.PostAsync($"/rapports/{revue.GetProperty("id").GetInt32()}/accepter", null, Ct));
-        Assert.Equal("A", accepte.GetProperty("winner").GetString());
     }
 
     [Fact]
@@ -221,7 +218,7 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/B",
             new { designation = "Manuel", playerId = enRevue.Serie.TeamB[0] }, Ct));
 
-        await AssertRefusAsync(await client.PostAsJsonAsync($"/series/{seriesId}/games", new { teamASide = "red" }, Ct), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await client.PostAsync($"/series/{seriesId}/games", null, Ct), HttpStatusCode.Conflict);
         await AssertRefusAsync(await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct), HttpStatusCode.Conflict);
         await AssertRefusAsync(await client.PutAsJsonAsync($"/games/{enRevue.GameId}/result", new { winner = "B" }, Ct), HttpStatusCode.Conflict);
 
@@ -322,7 +319,7 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         var code = await CodeCompanionAsync(client, serie.SeriesId);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
-        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000030", teamASide: "red", gagnante: "A")));
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000030", teamASide: "blue", gagnante: "A", equipeA: ["A1", "A2", "A3", "A4", "X1"])));
         var rapportId = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[1]
             .GetProperty("rapportEnRevue").GetProperty("id").GetInt32();
 

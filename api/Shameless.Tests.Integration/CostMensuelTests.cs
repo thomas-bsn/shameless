@@ -298,7 +298,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
 
     private async Task<int> RevancheAsync(HttpClient client, int seriesId) =>
         (await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{seriesId}/rematch",
-            new { format = 3, fearless = false, alternateSides = false }, Ct))).GetProperty("seriesId").GetInt32();
+            new { format = 3, fearless = false }, Ct))).GetProperty("seriesId").GetInt32();
 
     private int _rapports;
 
@@ -326,7 +326,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         if (open.GetProperty("soiree").ValueKind == JsonValueKind.Null)
             await OpenSoireeAsync(client);
         return (await ReadJsonAsync(await client.PostAsJsonAsync("/series",
-            new { teamA = serie.TeamA, teamB = serie.TeamB, format = 5, fearless = false, alternateSides = false }, Ct)))
+            new { teamA = serie.TeamA, teamB = serie.TeamB, format = 5, fearless = false }, Ct)))
             .GetProperty("seriesId").GetInt32();
     }
 }

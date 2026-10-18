@@ -37,7 +37,7 @@ public class ConcurrenceTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client);
 
         var responses = await Task.WhenAll(Enumerable.Range(0, Simultanees).Select(_ =>
-            client.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "blue" }, Ct)));
+            client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct)));
 
         UneSeuleReussit(responses, HttpStatusCode.Created);
         var series = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
@@ -83,7 +83,7 @@ public class ConcurrenceTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/roulette", new { variante = "Aleatoire" }, Ct));
 
         var responses = await Task.WhenAll(Enumerable.Range(0, Simultanees).Select(_ =>
-            client.PostAsJsonAsync("/soirees/open/picker/validate", new { format = 3, fearless = false, alternateSides = true }, Ct)));
+            client.PostAsJsonAsync("/soirees/open/picker/validate", new { format = 3, fearless = false }, Ct)));
 
         UneSeuleReussit(responses, HttpStatusCode.Created);
         var active = await ReadJsonAsync(await client.GetAsync("/series/active", Ct));
