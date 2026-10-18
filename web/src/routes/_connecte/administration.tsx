@@ -39,7 +39,7 @@ function Atraiter() {
   if (active.isError) return <ErrorAlert error={active.error} />;
   const games = pending.data;
   const series = active.data.series ?? [];
-  if (!games.length && !series.length) return <Card><CardContent className="py-5 text-sm text-muted-foreground">Rien à traiter. Tout est en ordre.</CardContent></Card>;
+  if (!games.length && !series.length) return null;
   return <section className="flex flex-col gap-3"><h2 className="text-lg font-semibold">À traiter</h2>
     {games.map((g) => <Card key={`g${g.id}`}><CardContent className="flex flex-wrap items-center justify-between gap-3 py-4"><span>Game #{g.id} · {g.participants.map((p) => p.prenom).join(", ")}</span><span className="flex gap-2"><Button disabled={winner.isPending} onClick={() => winner.mutate({ params: { path: { id: g.id } }, body: { winner: "A" } })}>Équipe A gagne</Button><Button variant="outline" disabled={winner.isPending} onClick={() => winner.mutate({ params: { path: { id: g.id } }, body: { winner: "B" } })}>Équipe B gagne</Button></span></CardContent></Card>)}
     {series.map((s) => <Card key={`s${s.seriesId}`}><CardContent className="flex items-center justify-between gap-3 py-4"><span>Série #{s.seriesId} · en cours</span><Button variant="destructive" disabled={stop.isPending} onClick={() => { if (window.confirm("Interrompre cette série ? Les games déjà jouées restent dans l'historique.")) stop.mutate({ params: { path: { id: s.seriesId } } }); }}>Interrompre</Button></CardContent></Card>)}
@@ -73,9 +73,10 @@ function JoueurAdminRow({ player: p }: { player: Schemas["PlayerDto"] }) {
 function ClipsAdmin() {
   const qc = useQueryClient();
   const [masked, setMasked] = useState(false);
-  const clips = $api.useQuery("get", "/clips", { params: { query: { masques: masked, sansGame: false, page: 1, pageSize: 100 } } });
+  const [page, setPage] = useState(1);
+  const clips = $api.useQuery("get", "/clips", { params: { query: { masques: masked, sansGame: false, page, pageSize: 30 } } });
   const set = $api.useMutation("put", "/clips/{id}/fond", { onSuccess: () => qc.invalidateQueries() });
   if (clips.isPending) return <LoadingRows />;
   if (clips.isError) return <ErrorAlert error={clips.error} />;
-  return <section className="flex flex-col gap-4"><label className="flex items-center gap-2"><input type="checkbox" checked={masked} onChange={(e) => setMasked(e.target.checked)} /> Masqués seulement</label><div className="grid gap-3 sm:grid-cols-2">{clips.data.map((c) => <Card key={c.id}><CardContent className="flex items-center justify-between gap-3 py-4"><span className="truncate">{c.auteurNom} · #{c.id}</span><Button variant="outline" disabled={set.isPending} onClick={() => set.mutate({ params: { path: { id: c.id } }, body: { masque: !c.masqueDuFond } })}>{c.masqueDuFond ? "Réafficher" : "Masquer"}</Button></CardContent></Card>)}</div></section>;
+  return <section className="flex flex-col gap-4"><label className="flex items-center gap-2"><input type="checkbox" checked={masked} onChange={(e) => { setMasked(e.target.checked); setPage(1); }} /> Masqués seulement</label><div className="grid gap-3 sm:grid-cols-2">{clips.data.map((c) => <Card key={c.id}><CardContent className="flex items-center gap-3 py-3"><video aria-label={`Aperçu ${c.nomFichier}`} className="aspect-video w-32 rounded object-cover" src={`/api/clips/${c.id}/fichier`} muted preload="metadata" /><div className="min-w-0 flex-1"><p className="truncate text-sm">{c.nomFichier}</p><p className="text-xs text-muted-foreground">{c.auteurNom} · #{c.id}</p><Button className="mt-2" variant="outline" disabled={set.isPending} onClick={() => set.mutate({ params: { path: { id: c.id } }, body: { masque: !c.masqueDuFond } })}>{c.masqueDuFond ? "Réafficher" : "Masquer"}</Button></div></CardContent></Card>)}</div><div className="flex items-center justify-between text-sm"><Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Précédent</Button><span>Page {page}</span><Button variant="outline" disabled={clips.data.length < 30} onClick={() => setPage((p) => p + 1)}>Suivant</Button></div></section>;
 }
