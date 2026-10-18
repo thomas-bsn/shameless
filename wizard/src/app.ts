@@ -219,12 +219,12 @@ export function createWizard(o: WizardOptions) {
 
     if (route === "validate") {
       const { errors, warnings } = validateConfig(corps);
-      return repondre(res, 200, { errors, warnings, callbackUrl: callback(corps) });
+      return repondre(res, 200, { errors, warnings, callbackUrl: callback(corps), wizardRedirectUri: redirectDuWizard(corps) });
     }
 
     if (route === "discord/start") {
       const { errors } = validateConfig(corps);
-      const redirectUri = callback(corps)?.replace("/api/auth/discord/callback", `/_setup/api/${CALLBACK}`);
+      const redirectUri = redirectDuWizard(corps);
       const bloquantes = Object.fromEntries(Object.entries(errors).filter(([k]) => ["publicUrl", "clientId", "clientSecret"].includes(k)));
       if (Object.keys(bloquantes).length > 0 || !redirectUri) return repondre(res, 422, { errors: bloquantes });
       const clientId = String(corps.clientId).trim();
@@ -319,6 +319,9 @@ export function createWizard(o: WizardOptions) {
     o.log("Connexion Discord de l'Opérateur : réussie.");
     return pageDiscord(res, 200, `Connecté en tant que ${r.username}`, "Ce compte deviendra le premier Superadministrateur de l'Instance.");
   }
+
+  /** URL de retour OAuth du wizard : sur l'adresse publique, qui sert aussi le wizard via Caddy. */
+  const redirectDuWizard = (corps: Record<string, unknown>) => callback(corps)?.replace("/api/auth/discord/callback", `/_setup/api/${CALLBACK}`) ?? null;
 
   const callback = (corps: Record<string, unknown>) => {
     const r = validateConfig({ publicUrl: corps.publicUrl });

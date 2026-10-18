@@ -155,6 +155,7 @@ describe("saisie et installation", () => {
     assert.equal(r.status, 200);
     assert.deepEqual(Object.keys(r.json.errors), ["guildId"]);
     assert.equal(r.json.callbackUrl, "https://shameless.example.org/api/auth/discord/callback");
+    assert.equal(r.json.wizardRedirectUri, "https://shameless.example.org/_setup/api/discord/callback");
   });
 
   it("explique un refus de Discord et laisse corriger", async () => {

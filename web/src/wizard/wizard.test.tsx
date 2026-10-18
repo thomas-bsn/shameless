@@ -13,10 +13,16 @@ function fauxServeur(initial: Json = { phase: "locked" }) {
     reponseInstall: null as null | { status: number; json: Json },
     /** Récapitulatif Uchuu que le serveur renvoie à l'installation (construit côté serveur, testé là-bas). */
     recap: null as null | Json,
+    /** Compte Discord connecté par l'Opérateur (renvoyé par l'état une fois le callback traité côté serveur). */
+    discord: null as null | { id: string; username: string },
+    discordError: "",
+    demarragesDiscord: [] as Json[],
+    /** Fenêtre ouverte vers Discord (stub de window.open). */
+    fenetre: { location: { href: "" }, close: vi.fn() },
     // Un champ est invalide s'il est vide ou commence par « bad ».
     // Obligatoires : les champs Discord et l'adresse ; la clé Riot est facultative ; le bot n'est exigé que si Uchuu est activé.
     erreurs: (c: Record<string, unknown>) => {
-      const invalides = ["publicUrl", "clientId", "clientSecret", "guildId", "adminIds"].filter((k) => !c[k] || String(c[k]).startsWith("bad"));
+      const invalides = ["publicUrl", "clientId", "clientSecret", "guildId"].filter((k) => !c[k] || String(c[k]).startsWith("bad"));
       if (String(c.riotKey ?? "").startsWith("bad")) invalides.push("riotKey");
       if (c.uchuu === true && (!c.botUrl || String(c.botUrl).startsWith("bad"))) invalides.push("botUrl");
       return Object.fromEntries(invalides.map((k) => [k, `Erreur serveur sur ${k}.`]));
@@ -29,14 +35,19 @@ function fauxServeur(initial: Json = { phase: "locked" }) {
       const route = url.replace("/_setup/api/", "");
       const corps = init?.body ? (JSON.parse(init.body as string) as Record<string, string>) : {};
       const avertissements = String(corps.botUrl ?? "").startsWith("http://localhost") ? ["Adresse locale : injoignable depuis le conteneur de l'API."] : [];
-      if (route === "state") return repondre(200, s.etat);
+      if (route === "state")
+        return repondre(200, { ...s.etat, ...(s.discord ? { discord: s.discord } : {}), ...(s.discordError ? { discordError: s.discordError } : {}) });
+      if (route === "discord/start") {
+        s.demarragesDiscord.push(corps);
+        return repondre(200, { authorizeUrl: "https://discord.com/oauth2/authorize?state=abc", redirectUri: `${corps.publicUrl}/_setup/api/discord/callback` });
+      }
       if (route === "unlock") {
         if (corps.code !== s.codeAttendu) return repondre(401, { message: "Code incorrect." });
         s.etat = { phase: "configuring" };
         return repondre(200, s.etat);
       }
       if (route === "validate")
-        return repondre(200, { errors: s.erreurs(corps), warnings: avertissements, callbackUrl: corps.publicUrl ? `${corps.publicUrl}/api/auth/discord/callback` : null });
+        return repondre(200, { errors: s.erreurs(corps), warnings: avertissements, callbackUrl: corps.publicUrl ? `${corps.publicUrl}/api/auth/discord/callback` : null, wizardRedirectUri: corps.publicUrl ? `${corps.publicUrl}/_setup/api/discord/callback` : null });
       if (route === "install") {
         s.installations.push(corps);
         if (s.reponseInstall) return repondre(s.reponseInstall.status, s.reponseInstall.json);
@@ -46,6 +57,7 @@ function fauxServeur(initial: Json = { phase: "locked" }) {
       return repondre(404, {});
     }),
   );
+  vi.stubGlobal("open", vi.fn(() => s.fenetre));
   return s;
 }
 
@@ -54,7 +66,6 @@ const saisies = {
   "Client ID": "123456789012345678",
   "Client Secret": "SECRET-DISCORD-abcdefghijklmnop",
   "Identifiant du serveur Discord": "987654321098765432",
-  "Identifiants Discord des administrateurs": "111111111111111111",
 };
 
 async function remplir(user: ReturnType<typeof userEvent.setup>, champs: Partial<typeof saisies> = saisies) {
@@ -67,7 +78,15 @@ async function deverrouillerEtCommencer(user: ReturnType<typeof userEvent.setup>
   await user.click(await screen.findByRole("button", { name: "Commencer" }));
 }
 
-async function parcourirJusquAuRecap(user: ReturnType<typeof userEvent.setup>) {
+/** L'Opérateur clique, s'identifie sur Discord (autre fenêtre) ; le serveur du wizard enregistre son compte. */
+async function connecterDiscord(user: ReturnType<typeof userEvent.setup>, serveur: ReturnType<typeof fauxServeur>, compte = { id: "111111111111111111", username: "thomas" }) {
+  await user.click(screen.getByRole("button", { name: /Se connecter avec Discord|Réessayer la connexion/ }));
+  await waitFor(() => expect(serveur.fenetre.location.href).toContain("discord.com"));
+  serveur.discord = compte;
+  await screen.findByText(/Connecté en tant que/, undefined, { timeout: 4000 });
+}
+
+async function parcourirJusquAuRecap(user: ReturnType<typeof userEvent.setup>, serveur: ReturnType<typeof fauxServeur>) {
   await deverrouillerEtCommencer(user);
   await remplir(user, { "Adresse publique": saisies["Adresse publique"] });
   await user.click(screen.getByRole("button", { name: "Continuer" }));
@@ -75,8 +94,8 @@ async function parcourirJusquAuRecap(user: ReturnType<typeof userEvent.setup>) {
     "Client ID": saisies["Client ID"],
     "Client Secret": saisies["Client Secret"],
     "Identifiant du serveur Discord": saisies["Identifiant du serveur Discord"],
-    "Identifiants Discord des administrateurs": saisies["Identifiants Discord des administrateurs"],
   });
+  await connecterDiscord(user, serveur);
   await user.click(screen.getByRole("button", { name: "Continuer" }));
   // Étape « Options » : tout est facultatif, on continue sans rien toucher.
   await user.click(screen.getByRole("button", { name: "Continuer" }));
@@ -175,10 +194,10 @@ describe("wizard d'installation", () => {
   });
 
   it("récapitule la configuration sans révéler le secret, avec le rappel de sauvegardes", async () => {
-    fauxServeur();
+    const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await parcourirJusquAuRecap(user);
+    await parcourirJusquAuRecap(user, serveur);
     expect(await screen.findByRole("heading", { name: "Récapitulatif" })).toBeInTheDocument();
     expect(screen.getByText(saisies["Client ID"])).toBeInTheDocument();
     expect(screen.queryByText(saisies["Client Secret"])).not.toBeInTheDocument();
@@ -189,7 +208,7 @@ describe("wizard d'installation", () => {
     const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await parcourirJusquAuRecap(user);
+    await parcourirJusquAuRecap(user, serveur);
     await user.click(await screen.findByRole("button", { name: "Installer" }));
 
     expect(await screen.findByText(/Installation en cours/)).toBeInTheDocument();
@@ -206,7 +225,7 @@ describe("wizard d'installation", () => {
     serveur.reponseInstall = { status: 422, json: { errors: { clientSecret: "Discord refuse ce Client ID / Client Secret." } } };
     const user = userEvent.setup();
     render(<WizardApp />);
-    await parcourirJusquAuRecap(user);
+    await parcourirJusquAuRecap(user, serveur);
     await user.click(await screen.findByRole("button", { name: "Installer" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Discord refuse ce Client ID / Client Secret.");
     await user.click(screen.getByRole("button", { name: "Corriger" }));
@@ -218,7 +237,7 @@ describe("wizard d'installation", () => {
     const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await parcourirJusquAuRecap(user);
+    await parcourirJusquAuRecap(user, serveur);
     await user.click(await screen.findByRole("button", { name: "Installer" }));
     serveur.etat = { phase: "failed", publicUrl: saisies["Adresse publique"], failure: "L'API n'a pas démarré. docker compose logs api" };
     expect(await screen.findByText(/L'API n'a pas démarré/, undefined, { timeout: 4000 })).toBeInTheDocument();
@@ -237,7 +256,7 @@ describe("wizard d'installation", () => {
 });
 
 describe("étape Options (#71)", () => {
-  const versOptions = async (user: ReturnType<typeof userEvent.setup>) => {
+  const versOptions = async (user: ReturnType<typeof userEvent.setup>, serveur: ReturnType<typeof fauxServeur>) => {
     await deverrouillerEtCommencer(user);
     await remplir(user, { "Adresse publique": saisies["Adresse publique"] });
     await user.click(screen.getByRole("button", { name: "Continuer" }));
@@ -245,17 +264,17 @@ describe("étape Options (#71)", () => {
       "Client ID": saisies["Client ID"],
       "Client Secret": saisies["Client Secret"],
       "Identifiant du serveur Discord": saisies["Identifiant du serveur Discord"],
-      "Identifiants Discord des administrateurs": saisies["Identifiants Discord des administrateurs"],
     });
+    await connecterDiscord(user, serveur);
     await user.click(screen.getByRole("button", { name: "Continuer" }));
     await screen.findByRole("heading", { name: "Options" });
   };
 
   it("propose Europe/Paris, une clé Riot masquée et facultative, et le bot Discord désactivé", async () => {
-    fauxServeur();
+    const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Options");
     expect(screen.getByLabelText("Fuseau horaire")).toHaveValue("Europe/Paris");
     expect(screen.getByLabelText("Clé de l'API Riot (facultatif)")).toHaveAttribute("type", "password");
@@ -267,7 +286,7 @@ describe("étape Options (#71)", () => {
     const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await parcourirJusquAuRecap(user);
+    await parcourirJusquAuRecap(user, serveur);
     expect(await screen.findByRole("heading", { name: "Récapitulatif" })).toBeInTheDocument();
     expect(screen.getByText(/Riot/)).toBeInTheDocument();
     expect(screen.getByText(/Ignoré/)).toBeInTheDocument();
@@ -277,10 +296,10 @@ describe("étape Options (#71)", () => {
   });
 
   it("valide la clé Riot à la saisie avec le message du serveur, sans bloquer si elle est vide", async () => {
-    fauxServeur();
+    const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     await user.type(screen.getByLabelText("Clé de l'API Riot (facultatif)"), "bad-cle");
     await user.tab();
     expect(await screen.findByText("Erreur serveur sur riotKey.")).toBeInTheDocument();
@@ -289,10 +308,10 @@ describe("étape Options (#71)", () => {
   });
 
   it("demande l'adresse du bot quand le bot Discord est activé, l'exige, et affiche l'avertissement d'une adresse locale", async () => {
-    fauxServeur();
+    const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     await user.click(screen.getByRole("switch", { name: /bot Discord/i }));
     await user.click(screen.getByRole("button", { name: "Continuer" }));
     expect(await screen.findByText("Erreur serveur sur botUrl.")).toBeInTheDocument();
@@ -304,10 +323,10 @@ describe("étape Options (#71)", () => {
   });
 
   it("rappelle l'avertissement d'adresse locale du bot dans le récapitulatif, avant d'installer", async () => {
-    fauxServeur();
+    const serveur = fauxServeur();
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     await activerUchuu(user, "http://localhost:9000");
     await user.click(screen.getByRole("button", { name: "Continuer" }));
     expect(await screen.findByRole("heading", { name: "Récapitulatif" })).toBeInTheDocument();
@@ -325,7 +344,7 @@ describe("étape Options (#71)", () => {
     serveur.recap = RECAP_UCHUU;
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     await activerUchuu(user);
     await user.click(screen.getByRole("button", { name: "Continuer" }));
     expect(await screen.findByText(/Activé/)).toBeInTheDocument();
@@ -361,7 +380,7 @@ describe("étape Options (#71)", () => {
     serveur.recap = RECAP_UCHUU;
     const user = userEvent.setup();
     render(<WizardApp />);
-    await versOptions(user);
+    await versOptions(user, serveur);
     await activerUchuu(user);
     await user.type(screen.getByLabelText(/Nom du bot/), "Harceleur");
     await user.click(screen.getByRole("button", { name: "Continuer" }));
@@ -382,5 +401,103 @@ describe("étape Options (#71)", () => {
     render(<WizardApp />);
     expect(await screen.findByRole("link", { name: "Ouvrir Shameless" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Bot Discord" })).not.toBeInTheDocument();
+  });
+});
+
+describe("étape Discord : premier Superadministrateur (#113)", () => {
+  const versDiscord = async (user: ReturnType<typeof userEvent.setup>) => {
+    await deverrouillerEtCommencer(user);
+    await remplir(user, { "Adresse publique": saisies["Adresse publique"] });
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    await remplir(user, {
+      "Client ID": saisies["Client ID"],
+      "Client Secret": saisies["Client Secret"],
+      "Identifiant du serveur Discord": saisies["Identifiant du serveur Discord"],
+    });
+  };
+
+  it("n'a plus de champ d'identifiants d'administrateurs et explique la connexion et la seconde URL de redirection", async () => {
+    fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versDiscord(user);
+    expect(screen.queryByLabelText(/administrateurs/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/premier Superadministrateur/)).toBeInTheDocument();
+    expect(await screen.findByText("https://shameless.example.org/_setup/api/discord/callback")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Se connecter avec Discord" })).toBeInTheDocument();
+  });
+
+  it("ne laisse pas continuer sans connexion Discord, en l'expliquant", async () => {
+    fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versDiscord(user);
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(await screen.findByText(/Connectez-vous avec Discord pour continuer/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Connexion Discord" })).toBeInTheDocument();
+  });
+
+  it("ouvre Discord avec la saisie de l'étape, affiche le compte connecté et laisse continuer", async () => {
+    const serveur = fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versDiscord(user);
+    await connecterDiscord(user, serveur);
+    expect(serveur.demarragesDiscord[0]).toMatchObject({ publicUrl: saisies["Adresse publique"], clientId: saisies["Client ID"], clientSecret: saisies["Client Secret"] });
+    expect(screen.getByText(/Connecté en tant que/)).toHaveTextContent("thomas");
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    expect(await screen.findByRole("heading", { name: "Options" })).toBeInTheDocument();
+  });
+
+  it("affiche le compte dans le récapitulatif et n'envoie aucun identifiant d'administrateur à l'installation", async () => {
+    const serveur = fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await parcourirJusquAuRecap(user, serveur);
+    expect(await screen.findByText("thomas (111111111111111111)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Installer" }));
+    await waitFor(() => expect(serveur.installations).toHaveLength(1));
+    expect(serveur.installations[0]).not.toHaveProperty("adminIds");
+  });
+
+  it("explique un refus ou un échec de connexion et permet de réessayer", async () => {
+    const serveur = fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versDiscord(user);
+    await user.click(screen.getByRole("button", { name: "Se connecter avec Discord" }));
+    serveur.discordError = "Vous avez refusé l'autorisation sur Discord.";
+    const alerte = await screen.findByRole("alert", undefined, { timeout: 4000 });
+    expect(alerte).toHaveTextContent("Vous avez refusé l'autorisation sur Discord.");
+
+    // Réessai : la connexion aboutit et l'erreur disparaît.
+    serveur.discordError = "";
+    await connecterDiscord(user, serveur);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("n'ouvre pas Discord tant que l'adresse, le Client ID ou le Client Secret sont invalides", async () => {
+    const serveur = fauxServeur();
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await deverrouillerEtCommencer(user);
+    await remplir(user, { "Adresse publique": saisies["Adresse publique"] });
+    await user.click(screen.getByRole("button", { name: "Continuer" }));
+    await user.click(screen.getByRole("button", { name: "Se connecter avec Discord" }));
+    expect(await screen.findByText("Erreur serveur sur clientId.")).toBeInTheDocument();
+    expect(serveur.demarragesDiscord).toHaveLength(0);
+    expect(serveur.fenetre.location.href).toBe("");
+  });
+
+  it("propose un lien si le navigateur a bloqué la fenêtre", async () => {
+    const serveur = fauxServeur();
+    vi.stubGlobal("open", vi.fn(() => null));
+    const user = userEvent.setup();
+    render(<WizardApp />);
+    await versDiscord(user);
+    await user.click(screen.getByRole("button", { name: "Se connecter avec Discord" }));
+    const lien = await screen.findByRole("link", { name: /Ouvrir Discord/ });
+    expect(lien).toHaveAttribute("href", expect.stringContaining("discord.com"));
+    expect(serveur.discord).toBeNull();
   });
 });
