@@ -1,7 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { SessionMenu } from "@/components/session-menu";
+import { createRootRouteWithContext, Outlet, useRouterState } from "@tanstack/react-router";
+import { AppShell, MinimalShell } from "@/components/app-shell";
 import { pageParLien } from "@/lib/liens";
+import { useTheme } from "@/lib/theme";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -12,49 +13,16 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: () => <p className="text-muted-foreground">Cette page n'existe pas.</p>,
 });
 
-const navigation = [
-  { to: "/soiree", label: "Soirée" },
-  { to: "/joueurs", label: "Joueurs" },
-  { to: "/classements", label: "Classements" },
-  { to: "/historique", label: "Historique" },
-  { to: "/hall-de-la-honte", label: "Hall de la Honte" },
-  { to: "/clips", label: "Clips" },
-] as const;
-
 function RootLayout() {
-  // Les pages ouvertes par un lien d'accès (ADR 0010) n'ont pas de session : pas de « Se connecter ».
+  // Le thème s'applique à toutes les pages, y compris celles ouvertes par un lien d'accès.
+  useTheme();
+  // Les pages ouvertes par un lien d'accès (ADR 0010) n'ont ni session ni sidebar.
   const parLien = useRouterState({ select: (state) => pageParLien(state.location.pathname) });
+  const Shell = parLien ? MinimalShell : AppShell;
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 font-bold">
-            <img src="/logo.png" alt="" className="size-8 rounded-full object-cover" />
-            Shameless
-          </Link>
-          <nav className="flex gap-1 text-sm">
-            {navigation.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                activeProps={{ className: "bg-accent text-accent-foreground" }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          {!parLien && (
-            <div className="ml-auto">
-              <SessionMenu />
-            </div>
-          )}
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <Outlet />
-      </main>
-    </div>
+    <Shell>
+      <Outlet />
+    </Shell>
   );
 }

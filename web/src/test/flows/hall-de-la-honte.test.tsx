@@ -1,5 +1,4 @@
 import { screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
 import { user } from "@/test/fixtures";
@@ -16,9 +15,7 @@ const hall: Schemas["HallDeLaHonte"] = {
 describe("Hall de la Honte", () => {
   it("liste le cumul des DOFD, les ex æquo au même rang, depuis la navigation", async () => {
     mockApi({ "GET /auth/me": user(), "GET /hall-de-la-honte": hall, "GET /soirees/open": { soiree: null } });
-    renderApp("/");
-
-    await userEvent.click(await screen.findByRole("link", { name: "Hall de la Honte" }));
+    renderApp("/hall-de-la-honte");
 
     const lignes = within(await screen.findByRole("list", { name: "Hall de la Honte" })).getAllByRole("listitem");
     expect(lignes.map((l) => within(l).getByLabelText("Rang").textContent)).toEqual(["1", "1", "3"]);
