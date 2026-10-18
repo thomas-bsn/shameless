@@ -88,6 +88,7 @@ const ONGLETS = {
     tuiles: [
       { nom: "Dégâts infligés", mesure: dommages, format: millierLabel },
       { nom: "Dégâts par minute", mesure: dommages, parMinute: 0 },
+      { nom: "Dégâts subis", mesure: subis, format: millierLabel },
       { nom: "Or gagné", mesure: or, format: millierLabel },
     ],
     colonnes: [
@@ -122,6 +123,7 @@ const ONGLETS = {
       { nom: "Score de vision", mesure: vision, format: total },
       { nom: "Balises posées", mesure: posees, format: total },
       { nom: "Balises détruites", mesure: detruites, format: total },
+      { nom: "Balises de contrôle", mesure: controle, format: total },
     ],
     colonnes: [
       {
@@ -179,7 +181,7 @@ export function OngletStats({ game, onglet }: { game: Recap; onglet: NomOnglet }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4">
         {tuiles.map((t) => (
           <Card key={t.nom} role="group" aria-label={t.nom} className="gap-2 py-4">
             <CardHeader className="px-4">
@@ -188,13 +190,18 @@ export function OngletStats({ game, onglet }: { game: Recap; onglet: NomOnglet }
             <CardContent className="flex items-baseline justify-between gap-2 px-4 font-mono text-lg font-semibold tabular-nums">
               {cotes.map((c) => {
                 const somme = sommeDe(c.players, t.mesure);
+                const manquants = somme == null ? 0 : c.players.filter((p) => valeur(p, t.mesure) == null).length;
                 const texte =
                   t.parMinute != null
                     ? nombreLabel(parMinute(somme, durationSeconds), t.parMinute)
                     : (t.format ?? total)(somme);
                 return (
                   <span key={c.side} className={sideTextClass(c.side)}>
-                    {texte}
+                    {manquants > 0 ? (
+                      <span title={`Total partiel : ${manquants} joueur${manquants > 1 ? "s" : ""} sans cette stat`}>≥ {texte}</span>
+                    ) : (
+                      texte
+                    )}
                   </span>
                 );
               })}

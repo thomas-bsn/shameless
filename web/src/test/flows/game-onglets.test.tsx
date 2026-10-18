@@ -97,6 +97,18 @@ describe("Onglet Dégâts", () => {
     expect(tuile("Or gagné")).toHaveTextContent("20,0 k");
   });
 
+  it("ajoute la tuile des dégâts subis et signale un total d'équipe partiel", async () => {
+    await ouvrir("Dégâts");
+
+    // Équipe bleue (B) : 9 + 7 = 16 k, complet. Équipe rouge (A) : seul Alice a la stat (12 k), Chloé non.
+    const subis = tuile("Dégâts subis");
+    expect(subis).toHaveTextContent("16,0 k");
+    expect(subis).toHaveTextContent("≥ 12,0 k");
+    expect(within(subis).getAllByTitle("Total partiel : 1 joueur sans cette stat")).toHaveLength(1);
+    // Les totaux complets ne sont pas marqués.
+    expect(within(tuile("Dégâts infligés")).queryByTitle(/partiel/)).not.toBeInTheDocument();
+  });
+
   it("affiche par joueur les dégâts infligés, par minute, la part de l'équipe et les dégâts subis", async () => {
     await ouvrir("Dégâts");
 
@@ -145,6 +157,8 @@ describe("Onglet Vision", () => {
     expect(tuile("Score de vision")).toHaveTextContent("90");
     expect(tuile("Balises posées")).toHaveTextContent("30");
     expect(tuile("Balises détruites")).toHaveTextContent("10");
+    expect(tuile("Balises de contrôle")).toHaveTextContent("1");
+    expect(tuile("Balises de contrôle")).toHaveTextContent("8");
 
     const chloe = ligne("Chloé");
     expect(cellule(chloe, "Score de vision")).toHaveTextContent("60");
