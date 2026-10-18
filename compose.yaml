@@ -26,6 +26,8 @@ services:
       WIZARD_CODE_TTL_SECONDS: ${WIZARD_CODE_TTL_SECONDS:-1800}
       WIZARD_INSTALL_TIMEOUT_SECONDS: ${WIZARD_INSTALL_TIMEOUT_SECONDS:-300}
       WIZARD_DISCORD_CHECK: ${WIZARD_DISCORD_CHECK:-on}
+      # Test d'acceptation seulement : la connexion Discord de l'Opérateur renvoie ce compte. Vide en production.
+      WIZARD_DISCORD_LOGIN_FAKE_ID: ${WIZARD_DISCORD_LOGIN_FAKE_ID:-}
     volumes:
       - instance-config:/instance
 

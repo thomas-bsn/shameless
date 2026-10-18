@@ -4,15 +4,15 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
-import { createWizard, isConfigured, type DiscordCheck } from "../src/app.ts";
+import { createWizard, isConfigured, type DiscordCheck, type DiscordLogin } from "../src/app.ts";
 
 const saisie = {
   publicUrl: "https://shameless.example.org",
   clientId: "123456789012345678",
   clientSecret: "SECRET-DISCORD-abcdefghijklmnop",
   guildId: "987654321098765432",
-  adminIds: "111111111111111111",
 };
+const SUPERADMIN = "111111111111111111";
 
 const serveurs: Server[] = [];
 afterEach(() => {
@@ -25,7 +25,13 @@ async function demarrer(
   const dir = mkdtempSync(join(tmpdir(), "wizard-"));
   const logs: string[] = [];
   let maintenant = 1_000_000;
-  const etat = { apiUp: false, fini: 0, discord: options.discord ?? ("ok" as DiscordCheck) };
+  const etat = {
+    apiUp: false,
+    fini: 0,
+    discord: options.discord ?? ("ok" as DiscordCheck),
+    login: { ok: true, id: SUPERADMIN, username: "thomas" } as DiscordLogin,
+    echanges: [] as { code: string; clientId: string; clientSecret: string; redirectUri: string }[],
+  };
   const wizard = createWizard({
     instanceDir: dir,
     log: (m) => logs.push(m),
@@ -33,6 +39,7 @@ async function demarrer(
     codeTtlMs: options.ttlMs ?? 30 * 60_000,
     maxAttempts: 3,
     checkDiscord: async () => etat.discord,
+    loginDiscord: async (demande) => (etat.echanges.push(demande), etat.login),
     probeApi: async () => etat.apiUp,
     pollIntervalMs: 5,
     installTimeoutMs: options.installTimeoutMs ?? 2000,
@@ -57,9 +64,27 @@ async function demarrer(
     return { status: res.status, headers: res.headers, json: texte && texte.startsWith("{") ? JSON.parse(texte) : undefined, texte };
   };
   const code = () => /Code d'accès : (\S+)/.exec(logs.join("\n").split("\n").reverse().find((l) => l.includes("Code d'accès")) ?? "")?.[1] ?? "";
-  const ouvrirSession = async () => {
+  /** Démarre la connexion Discord (l'Opérateur clique) et renvoie l'URL d'autorisation et le state. */
+  const demarrerConnexion = async (corps: unknown = saisie) => {
+    const r = await appel("POST", "/_setup/api/discord/start", corps);
+    const state = r.json?.authorizeUrl ? new URL(r.json.authorizeUrl).searchParams.get("state") : null;
+    return { ...r, state };
+  };
+  /** Discord renvoie l'Opérateur sur le callback : navigation sans cookie de session (SameSite=Strict). */
+  const retourDiscord = async (query: string) => {
+    const res = await fetch(`${base}/_setup/api/discord/callback?${query}`, { redirect: "manual" });
+    return { status: res.status, texte: await res.text(), headers: res.headers };
+  };
+  const connecter = async () => {
+    const d = await demarrerConnexion();
+    assert.equal(d.status, 200);
+    const r = await retourDiscord(`code=abc&state=${d.state}`);
+    assert.equal(r.status, 200);
+  };
+  const ouvrirSession = async ({ connexion = true } = {}) => {
     const r = await appel("POST", "/_setup/api/unlock", { code: code() });
     assert.equal(r.status, 200);
+    if (connexion) await connecter();
   };
   const attendre = async (phase: string) => {
     for (let i = 0; i < 200; i++) {
@@ -69,7 +94,7 @@ async function demarrer(
     }
     throw new Error(`phase ${phase} jamais atteinte`);
   };
-  return { dir, logs, etat, appel, code, ouvrirSession, attendre, avancer: (ms: number) => (maintenant += ms), resetCookie: () => (cookie = "") };
+  return { dir, logs, etat, appel, demarrerConnexion, retourDiscord, connecter, code, ouvrirSession, attendre, avancer: (ms: number) => (maintenant += ms), resetCookie: () => (cookie = "") };
 }
 
 describe("accès protégé par un code", () => {
@@ -130,6 +155,7 @@ describe("saisie et installation", () => {
     assert.equal(r.status, 200);
     assert.deepEqual(Object.keys(r.json.errors), ["guildId"]);
     assert.equal(r.json.callbackUrl, "https://shameless.example.org/api/auth/discord/callback");
+    assert.equal(r.json.wizardRedirectUri, "https://shameless.example.org/_setup/api/discord/callback");
   });
 
   it("explique un refus de Discord et laisse corriger", async () => {
@@ -179,7 +205,7 @@ describe("saisie et installation", () => {
     const fin = await w.attendre("done");
     const motDePasse = /POSTGRES_PASSWORD='([^']+)'/.exec(readFileSync(join(w.dir, "instance.env"), "utf8"))![1];
     const journal = w.logs.join("\n");
-    for (const secret of [saisie.clientSecret, motDePasse, saisie.clientId, saisie.guildId, saisie.adminIds]) {
+    for (const secret of [saisie.clientSecret, motDePasse, saisie.clientId, saisie.guildId]) {
       assert.ok(!journal.includes(secret), `le journal contient « ${secret} »`);
       assert.ok(!JSON.stringify(fin).includes(secret), "l'état renvoie un secret");
     }
@@ -212,6 +238,152 @@ describe("saisie et installation", () => {
     w.resetCookie();
     assert.equal((await w.appel("POST", "/_setup/api/unlock", { code })).status, 401);
     assert.equal((await w.appel("POST", "/_setup/api/install", saisie)).status, 401);
+  });
+});
+
+describe("connexion Discord du premier Superadministrateur (#113)", () => {
+  const env = (dir: string) => readFileSync(join(dir, "instance.env"), "utf8");
+
+  it("calcule l'URL de redirection du wizard depuis l'adresse publique et demande le scope identify", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    const r = await w.demarrerConnexion();
+    assert.equal(r.status, 200);
+    assert.equal(r.json.redirectUri, "https://shameless.example.org/_setup/api/discord/callback");
+    const u = new URL(r.json.authorizeUrl);
+    assert.equal(u.origin + u.pathname, "https://discord.com/oauth2/authorize");
+    assert.equal(u.searchParams.get("client_id"), saisie.clientId);
+    assert.equal(u.searchParams.get("scope"), "identify");
+    assert.equal(u.searchParams.get("response_type"), "code");
+    assert.equal(u.searchParams.get("redirect_uri"), r.json.redirectUri);
+    assert.ok((r.state ?? "").length >= 32);
+  });
+
+  it("exige la session du wizard pour démarrer et refuse une adresse ou un Client ID invalide", async () => {
+    const w = await demarrer();
+    assert.equal((await w.demarrerConnexion()).status, 401);
+    await w.ouvrirSession({ connexion: false });
+    const r = await w.demarrerConnexion({ ...saisie, clientId: "abc", publicUrl: "pas une url" });
+    assert.equal(r.status, 422);
+    assert.ok(r.json.errors.clientId && r.json.errors.publicUrl);
+  });
+
+  it("enregistre l'identifiant Discord obtenu et l'affiche dans l'état, sans le secret ni le jeton", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    assert.equal((await w.appel("GET", "/_setup/api/state")).json.discord, undefined);
+    const d = await w.demarrerConnexion();
+    const r = await w.retourDiscord(`code=le-code&state=${d.state}`);
+    assert.equal(r.status, 200);
+    assert.match(r.texte, /thomas/);
+    assert.deepEqual(w.etat.echanges, [
+      { code: "le-code", clientId: saisie.clientId, clientSecret: saisie.clientSecret, redirectUri: "https://shameless.example.org/_setup/api/discord/callback" },
+    ]);
+    const etat = (await w.appel("GET", "/_setup/api/state")).json;
+    assert.deepEqual(etat.discord, { id: SUPERADMIN, username: "thomas" });
+    assert.ok(!JSON.stringify(etat).includes(saisie.clientSecret));
+  });
+
+  it("écrit l'identifiant connecté comme premier Superadministrateur (Auth__AdminDiscordIds)", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    assert.equal((await w.appel("POST", "/_setup/api/install", saisie)).status, 202);
+    assert.match(env(w.dir), new RegExp(`^Auth__AdminDiscordIds='${SUPERADMIN}'$`, "m"));
+  });
+
+  it("refuse d'installer sans connexion Discord, en l'expliquant, et n'écrit rien", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    const r = await w.appel("POST", "/_setup/api/install", saisie);
+    assert.equal(r.status, 422);
+    assert.match(r.json.errors.discord, /Connectez-vous avec Discord/);
+    assert.equal(existsSync(join(w.dir, "ready")), false);
+    assert.equal(existsSync(join(w.dir, "instance.env")), false);
+  });
+
+  it("ignore un identifiant d'administrateur saisi à la main", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    await w.appel("POST", "/_setup/api/install", { ...saisie, adminIds: "222222222222222222" });
+    assert.match(env(w.dir), new RegExp(`^Auth__AdminDiscordIds='${SUPERADMIN}'$`, "m"));
+  });
+
+  it("explique un refus de l'Opérateur sur Discord et permet de réessayer", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    const d = await w.demarrerConnexion();
+    const r = await w.retourDiscord(`error=access_denied&error_description=The+resource+owner+denied&state=${d.state}`);
+    assert.equal(r.status, 200);
+    assert.match(r.texte, /refusé/);
+    const etat = (await w.appel("GET", "/_setup/api/state")).json;
+    assert.equal(etat.discord, undefined);
+    assert.match(etat.discordError, /refusé/);
+
+    // Réessai : une nouvelle connexion réussit et efface l'erreur.
+    await w.connecter();
+    const apres = (await w.appel("GET", "/_setup/api/state")).json;
+    assert.equal(apres.discordError, undefined);
+    assert.equal(apres.discord.id, SUPERADMIN);
+  });
+
+  it("explique l'échec de l'échange (identifiants refusés ou Discord injoignable) et permet de réessayer", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    for (const [login, motif] of [
+      [{ ok: false, reason: "refused" }, /redirection|Client Secret/],
+      [{ ok: false, reason: "unreachable" }, /joindre Discord/],
+    ] as const) {
+      w.etat.login = login;
+      const d = await w.demarrerConnexion();
+      await w.retourDiscord(`code=x&state=${d.state}`);
+      const etat = (await w.appel("GET", "/_setup/api/state")).json;
+      assert.equal(etat.discord, undefined);
+      assert.match(etat.discordError, motif);
+    }
+    w.etat.login = { ok: true, id: SUPERADMIN, username: "thomas" };
+    await w.connecter();
+    assert.equal((await w.appel("POST", "/_setup/api/install", saisie)).status, 202);
+  });
+
+  it("refuse un state inconnu ou déjà utilisé, sans appeler Discord", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    assert.equal((await w.retourDiscord("code=x&state=inconnu")).status, 400);
+    const d = await w.demarrerConnexion();
+    await w.retourDiscord(`code=x&state=${d.state}`);
+    assert.equal((await w.retourDiscord(`code=x&state=${d.state}`)).status, 400);
+    assert.equal(w.etat.echanges.length, 1);
+  });
+
+  it("refuse un state périmé (10 minutes)", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    const d = await w.demarrerConnexion();
+    w.avancer(10 * 60_000 + 1);
+    const r = await w.retourDiscord(`code=x&state=${d.state}`);
+    assert.equal(r.status, 400);
+    assert.match(r.texte, /expiré/);
+    assert.equal(w.etat.echanges.length, 0);
+  });
+
+  it("ne journalise ni l'identifiant Discord, ni le pseudo, ni le code, ni le state", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession({ connexion: false });
+    const d = await w.demarrerConnexion();
+    await w.retourDiscord(`code=code-secret-xyz&state=${d.state}`);
+    const journal = w.logs.join("\n");
+    for (const s of [SUPERADMIN, "thomas", "code-secret-xyz", String(d.state)]) assert.ok(!journal.includes(s), s);
+  });
+
+  it("ne sert plus de callback une fois l'installation terminée", async () => {
+    const w = await demarrer();
+    await w.ouvrirSession();
+    await w.appel("POST", "/_setup/api/install", saisie);
+    w.etat.apiUp = true;
+    await w.attendre("done");
+    await new Promise((r) => setTimeout(r, 60));
+    const d = await w.demarrerConnexion();
+    assert.equal(d.status, 401);
   });
 });
 
