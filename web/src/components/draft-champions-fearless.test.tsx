@@ -1,18 +1,20 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { DraftChampionsOrganisateur } from "@/components/draft-champions-organisateur";
 import { DraftParLien } from "@/components/draft-champions-view";
 import { mockApi } from "@/test/api";
 import { renderComponent } from "@/test/render";
 
-const champion = (id: string, name = id): Schemas["ChampionResponse"] => ({
+const champion = (id: string, name = id, classes: string[] = []): Schemas["ChampionResponse"] => ({
   id,
   key: id,
   name,
   imageUrl: `https://ddragon.test/${id}.png`,
+  classes,
 });
 
-const champions = [champion("Ahri"), champion("Garen"), champion("LeeSin", "Lee Sin"), champion("Zed")];
+const champions = [champion("Ahri", "Ahri", ["Mage", "Assassin"]), champion("Garen", "Garen", ["Tank", "Fighter"]), champion("LeeSin", "Lee Sin", ["Fighter"]), champion("Zed", "Zed", ["Assassin"] )];
 
 const tours: Schemas["TourDraftResponse"][] = Array.from({ length: 20 }, (_, i) => ({
   numero: i + 1,
@@ -93,5 +95,18 @@ describe("Fearless dans la Draft de champions", () => {
     const garen = await screen.findByRole("button", { name: /Garen.*déjà joué/ });
     expect(garen).toBeEnabled();
     expect(screen.getByRole("button", { name: "Ahri" })).toBeEnabled();
+  });
+
+  it("filtre les champions par classe Data Dragon, sans les présenter comme des rôles de voie", async () => {
+    mockDraft(draft(null));
+
+    renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
+
+    await screen.findByRole("button", { name: "Ahri" });
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Filtrer par classe" }), "Mage");
+
+    expect(screen.getByRole("button", { name: "Ahri" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Garen" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Zed" })).not.toBeInTheDocument();
   });
 });

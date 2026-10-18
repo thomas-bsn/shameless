@@ -5,7 +5,7 @@ import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 describe("Joueurs", () => {
-  it("groups the players by cost tier, from SS down", async () => {
+  it("lists players in a searchable table and sorts by cost", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /players": [
@@ -18,13 +18,78 @@ describe("Joueurs", () => {
 
     renderApp("/joueurs");
 
-    const tiers = await screen.findAllByRole("region", { name: /^Tier / });
-    expect(tiers.map((t) => t.getAttribute("aria-label"))).toEqual(["Tier SS", "Tier B", "Tier D"]);
-    expect(within(tiers[1]!).getAllByRole("link").map((l) => l.textContent)).toEqual([
-      expect.stringContaining("Chloé"),
-      expect.stringContaining("Alice"),
-    ]);
-    expect(within(tiers[0]!).getByRole("link", { name: /Bob/ })).toHaveAttribute("href", "/joueurs/2");
+    const table = await screen.findByRole("table");
+    const rows = () => within(table).getAllByRole("row").slice(1).map((row) => row.textContent);
+    expect(rows()).toHaveLength(4);
+    expect(rows()[0]).toContain("Alice");
+    await userEvent.click(screen.getByRole("button", { name: "Cost" }));
+    expect(rows()[0]).toContain("Bob");
+    expect(within(table).getByRole("link", { name: /Bob/ })).toHaveAttribute("href", "/joueurs/2");
+    await userEvent.type(screen.getByRole("textbox", { name: "Rechercher un joueur" }), "Chloé");
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]).toContain("Chloé");
+  });
+
+  it("filters the table by the player's main role", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [player({ id: 1, prenom: "Alice", mainRole: "MIDDLE" }), player({ id: 2, prenom: "Bob", mainRole: "JUNGLE" })],
+    });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    await userEvent.type(screen.getByRole("textbox", { name: "Rechercher un joueur" }), "jungle");
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(within(table).getByRole("link", { name: /Bob/ })).toBeInTheDocument();
+  });
+
+  it("keeps each letter visible for all six cost tiers", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /players": [1, 2, 3, 4, 5, 6].map((cost, i) => player({ id: i + 1, prenom: `J${i + 1}`, currentCost: cost })) });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    for (const tier of ["D", "C", "B", "A", "S", "SS"]) expect(within(table).getByText(tier)).toBeVisible();
+  });
+
+  it("shows custom winrate from the 5v5 ranking and sorts that column", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [player({ id: 1, prenom: "Alice" }), player({ id: 2, prenom: "Bob" })],
+      "GET /classements/5v5": { joueurs: [
+        { playerId: 1, prenom: "Alice", riotId: "Alice#EUW", gamesJouees: 4, victoires: 1, defaites: 3, winrate: 25 },
+        { playerId: 2, prenom: "Bob", riotId: "Bob#EUW", gamesJouees: 2, victoires: 2, defaites: 0, winrate: 100 },
+      ] },
+    });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("25%")).toBeInTheDocument();
+    expect(within(table).getByText("100%")).toBeInTheDocument();
+    await userEvent.click(within(table).getByRole("button", { name: "Winrate customs" }));
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("Bob");
+  });
+
+  it("shows all player profile sections and keeps missing statistics empty", async () => {
+    const profile = {
+      playerId: 7, prenom: "Kélio", riotId: "Kelio#EUW", discord: { discordId: "900", username: "kelio", avatarUrl: null }, cost: 4,
+      soloQ: null, flex: { tier: "GOLD", division: 2, lp: 40 },
+      stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 },
+      champions: [{ championId: "Ahri", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      roles: [{ role: "Mid", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      games: [{ gameId: 11, seriesId: 5, playedAt: "2026-10-03T20:00:00Z", equipe: "A", victoire: true, dureeSecondes: null, championId: "Ahri", role: "Mid", stats: null, performance: { note: 83, role: "Mid", sourceDuRole: "Rapport", composantes: [] } }],
+      titres: { mvp: 2, dofd: 1 },
+    };
+    mockApi({
+      "GET /auth/me": user(), "GET /players/7": player({ id: 7, prenom: "Kélio", riotId: "Kelio#EUW", flexRankTier: "GOLD", flexRankDivision: 2, flexLp: 40, currentCost: 4 }),
+      "GET /players/7/fiche": profile, "GET /players/7/cost/historique": { playerId: 7, mois: [{ mois: "2026-09-01", cost: 3, costDeDepart: 2, gamesTerminees: 5, victoires: 3, noteMoyenne: 70, evolution: null }, { mois: "2026-10-01", cost: 4, costDeDepart: 3, gamesTerminees: 5, victoires: 3, noteMoyenne: 75, evolution: 1 }] },
+    });
+    renderApp("/joueurs/7");
+    expect(await screen.findByRole("heading", { name: "Kélio" })).toBeInTheDocument();
+    expect(screen.getAllByText("Gold II · 40 LP")).toHaveLength(2);
+    expect(screen.getByText("Discord · kelio")).toBeInTheDocument();
+    expect(screen.getByText("2 MVP")).toBeInTheDocument();
+    expect(screen.getAllByText(/100%/)).not.toHaveLength(0);
+    expect(screen.getByRole("img", { name: "Évolution mensuelle du cost de 1 à 6" })).toBeInTheDocument();
+    expect(screen.getAllByText("Ahri")).toHaveLength(2);
+    expect(screen.getByText("83/100")).toBeInTheDocument();
+    expect(screen.getByText("KDA").parentElement?.parentElement).toHaveTextContent("—");
   });
 
   it("shows a player's Riot account, SoloQ rank, peak, cost and main role", async () => {
@@ -103,6 +168,28 @@ describe("Joueurs", () => {
 
     expect(created).toEqual({ prenom: "Lee", riotId: "Faker#KR1" });
     await waitFor(() => expect(router.state.location.pathname).toBe("/joueurs/12"));
+  });
+
+  it("adds a player from the roster in a dialog and keeps Riot verification before save", async () => {
+    let saved = false;
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [],
+      "GET /classements/5v5": { joueurs: [] },
+      "GET /players/riot-preview": () => json({ riotId: "Test#EUW", rankTier: "GOLD", rankDivision: 2, lp: 40, mainRole: "MIDDLE", alreadyRegistered: false }),
+      "POST /players": async () => { saved = true; return json({ id: 13, prenom: "Test", riotId: "Test#EUW" }); },
+      "GET /players/13": player({ id: 13, prenom: "Test", riotId: "Test#EUW" }),
+    });
+    renderApp("/joueurs");
+    await userEvent.click(await screen.findByRole("button", { name: "Ajouter un joueur" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Prénom"), "Test");
+    await userEvent.type(screen.getByLabelText("RiotId"), "Test#EUW");
+    await userEvent.click(screen.getByRole("button", { name: "Prévisualiser" }));
+    expect(await screen.findByRole("region", { name: "Compte Riot" })).toBeInTheDocument();
+    expect(saved).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+    await waitFor(() => expect(saved).toBe(true));
   });
 
   it("does not save an account that is already a player, nor an unknown account", async () => {

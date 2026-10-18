@@ -112,11 +112,31 @@ describe("Historique", () => {
 
     renderApp("/historique?annee=2026&mois=10");
 
+    expect(screen.queryByRole("link", { name: "Novembre 2026 →" })).not.toBeInTheDocument();
     await userEvent.click(await screen.findByRole("link", { name: "← Septembre 2026" }));
 
     expect(await screen.findByRole("heading", { name: "Septembre 2026" })).toBeInTheDocument();
     expect(await screen.findByText("Aucune game ce mois-ci.")).toBeInTheDocument();
     expect(fetch.mock.calls.some(([r]) => r.url.endsWith("/api/games/history/2026/9"))).toBe(true);
     expect(screen.getByRole("link", { name: "Octobre 2026 →" })).toBeInTheDocument();
+  });
+
+  it("marks played days with their game count and filters series after a day is selected", async () => {
+    const data: Schemas["GameHistoryListResponse"] = { games: [
+      ...october.games,
+      { seriesId: 7, format: 1, playedAt: "2026-10-04T20:00:00Z", outcome: "Gagnee", winningTeam: "B", games: [{ ...game(15, "B", "blue"), playedAt: "2026-10-04T20:00:00Z", seriesId: 7 }] },
+    ] };
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": data });
+    renderApp("/historique?annee=2026&mois=10");
+
+    const calendar = await screen.findByRole("region", { name: "Calendrier Octobre 2026" });
+    const third = within(calendar).getByRole("button", { name: /3.*4 games/ });
+    expect(third).toBeEnabled();
+    expect(within(calendar).getByRole("button", { name: /4.*1 game/ })).toBeEnabled();
+    await userEvent.click(third);
+
+    expect(screen.getByRole("article", { name: "Série BO3" })).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "Série BO5" })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: "Série BO1" })).not.toBeInTheDocument();
   });
 });

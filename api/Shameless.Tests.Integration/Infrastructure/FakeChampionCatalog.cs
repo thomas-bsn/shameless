@@ -10,7 +10,7 @@ public sealed class FakeChampionCatalog : IChampionCatalog
 {
     public static readonly IReadOnlyList<Champion> Champions =
     [
-        new("Ahri", "103", "Ahri", "https://ddragon.test/img/champion/Ahri.png"),
+        new("Ahri", "103", "Ahri", "https://ddragon.test/img/champion/Ahri.png", ["Mage", "Assassin"]),
         new("Garen", "86", "Garen", "https://ddragon.test/img/champion/Garen.png"),
         new("LeeSin", "64", "Lee Sin", "https://ddragon.test/img/champion/LeeSin.png"),
         new("Jinx", "222", "Jinx", "https://ddragon.test/img/champion/Jinx.png"),
