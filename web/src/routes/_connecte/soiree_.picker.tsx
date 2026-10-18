@@ -679,7 +679,7 @@ function Valider() {
   const validate = $api.useMutation("post", "/soirees/open/picker/validate", {
     onSuccess: async ({ seriesId }) => {
       await refresh();
-      await navigate({ href: `/series/${seriesId}` });
+      await navigate({ to: "/series/$seriesId/preparation", params: { seriesId: String(seriesId) } });
     },
   });
 

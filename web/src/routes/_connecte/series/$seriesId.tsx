@@ -2,9 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { $api, type Schemas } from "@/api/client";
-import { CapitainesLiensPanel } from "@/components/capitaines-liens-panel";
 import { ChampionsJoues } from "@/components/champions-joues";
-import { CodeCompanionPanel } from "@/components/code-companion-panel";
 import { DraftChampionsOrganisateur, DraftChampionsTerminee } from "@/components/draft-champions-organisateur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RapportEnRevuePanel } from "@/components/rapport-en-revue-panel";
@@ -95,8 +93,13 @@ function SerieView({ series }: { series: Series }) {
 
       {enCours ? (
         <>
-          <CapitainesLiensPanel series={series} onSeriesChanged={refresh} />
-          <CodeCompanionPanel seriesId={series.seriesId} />
+          <div>
+            <Button asChild variant="outline">
+              <Link to="/series/$seriesId/preparation" params={{ seriesId: String(series.seriesId) }}>
+                Liens et code
+              </Link>
+            </Button>
+          </div>
           <GamePanel series={series} />
           {pending?.rapportEnRevue && (
             <RapportEnRevuePanel

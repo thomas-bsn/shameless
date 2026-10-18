@@ -233,4 +233,16 @@ describe("Picker : Autorole puis Série", () => {
 
     await vi.waitFor(() => expect(creation()).toMatchObject({ format: 5, fearless: true }));
   });
+
+  it("mène à l'Écran de préparation de la série créée", async () => {
+    stubMotion(true);
+    mockEquipes();
+    const { router } = renderApp("/soiree/picker");
+    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+    await userEvent.click(screen.getByRole("button", { name: "Passer" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Créer la série" }));
+
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe("/series/5/preparation"));
+  });
 });
