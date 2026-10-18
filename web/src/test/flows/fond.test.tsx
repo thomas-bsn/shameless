@@ -114,6 +114,37 @@ describe("Fond", () => {
     expect(video()).toBeNull();
   });
 
+  it("preloads only the metadata of the next clip, off screen", async () => {
+    const creees: HTMLVideoElement[] = [];
+    const createElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation(((tag: string, options?: ElementCreationOptions) => {
+      const element = createElement(tag, options);
+      if (tag === "video") creees.push(element as HTMLVideoElement);
+      return element;
+    }) as typeof document.createElement);
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": clips, ...page });
+    renderApp("/joueurs");
+    await screen.findByText("Mina");
+
+    const suivant = creees.find((v) => v.getAttribute("src") === "/api/clips/12/fichier");
+    expect(suivant?.preload).toBe("metadata");
+    expect(document.querySelectorAll("video")).toHaveLength(1);
+    vi.restoreAllMocks();
+  });
+
+  it("does not call play() on visibility changes while the Fond is inactive", async () => {
+    stubEcran({ reduit: true });
+    const play = vi.fn().mockResolvedValue(undefined);
+    HTMLMediaElement.prototype.play = play;
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": clips, ...page });
+    renderApp("/joueurs");
+    await screen.findByTestId("fond-fixe");
+
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    expect(play).not.toHaveBeenCalled();
+  });
+
   it("keeps the fixed backdrop on pages without a session and does not request clips", async () => {
     const fetchMock = mockApi({ "GET /auth/me": problem(401), "GET /clips/fond": clips });
     renderApp("/connexion");

@@ -37,15 +37,30 @@ export function Fond() {
   const lisibles = (clips.data ?? []).filter((clip) => !illisibles.includes(clip.id));
   const courant = actif && lisibles.length > 0 ? lisibles[rang % lisibles.length] : undefined;
 
-  // La lecture s'arrête quand la page est cachée.
+  // La lecture s'arrête quand la page est cachée, et ne reprend que si le Fond est actif.
   useEffect(() => {
+    if (!actif) return;
     const surVisibilite = () => {
       if (document.hidden) video.current?.pause?.();
       else void video.current?.play?.()?.catch(() => {});
     };
     document.addEventListener("visibilitychange", surVisibilite);
     return () => document.removeEventListener("visibilitychange", surVisibilite);
-  }, []);
+  }, [actif]);
+
+  // Le clip suivant n'est préchargé qu'en métadonnées, hors de l'écran : un seul clip est chargé en entier.
+  const suivantId = courant && lisibles.length > 1 ? lisibles[(rang + 1) % lisibles.length].id : undefined;
+  useEffect(() => {
+    if (suivantId === undefined) return;
+    const precharge = document.createElement("video");
+    precharge.preload = "metadata";
+    precharge.muted = true;
+    precharge.src = clipVideoUrl(suivantId);
+    return () => {
+      precharge.removeAttribute("src");
+      precharge.load?.();
+    };
+  }, [suivantId]);
 
   const suivant = () => setRang((r) => r + 1);
 
