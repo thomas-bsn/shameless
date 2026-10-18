@@ -22,6 +22,27 @@ public static class SnapshotsDuBot
         TeamA: EquipeDeLaSerie(series, Equipes.A),
         TeamB: EquipeDeLaSerie(series, Equipes.B));
 
+    /// <summary>
+    /// <c>captain_link</c> : le Lien capitaine de l'Équipe et son Capitaine, à qui le bot l'envoie en DM.
+    /// Null tant que l'Équipe n'a pas de Capitaine : le lien attend sa désignation.
+    /// </summary>
+    public static CaptainLinkData? CaptainLink(BestOfSeries series, string equipe, string? webUrl)
+    {
+        var capitaine = series.PlayersOf(equipe).SingleOrDefault(p => p.Capitaine);
+        if (capitaine == null) return null;
+        return new CaptainLinkData(
+            SeriesId: Id(series.Id),
+            Team: equipe,
+            TeamName: NomDe(equipe),
+            Captain: new JoueurDuSnapshot(capitaine.Player.Prenom, GameDuBot.DiscordIdDe(capitaine.Player)),
+            Url: Lien(webUrl, $"draft/capitaine/{Uri.EscapeDataString(series.LienCapitaine(equipe).Secret)}"));
+    }
+
+    /// <summary><c>spectator_link</c> : le Lien spectateur, que le bot poste dans le salon général.</summary>
+    public static SpectatorLinkData SpectatorLink(BestOfSeries series, string? webUrl) => new(
+        SeriesId: Id(series.Id),
+        Url: Lien(webUrl, $"draft/spectateur/{Uri.EscapeDataString(series.LienSpectateur.Secret)}"));
+
     /// <summary><c>game_started</c> : la Game lancée, ses deux Équipes avec leur Side et ses participants liés.</summary>
     public static GameData GameStarted(CustomGame game, string? webUrl) => new(
         SeriesId: game.SeriesId is { } s ? Id(s) : null,
@@ -129,6 +150,12 @@ public static class SnapshotsDuBot
 
 /// <summary>Le snapshot de <c>teams_formed</c>.</summary>
 public sealed record TeamsFormedData(string SeriesId, EquipeDuSnapshot TeamA, EquipeDuSnapshot TeamB);
+
+/// <summary>Le snapshot de <c>captain_link</c> : <c>url</c> est null si l'URL publique du site n'est pas configurée.</summary>
+public sealed record CaptainLinkData(string SeriesId, string Team, string TeamName, JoueurDuSnapshot Captain, string? Url);
+
+/// <summary>Le snapshot de <c>spectator_link</c> : <c>url</c> est null si l'URL publique du site n'est pas configurée.</summary>
+public sealed record SpectatorLinkData(string SeriesId, string? Url);
 
 /// <summary>Le snapshot de <c>game_started</c> et, complété, de <c>game_completed</c>.</summary>
 public sealed record GameData(

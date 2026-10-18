@@ -12,8 +12,13 @@ namespace Shameless.Application.Services;
 public sealed class LiensAccesService
 {
     private readonly IBestOfSeriesRepository _series;
+    private readonly TimeProvider _clock;
 
-    public LiensAccesService(IBestOfSeriesRepository series) => _series = series;
+    public LiensAccesService(IBestOfSeriesRepository series, TimeProvider clock)
+    {
+        _series = series;
+        _clock = clock;
+    }
 
     /// <summary>La Série et ses liens, pour l'organisateur.</summary>
     public async Task<CommandResult<BestOfSeries>> GetAsync(int seriesId)
@@ -35,6 +40,28 @@ public sealed class LiensAccesService
             return CommandResult<BestOfSeries>.NotFound("Cette Série n'existe pas.");
 
         series.LienCapitaine(equipe).Renouveler();
+        return await SaveAsync(series);
+    }
+
+    /// <summary>
+    /// Le bot rapporte que le DM du Lien capitaine de l'Équipe n'est pas parti (compte Discord non lié,
+    /// DM fermé…) : l'organisateur le voit sur l'Écran de préparation.
+    /// </summary>
+    public async Task<CommandResult<BestOfSeries>> SignalerEchecDmAsync(int seriesId, string equipe, string raison)
+    {
+        if (!Equipes.IsValid(equipe))
+            return CommandResult<BestOfSeries>.Invalid("Un Lien capitaine est celui de l'Équipe A ou de l'Équipe B.");
+        if (!LienAcces.RaisonsEchecDm.Contains(raison))
+            return CommandResult<BestOfSeries>.Invalid(
+                $"La raison d'un échec de DM est {string.Join(", ", LienAcces.RaisonsEchecDm)}.");
+
+        var series = await _series.GetWithLiensAsync(seriesId);
+        if (series == null)
+            return CommandResult<BestOfSeries>.NotFound("Cette Série n'existe pas.");
+        if (series.CapitaineOf(equipe) is not { } capitaine)
+            return CommandResult<BestOfSeries>.Conflict("Cette Équipe n'a pas de Capitaine : aucun DM n'a pu partir.");
+
+        series.LienCapitaine(equipe).SignalerEchecDm(raison, capitaine, _clock.GetUtcNow().UtcDateTime);
         return await SaveAsync(series);
     }
 

@@ -104,6 +104,7 @@ public sealed class SeriesService
         };
         _series.Add(series);
         _evenements.TeamsFormed(series);
+        _evenements.LiensEnvoyes(series);
         return CommandResult<BestOfSeries>.Ok(series);
 
         SeriesPlayer NewPlayer(int playerId, string equipe, int? capitaine) => new()

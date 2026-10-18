@@ -53,6 +53,13 @@ public class BestOfSeries
     public LienAcces LienCapitaine(string equipe) =>
         Liens.Single(l => l.Portee == PorteeLien.Capitaine && l.Equipe == equipe);
 
+    /// <summary>
+    /// L'échec de DM du Lien capitaine de l'Équipe, tant qu'il concerne son Capitaine actuel : changer de
+    /// Capitaine, comme renouveler le lien, l'oublie. Demande les liens chargés.
+    /// </summary>
+    public LienAcces? LienEnEchecDm(string equipe) =>
+        LienCapitaine(equipe) is { EchecDmRaison: not null } lien && lien.EchecDmPlayerId == CapitaineOf(equipe) ? lien : null;
+
     public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
 
     /// <summary>L'accès que donne ce lien de la Série (ADR 0017 : le Lien spectateur vaut dès la création).</summary>
