@@ -859,6 +859,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clips/{id}/masque-du-fond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MasqueDuFondDuClip"];
+                        "application/json": components["schemas"]["MasqueDuFondDuClip"];
+                        "text/json": components["schemas"]["MasqueDuFondDuClip"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MasqueDuFondDuClip"];
+                        "application/json": components["schemas"]["MasqueDuFondDuClip"];
+                        "text/json": components["schemas"]["MasqueDuFondDuClip"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clips/{id}/fichier": {
         parameters: {
             query?: never;
@@ -5151,6 +5249,11 @@ export interface components {
         LinkPlayerRequest: {
             /** Format: int32 */
             playerId: number;
+        };
+        MasqueDuFondDuClip: {
+            /** Format: int32 */
+            id: number;
+            masqueDuFond: boolean;
         };
         NoteDePerformance: {
             /** Format: int32 */

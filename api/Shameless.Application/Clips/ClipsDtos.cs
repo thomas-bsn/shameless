@@ -144,3 +144,6 @@ public sealed record GameCandidateDuClip(int GameId, int? SeriesId, int GameNumb
 
 /// <summary>La vidéo d'un clip, à servir : chemin absolu et type.</summary>
 public sealed record FichierDeClip(string Chemin, string ContentType, string NomFichier);
+
+/// <summary>L'état « masqué du Fond » d'un clip, rendu après l'avoir masqué ou réaffiché.</summary>
+public sealed record MasqueDuFondDuClip(int Id, bool MasqueDuFond);

@@ -20,7 +20,7 @@ export const candidateLabel = (game: Candidate) =>
  * Après un changement de rattachement : la liste des clips sans Game et les clips de chaque Game se
  * relisent, pour que la page d'une Game reflète aussitôt l'association courante.
  */
-function useRelireLesClips() {
+export function useRelireLesClips() {
   const queryClient = useQueryClient();
   return () =>
     Promise.all([
