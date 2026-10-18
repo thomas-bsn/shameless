@@ -21,22 +21,38 @@ public sealed class FakeRiotService : IRiotService
     /// <summary>Vrai : l'API Riot ne répond plus pour les rangs (erreur réseau ou serveur).</summary>
     public bool RangsIndisponibles { get; set; }
 
+    /// <summary>Les RiotId dont le calcul du rôle principal échoue (Riot injoignable pour ce compte).</summary>
+    public HashSet<string> RolesIndisponibles { get; } = new();
+
+    /// <summary>Quand elle est posée, la lecture des rangs attend sa libération : fige une actualisation en cours.</summary>
+    public TaskCompletionSource? Barriere { get; set; }
+
     public void Reset()
     {
         _accounts.Clear();
+        RolesIndisponibles.Clear();
         RangsIndisponibles = false;
+        Barriere?.TrySetResult();
+        Barriere = null;
     }
 
     public Task<string?> GetPuuidFromRiotIdAsync(string riotId) =>
         Task.FromResult(_accounts.TryGetValue(riotId, out var a) ? a.Puuid : null);
 
-    public Task<RiotRanksDto> GetRanksFromPuuidAsync(string puuid) =>
-        RangsIndisponibles
-            ? Task.FromException<RiotRanksDto>(new HttpRequestException("Riot indisponible"))
-            : Task.FromResult(_accounts.Values.FirstOrDefault(a => a.Puuid == puuid).Ranks ?? new RiotRanksDto(null, null));
+    public async Task<RiotRanksDto> GetRanksFromPuuidAsync(string puuid)
+    {
+        if (Barriere is { } barriere) await barriere.Task;
+        if (RangsIndisponibles) throw new HttpRequestException("Riot indisponible");
+        return _accounts.Values.FirstOrDefault(a => a.Puuid == puuid).Ranks ?? new RiotRanksDto(null, null);
+    }
 
-    public Task<string?> GetMainRoleFromPuuidAsync(string puuid) =>
-        Task.FromResult(_accounts.Values.FirstOrDefault(a => a.Puuid == puuid).MainRole);
+    public Task<string?> GetMainRoleFromPuuidAsync(string puuid)
+    {
+        var compte = _accounts.FirstOrDefault(a => a.Value.Puuid == puuid);
+        return RolesIndisponibles.Contains(compte.Key ?? "")
+            ? Task.FromException<string?>(new HttpRequestException("Riot indisponible"))
+            : Task.FromResult(compte.Value.MainRole);
+    }
 
     public Task<string?> GetRiotIdFromPuuidAsync(string puuid) =>
         Task.FromResult<string?>(_accounts.FirstOrDefault(a => a.Value.Puuid == puuid).Key);

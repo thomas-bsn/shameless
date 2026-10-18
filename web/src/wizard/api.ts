@@ -17,6 +17,10 @@ export interface WizardState {
   codeExpired?: boolean;
   warnings?: string[];
   uchuu?: RecapUchuu;
+  /** Compte Discord connecté par l'Opérateur : le premier Superadministrateur. */
+  discord?: { id: string; username: string };
+  /** Pourquoi la dernière connexion Discord a échoué (expliqué en français par le serveur). */
+  discordError?: string;
 }
 
 export type Values = {
@@ -24,7 +28,6 @@ export type Values = {
   clientId: string;
   clientSecret: string;
   guildId: string;
-  adminIds: string;
   riotKey: string;
   timezone: string;
   uchuu: boolean;
@@ -32,7 +35,7 @@ export type Values = {
   /** Facultatif, affiché seulement par le wizard : « Bot Discord » quand il est vide. */
   botName: string;
 };
-export type FieldErrors = Partial<Record<keyof Values, string>>;
+export type FieldErrors = Partial<Record<keyof Values | "discord", string>>;
 
 export interface Reply<T> {
   status: number;
@@ -58,5 +61,7 @@ async function call<T>(method: "GET" | "POST", route: string, body?: unknown): P
 
 export const getState = () => call<WizardState>("GET", "state");
 export const unlock = (code: string) => call<{ phase: Phase }>("POST", "unlock", { code });
-export const validate = (values: Values) => call<{ errors: FieldErrors; warnings?: string[]; callbackUrl: string | null }>("POST", "validate", values);
+export const validate = (values: Values) => call<{ errors: FieldErrors; warnings?: string[]; callbackUrl: string | null; wizardRedirectUri?: string | null }>("POST", "validate", values);
 export const install = (values: Values) => call<{ errors?: FieldErrors; warnings?: string[]; uchuu?: RecapUchuu }>("POST", "install", values);
+export const startDiscord = (values: Pick<Values, "publicUrl" | "clientId" | "clientSecret">) =>
+  call<{ authorizeUrl?: string; redirectUri?: string; errors?: FieldErrors }>("POST", "discord/start", values);

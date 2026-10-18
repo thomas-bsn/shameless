@@ -100,6 +100,16 @@ public class PlayerRepository : IPlayerRepository
         await _db.SaveChangesAsync();
     }
 
+    public async Task<bool> UnlinkUserAsync(int userId)
+    {
+        var linked = await _db.Players.Where(p => p.UserId == userId).ToListAsync();
+        foreach (var player in linked)
+            player.UserId = null;
+
+        await _db.SaveChangesAsync();
+        return linked.Count > 0;
+    }
+
     public async Task<PlayerDto?> GetByUserIdAsync(int userId)
     {
         var player = await _db.Players.FirstOrDefaultAsync(p => p.UserId == userId);

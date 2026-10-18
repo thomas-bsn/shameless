@@ -4,6 +4,7 @@ using Shameless.Api.Services;
 using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Bot;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Riot;
 using Shameless.Application.Services;
 using Shameless.Infrastructure.Data.Repositories;
 using Shameless.Infrastructure.Integrations.Clips;
@@ -19,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<RefreshRanksJob>();
         services.AddHostedService<FermetureAutomatiqueSoireeJob>();
         services.AddHostedService<PublicationWebhooksBotJob>();
+        services.AddHostedService<Shameless.Api.Auth.ImportDesSuperadministrateursDeLaConfiguration>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -36,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IClipRepository, ClipRepository>();
 
         // Services
+        services.AddSingleton<ActualisationRiot>();
         services.AddScoped<IPlayerService, PlayerService>();
         services.AddScoped<CustomGameService>();
         services.AddScoped<ClassementsService>();
@@ -43,6 +46,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CostCalculationService>();
         services.AddScoped<SoireeService>();
         services.AddScoped<SeriesService>();
+        services.AddScoped<CorrectionDeGameService>();
+        services.AddScoped<CorrectionDeStatsService>();
         services.AddScoped<PickerService>();
         services.AddScoped<LiensAccesService>();
         services.AddScoped<CodeCompanionService>();
@@ -54,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<PronosticsService>();
         services.AddScoped<HallDeLaHonteService>();
         services.AddScoped<ClipsService>();
+        services.AddScoped<RolesService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();

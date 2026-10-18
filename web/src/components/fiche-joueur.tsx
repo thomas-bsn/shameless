@@ -169,12 +169,21 @@ function StatsEnCustoms({ stats }: { stats: Stats }) {
 }
 
 function CoutMoisParMois({ playerId }: { playerId: number }) {
+  return (
+    <Section titre="Cost, mois par mois">
+      <CourbeDuCost playerId={playerId} />
+    </Section>
+  );
+}
+
+/** La courbe du cost mois par mois d'un Joueur (réutilisée par le Profil). */
+export function CourbeDuCost({ playerId }: { playerId: number }) {
   const historique = $api.useQuery("get", "/players/{playerId}/cost/historique", { params: { path: { playerId } } });
   const courbe = historique.data ? pointsDeLaCourbe(historique.data.mois) : [];
   const description = `Cost mois par mois : ${courbe.map((p) => `${p.libelle} ${decimalLabel(p.cost, 2)}`).join(", ")}`;
 
   return (
-    <Section titre="Cost, mois par mois">
+    <>
       {historique.isPending ? (
         <Skeleton className="h-40 w-full" />
       ) : historique.isError ? (
@@ -220,11 +229,12 @@ function CoutMoisParMois({ playerId }: { playerId: number }) {
           ))}
         </svg>
       )}
-    </Section>
+    </>
   );
 }
 
-function DernieresGames({ games }: { games: Fiche["games"] }) {
+/** Les dernières games du Joueur, avec la note sur 100 (réutilisée par le Profil). */
+export function DernieresGames({ games }: { games: Fiche["games"] }) {
   const champions = useChampions();
   const catalogue = champions.data ?? [];
   return (
@@ -255,6 +265,8 @@ function DernieresGames({ games }: { games: Fiche["games"] }) {
                   <Badge variant={g.victoire ? "secondary" : "destructive"} className={cn(g.victoire && "text-emerald-400")}>
                     {g.victoire ? "Victoire" : "Défaite"}
                   </Badge>
+                  {g.mvp && <Badge className="bg-yellow-400 text-black">Roi/Reine</Badge>}
+                  {g.dofd && <Badge variant="destructive">DOFD</Badge>}
                   <span className={cn("font-mono tabular-nums", g.performance && noteClass[noteTone(g.performance.note)])}>
                     <span className="font-sans text-xs text-muted-foreground">Note </span>
                     {g.performance ? `${g.performance.note}/100` : "–"}

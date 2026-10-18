@@ -26,14 +26,15 @@ describe("Sidebar", () => {
   it("shows Administration to administrators only", async () => {
     mockApi({ "GET /auth/me": user({ isAdmin: true }), ...page });
     renderApp("/joueurs");
-    expect(await screen.findByRole("link", { name: "Administration" })).toBeInTheDocument();
+    const nav = await screen.findByRole("navigation", { name: "Navigation principale" });
+    expect(await within(nav).findByRole("link", { name: "Administration" })).toBeInTheDocument();
   });
 
   it("hides Administration from other users", async () => {
     mockApi({ "GET /auth/me": user({ isAdmin: false }), ...page });
     renderApp("/joueurs");
     await screen.findByRole("navigation", { name: "Navigation principale" });
-    await screen.findByRole("link", { name: /Thomas/ });
+    await screen.findByRole("button", { name: /Thomas/ });
     expect(screen.queryByRole("link", { name: "Administration" })).not.toBeInTheDocument();
   });
 
@@ -63,16 +64,45 @@ describe("Tiroir mobile", () => {
   });
 });
 
+async function ouvrirLeMenu() {
+  await userEvent.click(await screen.findByRole("button", { name: /Thomas/ }));
+  return screen.findByRole("menu");
+}
+
+describe("Menu utilisateur", () => {
+  it("shows the profile link, the theme row and a red logout under a separator", async () => {
+    mockApi({ "GET /auth/me": user(), ...page });
+    renderApp("/joueurs");
+
+    const menu = await ouvrirLeMenu();
+    expect(within(menu).getByRole("menuitem", { name: "Mon profil" })).toHaveAttribute("href", "/compte");
+    expect(within(menu).getByRole("menuitem", { name: /Thème/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Se déconnecter" })).toHaveClass("text-destructive");
+    expect(within(menu).getByRole("separator")).toBeInTheDocument();
+  });
+
+  it("goes to the profile page", async () => {
+    mockApi({ "GET /auth/me": user(), ...page, "GET /players/me": { linked: false } });
+    const { router } = renderApp("/joueurs");
+
+    const menu = await ouvrirLeMenu();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Mon profil" }));
+
+    expect(router.state.location.pathname).toBe("/compte");
+  });
+});
+
 describe("Thème", () => {
-  it("is dark by default, switches to light and remembers the choice", async () => {
+  it("is dark by default, switches to light in one click and remembers the choice", async () => {
     mockApi({ "GET /auth/me": user(), ...page });
     const premier = renderApp("/joueurs");
     await screen.findByRole("navigation", { name: "Navigation principale" });
     expect(document.documentElement).toHaveClass("dark");
 
-    await userEvent.click(screen.getByRole("button", { name: "Thème : Sombre" }));
+    const menu = await ouvrirLeMenu();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Thème Sombre" }));
     expect(document.documentElement).not.toHaveClass("dark");
-    expect(screen.getByRole("button", { name: "Thème : Clair" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Thème Clair" })).toBeInTheDocument();
 
     premier.unmount();
     document.documentElement.classList.add("dark");
@@ -92,7 +122,23 @@ describe("Thème", () => {
     });
     mockApi({ "GET /auth/me": user(), ...page });
     renderApp("/joueurs");
-    await userEvent.click(await screen.findByRole("button", { name: "Thème : Sombre" }));
+    const menu = await ouvrirLeMenu();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Thème Sombre" }));
     expect(document.documentElement).not.toHaveClass("dark");
+  });
+});
+
+describe("Tiroir mobile et menu utilisateur", () => {
+  it("offers the same user menu in the drawer", async () => {
+    mockApi({ "GET /auth/me": user({ isAdmin: true }), ...page });
+    renderApp("/joueurs");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Ouvrir le menu" }));
+    const tiroir = await screen.findByRole("dialog");
+    expect(within(tiroir).getByRole("link", { name: "Administration" })).toBeInTheDocument();
+    await userEvent.click(within(tiroir).getByRole("button", { name: /Thomas/ }));
+
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Se déconnecter" })).toBeInTheDocument();
   });
 });

@@ -23,26 +23,28 @@ public static class NotesDeLaGame
             .ToDictionary(side => side, side => KillsDeLEquipe(game, side));
 
         return game.Participants.ToDictionary(p => p.PlayerId, p =>
-            Noter(game, p, StatsDuParticipant.Lire(p.RiotParticipantData), killsParSide[p.Side], duree));
+            Noter(game, p, ValeursEffectives.Stats(p), killsParSide[p.Side], duree));
     }
 
     /// <summary>La note d'un Joueur pour la Game, null s'il n'y a pas joué ou n'a pas de note.</summary>
     public static NoteDePerformance? DuJoueur(CustomGame game, int playerId) =>
         game.Participants.FirstOrDefault(p => p.PlayerId == playerId) is { } participant
-            ? Noter(game, participant, StatsDuParticipant.Lire(participant.RiotParticipantData),
+            ? Noter(game, participant, ValeursEffectives.Stats(participant),
                 KillsDeLEquipe(game, participant.Side), DureeDe(game))
             : null;
 
     /// <summary>La note du participant à partir de ses stats déjà lues ; null sans stats ou sans critère mesurable.</summary>
     internal static NoteDePerformance? Noter(
-        CustomGame game, CustomGameParticipant participant, StatsDuParticipant? stats, int? killsDeLEquipe, int? dureeSecondes) =>
-        stats is null
-            ? null
-            : NoteDePerformance.Calculer(
-                stats,
-                RoleJoue.Determiner(stats.Position, AutoroleDe(game, participant.PlayerId), Autorole.RolePrincipal(participant.Player.MainRole)),
-                killsDeLEquipe,
-                dureeSecondes);
+        CustomGame game, CustomGameParticipant participant, StatsDuParticipant? stats, int? killsDeLEquipe, int? dureeSecondes)
+    {
+        var role = RoleJoue.Determiner(stats?.Position, AutoroleDe(game, participant.PlayerId), Autorole.RolePrincipal(participant.Player.MainRole));
+        var calculee = stats is null ? null : NoteDePerformance.Calculer(stats, role, killsDeLEquipe, dureeSecondes);
+
+        // Une note corrigée par un admin remplace la note calculée (sans composantes si rien n'était mesurable).
+        return ValeursEffectives.NoteCorrigee(participant) is { } corrigee
+            ? (calculee ?? new NoteDePerformance(corrigee, role.Role, role.Source, [])) with { Note = corrigee }
+            : calculee;
+    }
 
     /// <summary>La durée de la game envoyée par le Companion, null sans données.</summary>
     internal static int? DureeDe(CustomGame game) => DonneesDuMatch.Lire(game.RiotMatchData)?.DurationSeconds;
@@ -52,7 +54,7 @@ public static class NotesDeLaGame
     {
         var kills = game.Participants
             .Where(p => p.Side == side)
-            .Select(p => StatsDuParticipant.Lire(p.RiotParticipantData)?.Kills)
+            .Select(p => ValeursEffectives.Stats(p)?.Kills)
             .ToList();
         return kills.Any(k => k is not null) ? kills.Sum(k => k ?? 0) : null;
     }

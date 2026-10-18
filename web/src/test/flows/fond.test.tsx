@@ -39,6 +39,23 @@ describe("Fond", () => {
     expect(screen.getByRole("link", { name: "Game 14" })).toBeInTheDocument();
   });
 
+  it("marks the page as sitting on a dimmed Fond so the light theme turns text on it light", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": clips, ...page });
+    renderApp("/joueurs");
+
+    await screen.findByText("Mina");
+    expect(document.documentElement.dataset.fond).toBe("video");
+    expect(screen.getByRole("main")).toHaveClass("sur-fond");
+  });
+
+  it("does not mark the page when no clip plays", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": [], ...page });
+    renderApp("/joueurs");
+
+    await screen.findByRole("main");
+    expect(document.documentElement.dataset.fond).toBeUndefined();
+  });
+
   it("moves to the next clip with « Suivant »", async () => {
     mockApi({ "GET /auth/me": user(), "GET /clips/fond": clips, ...page });
     renderApp("/joueurs");

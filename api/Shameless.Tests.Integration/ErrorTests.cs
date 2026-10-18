@@ -31,7 +31,7 @@ public class ErrorTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task Setting_your_peak_without_a_linked_player_returns_404()
     {
         var response = await Factory.CreateSignedInClient("8003").PostAsJsonAsync("/players/peak",
-            new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S2025", peakLp = 0 }, Ct);
+            new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S25", peakLp = 0 }, Ct);
 
         await AssertProblemAsync(response, HttpStatusCode.NotFound);
     }

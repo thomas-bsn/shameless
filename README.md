@@ -70,7 +70,7 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 
 - le Client ID et le Client Secret de l'application (le secret reste masqué et n'est jamais écrit dans les logs) ;
 - l'ID du serveur Discord de la communauté (mode développeur, clic droit sur le serveur, « Copier l'identifiant ») : seuls ses membres peuvent se connecter ;
-- au moins un ID Discord d'administrateur.
+- une connexion avec votre propre compte Discord (bouton « Se connecter avec Discord ») : ce compte devient le premier Superadministrateur d'une installation neuve (sur une base qui a déjà un Superadministrateur, ce compte est ignoré : utilisez la commande `superadmin ajouter`, voir plus bas). Il faut aussi déclarer, dans **OAuth2 > Redirects**, une seconde URL affichée par le wizard : `<adresse publique>/_setup/api/discord/callback`, et ouvrir le wizard à cette adresse publique (en local, `http://localhost:8080`). Le wizard ne lit que l'identifiant du compte (scope `identify`), une seule fois, et ne garde pas le jeton. Un refus ou un échec est expliqué et la connexion peut être relancée.
 
 ### Options et bot Uchuu
 
@@ -90,7 +90,7 @@ Contrat complet : [ADR 0016](docs/adr/0016-contrat-de-configuration-shameless-uc
 
 ## Variables
 
-Le wizard écrit lui-même la configuration de base (adresse, Discord, administrateurs, mot de passe de la base, et les options ci-dessus dans `instance.env`). Les autres réglages se posent dans un `.env` (voir [`.env.example`](.env.example)) ; les variables ci-dessous qui existent aussi dans `instance.env` (clé Riot, fuseau, bot) y sont prioritaires sur le `.env` quand elles ne sont pas vides :
+Le wizard écrit lui-même la configuration de base (adresse, Discord, premier Superadministrateur, mot de passe de la base, et les options ci-dessus dans `instance.env`). Les autres réglages se posent dans un `.env` (voir [`.env.example`](.env.example)) ; les variables ci-dessous qui existent aussi dans `instance.env` (clé Riot, fuseau, bot) y sont prioritaires sur le `.env` quand elles ne sont pas vides :
 
 | Variable | Rôle |
 |---|---|
@@ -104,6 +104,18 @@ Le wizard écrit lui-même la configuration de base (adresse, Discord, administr
 | `SHAMELESS_CLIPS_MAX_BYTES` | Taille maximale d'une vidéo de clip, en octets (500 Mo par défaut). Les vidéos vivent dans le volume nommé `api-clips`. |
 | `SHAMELESS_HTTP_PORT`, `SHAMELESS_HTTPS_PORT` | Ports publiés par Caddy (8080 et 8443 par défaut ; 80 et 443 pour un domaine). |
 | `WIZARD_CODE_TTL_SECONDS`, `WIZARD_INSTALL_TIMEOUT_SECONDS` | Validité du code d'accès (1800) et délai de démarrage de l'API avant d'annoncer un échec (300). |
+
+## Rôles et Superadministrateur
+
+Trois rôles sont stockés en base : utilisateur, Administrateur, Superadministrateur ([ADR 0017](docs/adr/0017-roles-et-superadministrateur.md)). Les identifiants de `Auth__AdminDiscordIds` (le Wizard y écrit le compte Discord connecté par l'Opérateur) ne servent qu'une fois : au premier démarrage qui suit l'arrivée des rôles, tant qu'aucun Superadministrateur n'existe, ils le deviennent. Ensuite la configuration n'est plus lue pour les droits. Les Administrateurs se nomment depuis le site ; les Superadministrateurs, uniquement par la commande de l'image de l'API :
+
+```sh
+docker compose exec api dotnet Shameless.Api.dll superadmin lister
+docker compose exec api dotnet Shameless.Api.dll superadmin ajouter <identifiant Discord>
+docker compose exec api dotnet Shameless.Api.dll superadmin retirer <identifiant Discord>
+```
+
+La commande relit la connexion à la base dans `/instance/instance.env` et ne démarre pas le site. Elle refuse de retirer le dernier Superadministrateur (code de sortie 1) ; un usage incorrect donne le code 2.
 
 Aucun secret ni identifiant d'environnement n'est versionné : `.env` est ignoré par Git et la configuration du wizard vit dans un volume.
 

@@ -15,6 +15,9 @@ public class CustomGameParticipant
     /// <summary>Les stats brutes du joueur pour la partie (JSON), données par le rapport du Companion.</summary>
     public string? RiotParticipantData { get; set; }
 
+    /// <summary>Les corrections d'un Administrateur (une par champ), stockées à part des données du Companion.</summary>
+    public ICollection<CorrectionDeStat> Corrections { get; set; } = new List<CorrectionDeStat>();
+
     // Navigation properties
     public CustomGame CustomGame { get; set; } = null!;
     public Player Player { get; set; } = null!;

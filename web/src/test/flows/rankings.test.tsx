@@ -16,7 +16,7 @@ const players = [
     peakTier: "PLATINUM",
     peakDivision: 3,
     peakLp: 0,
-    peakSeason: "S2024",
+    peakSeason: "S24",
     currentCost: 6,
     costEvolution: 0.4,
   }),
@@ -70,7 +70,7 @@ describe("Classements", () => {
 
     const tiers = await screen.findAllByRole("region", { name: /^Tier / });
     expect(tiers.map((t) => t.getAttribute("aria-label"))).toEqual(["Tier Platinum", "Tier Gold", "Tier Unranked"]);
-    expect(within(tiers[0]!).getByText("Peak S2024")).toBeInTheDocument();
+    expect(within(tiers[0]!).getByText("Peak S24")).toBeInTheDocument();
     expect(within(tiers[1]!).getAllByRole("link").map((l) => l.textContent)).toEqual([
       expect.stringContaining("Bob"),
       expect.stringContaining("Éva"),

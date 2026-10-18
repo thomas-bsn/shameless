@@ -66,3 +66,8 @@ Alternatives écartées :
 - Une note historique peut changer si les références évoluent ; le cost mensuel, lui, est figé
   dans `PlayerMonthlyCost` une fois le mois clos.
 - Le résultat de la game n'entre pas dans la note : il est compté à part (winrate, cost).
+- Un Administrateur peut corriger les stats d'un joueur dans une game terminée (champion, voie,
+  K/D/A, CS, or, dégâts, vision, note). Les corrections sont stockées à part, une par champ et par
+  joueur (`corrections_de_stats`) ; le JSON du Companion reste intact. Toute lecture passe par
+  `ValeursEffectives` : la note se calcule sur les stats corrigées, ou prend la note corrigée ; le
+  cost du mois du joueur est recalculé à chaque correction ou annulation.

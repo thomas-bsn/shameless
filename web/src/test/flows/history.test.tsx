@@ -16,12 +16,14 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
     championId: null,
     stats: null,
     performance: null,
+    champsCorriges: [],
   }));
 
 const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({
   id,
   seriesId: 5,
   playedAt: "2026-10-03T20:30:00Z",
+  modifieeParAdminLe: null,
   teamASide,
   teamBSide: teamASide === "blue" ? "red" : "blue",
   winner,

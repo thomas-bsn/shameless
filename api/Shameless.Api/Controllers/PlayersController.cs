@@ -99,6 +99,19 @@ public sealed class PlayersController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Délie l'Utilisateur connecté de son Joueur : seule l'association disparaît. Le Joueur et ses stats,
+    /// l'Utilisateur et son Compte Discord restent, et on peut se relier ensuite. Toujours pour soi-même.
+    /// </summary>
+    [HttpDelete("link")]
+    [ProducesResponseType<PlayerLinkResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> UnlinkPlayer()
+    {
+        var unlinked = await _playerService.UnlinkPlayerAsync(User.DiscordId());
+        return unlinked ? Ok(new PlayerLinkResponse(Success: true)) : NoLinkedPlayer();
+    }
+
     /// <summary>Le cost du Joueur pour le mois en cours, avec le détail de son calcul (ADR 0012).</summary>
     [HttpGet("{playerId:int}/cost")]
     [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]
@@ -130,34 +143,58 @@ public sealed class PlayersController : ControllerBase
     }
 
     [HttpPost("{playerId:int}/peak")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> SetPlayerPeak(int playerId, [FromBody] UpdatePeakRequest request)
     {
-        var found = await _playerService.UpdatePeakForPlayerAsync(playerId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
-        return found ? Ok(new { ok = true }) : JoueurIntrouvable();
+        var result = await _playerService.UpdatePeakForPlayerAsync(playerId, request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        return result switch
+        {
+            PeakResult.Updated => Ok(new { ok = true }),
+            PeakResult.InvalidSeason => SaisonInvalide(),
+            _ => JoueurIntrouvable(),
+        };
     }
 
     [HttpDelete("{playerId:int}/peak")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> DeletePlayerPeak(int playerId)
     {
-        var found = await _playerService.UpdatePeakForPlayerAsync(playerId, null, null, null, 0);
-        return found ? Ok(new { ok = true }) : JoueurIntrouvable();
+        var result = await _playerService.UpdatePeakForPlayerAsync(playerId, null, null, null, 0);
+        return result == PeakResult.Updated ? Ok(new { ok = true }) : JoueurIntrouvable();
+    }
+
+    /// <summary>Les saisons qu'on peut choisir pour un peak, de S24 à la saison courante.</summary>
+    [HttpGet("peak/saisons")]
+    [ProducesResponseType<PeakSaisonsResponse>(StatusCodes.Status200OK)]
+    public IActionResult GetPeakSaisons([FromServices] TimeProvider clock)
+    {
+        var annee = clock.GetUtcNow().Year;
+        return Ok(new PeakSaisonsResponse(SaisonsDePeak.Jusqua(annee), SaisonsDePeak.Courante(annee)));
     }
 
     [HttpPost("peak")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     public async Task<IActionResult> UpdatePeak([FromBody] UpdatePeakRequest request)
     {
-        var found = await _playerService.UpdatePeakAsync(User.DiscordId(), request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
-        return found ? Ok(new { ok = true }) : NoLinkedPlayer();
+        var result = await _playerService.UpdatePeakAsync(User.DiscordId(), request.PeakTier, request.PeakDivision, request.PeakSeason, request.PeakLp);
+        return result switch
+        {
+            PeakResult.Updated => Ok(new { ok = true }),
+            PeakResult.InvalidSeason => SaisonInvalide(),
+            _ => NoLinkedPlayer(),
+        };
     }
 
     [HttpDelete("peak")]
     public async Task<IActionResult> DeletePeak()
     {
-        var found = await _playerService.UpdatePeakAsync(User.DiscordId(), null, null, null, 0);
-        return found ? Ok(new { ok = true }) : NoLinkedPlayer();
+        var result = await _playerService.UpdatePeakAsync(User.DiscordId(), null, null, null, 0);
+        return result == PeakResult.Updated ? Ok(new { ok = true }) : NoLinkedPlayer();
     }
+
+    private ObjectResult SaisonInvalide() =>
+        Problem(statusCode: StatusCodes.Status400BadRequest, detail: "La saison du peak doit aller de S24 à la saison courante.");
 
     /// <summary>La réponse unique à un Joueur inconnu.</summary>
     private ObjectResult JoueurIntrouvable() =>
