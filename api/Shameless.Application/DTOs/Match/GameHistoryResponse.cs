@@ -3,12 +3,14 @@
 namespace Shameless.Application.DTOs.Match;
 
 /// <summary>Une game terminée de l'historique.</summary>
+/// <param name="ModifieeParAdminLe">Quand un Administrateur a corrigé la game ; null si elle est telle que saisie.</param>
 /// <param name="Mvp">Les Joueurs élus MVP par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
 /// <param name="Dofd">Les Joueurs élus DOFD par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
 public record GameHistoryResponse(
     int Id,
     int? SeriesId,
     DateTime PlayedAt,
+    DateTime? ModifieeParAdminLe,
     string TeamASide,
     string TeamBSide,
     string? Winner, // Équipe gagnante : "A" | "B"

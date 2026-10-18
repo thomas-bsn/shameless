@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AdministrateursAdmin } from "@/components/administration/administrateurs-admin";
 import { ATraiter } from "@/components/administration/a-traiter";
 import { ClipsAdmin } from "@/components/administration/clips-admin";
+import { GamesAdmin } from "@/components/administration/games-admin";
 import { JoueursAdmin } from "@/components/administration/joueurs-admin";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const ONGLETS = [
   { id: "joueurs", label: "Joueurs", contenu: <JoueursAdmin /> },
   { id: "clips", label: "Clips du Fond", contenu: <ClipsAdmin /> },
+  { id: "games", label: "Games", contenu: <GamesAdmin /> },
   { id: "administrateurs", label: "Administrateurs", contenu: null },
 ];
 

@@ -23,6 +23,7 @@ const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): 
   id,
   seriesId: 5,
   playedAt: "2026-10-03T20:30:00Z",
+  modifieeParAdminLe: null,
   teamASide,
   teamBSide: teamASide === "blue" ? "red" : "blue",
   winner,

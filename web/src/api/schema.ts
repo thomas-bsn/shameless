@@ -5887,6 +5887,8 @@ export interface components {
             seriesId: null | number;
             /** Format: date-time */
             playedAt: string;
+            /** Format: date-time */
+            modifieeParAdminLe: null | string;
             teamASide: string;
             teamBSide: string;
             winner: null | string;
