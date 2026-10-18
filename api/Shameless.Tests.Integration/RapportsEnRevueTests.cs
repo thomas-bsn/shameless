@@ -89,6 +89,44 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Un_joueur_inconnu_est_signale_avec_son_riotid()
+    {
+        var client = Factory.CreateSignedInClient();
+        Factory.Riot.AddAccount("Inconnu#EUW", "GOLD", "II");
+        var serie = await CreateSerieAsync(client, format: 3);
+        var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        var recu = await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000005", teamASide: "blue", gagnante: "B",
+            equipeB: ["B1", "B2", "B3", "B4", "Inconnu"])));
+
+        Assert.Equal("EnRevue", recu.GetProperty("statut").GetString());
+        var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
+        Assert.Equal(gameId, game.GetProperty("id").GetInt32());
+        Assert.Equal("pending", game.GetProperty("status").GetString());
+        var inattendu = Assert.Single(game.GetProperty("rapportEnRevue").GetProperty("inattendus").EnumerateArray());
+        Assert.Equal("Inconnu#EUW", inattendu.GetProperty("riotId").GetString());
+        Assert.Equal(JsonValueKind.Null, inattendu.GetProperty("joueur").ValueKind);
+    }
+
+    [Fact]
+    public async Task Un_joueur_inconnu_dont_riot_ne_repond_pas_reste_signale_sans_riotid()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_8000000006", teamASide: "blue", gagnante: "B",
+            equipeB: ["B1", "B2", "B3", "B4", "Fantome"])));
+
+        var revue = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("rapportEnRevue");
+        var inattendu = Assert.Single(revue.GetProperty("inattendus").EnumerateArray());
+        Assert.Equal("puuid-Fantome#EUW", inattendu.GetProperty("puuid").GetString());
+        Assert.Equal(JsonValueKind.Null, inattendu.GetProperty("riotId").ValueKind);
+    }
+
+    [Fact]
     public async Task Des_sides_inverses_sont_en_revue_et_l_equipe_gagnante_suit_ses_joueurs()
     {
         var client = Factory.CreateSignedInClient();
