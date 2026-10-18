@@ -30,6 +30,49 @@ describe("Joueurs", () => {
     expect(rows()[0]).toContain("Chloé");
   });
 
+  it("filters the table by the player's main role", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [player({ id: 1, prenom: "Alice", mainRole: "MIDDLE" }), player({ id: 2, prenom: "Bob", mainRole: "JUNGLE" })],
+    });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    await userEvent.type(screen.getByRole("textbox", { name: "Rechercher un joueur" }), "jungle");
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(within(table).getByRole("link", { name: /Bob/ })).toBeInTheDocument();
+  });
+
+  it("keeps each letter visible for all six cost tiers", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /players": [1, 2, 3, 4, 5, 6].map((cost, i) => player({ id: i + 1, prenom: `J${i + 1}`, currentCost: cost })) });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    for (const tier of ["D", "C", "B", "A", "S", "SS"]) expect(within(table).getByText(tier)).toBeVisible();
+  });
+
+  it("shows all player profile sections and keeps missing statistics empty", async () => {
+    const profile = {
+      playerId: 7, prenom: "Kélio", riotId: "Kelio#EUW", discord: null, cost: 4,
+      soloQ: null, flex: { tier: "GOLD", division: 2, lp: 40 },
+      stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 },
+      champions: [{ championId: "Ahri", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      roles: [{ role: "Mid", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      games: [{ gameId: 11, seriesId: 5, playedAt: "2026-10-03T20:00:00Z", equipe: "A", victoire: true, dureeSecondes: null, championId: "Ahri", role: "Mid", stats: null, performance: { note: 83, role: "Mid", sourceDuRole: "Rapport", composantes: [] } }],
+      titres: { mvp: 2, dofd: 1 },
+    };
+    mockApi({
+      "GET /auth/me": user(), "GET /players/7": player({ id: 7, prenom: "Kélio", riotId: "Kelio#EUW", flexRankTier: "GOLD", flexRankDivision: 2, flexLp: 40, currentCost: 4 }),
+      "GET /players/7/fiche": profile, "GET /players/7/cost/historique": { playerId: 7, mois: [{ mois: "2026-09-01", cost: 3, costDeDepart: 2, gamesTerminees: 5, victoires: 3, noteMoyenne: 70, evolution: null }, { mois: "2026-10-01", cost: 4, costDeDepart: 3, gamesTerminees: 5, victoires: 3, noteMoyenne: 75, evolution: 1 }] },
+    });
+    renderApp("/joueurs/7");
+    expect(await screen.findByRole("heading", { name: "Kélio" })).toBeInTheDocument();
+    expect(screen.getAllByText("Gold II · 40 LP")).toHaveLength(2);
+    expect(screen.getByText("2 MVP")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Évolution mensuelle du cost de 1 à 6" })).toBeInTheDocument();
+    expect(screen.getAllByText("Ahri")).toHaveLength(2);
+    expect(screen.getByText("83/100")).toBeInTheDocument();
+    expect(screen.getByText("KDA").parentElement?.parentElement).toHaveTextContent("—");
+  });
+
   it("shows a player's Riot account, SoloQ rank, peak, cost and main role", async () => {
     mockApi({
       "GET /auth/me": user(),

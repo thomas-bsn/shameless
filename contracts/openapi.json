@@ -5721,7 +5721,8 @@
           "costDeDepart",
           "gamesTerminees",
           "victoires",
-          "noteMoyenne"
+          "noteMoyenne",
+          "evolution"
         ],
         "type": "object",
         "properties": {
@@ -5749,6 +5750,13 @@
             "format": "int32"
           },
           "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "evolution": {
             "type": [
               "null",
               "number"

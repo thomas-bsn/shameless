@@ -63,7 +63,7 @@ function Classements() {
 function DofdRanking({ players }: { players: Schemas["LigneHallDeLaHonte"][] }) {
   if (!players.length) return <p className="py-12 text-center text-muted-foreground">Aucun DOFD élu pour l'instant.</p>;
   const podium = players.slice(0, 3);
-  return <div className="flex flex-col gap-5"><div className="grid gap-3 sm:grid-cols-3">{podium.map((p, i) => <div key={p.playerId} className="rounded-xl border border-border/70 bg-card/60 p-5 text-center backdrop-blur"><div className="text-3xl" aria-hidden="true">{["🥇", "🥈", "🥉"][i]}</div><LinkPlayer playerId={p.playerId} name={p.prenom} /><p className="mt-2 font-mono text-lg">{p.dofd} DOFD</p></div>)}</div><ol aria-label="Classement DOFD" className="divide-y rounded-xl border border-border/70 bg-card/60 px-4 backdrop-blur">{players.map((p) => <li key={p.playerId} className="flex items-center gap-4 py-3"><span className="w-8 text-right font-mono text-muted-foreground">{p.rang}</span><LinkPlayer playerId={p.playerId} name={p.prenom} /><span className="ml-auto font-mono">{p.dofd}</span></li>)}</ol></div>;
+  return <div className="flex flex-col gap-5"><div className="grid gap-3 sm:grid-cols-3">{podium.map((p, i) => <div key={p.playerId} className="rounded-xl border border-border/70 bg-card/60 p-5 text-center backdrop-blur"><div className="text-3xl" aria-hidden="true">{["🥇", "🥈", "🥉"][i]}</div><span role="img" aria-label="Bouse du DOFD" className="my-2 block text-4xl">💩</span><LinkPlayer playerId={p.playerId} name={p.prenom} /><p className="mt-2 font-mono text-lg">{p.dofd} DOFD</p></div>)}</div><ol aria-label="Classement DOFD" className="divide-y rounded-xl border border-border/70 bg-card/60 px-4 backdrop-blur">{players.map((p) => <li key={p.playerId} className="flex items-center gap-4 py-3"><span className="w-8 text-right font-mono text-muted-foreground">{p.rang}</span><LinkPlayer playerId={p.playerId} name={p.prenom} /><span className="ml-auto font-mono">{p.dofd}</span></li>)}</ol></div>;
 }
 
 function LinkPlayer({ playerId, name }: { playerId: number; name: string }) {
@@ -139,9 +139,9 @@ function CostRanking({ players }: { players: Schemas["PlayerDto"][] }) {
 function CostMovement({ playerId }: { playerId: number }) {
   const history = $api.useQuery("get", "/players/{playerId}/cost/historique", { params: { path: { playerId } } });
   const months = history.data?.mois ?? [];
-  if (months.length < 2) return <span className="text-[10px] text-muted-foreground">—</span>;
-  const delta = months.at(-1)!.cost - months.at(-2)!.cost;
-  return <span aria-label={`Évolution du cost ${delta > 0 ? "plus" : delta < 0 ? "moins" : "stable"} ${Math.abs(delta).toFixed(1)}`} className={delta > 0 ? "text-xs text-emerald-600" : delta < 0 ? "text-xs text-rose-500" : "text-xs text-muted-foreground"}>{delta > 0 ? "↑" : delta < 0 ? "↓" : "→"}{delta !== 0 && ` ${Math.abs(delta).toFixed(1)}`}</span>;
+  const delta = months.at(-1)?.evolution;
+  if (delta == null) return <span className="text-[10px] text-muted-foreground">—</span>;
+  return <span role="img" aria-label={`Évolution du cost ${delta > 0 ? "plus" : delta < 0 ? "moins" : "stable"} ${Math.abs(delta).toFixed(1)}`} className={delta > 0 ? "text-xs text-emerald-600" : delta < 0 ? "text-xs text-rose-500" : "text-xs text-muted-foreground"}>{delta > 0 ? "↑" : delta < 0 ? "↓" : "→"}{delta !== 0 && ` ${Math.abs(delta).toFixed(1)}`}</span>;
 }
 
 function Stat({ label, children }: { label: string; children: ReactNode }) {

@@ -118,7 +118,8 @@ public sealed class PlayersController : ControllerBase
         var historique = await _costService.HistoriqueAsync(playerId);
         return historique == null
             ? JoueurIntrouvable()
-            : Ok(new PlayerCostHistoryResponse(playerId, historique.Select(CostMensuelHistorique.From).ToList()));
+            : Ok(new PlayerCostHistoryResponse(playerId, historique.Select((mois, index) =>
+                CostMensuelHistorique.From(mois, index == 0 ? null : mois.FinalCost - historique[index - 1].FinalCost)).ToList()));
     }
 
     [HttpPut("{playerId:int}/cost")]

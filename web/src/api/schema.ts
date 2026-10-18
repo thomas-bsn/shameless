@@ -4848,6 +4848,8 @@ export interface components {
             victoires: number;
             /** Format: double */
             noteMoyenne: null | number;
+            /** Format: double */
+            evolution: null | number;
         };
         CreatePlayerRequest: {
             prenom: string;

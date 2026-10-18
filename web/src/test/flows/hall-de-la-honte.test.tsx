@@ -19,6 +19,7 @@ describe("Hall de la Honte", () => {
     const { router } = renderApp("/hall-de-la-honte");
 
     const classement = await screen.findByRole("list", { name: "Classement DOFD" });
+    expect(screen.getAllByRole("img", { name: "Bouse du DOFD" })).toHaveLength(3);
     expect(router.state.location.pathname).toBe("/classements");
     expect(router.state.location.search).toEqual({ vue: "dofd" });
     const lignes = within(classement).getAllByRole("listitem");
