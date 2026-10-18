@@ -1,7 +1,7 @@
 namespace Shameless.Application.Interfaces;
 
 /// <summary>Un champion du catalogue : identifiant Data Dragon (ex. "LeeSin"), clé numérique Riot, nom affiché, image.</summary>
-public sealed record Champion(string Id, string Key, string Name, string ImageUrl);
+public sealed record Champion(string Id, string Key, string Name, string ImageUrl, IReadOnlyList<string>? Roles = null);
 
 /// <summary>Le catalogue des champions jouables, pour la Draft de champions. Données statiques publiques.</summary>
 public interface IChampionCatalog

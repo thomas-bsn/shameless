@@ -213,6 +213,12 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
 
+                    b.Property<bool>("MasqueDuFond")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("masque_du_fond");
+
                     b.Property<string>("NomFichier")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -234,12 +240,6 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<long>("Taille")
                         .HasColumnType("bigint")
                         .HasColumnName("taille");
-
-                    b.Property<bool>("MasqueDuFond")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("masque_du_fond");
 
                     b.HasKey("Id")
                         .HasName("pk_clips");
@@ -939,6 +939,12 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<DateTime?>("ClosedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("closed_at");
+
+                    b.Property<bool>("FermetureAutomatique")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("fermeture_automatique");
 
                     b.Property<DateTime>("OpenedAt")
                         .HasColumnType("timestamp without time zone")

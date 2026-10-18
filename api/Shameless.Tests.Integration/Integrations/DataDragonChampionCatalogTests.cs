@@ -11,7 +11,7 @@ public class DataDragonChampionCatalogTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private const string Versions = """["15.1.1"]""";
-    private const string Champions = """{"data":{"Ahri":{"id":"Ahri","key":"103","name":"Ahri","image":{"full":"Ahri.png"}}}}""";
+    private const string Champions = """{"data":{"Ahri":{"id":"Ahri","key":"103","name":"Ahri","tags":["Mage","Assassin"],"image":{"full":"Ahri.png"}}}}""";
 
     private static DataDragonChampionCatalog Catalogue(Func<string, HttpResponseMessage> repondre) =>
         new(new FakeHttpClientFactory(new Repondeur(repondre)), TimeProvider.System);
@@ -28,6 +28,7 @@ public class DataDragonChampionCatalogTests
 
         var ahri = Assert.Single(champions);
         Assert.Equal("https://ddragon.test/cdn/15.1.1/img/champion/Ahri.png", ahri.ImageUrl);
+        Assert.Equal(["Mage", "Assassin"], ahri.Roles);
     }
 
     public static TheoryData<string> Pannes => ["erreur http", "json invalide", "aucune version", "aucun champion"];

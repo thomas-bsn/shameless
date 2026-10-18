@@ -14,4 +14,4 @@ public sealed record SoireeResponse(int Id, SoireeStatus Status, DateTime Opened
 public sealed record SoireeSeriesResponse(List<Application.DTOs.Match.SeriesResponse> Series);
 
 /// <summary>La Soirée ouverte, ou <c>soiree: null</c> s'il n'y en a pas.</summary>
-public sealed record OpenSoireeResponse(SoireeResponse? Soiree);
+public sealed record OpenSoireeResponse(SoireeResponse? Soiree, bool PickerInterrompu = false);

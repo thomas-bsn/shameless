@@ -23,6 +23,37 @@ public class FermetureAutomatiqueSoireeTests(ApiFactory factory) : IntegrationTe
     }
 
     [Fact]
+    public async Task L_API_signale_qu_une_fermeture_automatique_a_interrompu_le_Picker()
+    {
+        var client = Factory.CreateSignedInClient();
+        await OuvrirSoireeAsync(client);
+        var playerIds = await CreatePlayersAsync(client, "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10");
+        await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds }, Ct));
+
+        Factory.Clock.Advance(TimeSpan.FromHours(3) + TimeSpan.FromMinutes(1));
+        await TickAsync(Factory.Services);
+
+        var current = await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct));
+        Assert.Equal(JsonValueKind.Null, current.GetProperty("soiree").ValueKind);
+        Assert.True(current.GetProperty("pickerInterrompu").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Une_fermeture_manuelle_ne_signale_pas_un_Picker_interrompu_automatiquement()
+    {
+        var client = Factory.CreateSignedInClient();
+        var id = await OuvrirSoireeAsync(client);
+        var playerIds = await CreatePlayersAsync(client, "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10");
+        await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds }, Ct));
+        await ReadJsonAsync(await client.PostAsync($"/soirees/{id}/close", null, Ct));
+
+        var current = await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct));
+
+        Assert.Equal(JsonValueKind.Null, current.GetProperty("soiree").ValueKind);
+        Assert.False(current.GetProperty("pickerInterrompu").GetBoolean());
+    }
+
+    [Fact]
     public async Task Une_soiree_n_est_pas_fermee_avant_le_delai()
     {
         var client = Factory.CreateSignedInClient();

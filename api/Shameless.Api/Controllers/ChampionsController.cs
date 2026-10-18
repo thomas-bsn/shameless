@@ -28,6 +28,6 @@ public sealed class ChampionsController : ControllerBase
     public async Task<ActionResult<List<ChampionResponse>>> GetAll(CancellationToken cancellationToken)
     {
         var champions = await _catalog.GetAllAsync(cancellationToken);
-        return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl)).ToList();
+        return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl, c.Roles ?? [])).ToList();
     }
 }

@@ -48,24 +48,21 @@ function usePickerRefresh() {
 }
 
 function PickerPage() {
+  const queryClient = useQueryClient();
   const soiree = $api.useQuery("get", "/soirees/open");
+  const ouvrir = $api.useMutation("post", "/soirees", {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["get", "/soirees/open"] });
+    },
+  });
 
   if (soiree.isPending) return <LoadingRows />;
   if (soiree.isError) return <ErrorAlert error={soiree.error} />;
   if (!soiree.data.soiree) {
-    return (
-      <>
-        <PageHeader title="Picker" />
-        <Card>
-          <CardContent className="flex flex-col items-start gap-3">
-            <p className="text-muted-foreground">Aucune Soirée n'est ouverte : ouvre-en une pour lancer le Picker.</p>
-            <Button asChild variant="outline">
-              <Link to="/soiree">Aller à la Soirée</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </>
-    );
+    if (soiree.data.pickerInterrompu) {
+      return <Card><CardHeader><h1 className="text-xl font-semibold">La Soirée a été fermée</h1></CardHeader><CardContent className="flex flex-col items-start gap-3"><p className="text-muted-foreground">La Soirée en cours a été fermée automatiquement pendant le Picker. Ouvre-en une nouvelle pour reprendre.</p>{ouvrir.isError && <ErrorAlert error={ouvrir.error} />}<Button disabled={ouvrir.isPending} onClick={() => ouvrir.mutate({})}>Ouvrir une nouvelle Soirée</Button></CardContent></Card>;
+    }
+    return <><PageHeader title="Picker" /><Card><CardContent className="flex flex-col items-start gap-3"><p className="text-muted-foreground">Aucune Soirée n'est ouverte : ouvre-en une pour lancer le Picker.</p><Button asChild variant="outline"><Link to="/soiree">Aller à la Soirée</Link></Button></CardContent></Card></>;
   }
   return <PickerSession picker={soiree.data.soiree.picker} />;
 }

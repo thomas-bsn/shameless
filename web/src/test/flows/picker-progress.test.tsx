@@ -35,6 +35,7 @@ const picker = (overrides: Partial<Schemas["PickerResponse"]> = {}): Schemas["Pi
 
 const labels = ["Joueurs", "Méthode", "Draft", "Équipes", "Autorole", "Série"];
 const soiree = (activePicker: Schemas["PickerResponse"] | null): Schemas["OpenSoireeResponse"] => ({
+  pickerInterrompu: false,
   soiree: { id: 7, status: "Open", openedAt: "2026-10-16T19:00:00Z", closedAt: null, picker: activePicker },
 });
 
