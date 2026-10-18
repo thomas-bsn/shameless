@@ -127,3 +127,22 @@ wizard. Forgeyard n'accepte qu'un sous-ensemble de Compose (`ports`, `user`, `bu
   obtient son certificat).
 - Test : `tests/compose/forgeyard-compat.mjs` (CI, job `images`) ; le parcours E de
   `tests/compose/acceptance.sh` couvre le proxy qui termine le HTTPS.
+
+## Addendum — le premier Superadministrateur se connecte avec Discord (2026-10-19, ticket #113)
+L'étape Discord ne demande plus d'identifiants d'administrateurs (ADR 0017) : l'Opérateur se connecte avec Discord et son
+identifiant devient le premier Superadministrateur.
+- **Flux géré par le serveur du wizard.** `POST /_setup/api/discord/start` (session requise, saisie : adresse, Client ID,
+  Client Secret) mémorise une tentative et renvoie l'URL d'autorisation (`scope=identify`). L'interface l'ouvre dans une
+  autre fenêtre pour ne pas perdre la saisie ; elle attend ensuite l'état du wizard (`discord`, ou `discordError`).
+- **URL de retour.** `<adresse publique>/_setup/api/discord/callback`, servie par Caddy comme le reste du wizard. L'Opérateur
+  l'ajoute dans OAuth2 > Redirects, à côté de l'URL de callback de l'Instance, et ouvre le wizard à l'adresse publique (en
+  local, `http://localhost:<port>` : Discord accepte http pour localhost). Choix de simplicité : une seule adresse, déjà saisie.
+- **Sécurité.** Le retour de Discord est une navigation d'un autre site : le cookie `SameSite=Strict` n'y est pas envoyé.
+  Seul un `state` aléatoire (40 caractères, une seule tentative en cours, usage unique, 10 minutes) autorise le retour. Le
+  wizard échange le code, lit `/users/@me`, ne garde que l'identifiant et le pseudo en mémoire, jette le jeton et ne
+  journalise ni identifiant, ni code, ni state. Après l'installation, plus rien n'est servi.
+- **Configuration.** `Auth__AdminDiscordIds` reçoit cet unique identifiant ; l'API l'importe comme Superadministrateur au
+  premier démarrage si aucun n'existe (#112). Les noms de variables du contrat (ADR 0016) ne changent pas. L'installation est
+  refusée (422) tant qu'aucun compte n'est connecté ; il n'y a pas de saisie manuelle de secours (le CLI `superadmin ajouter` en tient lieu).
+- **Test d'acceptation.** `WIZARD_DISCORD_LOGIN_FAKE_ID` (vide en production) remplace l'échange par un compte fictif, faute de
+  vrai compte Discord en CI.

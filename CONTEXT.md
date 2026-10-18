@@ -38,7 +38,8 @@ Discord, sa base de données et sa propre clé Riot.
 Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
 - **Wizard** : l'interface web temporaire, distincte du site, qui guide l'Opérateur  
 pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
-un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  
+un code d'accès à usage unique lu dans ses logs ; l'Opérateur s'y connecte avec Discord pour
+devenir le premier Superadministrateur ; il s'arrête après l'installation et  
 ne se rouvre jamais (ADR 0015).
 - **Uchuu** : le bot Discord de l'Instance (dépôt `harceleur_bot`), intégration facultative.  
 Le wizard génère les secrets partagés et affiche les valeurs à reporter dans le bot,  

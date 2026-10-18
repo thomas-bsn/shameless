@@ -69,7 +69,7 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 
 - le Client ID et le Client Secret de l'application (le secret reste masqué et n'est jamais écrit dans les logs) ;
 - l'ID du serveur Discord de la communauté (mode développeur, clic droit sur le serveur, « Copier l'identifiant ») : seuls ses membres peuvent se connecter ;
-- au moins un ID Discord d'administrateur.
+- une connexion avec votre propre compte Discord (bouton « Se connecter avec Discord ») : ce compte devient le premier Superadministrateur. Il faut aussi déclarer, dans **OAuth2 > Redirects**, une seconde URL affichée par le wizard : `<adresse publique>/_setup/api/discord/callback`, et ouvrir le wizard à cette adresse publique (en local, `http://localhost:8080`). Le wizard ne lit que l'identifiant du compte (scope `identify`), une seule fois, et ne garde pas le jeton. Un refus ou un échec est expliqué et la connexion peut être relancée.
 
 ### Options et bot Uchuu
 
@@ -89,7 +89,7 @@ Contrat complet : [ADR 0016](docs/adr/0016-contrat-de-configuration-shameless-uc
 
 ## Variables
 
-Le wizard écrit lui-même la configuration de base (adresse, Discord, administrateurs, mot de passe de la base, et les options ci-dessus dans `instance.env`). Les autres réglages se posent dans un `.env` (voir [`.env.example`](.env.example)) ; les variables ci-dessous qui existent aussi dans `instance.env` (clé Riot, fuseau, bot) y sont prioritaires sur le `.env` quand elles ne sont pas vides :
+Le wizard écrit lui-même la configuration de base (adresse, Discord, premier Superadministrateur, mot de passe de la base, et les options ci-dessus dans `instance.env`). Les autres réglages se posent dans un `.env` (voir [`.env.example`](.env.example)) ; les variables ci-dessous qui existent aussi dans `instance.env` (clé Riot, fuseau, bot) y sont prioritaires sur le `.env` quand elles ne sont pas vides :
 
 | Variable | Rôle |
 |---|---|
@@ -106,7 +106,7 @@ Le wizard écrit lui-même la configuration de base (adresse, Discord, administr
 
 ## Rôles et Superadministrateur
 
-Trois rôles sont stockés en base : utilisateur, Administrateur, Superadministrateur ([ADR 0017](docs/adr/0017-roles-et-superadministrateur.md)). Les identifiants de `Auth__AdminDiscordIds` ne servent qu'une fois : au premier démarrage qui suit l'arrivée des rôles, tant qu'aucun Superadministrateur n'existe, ils le deviennent. Ensuite la configuration n'est plus lue pour les droits. Les Administrateurs se nomment depuis le site ; les Superadministrateurs, uniquement par la commande de l'image de l'API :
+Trois rôles sont stockés en base : utilisateur, Administrateur, Superadministrateur ([ADR 0017](docs/adr/0017-roles-et-superadministrateur.md)). Les identifiants de `Auth__AdminDiscordIds` (le Wizard y écrit le compte Discord connecté par l'Opérateur) ne servent qu'une fois : au premier démarrage qui suit l'arrivée des rôles, tant qu'aucun Superadministrateur n'existe, ils le deviennent. Ensuite la configuration n'est plus lue pour les droits. Les Administrateurs se nomment depuis le site ; les Superadministrateurs, uniquement par la commande de l'image de l'API :
 
 ```sh
 docker compose exec api dotnet Shameless.Api.dll superadmin lister
