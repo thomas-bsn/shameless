@@ -22,6 +22,10 @@ aussi pour son MVP et son DOFD.
 Discord, sa base de données et sa propre clé Riot.
 - **Opérateur** : la personne qui installe et héberge l'Instance de sa communauté.  
 Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
+- **Administrateur** : un Utilisateur de l'Instance, désigné par l'Opérateur à  
+l'installation (wizard), qui voit l'entrée Administration et a accès aux actions  
+réservées : les games sans résultat, l'arrêt d'une Série, le cost et le Peak des Joueurs,  
+les Clips du fond. Les autres Utilisateurs ne voient pas l'entrée, et la page leur est refusée.
 - **Wizard** : l'interface web temporaire, distincte du site, qui guide l'Opérateur  
 pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
 un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  

@@ -176,7 +176,7 @@ function TeamColumn({
   const cost = players.reduce((sum, p) => sum + (p.cost ?? 0), 0);
 
   return (
-    <div role="group" aria-label={label} className={cn("flex flex-col gap-2 p-3", won && "bg-emerald-400/5")}>
+    <div role="group" aria-label={label} className={cn("flex flex-col gap-2 p-3", won && "bg-emerald-600/5 dark:bg-emerald-400/5")}>
       <div className="flex items-center justify-between text-xs font-semibold">
         <span className={sideTextClass(side)}>{label}</span>
         <span className="text-muted-foreground">{cost} pts</span>
