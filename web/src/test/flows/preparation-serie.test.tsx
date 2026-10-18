@@ -265,10 +265,10 @@ describe("Écran de préparation", () => {
   });
 });
 
-describe("Série : accès aux liens", () => {
+describe("Espace organisateur : accès aux liens", () => {
   it("renvoie vers l'Écran de préparation par « Liens et code »", async () => {
-    mockApi(routes());
-    renderApp("/series/5");
+    mockApi({ ...routes(), "GET /players": [] });
+    renderApp("/series/5/organisateur");
 
     const lien = await screen.findByRole("link", { name: "Liens et code" });
     expect(lien).toHaveAttribute("href", "/series/5/preparation");
