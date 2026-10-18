@@ -97,6 +97,31 @@ public sealed class ClipsService
     public async Task<List<ClipResponse>> GetSansGameAsync() =>
         (await _clips.GetSansGameAsync()).Select(ClipResponse.From).ToList();
 
+    public const int TailleMaxDePage = 200;
+
+    /// <summary>
+    /// Une page de tous les clips, du plus récent au plus ancien publié. <paramref name="soiree"/> est un
+    /// jour calendaire dans le fuseau de l'Instance : la soirée d'un clip est le jour de lancement de sa
+    /// Game, ou celui de sa publication sans Game.
+    /// </summary>
+    public async Task<CommandResult<ClipsPage>> ListerAsync(string? auteur, DateOnly? soiree, bool? sansGame, int page, int taille)
+    {
+        if (page < 1) return CommandResult<ClipsPage>.Invalid("La page commence à 1.");
+        if (taille is < 1 or > TailleMaxDePage)
+            return CommandResult<ClipsPage>.Invalid($"Une page compte de 1 à {TailleMaxDePage} clips.");
+
+        DateTime? debut = null, fin = null;
+        if (soiree is { } jour)
+        {
+            // Midi du jour désigné : le jour calendaire qui le contient, dans le fuseau de l'Instance.
+            var midi = TimeZoneInfo.ConvertTimeToUtc(jour.ToDateTime(new TimeOnly(12, 0), DateTimeKind.Unspecified), _fuseau);
+            (debut, fin) = GamePlausible.JourDePublication(midi, _fuseau);
+        }
+
+        var (clips, total) = await _clips.ListerAsync(new FiltreDesClips(auteur, debut, fin, sansGame), page, taille);
+        return CommandResult<ClipsPage>.Ok(new ClipsPage(clips.Select(ClipDeLaListe.From).ToList(), total, page, taille));
+    }
+
     /// <summary>
     /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou
     /// null si le clip n'existe pas (<see cref="GamePlausible.FenetreDesCandidates"/>).

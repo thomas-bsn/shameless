@@ -527,6 +527,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    auteur?: string;
+                    soiree?: string;
+                    sansGame?: boolean;
+                    page?: number;
+                    taille?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipsPage"];
+                        "application/json": components["schemas"]["ClipsPage"];
+                        "text/json": components["schemas"]["ClipsPage"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clips/sans-game": {
         parameters: {
             query?: never;
@@ -4637,6 +4698,22 @@ export interface components {
             solo: components["schemas"]["LigneClassementSoloQ"][];
             flex: components["schemas"]["LigneClassementSoloQ"][];
         };
+        ClipDeLaListe: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            gameId: null | number;
+            rattachement: null | string;
+            auteurNom: string;
+            auteurDiscordId: string;
+            /** Format: date-time */
+            publieLe: string;
+            nomFichier: string;
+            contentType: string;
+            /** Format: int64 */
+            taille: number;
+            game: null | components["schemas"]["GameDeLaListeDeClips"];
+        };
         ClipDuBot: {
             /** Format: int32 */
             clipId: number;
@@ -4657,6 +4734,15 @@ export interface components {
             nomFichier: string;
             contentType: string;
             /** Format: int64 */
+            taille: number;
+        };
+        ClipsPage: {
+            items: components["schemas"]["ClipDeLaListe"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
             taille: number;
         };
         CodeCompanionResponse: {
@@ -4812,6 +4898,22 @@ export interface components {
             role: null | components["schemas"]["Role"];
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+        };
+        GameDeLaListeDeClips: {
+            /** Format: int32 */
+            gameId: number;
+            /** Format: int32 */
+            seriesId: null | number;
+            /** Format: int32 */
+            gameNumber: number;
+            /** Format: int32 */
+            bestOf: null | number;
+            /** Format: date-time */
+            lanceeLe: string;
+            /** Format: int32 */
+            scoreA: number;
+            /** Format: int32 */
+            scoreB: number;
         };
         GameDuBot: {
             /** Format: int32 */
