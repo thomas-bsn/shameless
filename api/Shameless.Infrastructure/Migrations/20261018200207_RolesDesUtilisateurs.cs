@@ -19,17 +19,9 @@ namespace Shameless.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "promoted_at",
-                table: "users");
-
-            migrationBuilder.DropColumn(
-                name: "promoted_by",
-                table: "users");
-
-            migrationBuilder.DropColumn(
-                name: "role",
-                table: "users");
+            migrationBuilder.Sql("ALTER TABLE users DROP COLUMN IF EXISTS promoted_at;");
+            migrationBuilder.Sql("ALTER TABLE users DROP COLUMN IF EXISTS promoted_by;");
+            migrationBuilder.Sql("ALTER TABLE users DROP COLUMN IF EXISTS role;");
         }
     }
 }
