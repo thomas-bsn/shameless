@@ -24,6 +24,21 @@ public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_catalogue_expose_les_voies_et_une_liste_vide_quand_elles_sont_inconnues()
+    {
+        var client = Factory.CreateSignedInClient();
+
+        var champions = await ReadJsonAsync(await client.GetAsync("/champions", Ct));
+
+        var voies = champions.EnumerateArray().ToDictionary(
+            c => c.GetProperty("id").GetString()!,
+            c => c.GetProperty("voies").EnumerateArray().Select(v => v.GetString()).ToList());
+        Assert.Equal(["mid"], voies["Ahri"]);
+        Assert.Equal(["adc"], voies["Jinx"]);
+        Assert.Empty(voies["Annie"]);
+    }
+
+    [Fact]
     public async Task Le_catalogue_indisponible_repond_503()
     {
         Factory.Champions.Indisponible = true;
