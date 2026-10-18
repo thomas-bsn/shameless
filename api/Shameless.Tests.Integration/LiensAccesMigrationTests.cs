@@ -35,7 +35,7 @@ public class LiensAccesMigrationTests(ApiFactory factory) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Chaque_serie_existante_recoit_deux_liens_capitaine_et_un_lien_spectateur_non_envoye()
+    public async Task Chaque_serie_existante_recoit_deux_liens_capitaine_et_un_lien_spectateur()
     {
         await _db.Database.ExecuteSqlRawAsync("""
             INSERT INTO best_of_series (id, played_at, format) VALUES (1, '2026-09-01 21:00', 3), (2, '2026-09-02 21:00', 1);
@@ -47,14 +47,14 @@ public class LiensAccesMigrationTests(ApiFactory factory) : IAsyncLifetime
         await connection.OpenAsync(Ct);
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT l.series_id, l.portee || coalesce(l.equipe, ''), l.secret, s.liens_capitaine_envoyes
-            FROM liens_acces l JOIN best_of_series s ON s.id = l.series_id
+            SELECT l.series_id, l.portee || coalesce(l.equipe, ''), l.secret
+            FROM liens_acces l
             ORDER BY l.series_id, l.portee, l.equipe
             """;
         await using var reader = await command.ExecuteReaderAsync(Ct);
-        var liens = new List<(int Serie, string Portee, string Secret, bool Envoyes)>();
+        var liens = new List<(int Serie, string Portee, string Secret)>();
         while (await reader.ReadAsync(Ct))
-            liens.Add((reader.GetInt32(0), reader.GetString(1), reader.GetString(2), reader.GetBoolean(3)));
+            liens.Add((reader.GetInt32(0), reader.GetString(1), reader.GetString(2)));
         await connection.CloseAsync();
 
         Assert.Equal(
@@ -62,6 +62,5 @@ public class LiensAccesMigrationTests(ApiFactory factory) : IAsyncLifetime
             liens.Select(l => (l.Serie, l.Portee)));
         Assert.All(liens, l => Assert.True(l.Secret.Length >= 40));
         Assert.Equal(liens.Count, liens.Select(l => l.Secret).Distinct().Count());
-        Assert.All(liens, l => Assert.False(l.Envoyes));
     }
 }

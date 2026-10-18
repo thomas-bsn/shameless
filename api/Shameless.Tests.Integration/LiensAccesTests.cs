@@ -92,8 +92,6 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
         var liens = await LiensAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
-        liens = await LiensAsync(client, serie.SeriesId);
 
         foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB", "lienSpectateur" })
         {
@@ -147,50 +145,31 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Le_lien_spectateur_n_est_disponible_qu_apres_l_envoi_des_liens_capitaine()
+    public async Task Le_lien_spectateur_est_disponible_des_la_creation_de_la_serie()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
 
-        var avant = await LiensAsync(client, serie.SeriesId);
-        Assert.False(avant.GetProperty("liensCapitaineEnvoyes").GetBoolean());
-        Assert.Equal(JsonValueKind.Null, avant.GetProperty("lienSpectateur").ValueKind);
+        var liens = await LiensAsync(client, serie.SeriesId);
 
-        var envoyes = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
-
-        Assert.True(envoyes.GetProperty("liensCapitaineEnvoyes").GetBoolean());
-        var spectateur = Lien(envoyes, "lienSpectateur");
+        var spectateur = Lien(liens, "lienSpectateur");
         Assert.True(spectateur.Length >= 40, $"Lien trop court : {spectateur}");
-        Assert.Equal(spectateur, Lien(await LiensAsync(client, serie.SeriesId), "lienSpectateur"));
+        Assert.False(liens.TryGetProperty("liensCapitaineEnvoyes", out _));
         var resolu = await ReadJsonAsync(await ResoudreAsync(spectateur));
         Assert.Equal(serie.SeriesId, resolu.GetProperty("seriesId").GetInt32());
         Assert.Equal("Spectateur", resolu.GetProperty("portee").GetString());
         Assert.Equal(JsonValueKind.Null, resolu.GetProperty("equipe").ValueKind);
-
-        // Indiquer à nouveau l'envoi ne change pas le lien.
-        var encore = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
-        Assert.Equal(spectateur, Lien(encore, "lienSpectateur"));
     }
 
     [Fact]
-    public async Task Le_lien_spectateur_est_refuse_tant_que_les_liens_capitaine_ne_sont_pas_envoyes()
+    public async Task La_route_indiquant_l_envoi_des_liens_capitaine_n_existe_plus()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
-        // L'API ne montre le Lien spectateur à personne avant l'envoi : on le prend en base, comme
-        // quelqu'un qui l'aurait deviné.
-        string spectateur;
-        await using (var db = Factory.CreateDbContext())
-            spectateur = await db.Database
-                .SqlQuery<string>($"SELECT secret AS \"Value\" FROM liens_acces WHERE series_id = {serie.SeriesId} AND portee = 'spectateur'")
-                .SingleAsync(Ct);
 
-        var avant = await ResoudreAsync(spectateur);
-        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
-        var apres = await ResoudreAsync(spectateur);
+        var response = await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct);
 
-        Assert.Equal(HttpStatusCode.NotFound, avant.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, apres.StatusCode);
+        Assert.True(response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed, $"{response.StatusCode}");
     }
 
     [Fact]
@@ -208,7 +187,7 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Un_visiteur_non_connecte_ne_lit_ni_ne_renouvelle_les_liens_ni_n_indique_leur_envoi()
+    public async Task Un_visiteur_non_connecte_ne_lit_ni_ne_renouvelle_les_liens()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
@@ -217,14 +196,11 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
 
         var lire = await anonyme.GetAsync($"/series/{serie.SeriesId}/liens", Ct);
         var renouveler = await anonyme.PostAsync($"/series/{serie.SeriesId}/liens/A/renouveler", null, Ct);
-        var envoyer = await anonyme.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, lire.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, renouveler.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, envoyer.StatusCode);
         var apres = await LiensAsync(client, serie.SeriesId);
         Assert.Equal(Lien(avant, "lienCapitaineA"), Lien(apres, "lienCapitaineA"));
-        Assert.False(apres.GetProperty("liensCapitaineEnvoyes").GetBoolean());
     }
 
     [Fact]

@@ -84,10 +84,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("format");
 
-                    b.Property<bool>("LiensCapitaineEnvoyes")
-                        .HasColumnType("boolean")
-                        .HasColumnName("liens_capitaine_envoyes");
-
                     b.Property<string>("Outcome")
                         .IsRequired()
                         .HasColumnType("text")

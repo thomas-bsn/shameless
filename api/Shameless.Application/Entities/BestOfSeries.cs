@@ -45,11 +45,6 @@ public class BestOfSeries
     public ICollection<LienAcces> Liens { get; set; } = new List<LienAcces>();
 
     /// <summary>
-    /// L'organisateur a indiqué avoir envoyé les Liens capitaine : le Lien spectateur est disponible.
-    /// </summary>
-    public bool LiensCapitaineEnvoyes { get; set; }
-
-    /// <summary>
     /// Le code Companion : un secret long, distinct des liens d'accès, qui ne permet que de téléverser
     /// des rapports pour cette Série, et seulement tant qu'elle est en cours.
     /// </summary>
@@ -63,14 +58,8 @@ public class BestOfSeries
 
     public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
 
-    /// <summary>
-    /// L'accès que donne ce lien de la Série, ou null s'il n'en donne aucun : le Lien spectateur ne vaut
-    /// qu'une fois les Liens capitaine envoyés.
-    /// </summary>
-    public AccesParLien? AccesPar(LienAcces lien) =>
-        lien.Portee == PorteeLien.Spectateur && !LiensCapitaineEnvoyes
-            ? null
-            : new AccesParLien(Id, lien.Portee, lien.Equipe);
+    /// <summary>L'accès que donne ce lien de la Série (ADR 0017 : le Lien spectateur vaut dès la création).</summary>
+    public AccesParLien AccesPar(LienAcces lien) => new(Id, lien.Portee, lien.Equipe);
 
     public bool IsEnCours => Outcome == SeriesOutcome.EnCours;
 

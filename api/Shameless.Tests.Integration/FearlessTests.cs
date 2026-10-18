@@ -16,7 +16,7 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
 
     private sealed record Preparee(CreatedSerie Serie, string Code, string LienA, string LienB, string LienSpectateur);
 
-    /// <summary>Une Série avec ses deux capitaines, ses liens envoyés et son code Companion.</summary>
+    /// <summary>Une Série avec ses deux capitaines, ses liens et son code Companion.</summary>
     private async Task<Preparee> PreparerAsync(HttpClient client, bool fearless)
     {
         var serie = await CreateSerieAsync(client, format: 5, fearless: fearless);
@@ -24,7 +24,7 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
             new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct));
         await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/B",
             new { designation = "Manuel", playerId = serie.TeamB[0] }, Ct));
-        var liens = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
         var code = await CodeCompanionAsync(client, serie.SeriesId);
         return new Preparee(serie, code,
             liens.GetProperty("lienCapitaineA").GetString()!,
