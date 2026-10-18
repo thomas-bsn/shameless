@@ -37,8 +37,8 @@ describe("Session", () => {
 
     renderApp("/");
 
-    expect(await screen.findByRole("link", { name: /Thomas/ })).toHaveAttribute("href", "/compte");
-    await userEvent.click(screen.getByRole("button", { name: "Déconnexion" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Thomas/ }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Se déconnecter" }));
 
     expect(await screen.findByRole("link", { name: "Se connecter" })).toBeInTheDocument();
     await waitFor(() =>
