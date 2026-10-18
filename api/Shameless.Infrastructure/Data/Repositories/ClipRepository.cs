@@ -24,7 +24,7 @@ public sealed class ClipRepository : IClipRepository
         _db.Clips.AsNoTracking().Where(c => c.GameId == null).OrderBy(c => c.PublieLe).ThenBy(c => c.Id).ToListAsync();
 
     public Task<List<Clip>> GetTousAsync(bool? sansGame, bool? masques, string? auteur, int? soireeId, int page, int pageSize) =>
-        _db.Clips.AsNoTracking()
+        _db.Clips.AsNoTracking().Include(c => c.Game).ThenInclude(g => g!.Series)
             .Where(c => sansGame != true || c.GameId == null)
             .Where(c => masques != true || c.MasqueDuFond)
             .Where(c => string.IsNullOrWhiteSpace(auteur) || c.AuteurNom.ToLower().Contains(auteur.Trim().ToLower()))
