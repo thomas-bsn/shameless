@@ -2,6 +2,7 @@
 using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Joueurs;
 using Microsoft.Extensions.Logging;
 
 namespace Shameless.Application.Services;
@@ -149,22 +150,29 @@ public class PlayerService : IPlayerService
         return LinkResult.Linked;
     }
     
-    public async Task<bool> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
+    public async Task<PeakResult> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
     {
+        if (!SaisonValide(peakTier, peakSeason)) return PeakResult.InvalidSeason;
+
         var player = await GetPlayerByDiscordIdAsync(discordUserId);
-        if (player == null) return false;
+        if (player == null) return PeakResult.PlayerNotFound;
 
         await _players.UpdatePeakAsync(player.Id, peakTier, peakDivision, peakSeason, peakLp);
-        return true;
+        return PeakResult.Updated;
     }
 
-    public async Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
+    public async Task<PeakResult> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp)
     {
-        if (await _players.GetByIdAsync(playerId) is null) return false;
+        if (!SaisonValide(peakTier, peakSeason)) return PeakResult.InvalidSeason;
+        if (await _players.GetByIdAsync(playerId) is null) return PeakResult.PlayerNotFound;
 
         await _players.UpdatePeakAsync(playerId, peakTier, peakDivision, peakSeason, peakLp);
-        return true;
+        return PeakResult.Updated;
     }
+
+    /// <summary>Un peak porte toujours sa saison, de S24 à la saison courante ; l'effacer (sans tier) n'en demande pas.</summary>
+    private bool SaisonValide(string? peakTier, string? peakSeason) =>
+        peakTier is null || SaisonsDePeak.EstValide(peakSeason, _clock.GetUtcNow().Year);
 
     public async Task<PlayerDto?> GetPlayerByDiscordIdAsync(string discordUserId)
     {
