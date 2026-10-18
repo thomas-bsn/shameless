@@ -5,7 +5,7 @@ import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 describe("Joueurs", () => {
-  it("groups the players by cost tier, from SS down", async () => {
+  it("lists players in a searchable table and sorts by cost", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /players": [
@@ -18,13 +18,16 @@ describe("Joueurs", () => {
 
     renderApp("/joueurs");
 
-    const tiers = await screen.findAllByRole("region", { name: /^Tier / });
-    expect(tiers.map((t) => t.getAttribute("aria-label"))).toEqual(["Tier SS", "Tier B", "Tier D"]);
-    expect(within(tiers[1]!).getAllByRole("link").map((l) => l.textContent)).toEqual([
-      expect.stringContaining("Chloé"),
-      expect.stringContaining("Alice"),
-    ]);
-    expect(within(tiers[0]!).getByRole("link", { name: /Bob/ })).toHaveAttribute("href", "/joueurs/2");
+    const table = await screen.findByRole("table");
+    const rows = () => within(table).getAllByRole("row").slice(1).map((row) => row.textContent);
+    expect(rows()).toHaveLength(4);
+    expect(rows()[0]).toContain("Alice");
+    await userEvent.click(screen.getByRole("button", { name: "Cost" }));
+    expect(rows()[0]).toContain("Bob");
+    expect(within(table).getByRole("link", { name: /Bob/ })).toHaveAttribute("href", "/joueurs/2");
+    await userEvent.type(screen.getByRole("textbox", { name: "Rechercher un joueur" }), "Chloé");
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]).toContain("Chloé");
   });
 
   it("shows a player's Riot account, SoloQ rank, peak, cost and main role", async () => {

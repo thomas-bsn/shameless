@@ -13,22 +13,24 @@ const hall: Schemas["HallDeLaHonte"] = {
 };
 
 describe("Hall de la Honte", () => {
-  // L'entrée a quitté la sidebar (la vue DOFD arrive avec les Classements) ; la route fonctionne toujours.
-  it("liste le cumul des DOFD, les ex æquo au même rang", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /hall-de-la-honte": hall });
+  it("redirige l'ancienne adresse vers la vue DOFD et conserve les ex æquo", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": [], "GET /players": [], "GET /hall-de-la-honte": hall });
 
-    renderApp("/hall-de-la-honte");
+    const { router } = renderApp("/hall-de-la-honte");
 
-    const lignes = within(await screen.findByRole("list", { name: "Hall de la Honte" })).getAllByRole("listitem");
-    expect(lignes.map((l) => within(l).getByLabelText("Rang").textContent)).toEqual(["1", "1", "3"]);
-    expect(within(lignes[0]!).getByRole("link", { name: /Ana/ })).toHaveAttribute("href", "/joueurs/2");
-    expect(lignes[0]).toHaveTextContent("3 DOFD");
+    const classement = await screen.findByRole("list", { name: "Classement DOFD" });
+    expect(router.state.location.pathname).toBe("/classements");
+    expect(router.state.location.search).toEqual({ vue: "dofd" });
+    const lignes = within(classement).getAllByRole("listitem");
+    expect(lignes.map((l) => l.firstElementChild?.textContent)).toEqual(["1", "1", "3"]);
+    expect(within(lignes[0]!).getByRole("link", { name: "Ana" })).toHaveAttribute("href", "/joueurs/2");
+    expect(lignes[0]).toHaveTextContent("3");
     expect(lignes[2]).toHaveTextContent("Bob");
-    expect(lignes[2]).toHaveTextContent("1 DOFD");
+    expect(lignes[2]).toHaveTextContent("1");
   });
 
   it("annonce un Hall vide tant qu'aucun DOFD n'est élu", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /hall-de-la-honte": { joueurs: [] } });
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": [], "GET /players": [], "GET /hall-de-la-honte": { joueurs: [] } });
     renderApp("/hall-de-la-honte");
 
     expect(await screen.findByText(/Aucun DOFD élu pour l'instant/)).toBeInTheDocument();

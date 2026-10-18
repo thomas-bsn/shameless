@@ -32,6 +32,8 @@ describe("Clips à rattacher", () => {
     let sansGame = [clip(7), clip(8, { nomFichier: "baron.webm", auteurNom: "Léa" })];
     const api = mockApi({
       "GET /auth/me": user(),
+      "GET /clips/fond": [],
+      "GET /clips": () => json(sansGame),
       "GET /clips/sans-game": () => json(sansGame),
       "GET /clips/7/games-candidates": [
         candidate(43, 2, "2026-10-16T20:40:00Z"),
@@ -47,7 +49,7 @@ describe("Clips à rattacher", () => {
 
     renderApp("/clips");
 
-    expect(await screen.findByRole("heading", { name: "Clips à rattacher" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Clips" })).toBeInTheDocument();
     const premier = await screen.findByRole("article", { name: "pentakill.mp4" });
     expect(premier.querySelector("video")).toHaveAttribute("src", "/api/clips/7/fichier");
     expect(within(premier).getByText(/Sam/)).toBeInTheDocument();
@@ -65,6 +67,8 @@ describe("Clips à rattacher", () => {
     let sansGame = [clip(7)];
     const api = mockApi({
       "GET /auth/me": user(),
+      "GET /clips/fond": [],
+      "GET /clips": () => json(sansGame),
       "GET /clips/sans-game": () => json(sansGame),
       "GET /clips/7/games-candidates": [],
       "PUT /clips/7/game": () => {
@@ -79,17 +83,17 @@ describe("Clips à rattacher", () => {
     await userEvent.type(within(premier).getByLabelText("N° de Game"), "12");
     await userEvent.click(within(premier).getByRole("button", { name: "Rattacher" }));
 
-    expect(await screen.findByText(/Aucun clip à rattacher/)).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun clip pour l'instant/)).toBeInTheDocument();
     const put = api.mock.calls.map(([r]) => r).find((r) => r.method === "PUT");
     expect(await put?.clone().json()).toEqual({ gameId: 12 });
   });
 
   it("est dans la navigation", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /clips/sans-game": [] });
+    mockApi({ "GET /auth/me": user(), "GET /clips/fond": [], "GET /clips": [], "GET /clips/sans-game": [] });
 
     renderApp("/clips");
 
     expect(await screen.findByRole("link", { name: "Clips" })).toHaveAttribute("href", "/clips");
-    expect(await screen.findByText(/Aucun clip à rattacher/)).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun clip pour l'instant/)).toBeInTheDocument();
   });
 });
