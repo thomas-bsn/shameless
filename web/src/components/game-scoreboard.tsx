@@ -165,7 +165,7 @@ function Degats({ value, max, side }: { value: number | null; max: number; side:
 }
 
 /** L'illustration du champion (image du jeu), sinon un carré avec son initiale ; le niveau en coin. */
-function ChampionCarre({
+export function ChampionCarre({
   championId,
   nom,
   image,
