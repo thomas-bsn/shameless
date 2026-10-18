@@ -25,7 +25,6 @@ function useRelireLesClips() {
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["get", "/clips/sans-game"] }),
-      queryClient.invalidateQueries({ queryKey: ["get", "/clips"] }),
       queryClient.invalidateQueries({ queryKey: ["get", "/games/{gameId}/clips"] }),
     ]);
 }

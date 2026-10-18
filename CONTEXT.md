@@ -22,10 +22,6 @@ aussi pour son MVP et son DOFD.
 Discord, sa base de données et sa propre clé Riot.
 - **Opérateur** : la personne qui installe et héberge l'Instance de sa communauté.  
 Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
-- **Administrateur** : un Utilisateur de l'Instance, désigné par l'Opérateur à l'installation
-(wizard), qui voit l'entrée Administration et a accès aux actions réservées : les games sans
-résultat, l'arrêt d'une Série, le cost et le Peak des Joueurs, les Clips du fond. Les autres
-Utilisateurs ne voient pas l'entrée, et la page leur est refusée.
 - **Wizard** : l'interface web temporaire, distincte du site, qui guide l'Opérateur  
 pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
 un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  
@@ -85,7 +81,6 @@ hasard pur. Ne forme pas les équipes.
 choisissent cinq champions pour leur Équipe, dans l'ordre fixe du mode Tournament.  
 Les champions sont choisis pour l'Équipe, pas pour un joueur : qui joue quoi se  
 décide en vocal. À ne pas confondre avec la **Draft**, qui forme les équipes.
-- **Classe de champion** : catégorie Data Dragon (mage, tank, etc.), distincte d'un rôle de voie (top, jungle, mid, ADC, support) ; elle ne permet pas de déduire la voie jouée.
 - **Capitaine** : le joueur qui mène une Équipe dans une Draft ou une Draft de  
 champions. Ceux de la Draft le restent pour la Draft de champions ; après une  
 Roulette, l'organisateur en désigne un par Équipe.

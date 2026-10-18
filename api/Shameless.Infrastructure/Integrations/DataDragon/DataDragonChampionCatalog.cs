@@ -79,8 +79,7 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
                 c.Id,
                 c.Key,
                 c.Name,
-                new Uri(http.BaseAddress ?? BaseAddress, $"cdn/{version}/img/champion/{c.Image.Full}").ToString(),
-                c.Tags ?? []))
+                new Uri(http.BaseAddress ?? BaseAddress, $"cdn/{version}/img/champion/{c.Image.Full}").ToString()))
             .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("fr-FR"), ignoreCase: true))
             .ToList();
     }
@@ -91,7 +90,6 @@ public sealed class DataDragonChampionCatalog : IChampionCatalog
         [property: JsonPropertyName("id")] string Id,
         [property: JsonPropertyName("key")] string Key,
         [property: JsonPropertyName("name")] string Name,
-        [property: JsonPropertyName("tags")] List<string>? Tags,
         [property: JsonPropertyName("image")] ChampionImage Image);
 
     private sealed record ChampionImage([property: JsonPropertyName("full")] string Full);

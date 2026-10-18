@@ -97,20 +97,6 @@ public sealed class ClipsService
     public async Task<List<ClipResponse>> GetSansGameAsync() =>
         (await _clips.GetSansGameAsync()).Select(ClipResponse.From).ToList();
 
-    public async Task<List<ClipResponse>> GetTousAsync(bool? sansGame, bool? masques, string? auteur, int? soireeId, int page, int pageSize) =>
-        (await _clips.GetTousAsync(sansGame, masques, auteur, soireeId, page, pageSize)).Select(ClipResponse.From).ToList();
-
-    public async Task<List<ClipResponse>> GetEligiblesAuFondAsync(int take) =>
-        (await _clips.GetEligiblesAuFondAsync(take)).Select(ClipResponse.From).ToList();
-
-    public async Task<CommandResult<ClipResponse>> MasquerDuFondAsync(int clipId, bool masque)
-    {
-        if (await _clips.GetAsync(clipId) is not { } clip)
-            return CommandResult<ClipResponse>.NotFound("Ce clip n'existe pas.");
-        clip.MasqueDuFond = masque;
-        return await EnregistrerAsync(clip);
-    }
-
     /// <summary>
     /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou
     /// null si le clip n'existe pas (<see cref="GamePlausible.FenetreDesCandidates"/>).

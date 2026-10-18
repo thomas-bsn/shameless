@@ -67,23 +67,19 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(0, debutAvril.GetProperty("gamesTerminees").GetInt32());
         Assert.Equal(2.5m, debutAvril.GetProperty("cost").GetDecimal());
 
-        // En avril, cinq games notées font évoluer le cost depuis son départ de 2,5.
+        // En avril, A gagne une game : moins de cinq games, le cost reste celui de départ.
         var revanche = await RevancheAsync(client, serie.SeriesId);
-        foreach (var gagnante in new[] { "B", "B" }) await JouerUneGameNoteeAsync(client, revanche, gagnante);
-        revanche = await RevancheAsync(client, revanche);
-        foreach (var gagnante in new[] { "B", "A", "B" }) await JouerUneGameNoteeAsync(client, revanche, gagnante);
+        await PlayAndWinAsync(client, revanche, "A");
 
         var historique = await HistoriqueAsync(client, serie.TeamA[0]);
         Assert.Equal(
-            [("2026-03-01", 2m, 2.5m, 5, 3), ("2026-04-01", 2.5m, 2.7m, 5, 1)],
+            [("2026-03-01", 2m, 2.5m, 5, 3), ("2026-04-01", 2.5m, 2.5m, 1, 1)],
             historique.Select(m => (
                 m.GetProperty("mois").GetString(),
                 m.GetProperty("costDeDepart").GetDecimal(),
                 m.GetProperty("cost").GetDecimal(),
                 m.GetProperty("gamesTerminees").GetInt32(),
                 m.GetProperty("victoires").GetInt32())));
-        Assert.Equal(JsonValueKind.Null, historique[0].GetProperty("evolution").ValueKind);
-        Assert.Equal(0.2m, historique[1].GetProperty("evolution").GetDecimal());
     }
 
     [Fact]

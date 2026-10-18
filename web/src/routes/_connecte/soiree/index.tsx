@@ -76,7 +76,6 @@ function SeriesList({ soireeId }: { soireeId: number }) {
 
   return (
     <section aria-labelledby="series-soiree" className="flex flex-col gap-3">
-      {series.data.series.find((s) => s.outcome === "EnCours") && <SerieEnCours serie={series.data.series.find((s) => s.outcome === "EnCours")!} />}
       <h2 id="series-soiree" className="text-lg font-semibold">
         Séries
       </h2>
@@ -89,12 +88,6 @@ function SeriesList({ soireeId }: { soireeId: number }) {
       </ol>
     </section>
   );
-}
-
-function SerieEnCours({ serie }: { serie: Schemas["SeriesResponse"] }) {
-  const game = serie.games.find((g) => g.status === "pending");
-  const noms = (team: Schemas["GameParticipantDto"][]) => team.map((p) => p.prenom).join(" · ");
-  return <Card className="border-primary/40 bg-primary/5"><CardHeader className="flex flex-row items-center justify-between gap-3"><CardTitle>Face-à-face · BO{serie.format}</CardTitle><Badge>En cours</Badge></CardHeader><CardContent className="flex flex-col gap-4"><div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center"><div><p className="text-xs text-muted-foreground">ÉQUIPE A</p><p className="font-medium">{noms(serie.teamA)}</p></div><p className="font-mono text-2xl font-semibold">{serie.teamAWins} – {serie.teamBWins}</p><div className="sm:text-right"><p className="text-xs text-muted-foreground">ÉQUIPE B</p><p className="font-medium">{noms(serie.teamB)}</p></div></div>{game ? <Button asChild className="self-start"><Link to="/games/$gameId" params={{ gameId: String(game.id) }}>Ouvrir la Game #{game.id}</Link></Button> : <Button asChild className="self-start"><Link to="/series/$seriesId" params={{ seriesId: String(serie.seriesId) }}>Ouvrir la Série</Link></Button>}</CardContent></Card>;
 }
 
 function SeriesRow({ series, index }: { series: Schemas["SeriesResponse"]; index: number }) {

@@ -1,5 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen, within } from "@testing-library/react";
 import type { Schemas } from "@/api/client";
 import { mockApi, problem } from "@/test/api";
 import { user } from "@/test/fixtures";
@@ -65,18 +64,6 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
 });
 
 describe("Page d'une Game", () => {
-  it("affiche le nom et l'icône du champion résolus depuis le catalogue", async () => {
-    mockApi({
-      "GET /auth/me": user(),
-      "GET /games/42": recap(),
-      "GET /champions": [{ id: "Ahri", key: "103", name: "Ahri", imageUrl: "https://ddragon.test/Ahri.png", classes: ["Mage"] }],
-    });
-    renderApp("/games/42");
-    const team = await screen.findByRole("group", { name: "Équipe A · Red side" });
-    expect(within(team).getByText("Ahri")).toBeInTheDocument();
-    await waitFor(() => expect(within(team).getByRole("cell", { name: "Ahri" }).querySelector("img")).toHaveAttribute("src", "https://ddragon.test/Ahri.png"));
-  });
-
   it("montre la Game dans sa Série, son vainqueur et les stats de chaque joueur", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap() });
 
@@ -111,43 +98,5 @@ describe("Page d'une Game", () => {
     renderApp("/games/42");
 
     expect(await screen.findByText("Cette game n'existe pas.")).toBeInTheDocument();
-  });
-
-  it("affiche les métriques de dégâts par joueur et grise le replay avec sa raison", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /games/42": recap({ teamA: [participant(1, "Alice", { stats: stats(7, 2, 9) })] }) });
-    renderApp("/games/42");
-    await screen.findByRole("heading", { name: "Game 2 · Série BO3" });
-    await userEvent.click(screen.getByRole("button", { name: "Dégâts" }));
-    expect(await screen.findByLabelText("Dégâts par minute Alice")).toBeInTheDocument();
-    expect(screen.getByLabelText("Part des dégâts de l'équipe Alice")).toBeInTheDocument();
-    expect(screen.getAllByText("Dégâts subis")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /Replay/ })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /positions absentes/ })).toBeInTheDocument();
-  });
-
-  it("entoure les joueurs MVP et DOFD élus", async () => {
-    mockApi({
-      "GET /auth/me": user(),
-      "GET /games/42": recap({ teamA: [participant(1, "Alice")], teamB: [participant(2, "Bob")] }),
-      "GET /games/42/votes": { gameId: 42, statut: "clos", ouvertureLe: null, fermetureLe: null, votants: 2, mvp: { gagnants: [1], decompte: [{ playerId: 1, prenom: "Alice", voix: 2 }] }, dofd: { gagnants: [2], decompte: [{ playerId: 2, prenom: "Bob", voix: 2 }] } },
-    });
-    renderApp("/games/42");
-    expect(await screen.findByLabelText("MVP Alice")).toBeInTheDocument();
-    expect(screen.getByLabelText("DOFD Bob")).toBeInTheDocument();
-  });
-
-  it("montre les totaux Objectifs et Vision, et laisse le par minute absent sans durée", async () => {
-    const aStats = { ...stats(5, 3, 8), turretKills: 2, dragonKills: 1, baronKills: 1, damageToObjectives: 4200, visionScore: 36, wardsPlaced: 15, wardsKilled: 4, controlWardsBought: 5 };
-    mockApi({ "GET /auth/me": user(), "GET /games/42": recap({ match: null, teamA: [participant(1, "Alice", { stats: aStats })], teamB: [] }) });
-    renderApp("/games/42");
-    await screen.findByRole("heading", { name: "Game 2 · Série BO3" });
-    await userEvent.click(screen.getByRole("button", { name: "Dégâts" }));
-    expect(await screen.findByLabelText("Dégâts par minute Alice")).toHaveTextContent("—");
-    await userEvent.click(screen.getByRole("button", { name: "Objectifs" }));
-    expect(await screen.findAllByText("Tours")).toHaveLength(2);
-    expect(screen.getAllByText("Dragons")).toHaveLength(2);
-    expect(screen.getAllByText("Barons")).toHaveLength(2);
-    await userEvent.click(screen.getByRole("button", { name: "Vision" }));
-    expect(await screen.findAllByText("Balises de contrôle")).toHaveLength(2);
   });
 });

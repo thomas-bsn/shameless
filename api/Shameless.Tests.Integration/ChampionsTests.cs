@@ -6,7 +6,7 @@ namespace Shameless.Tests.Integration;
 public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
 {
     [Fact]
-    public async Task Le_catalogue_des_champions_liste_id_key_nom_image_et_classes()
+    public async Task Le_catalogue_des_champions_liste_id_key_nom_et_image()
     {
         var client = Factory.CreateSignedInClient();
 
@@ -21,9 +21,6 @@ public class ChampionsTests(ApiFactory factory) : IntegrationTest(factory)
             .ToList();
         Assert.Equal(25, lus.Count);
         Assert.Contains(("LeeSin", "64", "Lee Sin", "https://ddragon.test/img/champion/LeeSin.png"), lus);
-        var ahri = champions.EnumerateArray().Single(c => c.GetProperty("id").GetString() == "Ahri");
-        Assert.Equal(["Mage", "Assassin"], ahri.GetProperty("classes").EnumerateArray().Select(c => c.GetString()).ToArray());
-        Assert.False(ahri.TryGetProperty("roles", out _));
     }
 
     [Fact]

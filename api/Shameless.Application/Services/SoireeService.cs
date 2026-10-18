@@ -17,10 +17,6 @@ public sealed class SoireeService
 
     public Task<Soiree?> GetOpenAsync() => _soirees.GetOpenAsync();
 
-    /// <summary>Dit si une fermeture automatique a interrompu le Picker.</summary>
-    public async Task<bool> PickerInterrompuAsync() =>
-        (await _soirees.GetDerniereFermeeAsync())?.Picker is not null;
-
     public Task<Soiree?> GetAsync(int id) => _soirees.GetByIdAsync(id);
 
     /// <summary>Ouvre une Soirée ; refusé si une Soirée est déjà ouverte.</summary>
@@ -73,7 +69,6 @@ public sealed class SoireeService
 
         soiree.Status = SoireeStatus.Closed;
         soiree.ClosedAt = now;
-        soiree.FermetureAutomatique = true;
         await _soirees.SaveChangesAsync();
         return soiree;
     }

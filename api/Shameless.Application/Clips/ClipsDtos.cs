@@ -40,11 +40,7 @@ public sealed record ClipResponse(
     DateTime PublieLe,
     string NomFichier,
     string ContentType,
-    long Taille,
-    bool MasqueDuFond = false,
-    int? SoireeId = null,
-    int? ScoreEquipeA = null,
-    int? ScoreEquipeB = null)
+    long Taille)
 {
     public static ClipResponse From(Clip clip) => new(
         clip.Id,
@@ -55,11 +51,7 @@ public sealed record ClipResponse(
         clip.PublieLe,
         clip.NomFichier,
         clip.ContentType,
-        clip.Taille,
-        clip.MasqueDuFond,
-        clip.Game?.Series?.SoireeId,
-        clip.Game?.Series?.TeamAWins,
-        clip.Game?.Series?.TeamBWins);
+        clip.Taille);
 }
 
 /// <summary>

@@ -6,7 +6,6 @@ import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const soiree: Schemas["OpenSoireeResponse"] = {
-  pickerInterrompu: false,
   soiree: { id: 7, status: "Open", openedAt: "2026-10-16T19:00:00Z", closedAt: null, picker: null },
 };
 
@@ -59,45 +58,5 @@ describe("Picker : candidats vocaux", () => {
 
     expect(await screen.findByText("Le bot Discord ne répond pas : réessayez dans un instant.")).toBeInTheDocument();
     expect(coche(/Alice/)).not.toBeChecked();
-  });
-
-  it("permet de réessayer si les joueurs ne se chargent pas", async () => {
-    let attempts = 0;
-    mockApi({
-      "GET /auth/me": user(),
-      "GET /soirees/open": soiree,
-      "GET /players": () => (++attempts === 1 ? problem(503, "Service indisponible") : new Response(JSON.stringify(players), { headers: { "Content-Type": "application/json" } })),
-    });
-    renderApp("/soiree/picker");
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Service indisponible");
-    await userEvent.click(screen.getByRole("button", { name: "Réessayer" }));
-
-    expect(await screen.findByRole("checkbox", { name: /Alice/ })).toBeInTheDocument();
-    expect(attempts).toBe(2);
-  });
-
-  it("explique qu'une Soirée a fermé pendant le Picker et permet d'en ouvrir une autre", async () => {
-    const ouvrir = vi.fn(() => new Response(JSON.stringify({ id: 8, status: "Open", openedAt: "2026-10-18T10:00:00Z", closedAt: null }), { headers: { "Content-Type": "application/json" } }));
-    mockApi({
-      "GET /auth/me": user(),
-      "GET /soirees/open": { soiree: null, pickerInterrompu: true },
-      "POST /soirees": ouvrir,
-    });
-    renderApp("/soiree/picker");
-
-    expect(await screen.findByRole("heading", { name: "La Soirée a été fermée" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Ouvrir une nouvelle Soirée" }));
-
-    expect(ouvrir).toHaveBeenCalledOnce();
-  });
-
-  it("garde l'état habituel quand aucune Soirée n'est ouverte et qu'aucun Picker n'a été interrompu", async () => {
-    mockApi({ "GET /auth/me": user(), "GET /soirees/open": { soiree: null, pickerInterrompu: false } });
-    renderApp("/soiree/picker");
-
-    expect(await screen.findByRole("heading", { name: "Picker" })).toBeInTheDocument();
-    expect(screen.getByText(/Aucune Soirée n'est ouverte/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Aller à la Soirée" })).toHaveAttribute("href", "/soiree");
   });
 });

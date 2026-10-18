@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { GameClips } from "@/components/game-clips";
@@ -35,12 +34,7 @@ function GamePage() {
 }
 
 function Recit({ game }: { game: Recap }) {
-  const [tab, setTab] = useState("resume");
-  const champions = $api.useQuery("get", "/champions");
-  const votes = $api.useQuery("get", "/games/{id}/votes", { params: { path: { id: game.id } } });
   const winner = gameWinner(game);
-  const mvp = new Set(votes.data?.statut === "clos" ? votes.data.mvp.gagnants : []);
-  const dofd = new Set(votes.data?.statut === "clos" ? votes.data.dofd.gagnants : []);
   const aOnBlue = game.teamASide !== "red";
   const title = game.seriesId == null ? `Game #${game.id}` : `Game ${game.gameNumber} · Série BO${game.bestOf}`;
 
@@ -72,25 +66,20 @@ function Recit({ game }: { game: Recap }) {
           </Link>
         )}
       </div>
-      <nav aria-label="Statistiques de la game" className="flex flex-wrap gap-2 border-b border-border/60 pb-3">{[["resume", "Résumé"], ["degats", "Dégâts"], ["objectifs", "Objectifs"], ["vision", "Vision"], ["replay", "Replay"]].map(([value, label]) => <button key={value} type="button" disabled={value === "replay"} aria-current={tab === value ? "page" : undefined} title={value === "replay" ? "Le replay 3D est indisponible car les positions des joueurs ne sont pas disponibles." : undefined} onClick={() => setTab(value)} className={cn("rounded-lg px-3 py-2 text-sm", value === tab ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted", value === "replay" && "cursor-not-allowed opacity-50")}>{label}{value === "replay" && <span className="ml-1 text-[10px]">Prévu · positions absentes</span>}</button>)}</nav>
-      {tab === "resume" ? <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <Equipe
           team={aOnBlue ? "A" : "B"}
           side="blue"
           players={aOnBlue ? game.teamA : game.teamB}
-          champions={champions.data ?? []}
           won={winner === (aOnBlue ? "A" : "B")}
-          mvp={mvp} dofd={dofd}
         />
         <Equipe
           team={aOnBlue ? "B" : "A"}
           side="red"
           players={aOnBlue ? game.teamB : game.teamA}
-          champions={champions.data ?? []}
           won={winner === (aOnBlue ? "B" : "A")}
-          mvp={mvp} dofd={dofd}
         />
-      </div> : <Statistiques game={game} type={tab} />}
+      </div>
       <VotesDeLaGame gameId={game.id} />
       <PronosticsDeLaGame gameId={game.id} />
       <GameClips gameId={game.id} />
@@ -98,57 +87,40 @@ function Recit({ game }: { game: Recap }) {
   );
 }
 
-function Statistiques({ game, type }: { game: Recap; type: string }) {
-  const blueIsA = game.teamASide !== "red";
-  const teams = [{ name: `Équipe ${blueIsA ? "A" : "B"} · Blue`, side: "blue", players: blueIsA ? game.teamA : game.teamB }, { name: `Équipe ${blueIsA ? "B" : "A"} · Red`, side: "red", players: blueIsA ? game.teamB : game.teamA }];
-  const rows = type === "degats" ? [["damageToChampions", "Dégâts infligés"], ["damageTaken", "Dégâts subis"]] as const : type === "objectifs" ? [["turretKills", "Tours"], ["dragonKills", "Dragons"], ["baronKills", "Barons"], ["damageToObjectives", "Dégâts aux objectifs"]] as const : [["visionScore", "Score de vision"], ["wardsPlaced", "Balises posées"], ["wardsKilled", "Balises détruites"], ["controlWardsBought", "Balises de contrôle"]] as const;
-  const durationMinutes = game.match?.durationSeconds ? game.match.durationSeconds / 60 : null;
-  if (teams.every((team) => team.players.every((player) => !player.stats))) return <p className="rounded-xl border border-border/60 bg-card/50 p-6 text-sm text-muted-foreground">Les statistiques détaillées sont absentes pour cette game.</p>;
-  return <div className="grid gap-4 md:grid-cols-2">{teams.map((team) => <Card key={team.side} role="group" aria-label={team.name}><CardHeader><CardTitle className={cn("text-sm", sideTextClass(team.side as "blue" | "red"))}>{team.name}</CardTitle><div className="grid grid-cols-2 gap-2">{rows.map(([key, label]) => { const values = team.players.map((player) => player.stats?.[key]); const sum = values.reduce<number>((total, value) => total + (value ?? 0), 0); const available = values.length > 0 && values.every((value) => value != null); return <div key={key} className="rounded-lg bg-muted/40 p-2"><p className="text-[10px] text-muted-foreground">{label}</p><p className="font-mono text-sm">{available ? sum.toLocaleString("fr-FR") : "—"}</p></div>; })}</div></CardHeader><CardContent className="flex flex-col gap-2">{team.players.map((player) => <div key={player.playerId} className="grid grid-cols-[1fr_repeat(4,minmax(48px,auto))] items-center gap-2 border-t border-border/50 py-2 text-xs"><span className="truncate font-medium">{player.prenom}</span>{rows.map(([key, label]) => { const value = player.stats?.[key]; const perMinute = key === "damageToChampions" && value != null && durationMinutes ? Math.round(value / durationMinutes) : null; const share = key === "damageToChampions" && value != null ? `${Math.round(value / Math.max(1, team.players.reduce((sum, p) => sum + (p.stats?.damageToChampions ?? 0), 0)) * 100)}%` : null; return <span key={key} aria-label={`${label} ${player.prenom}`} className="text-right font-mono">{value == null ? "—" : value.toLocaleString("fr-FR")}{type === "degats" && key === "damageToChampions" && <> · <span aria-label={`Dégâts par minute ${player.prenom}`}>{perMinute == null ? "—" : `${perMinute}/min`}</span> · <span aria-label={`Part des dégâts de l'équipe ${player.prenom}`}>{share}</span></>}</span>; })}</div>)}</CardContent></Card>)}</div>;
-}
-
 function Equipe({
   team,
   side,
   players,
-  champions,
   won,
-  mvp,
-  dofd,
 }: {
   team: string;
   side: "blue" | "red";
   players: Schemas["GameHistoryParticipantDto"][];
-  champions: Schemas["ChampionResponse"][];
   won: boolean;
-  mvp: Set<number>;
-  dofd: Set<number>;
 }) {
   const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;
-  const maxDamage = Math.max(1, ...players.map((p) => p.stats?.damageToChampions ?? 0));
-  const valeur = (n: number | null | undefined) => n == null ? "—" : n.toLocaleString("fr-FR");
 
   return (
-    <Card role="group" aria-label={label} className={cn("overflow-hidden", won && "border-emerald-600/50 dark:border-emerald-400/50")}>
-      <CardHeader className="pb-3">
+    <Card role="group" aria-label={label} className={cn(won && "border-emerald-400/50")}>
+      <CardHeader>
         <CardTitle className={cn("text-sm", sideTextClass(side))}>{label}</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-x-auto px-3">
-        {gameSansStats(players) && <p className="mb-3 text-sm text-muted-foreground">Game saisie à la main : les stats détaillées et les notes de performance ne sont pas disponibles.</p>}
-        <table className="w-full min-w-[620px] text-left text-xs">
-          <thead className="text-muted-foreground"><tr><th className="pb-2">Joueur</th><th>Champion · niv.</th><th>K / D / A</th><th>CS</th><th>Or</th><th>Dégâts</th><th>Note</th></tr></thead>
-          <tbody className="divide-y divide-border/60">{players.map((p) => { const stats = p.stats; const damage = stats?.damageToChampions ?? null; const titles = [mvp.has(p.playerId) ? "MVP" : null, dofd.has(p.playerId) ? "DOFD" : null].filter(Boolean); const champion = champions.find((c) => c.id === p.championId); return <tr key={p.playerId} className={cn("h-11", titles.length > 0 && "outline outline-1 outline-primary/70 outline-offset-[-2px]")}>
-            <th scope="row" className="pr-2 font-medium"><span>{p.prenom}</span>{titles.map((title) => <Badge key={title} aria-label={`${title} ${p.prenom}`} className="ml-1" variant="outline">{title}</Badge>)}</th><td>{p.championId ? <span className="inline-flex items-center gap-1" title={champion?.name ?? p.championId}>{champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}{champion?.name ?? p.championId}</span> : "—"}{stats?.champLevel != null && <span className="ml-1 text-muted-foreground">· {stats.champLevel}</span>}</td>
-            <td className="font-mono">{stats ? kdaLabel(stats) : "—"}</td><td className="font-mono">{stats ? valeur((stats.minionsKilled ?? 0) + (stats.neutralMinionsKilled ?? 0)) : "—"}</td>
-            <td className="font-mono">{valeur(stats?.goldEarned)}</td><td><span className="font-mono">{valeur(damage)}</span>{damage != null && <progress className="ml-2 h-1.5 w-12 align-middle accent-primary" aria-label={`Dégâts de ${p.prenom}`} value={damage} max={maxDamage} />}</td>
-            <td>{p.performance ? <Badge variant="outline">{p.performance.note}/100</Badge> : "—"}</td>
-          </tr>; })}</tbody>
-        </table>
+      <CardContent>
+        <ul className="flex flex-col gap-2">
+          {players.map((p) => (
+            <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{p.prenom}</span>
+                {p.championId && <span className="text-xs text-muted-foreground">{p.championId}</span>}
+              </span>
+              <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                {p.stats && <span>{kdaLabel(p.stats)}</span>}
+                {p.performance && <Badge variant="outline">{p.performance.note}/100</Badge>}
+              </span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
-}
-
-function gameSansStats(players: Schemas["GameHistoryParticipantDto"][]) {
-  return players.length > 0 && players.every((p) => p.stats == null);
 }

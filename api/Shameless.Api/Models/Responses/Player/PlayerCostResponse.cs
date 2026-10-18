@@ -50,9 +50,8 @@ public sealed record CostMensuelHistorique(
     decimal? CostDeDepart,
     int GamesTerminees,
     int Victoires,
-    decimal? NoteMoyenne,
-    decimal? Evolution)
+    decimal? NoteMoyenne)
 {
-    public static CostMensuelHistorique From(PlayerMonthlyCost mois, decimal? evolution) =>
-        new(DateOnly.FromDateTime(mois.Month), mois.FinalCost, mois.CostDeDepart, mois.GamesPlayed, mois.Wins, mois.NoteMoyenne, evolution);
+    public static CostMensuelHistorique From(PlayerMonthlyCost mois) =>
+        new(DateOnly.FromDateTime(mois.Month), mois.FinalCost, mois.CostDeDepart, mois.GamesPlayed, mois.Wins, mois.NoteMoyenne);
 }
