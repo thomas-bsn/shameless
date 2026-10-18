@@ -1,7 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronsUpDownIcon } from "lucide-react";
-import { $api } from "@/api/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,21 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { loginUrl, sessionQuery } from "@/lib/session";
 import { useTheme } from "@/lib/theme";
+import { useDeconnexion } from "@/lib/use-deconnexion";
 
 /** Le menu de l'utilisateur connecté (profil, thème, déconnexion), ou le bouton de connexion. */
 export function SessionMenu() {
   const session = useQuery(sessionQuery);
   const location = useLocation();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [theme, setTheme] = useTheme();
-  const logout = $api.useMutation("post", "/auth/logout", {
-    onSuccess: async () => {
-      queryClient.removeQueries();
-      queryClient.setQueryData(sessionQuery.queryKey, null);
-      await navigate({ to: "/" });
-    },
-  });
+  const logout = useDeconnexion();
 
   if (session.isPending) return null;
 

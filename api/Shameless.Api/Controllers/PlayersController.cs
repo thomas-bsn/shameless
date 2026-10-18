@@ -99,6 +99,19 @@ public sealed class PlayersController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Délie l'Utilisateur connecté de son Joueur : seule l'association disparaît. Le Joueur et ses stats,
+    /// l'Utilisateur et son Compte Discord restent, et on peut se relier ensuite. Toujours pour soi-même.
+    /// </summary>
+    [HttpDelete("link")]
+    [ProducesResponseType<PlayerLinkResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<IActionResult> UnlinkPlayer()
+    {
+        var unlinked = await _playerService.UnlinkPlayerAsync(User.DiscordId());
+        return unlinked ? Ok(new PlayerLinkResponse(Success: true)) : NoLinkedPlayer();
+    }
+
     /// <summary>Le cost du Joueur pour le mois en cours, avec le détail de son calcul (ADR 0012).</summary>
     [HttpGet("{playerId:int}/cost")]
     [ProducesResponseType<PlayerCostResponse>(StatusCodes.Status200OK)]

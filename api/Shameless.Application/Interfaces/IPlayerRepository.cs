@@ -13,6 +13,8 @@ public interface IPlayerRepository
     Task UpdateRankAsync(int id, string? tier, int? division, int? lp);
     Task UpdateFlexRankAsync(int id, string? tier, int? division, int? lp);
     Task LinkUserAsync(int playerId, int userId);
+    /// <summary>Retire l'association Utilisateur-Joueur ; true si un Joueur était lié à cet Utilisateur.</summary>
+    Task<bool> UnlinkUserAsync(int userId);
     Task<PlayerDto?> GetByUserIdAsync(int userId);
     Task UpdatePeakAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task UpdateMainRoleAsync(int id, string? mainRole);
