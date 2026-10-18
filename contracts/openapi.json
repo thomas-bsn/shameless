@@ -542,6 +542,96 @@
         }
       }
     },
+    "/clips": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "parameters": [
+          {
+            "name": "auteur",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "soiree",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sansGame",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "taille",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipsPage"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipsPage"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/clips/sans-game": {
       "get": {
         "tags": [
@@ -5343,6 +5433,70 @@
           }
         }
       },
+      "ClipDeLaListe": {
+        "required": [
+          "id",
+          "gameId",
+          "rattachement",
+          "auteurNom",
+          "auteurDiscordId",
+          "publieLe",
+          "nomFichier",
+          "contentType",
+          "taille",
+          "game"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "rattachement": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "auteurNom": {
+            "type": "string"
+          },
+          "auteurDiscordId": {
+            "type": "string"
+          },
+          "publieLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nomFichier": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "taille": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "game": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GameDeLaListeDeClips"
+              }
+            ]
+          }
+        }
+      },
       "ClipDuBot": {
         "required": [
           "clipId",
@@ -5420,6 +5574,35 @@
           "taille": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "ClipsPage": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "taille"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClipDeLaListe"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taille": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6071,6 +6254,54 @@
                 "$ref": "#/components/schemas/NoteDePerformance"
               }
             ]
+          }
+        }
+      },
+      "GameDeLaListeDeClips": {
+        "required": [
+          "gameId",
+          "seriesId",
+          "gameNumber",
+          "bestOf",
+          "lanceeLe",
+          "scoreA",
+          "scoreB"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seriesId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "gameNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestOf": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "lanceeLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scoreA": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scoreB": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

@@ -24,6 +24,7 @@ function useRelireLesClips() {
   const queryClient = useQueryClient();
   return () =>
     Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["get", "/clips"] }),
       queryClient.invalidateQueries({ queryKey: ["get", "/clips/sans-game"] }),
       queryClient.invalidateQueries({ queryKey: ["get", "/games/{gameId}/clips"] }),
     ]);
@@ -33,10 +34,24 @@ function useRelireLesClips() {
  * Rattache un clip à la main (ADR 0014) : une des Games lancées la veille ou le jour de sa publication,
  * ou une Game donnée par son numéro. Sert à rattacher un clip sans Game comme à corriger une Game fausse.
  */
-export function RattacherClip({ clip, sauf }: { clip: Schemas["ClipResponse"]; sauf?: number }) {
+export function RattacherClip({
+  clip,
+  sauf,
+  onRattache,
+}: {
+  clip: Schemas["ClipResponse"];
+  sauf?: number;
+  /** Appelé une fois le clip rattaché et les listes relues. */
+  onRattache?: () => void;
+}) {
   const relire = useRelireLesClips();
   const candidates = $api.useQuery("get", "/clips/{id}/games-candidates", { params: { path: { id: clip.id } } });
-  const rattacher = $api.useMutation("put", "/clips/{id}/game", { onSuccess: relire });
+  const rattacher = $api.useMutation("put", "/clips/{id}/game", {
+    onSuccess: async () => {
+      await relire();
+      onRattache?.();
+    },
+  });
   const [numero, setNumero] = useState("");
   const champ = useId();
 
@@ -94,9 +109,14 @@ export function RattacherClip({ clip, sauf }: { clip: Schemas["ClipResponse"]; s
 }
 
 /** Retire le clip de sa Game : il revient parmi les clips à rattacher. */
-export function RetirerClip({ clip }: { clip: Schemas["ClipResponse"] }) {
+export function RetirerClip({ clip, onRetire }: { clip: Schemas["ClipResponse"]; onRetire?: () => void }) {
   const relire = useRelireLesClips();
-  const retirer = $api.useMutation("delete", "/clips/{id}/game", { onSuccess: relire });
+  const retirer = $api.useMutation("delete", "/clips/{id}/game", {
+    onSuccess: async () => {
+      await relire();
+      onRetire?.();
+    },
+  });
 
   return (
     <>
