@@ -3,7 +3,6 @@ import { ErrorAlert } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /** Les options d'une Série : son format, l'étiquette Fearless et l'alternance automatique des Sides. */
 export interface SeriesOptions {
@@ -40,21 +39,27 @@ export function SeriesOptionsForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={`${id}-format`}>Format</Label>
-        <Select value={format} onValueChange={setFormat}>
-          <SelectTrigger id={`${id}-format`} aria-label="Format" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {formats.map((f) => (
-              <SelectItem key={f} value={String(f)}>
-                BO{f}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-sm leading-none font-medium">Format</legend>
+        <div className="flex flex-wrap gap-2">
+          {formats.map((f) => (
+            <label
+              key={f}
+              className="flex h-9 min-w-14 cursor-pointer items-center justify-center rounded-md border px-3 text-sm font-medium has-checked:border-primary has-checked:bg-accent has-focus-visible:ring-2 has-focus-visible:ring-ring"
+            >
+              <input
+                type="radio"
+                name={`${id}-format`}
+                value={f}
+                checked={format === String(f)}
+                onChange={() => setFormat(String(f))}
+                className="sr-only"
+              />
+              BO{f}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="flex items-center gap-2">
         <Checkbox id={`${id}-fearless`} checked={fearless} onCheckedChange={(v) => setFearless(v === true)} />
         <Label htmlFor={`${id}-fearless`}>Fearless</Label>
