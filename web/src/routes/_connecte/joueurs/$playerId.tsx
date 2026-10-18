@@ -31,6 +31,7 @@ function FicheJoueur() {
           <div>
             <h1 className="text-2xl font-bold">{player.data.prenom}</h1>
             <p className="text-muted-foreground">{player.data.riotId}</p>
+            {fiche.data?.discord && <p className="text-sm text-muted-foreground">Discord · {fiche.data.discord.username ?? fiche.data.discord.discordId}</p>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat title="Rang SoloQ">
@@ -82,7 +83,7 @@ function FicheJoueur() {
 }
 
 const n = (value: number | null) => value == null ? "—" : value.toFixed(1);
-const pct = (value: number | null) => value == null ? "—" : `${Math.round(value * 100)}%`;
+const pct = (value: number | null) => value == null ? "—" : `${Math.round(value)}%`;
 
 function Rows({ items, empty }: { items: [string, string][]; empty: string }) {
   return <div className="divide-y rounded-xl border border-border/60 bg-card/50 px-4">{items.length ? items.map(([label, value]) => <p key={label} className="flex justify-between gap-3 py-3 text-sm"><span>{label}</span><span className="text-muted-foreground">{value}</span></p>) : <p className="py-5 text-sm text-muted-foreground">{empty}</p>}</div>;

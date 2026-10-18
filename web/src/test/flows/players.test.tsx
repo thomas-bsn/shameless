@@ -51,11 +51,11 @@ describe("Joueurs", () => {
 
   it("shows all player profile sections and keeps missing statistics empty", async () => {
     const profile = {
-      playerId: 7, prenom: "Kélio", riotId: "Kelio#EUW", discord: null, cost: 4,
+      playerId: 7, prenom: "Kélio", riotId: "Kelio#EUW", discord: { discordId: "900", username: "kelio", avatarUrl: null }, cost: 4,
       soloQ: null, flex: { tier: "GOLD", division: 2, lp: 40 },
-      stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 },
-      champions: [{ championId: "Ahri", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
-      roles: [{ role: "Mid", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 1, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 },
+      champions: [{ championId: "Ahri", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
+      roles: [{ role: "Mid", stats: { gamesJouees: 1, victoires: 1, defaites: 0, winrate: 100, kda: null, killsMoyens: null, mortsMoyennes: null, assistsMoyens: null, csParMinute: null, participationAuxKills: null, degatsMoyens: null, degatsParMinute: null, noteMoyenne: null, gamesNotees: 0 } }],
       games: [{ gameId: 11, seriesId: 5, playedAt: "2026-10-03T20:00:00Z", equipe: "A", victoire: true, dureeSecondes: null, championId: "Ahri", role: "Mid", stats: null, performance: { note: 83, role: "Mid", sourceDuRole: "Rapport", composantes: [] } }],
       titres: { mvp: 2, dofd: 1 },
     };
@@ -66,7 +66,9 @@ describe("Joueurs", () => {
     renderApp("/joueurs/7");
     expect(await screen.findByRole("heading", { name: "Kélio" })).toBeInTheDocument();
     expect(screen.getAllByText("Gold II · 40 LP")).toHaveLength(2);
+    expect(screen.getByText("Discord · kelio")).toBeInTheDocument();
     expect(screen.getByText("2 MVP")).toBeInTheDocument();
+    expect(screen.getAllByText(/100%/)).not.toHaveLength(0);
     expect(screen.getByRole("img", { name: "Évolution mensuelle du cost de 1 à 6" })).toBeInTheDocument();
     expect(screen.getAllByText("Ahri")).toHaveLength(2);
     expect(screen.getByText("83/100")).toBeInTheDocument();
