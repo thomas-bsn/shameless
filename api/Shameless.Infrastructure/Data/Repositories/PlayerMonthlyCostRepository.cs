@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,17 +21,14 @@ public class PlayerMonthlyCostRepository : IPlayerMonthlyCostRepository
             .OrderBy(c => c.Month)
             .ToListAsync();
 
-    public async Task<Dictionary<int, decimal>> GetCostsFinauxAvantAsync(DateOnly mois)
+    public async Task<Dictionary<int, decimal>> GetCostsFinauxDuMoisAsync(DateOnly mois)
     {
-        var limite = mois.ToDateTime(TimeOnly.MinValue);
-        var lignes = await _db.PlayerMonthlyCosts
+        var debut = mois.ToDateTime(TimeOnly.MinValue);
+        var fin = mois.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+        return await _db.PlayerMonthlyCosts
             .AsNoTracking()
-            .Where(c => c.Month < limite)
-            .Select(c => new { c.PlayerId, c.Month, c.FinalCost })
-            .ToListAsync();
-        return lignes
-            .GroupBy(c => c.PlayerId)
-            .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.Month).First().FinalCost);
+            .Where(c => c.Month >= debut && c.Month < fin)
+            .ToDictionaryAsync(c => c.PlayerId, c => c.FinalCost);
     }
 
     public async Task UpsertAsync(PlayerMonthlyCost monthlyCost)

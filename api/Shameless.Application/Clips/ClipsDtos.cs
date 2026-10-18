@@ -117,7 +117,7 @@ public sealed record ClipsPage(List<ClipDeLaListe> Items, int Total, int Page, i
 /// <summary>Les filtres de la liste des clips ; chacun est facultatif. Bornes UTC [SoireeDebut, SoireeFin[.</summary>
 /// <param name="Auteur">Un morceau du nom de l'auteur, sans tenir compte de la casse.</param>
 /// <param name="SansGame">true : seulement sans Game ; false : seulement avec une Game.</param>
-public sealed record FiltreDesClips(string? Auteur, DateTime? SoireeDebut, DateTime? SoireeFin, bool? SansGame);
+public sealed record FiltreDesClips(string? Auteur, DateTime? SoireeDebut, DateTime? SoireeFin, bool? SansGame, bool? Masques = null);
 
 /// <summary>
 /// Un clip éligible au Fond (<c>GET /clips/fond</c>) : de quoi le lire et créditer son auteur. La vidéo se

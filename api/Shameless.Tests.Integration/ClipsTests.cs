@@ -174,7 +174,7 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
         public Task<(List<Clip> Clips, int Total)> ListerAsync(Shameless.Application.Clips.FiltreDesClips filtre, int page, int taille) =>
             _reel.ListerAsync(filtre, page, taille);
 
-        public Task<List<Clip>> GetDuFondAuHasardAsync() => _reel.GetDuFondAuHasardAsync();
+        public Task<List<Clip>> GetDuFondAuHasardAsync(int limite) => _reel.GetDuFondAuHasardAsync(limite);
         public Task<bool> TrySaveChangesAsync() => throw new InvalidOperationException("La base est en panne.");
     }
 
