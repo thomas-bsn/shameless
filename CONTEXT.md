@@ -37,8 +37,9 @@ Statut : `pending`, `completed`, `error`.
 - **Équipe** : les cinq joueurs d'un même camp dans une série. Une équipe garde son  
 identité d'une game à l'autre, même si elle change de side.
 - **Side** : le camp sur la carte pour une game donnée, `blue` ou `red`. À ne pas  
-confondre avec l'équipe. Choisi à la main à chaque game, ou alterné automatiquement  
-si demandé.
+confondre avec l'équipe. Alterné automatiquement d'une game à l'autre ; celui de la  
+première game est tiré à pile ou face. Il n'est jamais choisi à la main : le Rapport du  
+Companion fait foi après la partie.
 - **Série** : une suite de games entre les deux mêmes équipes. Entité `BestOfSeries`.  
 Formats : BO1, BO2, BO3, BO5. Une série finit **gagnée** (une équipe atteint le nombre  
 de victoires du format), **nulle** (BO2 terminé à 1-1) ou **interrompue**.
@@ -61,6 +62,18 @@ main ou automatiquement après une période sans game. Peut passer minuit. Son �
 sauvegardé côté API.
 - **Récap** : le résumé d'une game terminée (vainqueur, stats des dix joueurs, votes),  
 affiché sur le site et posté par le bot.
+- **Page de la Série** : le récap d'une Série, à lien stable et joignable à tout moment :  
+format et options, score, les deux Équipes, la liste des Games avec leur vainqueur. Elle  
+ne montre ni Capitaine, ni lien, ni code, ni commande.
+- **Écran de préparation** : l'écran réservé à l'organisateur, affiché juste après la  
+création de la Série. Il montre les Équipes, désigne les Capitaines (après une Roulette, ou  
+pour en changer), donne les deux Liens capitaine, le Lien spectateur et le Code Companion,  
+et porte le seul bouton « Lancer la draft », grisé tant que les deux Capitaines n'ont pas  
+rejoint. Il se rouvre depuis l'Espace organisateur, sans ce bouton une fois la Draft de  
+champions lancée.
+- **Espace organisateur** : l'écran de pilotage d'une Série en cours, réservé à  
+l'organisateur connecté : game en cours, Rapport en revue, Remplacement, Interruption, accès  
+à l'Écran de préparation.
 
 ## Former les équipes : le Picker
 
@@ -83,11 +96,17 @@ Les champions sont choisis pour l'Équipe, pas pour un joueur : qui joue quoi se
 décide en vocal. À ne pas confondre avec la **Draft**, qui forme les équipes.
 - **Capitaine** : le joueur qui mène une Équipe dans une Draft ou une Draft de  
 champions. Ceux de la Draft le restent pour la Draft de champions ; après une  
-Roulette, l'organisateur en désigne un par Équipe.
+Roulette, l'organisateur en désigne un par Équipe sur l'Écran de préparation. Un joueur  
+ne peut pas être Capitaine des deux Équipes. Le Capitaine n'est affiché ni sur la Page de  
+la Série ni sur le récap du Picker.
+- **Capitaine rejoint** : un Capitaine a rejoint dès que son Lien capitaine a été ouvert  
+une première fois ; la mémoire en est conservée côté API.
 - **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
-champions de son Équipe pendant toute la Série, sans se connecter.
+champions de son Équipe pendant toute la Série, sans se connecter. Le bot l'envoie en DM  
+au Capitaine ; sans bot, ou si le DM échoue, l'organisateur le copie à la main.
 - **Lien spectateur** : lien public, en lecture seule, pour regarder les Drafts de  
-champions d'une Série.
+champions d'une Série. Disponible dès la création de la Série ; le bot le poste dans le  
+salon général.
 
 ## Niveau des joueurs
 
@@ -172,7 +191,8 @@ champion joué, victoire et stats brutes. La Série vient du code, jamais du rap
 rapport **conforme** (joueurs détectés = participants de la game en attente, chacun sur  
 son Side, Remplacements compris) termine cette game comme une saisie manuelle, qui reste  
 le secours ; la game garde alors ses données Riot et le champion joué de chaque joueur.  
-Un rapport qui n'est pas conforme est **en revue**. Sans game en attente, le rapport est  
+Un rapport qui n'est pas conforme est **en revue** ; un joueur détecté que  
+l'Instance ne connaît pas (PUUID inconnu) y est signalé à l'organisateur avec son RiotId. Sans game en attente, le rapport est  
 refusé (`RapportDeGame`).
 - **Rapport en revue** : un rapport dont les joueurs détectés ne sont pas la composition  
 de la game en attente (participants absents, joueurs inattendus, participants sur l'autre  
@@ -188,9 +208,15 @@ séries, poste les récaps, gère les votes et rattache les clips. Il échange a
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
 webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les routes  
 `/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
-- **Début de la Game** : son lancement dans la Série (`POST /series/{id}/games`), avant  
-sa Draft de champions. C'est là que part `game_started` et que les pronostics se closent  
-(ADR 0013).
+- **Lancement de la Game** : sa création dans la Série (`POST /series/{id}/games`), quand  
+l'organisateur clique sur « Lancer la draft ». Elle porte alors la Draft de champions.
+- **Début de la Game** : le moment où le Companion détecte le lancement de la partie  
+dans le client LoL et le signale à l'API. C'est là que part `game_started` et que les  
+pronostics se closent (ADR 0017, qui révise l'ADR 0013). Sans Companion, l'organisateur  
+le signale à la main.
+- **Fin de la Game** : le Rapport du Companion à la fin de la partie ; l'organisateur  
+n'a pas à revenir sur le site, sauf pour consulter ou pour un Remplacement entre deux  
+games.
 - **Proxchat** : le logiciel de chat vocal de proximité, dans un repo séparé.
 - **Clip** : une vidéo d'un moment de game, postée dans le salon `#clips` de Discord.  
 Le bot la télécharge et la dépose à l'API, qui la conserve sur l'Instance (le lien  

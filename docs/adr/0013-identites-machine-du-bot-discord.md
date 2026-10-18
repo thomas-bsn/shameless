@@ -1,6 +1,6 @@
 # 0013 — Identités machine du bot Discord
 
-Statut : acceptée — 2026-10-17
+Statut : acceptée — 2026-10-17 (« Début de la Game » révisé par l'ADR 0017)
 
 ## Contexte
 L'ADR 0005 fait de Discord OAuth la seule connexion des personnes ; l'ADR 0010 y ajoute

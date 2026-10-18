@@ -1,6 +1,6 @@
 # 0010 — Liens d'accès à portée limitée pour la Draft de champions
 
-Statut : acceptée — 2026-10-16
+Statut : acceptée — 2026-10-16 (disponibilité du lien spectateur révisée par l'ADR 0017)
 
 ## Contexte
 L'ADR 0005 fait de Discord OAuth la seule connexion, et toute commande qui modifie une
