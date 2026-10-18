@@ -78,6 +78,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Calcul de version (publication automatique)
+        run: tests/deploy/prochaine-version.test.sh
+
       - name: Vérifier la publication et le compose de déploiement
         run: tests/deploy/verifier-publication.sh
 

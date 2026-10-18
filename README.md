@@ -48,13 +48,20 @@ Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}` (`-f c
 
 Pour un domaine en HTTPS automatique, Caddy doit être joignable sur les ports 80 et 443 : `SHAMELESS_HTTP_PORT=80` et `SHAMELESS_HTTPS_PORT=443`. Le wizard est servi sur ces mêmes ports (en HTTPS auto-signé sur le 443 : l'avertissement du navigateur est attendu) ; ne pas laisser un wizard non configuré exposé plus longtemps que nécessaire.
 
-Tags publiés à chaque tag Git `vX.Y.Z` (semver), pour les quatre images :
+Tags publiés à chaque version `vX.Y.Z` (semver), pour les quatre images :
 
 - `X.Y.Z` : version exacte, reproductible. Épingler `SHAMELESS_VERSION=X.Y.Z` (sans le `v`) pour une instance prévisible ;
 - `X.Y` : dernier correctif de la série ;
 - `latest` : tag stable, dernière version non préversion. C'est le défaut du compose.
 
-Une préversion (`vX.Y.Z-rc.1`) ne pose que son tag exact. Les images sont multi-architecture (amd64, arm64). Le workflow est `.github/workflows/release.yml` ; pour publier : `git tag vX.Y.Z && git push origin vX.Y.Z`. Les packages GHCR doivent être rendus publics dans les réglages GitHub pour être tirés sans authentification.
+Une préversion (`vX.Y.Z-rc.1`) ne pose que son tag exact. Les images sont multi-architecture (amd64, arm64). Les packages GHCR doivent être rendus publics dans les réglages GitHub pour être tirés sans authentification.
+
+#### Publication automatique et manuelle
+
+- **Automatique** : après chaque CI verte sur `main` (workflow `.github/workflows/publication-auto.yml`), la version suivante est calculée à partir du dernier tag `vX.Y.Z` (les préversions sont ignorées ; sans tag, on part de `0.0.0`), le tag `vX.Y.Z` est posé sur le commit testé, puis les quatre images sont publiées dans le même run. Une CI en échec ne publie rien.
+- **Niveau de bump** : patch par défaut. Le label `minor` ou `major` sur la PR mergée, ou `[minor]` / `[major]` dans son titre, passe au niveau supérieur (`major` l'emporte sur `minor`). Le label doit être posé avant le merge ; il se lit sur la PR du commit, donc un push direct sur `main` donne toujours un patch. Si deux merges se suivent de près, la publication en attente remplace la précédente : le label de la PR ignorée est alors perdu, la version suivante part du dernier tag.
+- **Manuelle** (préversion, ou publier à la demande en cas de besoin) : `git tag vX.Y.Z && git push origin vX.Y.Z` (ou `vX.Y.Z-rc.1`). Le workflow `.github/workflows/release.yml` publie alors les images. Le tag posé par la publication automatique ne le relance pas (un tag poussé avec le `GITHUB_TOKEN` ne déclenche pas de workflow).
+- La construction des images est factorisée dans `.github/workflows/publier-images.yml`, appelé par les deux workflows. Le calcul de version est dans `.github/scripts/prochaine-version.sh`, testé par `tests/deploy/prochaine-version.test.sh` (lancé dans la CI).
 
 ### Application Discord
 
@@ -167,4 +174,4 @@ Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `f
 - type-check et teste le serveur du wizard (`wizard/`) ;
 - joue le test d'acceptation `tests/compose/acceptance.sh` (job `compose-acceptance`) : Compose vierge, wizard, site accessible, connexion Discord possible, redémarrage. Localement : `tests/compose/acceptance.sh` (Docker requis).
 
-Sur un tag `vX.Y.Z`, le workflow `release.yml` publie les images dans GHCR.
+Après une CI verte sur `main`, `publication-auto.yml` pose le tag `vX.Y.Z` suivant et publie les images dans GHCR ; sur un tag `vX.Y.Z` poussé à la main, `release.yml` les publie (voir « Publication automatique et manuelle »).
