@@ -6,15 +6,32 @@ namespace Shameless.Tests.Integration.Infrastructure;
 public sealed class FakeDiscord : IDiscordOAuthClient
 {
     private readonly Dictionary<string, (DiscordMeResponse User, string[] Guilds)> _byCode = new();
+    private readonly HashSet<string> _failing = [];
 
-    public string AddUser(string discordId, string username, params string[] guilds)
+    public string AddUser(string discordId, string username, params string[] guilds) =>
+        AddProfile(discordId, username, null, null, null, guilds);
+
+    /// <summary>Un code OAuth pour ce profil Discord complet (photo, bannière, couleur d'accent).</summary>
+    public string AddProfile(string discordId, string username, string? avatar, string? banner, int? accentColor, params string[] guilds)
     {
         var code = $"code-{discordId}-{Guid.NewGuid():N}";
-        _byCode[code] = (new DiscordMeResponse(discordId, username, null, null), guilds);
+        _byCode[code] = (new DiscordMeResponse(discordId, username, null, avatar, banner, accentColor), guilds);
         return code;
     }
 
-    public void Reset() => _byCode.Clear();
+    /// <summary>Un code que Discord refuse d'échanger (Discord en panne ou autorisation retirée).</summary>
+    public string AddFailingCode()
+    {
+        var code = $"code-failing-{Guid.NewGuid():N}";
+        _failing.Add(code);
+        return code;
+    }
+
+    public void Reset()
+    {
+        _byCode.Clear();
+        _failing.Clear();
+    }
 
     public Task<DiscordTokenResponse> ExchangeCodeAsync(string code, CancellationToken ct) =>
         _byCode.ContainsKey(code)

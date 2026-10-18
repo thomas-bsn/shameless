@@ -993,6 +993,15 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying")
                         .HasColumnName("avatar_url");
 
+                    b.Property<string>("BannerColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("banner_color");
+
+                    b.Property<string>("BannerUrl")
+                        .HasColumnType("character varying")
+                        .HasColumnName("banner_url");
+
                     b.Property<long>("DiscordId")
                         .HasColumnType("bigint")
                         .HasColumnName("discord_id");

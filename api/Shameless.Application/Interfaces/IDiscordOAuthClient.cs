@@ -23,5 +23,7 @@ public sealed record DiscordMeResponse(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("username")] string Username,
     [property: JsonPropertyName("discriminator")] string? Discriminator,
-    [property: JsonPropertyName("avatar")] string? Avatar
+    [property: JsonPropertyName("avatar")] string? Avatar,
+    [property: JsonPropertyName("banner")] string? Banner = null,
+    [property: JsonPropertyName("accent_color")] int? AccentColor = null
 );

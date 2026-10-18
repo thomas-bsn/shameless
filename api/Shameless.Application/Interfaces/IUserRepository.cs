@@ -8,8 +8,8 @@ public interface IUserRepository
     Task<UserDto?> GetByDiscordIdAsync(long discordId);
     Task<UserDto> CreateAsync(long discordId, string? username, string? avatarUrl);
 
-    /// <summary>Première connexion : crée la ligne ; ensuite met à jour pseudo et photo.</summary>
-    Task<UserDto> SignInAsync(long discordId, string? username, string? avatarUrl);
+    /// <summary>Première connexion : crée la ligne ; ensuite met à jour pseudo, photo et bannière.</summary>
+    Task<UserDto> SignInAsync(long discordId, string? username, string? avatarUrl, string? bannerUrl, string? bannerColor);
 
     Task<List<UserDto>> ListAsync();
     Task<List<UserDto>> ListByRoleAsync(UserRole role);
