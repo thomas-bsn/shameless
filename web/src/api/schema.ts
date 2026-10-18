@@ -5145,6 +5145,10 @@ export interface components {
             lienCapitaineA: string;
             lienCapitaineB: string;
             lienSpectateur: string;
+            /** Format: date-time */
+            capitaineARejointLe: null | string;
+            /** Format: date-time */
+            capitaineBRejointLe: null | string;
         };
         LigneClassement5v5: {
             /** Format: int32 */
