@@ -10,12 +10,9 @@ namespace Shameless.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "masque_du_fond",
-                table: "clips",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            // Une base qui a servi une ancienne version de la refonte du front porte déjà cette colonne.
+            migrationBuilder.Sql(
+                "ALTER TABLE clips ADD COLUMN IF NOT EXISTS masque_du_fond boolean NOT NULL DEFAULT FALSE;");
         }
 
         /// <inheritdoc />
