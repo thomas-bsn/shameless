@@ -23,5 +23,8 @@ public sealed class ClipRepository : IClipRepository
     public Task<List<Clip>> GetSansGameAsync() =>
         _db.Clips.AsNoTracking().Where(c => c.GameId == null).OrderBy(c => c.PublieLe).ThenBy(c => c.Id).ToListAsync();
 
+    public Task<List<Clip>> GetDuFondAuHasardAsync() =>
+        _db.Clips.AsNoTracking().Where(c => !c.MasqueDuFond).OrderBy(_ => EF.Functions.Random()).ToListAsync();
+
     public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 }

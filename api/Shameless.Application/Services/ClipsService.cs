@@ -97,6 +97,10 @@ public sealed class ClipsService
     public async Task<List<ClipResponse>> GetSansGameAsync() =>
         (await _clips.GetSansGameAsync()).Select(ClipResponse.From).ToList();
 
+    /// <summary>Les clips éligibles au Fond (non masqués), dans un ordre aléatoire.</summary>
+    public async Task<List<ClipDuFond>> GetDuFondAsync() =>
+        (await _clips.GetDuFondAuHasardAsync()).Select(ClipDuFond.From).ToList();
+
     /// <summary>
     /// Les games à proposer pour rattacher le clip à la main, de la plus récente à la plus ancienne, ou
     /// null si le clip n'existe pas (<see cref="GamePlausible.FenetreDesCandidates"/>).

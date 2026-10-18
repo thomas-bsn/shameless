@@ -55,6 +55,16 @@ public sealed record ClipResponse(
 }
 
 /// <summary>
+/// Un clip éligible au Fond (<c>GET /clips/fond</c>) : de quoi le lire et créditer son auteur. La vidéo se
+/// lit sur <c>GET /clips/{id}/fichier</c>.
+/// </summary>
+/// <param name="GameId">La Game du clip, null s'il n'en a pas.</param>
+public sealed record ClipDuFond(int Id, string AuteurNom, int? GameId)
+{
+    public static ClipDuFond From(Clip clip) => new(clip.Id, clip.AuteurNom, clip.GameId);
+}
+
+/// <summary>
 /// Une Game proposée pour rattacher un clip à la main (<c>GET /clips/{id}/games-candidates</c>).
 /// </summary>
 /// <param name="SeriesId">La Série de la game, null pour une game legacy hors Série.</param>

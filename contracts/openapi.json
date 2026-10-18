@@ -590,6 +590,54 @@
         }
       }
     },
+    "/clips/fond": {
+      "get": {
+        "tags": [
+          "Clips"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipDuFond"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipDuFond"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClipDuFond"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/clips/{id}/games-candidates": {
       "get": {
         "tags": [
@@ -5360,6 +5408,30 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ClipDuFond": {
+        "required": [
+          "id",
+          "auteurNom",
+          "gameId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "auteurNom": {
+            "type": "string"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },

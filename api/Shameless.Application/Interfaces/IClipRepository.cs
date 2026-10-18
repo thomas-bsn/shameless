@@ -18,6 +18,9 @@ public interface IClipRepository
     /// <summary>Les clips sans Game, du plus ancien au plus récent publié.</summary>
     Task<List<Clip>> GetSansGameAsync();
 
+    /// <summary>Les clips non masqués du Fond, dans un ordre tiré au hasard par la base.</summary>
+    Task<List<Clip>> GetDuFondAuHasardAsync();
+
     /// <summary>Enregistre ; false si une autre commande a déposé la même pièce jointe entre-temps.</summary>
     Task<bool> TrySaveChangesAsync();
 }

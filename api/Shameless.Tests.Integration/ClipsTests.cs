@@ -171,6 +171,7 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
         public Task<Clip?> GetByAttachmentIdAsync(long discordAttachmentId) => _reel.GetByAttachmentIdAsync(discordAttachmentId);
         public Task<List<Clip>> GetDeLaGameAsync(int gameId) => _reel.GetDeLaGameAsync(gameId);
         public Task<List<Clip>> GetSansGameAsync() => _reel.GetSansGameAsync();
+        public Task<List<Clip>> GetDuFondAuHasardAsync() => _reel.GetDuFondAuHasardAsync();
         public Task<bool> TrySaveChangesAsync() => throw new InvalidOperationException("La base est en panne.");
     }
 

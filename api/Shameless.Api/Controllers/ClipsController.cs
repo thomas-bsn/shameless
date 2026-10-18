@@ -32,6 +32,13 @@ public sealed class ClipsController : ControllerBase
     public async Task<List<ClipResponse>> GetSansGame() => await _clips.GetSansGameAsync();
 
     /// <summary>
+    /// Les clips du Fond : tous ceux qui ne sont pas masqués du Fond, tirés dans un ordre aléatoire.
+    /// </summary>
+    [HttpGet("clips/fond")]
+    [ProducesResponseType<List<ClipDuFond>>(StatusCodes.Status200OK)]
+    public async Task<List<ClipDuFond>> GetDuFond() => await _clips.GetDuFondAsync();
+
+    /// <summary>
     /// Les games à proposer pour rattacher le clip : lancées la veille ou le jour de sa publication
     /// (fuseau de l'Instance), avant lui, de la plus récente à la plus ancienne.
     /// </summary>

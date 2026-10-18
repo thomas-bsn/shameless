@@ -573,6 +573,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clips/fond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClipDuFond"][];
+                        "application/json": components["schemas"]["ClipDuFond"][];
+                        "text/json": components["schemas"]["ClipDuFond"][];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clips/{id}/games-candidates": {
         parameters: {
             query?: never;
@@ -4643,6 +4689,13 @@ export interface components {
             /** Format: int32 */
             gameId: null | number;
             rattachement: null | string;
+        };
+        ClipDuFond: {
+            /** Format: int32 */
+            id: number;
+            auteurNom: string;
+            /** Format: int32 */
+            gameId: null | number;
         };
         ClipResponse: {
             /** Format: int32 */
