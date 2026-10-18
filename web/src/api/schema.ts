@@ -257,6 +257,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bot/series/{id}/liens-capitaine/{equipe}/dm-echec": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    equipe: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EchecDmRequest"];
+                    "text/json": components["schemas"]["EchecDmRequest"];
+                    "application/*+json": components["schemas"]["EchecDmRequest"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bot/games/{id}": {
         parameters: {
             query?: never;
@@ -4927,6 +5014,14 @@ export interface components {
             playerId: number;
             equipe: string;
         };
+        EchecDmRequest: {
+            raison: string;
+        };
+        EchecDmResponse: {
+            raison: string;
+            /** Format: date-time */
+            signaleLe: string;
+        };
         EntityTagHeaderValue: {
             tag: components["schemas"]["StringSegment"];
             isWeak: boolean;
@@ -5145,6 +5240,8 @@ export interface components {
             lienCapitaineA: string;
             lienCapitaineB: string;
             lienSpectateur: string;
+            echecDmA: null | components["schemas"]["EchecDmResponse"];
+            echecDmB: null | components["schemas"]["EchecDmResponse"];
         };
         LigneClassement5v5: {
             /** Format: int32 */

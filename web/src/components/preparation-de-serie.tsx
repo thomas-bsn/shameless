@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { $api, type Schemas } from "@/api/client";
+import { AlerteDmCapitaine } from "@/components/alerte-dm-capitaine";
 import { CodeCompanionPanel } from "@/components/code-companion-panel";
 import { CopyField } from "@/components/copy-field";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -24,7 +25,8 @@ const equipes = ["A", "B"] as const;
 export function PreparationDeSerie({ series }: { series: Series }) {
   const queryClient = useQueryClient();
   const params = { params: { path: { id: series.seriesId } } };
-  const liens = $api.useQuery("get", "/series/{id}/liens", params);
+  // Relu régulièrement : le bot rapporte un DM raté quelques secondes après la création de la Série.
+  const liens = $api.useQuery("get", "/series/{id}/liens", params, { refetchInterval: 5000 });
   const renouveler = $api.useMutation("post", "/series/{id}/liens/{equipe}/renouveler", {
     onSuccess: (data: Schemas["LiensSerieResponse"]) =>
       queryClient.setQueryData(["get", "/series/{id}/liens", params], data),
@@ -78,6 +80,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
                     </Button>
                   </CopyField>
                 )}
+                {liens.isSuccess && <AlerteDmCapitaine equipe={equipe} liens={liens.data} />}
               </div>
             ))}
             {renouveler.isError && <ErrorAlert error={renouveler.error} />}

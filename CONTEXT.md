@@ -206,7 +206,7 @@ la game en attente si la Série est interrompue ou annulée (`RapportCompanion`)
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
-webhooks `teams_formed`, `game_started`, `game_completed`), et il appelle les routes  
+webhooks `teams_formed`, `captain_link`, `spectator_link`, `game_started`, `game_completed`), et il appelle les routes  
 `/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
 - **Lancement de la Game** : sa création dans la Série (`POST /series/{id}/games`), quand  
 l'organisateur clique sur « Lancer la draft ». Elle porte alors la Draft de champions.

@@ -33,6 +33,8 @@ non livré au bout de 24 h : abandonné. Le snapshot est relu à chaque tentativ
 disparaît avec sa Série ou sa Game (Série annulée, game en attente supprimée, ADR 0009).
 - `teams_formed` : à toute création de Série (validation du Picker, création directe,
   Revanche), avant la Draft de champions.
+- `captain_link` et `spectator_link` : à toute création de Série, un Lien capitaine par Équipe
+  (DM) et le Lien spectateur (salon général) ; contrat et échec de DM dans l'ADR 0017.
 - `game_started` : au lancement de la Game (`POST /series/{id}/games`).
 - `game_completed` : à sa fin, quelle que soit la source du résultat (saisie, Companion,
   revue acceptée), avec le score de la Série à l'issue de cette Game.

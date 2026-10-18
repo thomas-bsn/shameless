@@ -44,6 +44,8 @@ const liens: Schemas["LiensSerieResponse"] = {
   lienCapitaineA: "secret-a",
   lienCapitaineB: "secret-b",
   lienSpectateur: "secret-spectateur",
+  echecDmA: null,
+  echecDmB: null,
 };
 
 const routes = (series: Series = serie()) => ({
@@ -135,6 +137,38 @@ describe("Écran de préparation", () => {
       `${window.location.origin}/draft/spectateur/secret-spectateur`,
     );
     expect(screen.queryByRole("button", { name: /J'ai envoyé/ })).not.toBeInTheDocument();
+  });
+
+  it("prévient quand le bot n'a pas pu envoyer le DM d'un Lien capitaine, pour copier le lien à la main", async () => {
+    mockApi({
+      ...routes(serie({ capitaineA: 2, capitaineB: 3 })),
+      "GET /series/5/liens": { ...liens, echecDmB: { raison: "dm_ferme", signaleLe: "2026-10-19T19:05:00Z" } },
+    });
+    renderApp("/series/5/preparation");
+
+    const alerte = await screen.findByRole("alert");
+    expect(alerte).toHaveTextContent("Le DM du Lien capitaine de l'Équipe B n'est pas parti");
+    expect(alerte).toHaveTextContent("DM fermé");
+    expect(alerte).toHaveTextContent("Copiez le lien");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("explique qu'un compte Discord non lié n'a pas reçu son DM", async () => {
+    mockApi({
+      ...routes(serie({ capitaineA: 2, capitaineB: 3 })),
+      "GET /series/5/liens": { ...liens, echecDmA: { raison: "compte_non_lie", signaleLe: "2026-10-19T19:05:00Z" } },
+    });
+    renderApp("/series/5/preparation");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Compte Discord non lié");
+  });
+
+  it("n'affiche aucune alerte de DM quand tout est parti ou sans bot", async () => {
+    mockApi(routes(serie({ capitaineA: 2, capitaineB: 3 })));
+    renderApp("/series/5/preparation");
+
+    await screen.findByLabelText("Lien capitaine de l'Équipe A");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("montre le Code Companion, le copie et le renouvelle", async () => {

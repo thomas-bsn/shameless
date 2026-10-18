@@ -40,3 +40,40 @@ reflèterait pas le vrai début de partie.
   n'accepte rien d'autre et refuse sans Game en attente.
 - Une Série annulée ou une Game en attente supprimée emporte son `game_started` non livré
   (ADR 0009 inchangé).
+
+## Contrat des liens pour `harceleur_bot`
+Deux événements s'ajoutent à l'outbox de l'ADR 0013, même enveloppe v1, même signature, mêmes
+règles de livraison. Ils sont enregistrés à toute création de Série (validation du Picker,
+création directe, Revanche), seulement si les webhooks sont configurés : sans bot lié, rien
+ne part et l'organisateur copie les liens sur l'Écran de préparation.
+
+- `captain_link` : un par Équipe, `event_id` `captain_link:series:{id}:team:{A|B}`. Le bot
+  envoie `data.url` en DM au Capitaine.
+  ```json
+  { "series_id": "12", "team": "A", "team_name": "Équipe A",
+    "captain": { "name": "Kuro", "discord_id": "111111111111111111" },
+    "url": "https://shameless.example.org/draft/capitaine/{secret}" }
+  ```
+  `captain.discord_id` vaut `null` si le Joueur n'a pas de compte Discord lié : le bot ne peut
+  pas écrire, il le rapporte comme échec (`compte_non_lie`). Tant que l'Équipe n'a pas de
+  Capitaine, l'événement n'est pas livré (retenté jusqu'à ses 24 h) : il part dès la
+  désignation, avec le Capitaine et le lien du moment de la livraison. Un Capitaine changé
+  ou un lien renouvelé après livraison ne renvoie rien : l'organisateur copie le lien.
+- `spectator_link` : un par Série, `event_id` `spectator_link:series:{id}`. Le bot poste
+  `data.url` dans le salon général.
+  ```json
+  { "series_id": "12", "url": "https://shameless.example.org/draft/spectateur/{secret}" }
+  ```
+- `url` est `null` quand `Bot:WebUrl` n'est pas configuré (le bot ne peut alors rien envoyer).
+  Les URL portent un secret : ne pas les journaliser.
+
+**Échec de DM.** Quand le DM d'un `captain_link` ne peut pas partir, le bot le rapporte, avec
+sa clé bot → API (`Authorization: Bearer`, ADR 0013) :
+
+`POST /bot/series/{series_id}/liens-capitaine/{team}/dm-echec`, corps `{ "raison": "…" }`,
+`raison` valant `compte_non_lie`, `dm_ferme` ou `autre`. Réponses : 204 ; 400 (équipe ou
+raison inconnue) ; 401 ; 404 (Série inconnue) ; 409 (Équipe sans Capitaine).
+
+L'Écran de préparation affiche l'échec à côté du lien concerné. Il s'efface quand l'organisateur
+renouvelle le lien ou change de Capitaine. Un DM réussi ne se rapporte pas. Un échec du poste
+du `spectator_link` n'a pas de route : le lien reste copiable.
