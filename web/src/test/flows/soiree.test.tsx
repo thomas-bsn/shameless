@@ -152,16 +152,22 @@ describe("Soirée", () => {
       "GET /soirees/7/series": { series: [] },
       "POST /soirees/7/close": json({}),
     });
-    const confirm = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const confirm = vi.fn();
     vi.stubGlobal("confirm", confirm);
     renderApp("/soiree");
     const fermer = () => fetch.mock.calls.filter(([r]) => r.url.endsWith("/soirees/7/close"));
 
     await userEvent.click(await screen.findByRole("button", { name: "Fermer la soirée" }));
+    const fenetre = await screen.findByRole("dialog", { name: "Fermer la soirée ?" });
+    expect(within(fenetre).getByText(/séries en cours resteront telles quelles/)).toBeInTheDocument();
+    await userEvent.click(within(fenetre).getByRole("button", { name: "Annuler" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(fermer()).toHaveLength(0);
 
     await userEvent.click(screen.getByRole("button", { name: "Fermer la soirée" }));
-    expect(fermer()).toHaveLength(1);
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Fermer la soirée" }));
+    await vi.waitFor(() => expect(fermer()).toHaveLength(1));
+    expect(confirm).not.toHaveBeenCalled();
   });
 
   it("shows a dedicated screen when the Soirée closed by itself during a Picker", async () => {
