@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SeriesOptionsForm } from "@/components/series-options-form";
 import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { points } from "@/lib/cost";
 import { ajouterCandidats, joueursLibres, type PickerStep, pickerStep } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
+import { problemMessage } from "@/lib/problem";
 import { cn } from "@/lib/utils";
 
 // « soiree_ » : la page n'est pas imbriquée dans le layout de l'écran Soirée.
@@ -176,7 +178,15 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
         {players.isPending ? (
           <LoadingRows />
         ) : players.isError ? (
-          <ErrorAlert error={players.error} />
+          <Alert variant="destructive">
+            <AlertTitle>Impossible de charger les joueurs</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+              <span>{problemMessage(players.error)}</span>
+              <Button variant="outline" onClick={() => void players.refetch()}>
+                Réessayer
+              </Button>
+            </AlertDescription>
+          </Alert>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => {

@@ -59,4 +59,20 @@ describe("Picker : candidats vocaux", () => {
     expect(await screen.findByText("Le bot Discord ne répond pas : réessayez dans un instant.")).toBeInTheDocument();
     expect(coche(/Alice/)).not.toBeChecked();
   });
+
+  it("permet de réessayer si les joueurs ne se chargent pas", async () => {
+    let attempts = 0;
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /soirees/open": soiree,
+      "GET /players": () => (++attempts === 1 ? problem(503, "Service indisponible") : new Response(JSON.stringify(players), { headers: { "Content-Type": "application/json" } })),
+    });
+    renderApp("/soiree/picker");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Service indisponible");
+    await userEvent.click(screen.getByRole("button", { name: "Réessayer" }));
+
+    expect(await screen.findByRole("checkbox", { name: /Alice/ })).toBeInTheDocument();
+    expect(attempts).toBe(2);
+  });
 });
