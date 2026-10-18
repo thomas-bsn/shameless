@@ -22,8 +22,8 @@ const revue = (overrides: Partial<Schemas["RapportEnRevueResponse"]> = {}): Sche
   equipeGagnante: "B",
   absents: [participant(5, "Elsa")],
   inattendus: [
-    { puuid: "puuid-X1", side: "blue", championId: "Thresh", joueur: participant(11, "Xavier") },
-    { puuid: "puuid-inconnu-1234567890", side: "red", championId: "Ahri", joueur: null },
+    { puuid: "puuid-X1", riotId: null, side: "blue", championId: "Thresh", joueur: participant(11, "Xavier") },
+    { puuid: "puuid-inconnu-1234567890", riotId: "Inconnu#EUW", side: "red", championId: "Ahri", joueur: null },
   ],
   mauvaisSide: [participant(2, "Bruno")],
   ...overrides,
@@ -42,7 +42,7 @@ describe("RapportEnRevuePanel", () => {
     expect(within(absents).getByText("Elsa")).toBeInTheDocument();
     const inattendus = screen.getByRole("list", { name: "Joueurs détectés inattendus" });
     expect(within(inattendus).getByText("Xavier")).toBeInTheDocument();
-    expect(within(inattendus).getByText(/puuid-inconnu/)).toBeInTheDocument();
+    expect(within(inattendus).getByText("Inconnu#EUW")).toBeInTheDocument();
     expect(await within(inattendus).findByText("Thresh")).toBeInTheDocument();
     const mauvaisSide = screen.getByRole("list", { name: "Joueurs détectés sur l'autre Side" });
     expect(within(mauvaisSide).getByText("Bruno")).toBeInTheDocument();

@@ -20,17 +20,23 @@ public sealed class RapportsCompanionService
     private readonly IBestOfSeriesRepository _series;
     private readonly ICustomGameRepository _games;
     private readonly SeriesService _seriesService;
+    private readonly IPlayerRepository _players;
+    private readonly IRiotService _riot;
     private readonly TimeProvider _clock;
 
     public RapportsCompanionService(
         IBestOfSeriesRepository series,
         ICustomGameRepository games,
         SeriesService seriesService,
+        IPlayerRepository players,
+        IRiotService riot,
         TimeProvider clock)
     {
         _series = series;
         _games = games;
         _seriesService = seriesService;
+        _players = players;
+        _riot = riot;
         _clock = clock;
     }
 
@@ -68,8 +74,10 @@ public sealed class RapportsCompanionService
             return CommandResult<RapportTraite>.Conflict(
                 "Un rapport de la game en attente est déjà en revue : l'organisateur doit l'accepter ou le rejeter.");
 
-        if (!rapport.EcartAvec(game).EstVide)
+        var ecart = rapport.EcartAvec(game);
+        if (!ecart.EstVide)
         {
+            rapport = await AvecRiotIdsDesInconnusAsync(rapport, ecart);
             game.Rapports.Add(RapportCompanion.EnRevue(rapport, Maintenant()));
             if (await _games.TrySaveChangesAsync())
                 return EnRevue(game);
@@ -118,6 +126,32 @@ public sealed class RapportsCompanionService
         if (!await _games.TrySaveChangesAsync())
             return CommandResult<RapportTraite>.Conflict(DejaDecide);
         return CommandResult<RapportTraite>.Ok(new RapportTraite(game, StatutRapport.Rejete));
+    }
+
+    /// <summary>
+    /// Le rapport où chaque joueur détecté inattendu, inconnu de l'Instance, porte son RiotId pour que
+    /// l'organisateur sache qui c'est. Riot qui ne répond pas laisse le joueur sans RiotId : le rapport
+    /// est mis en revue quand même, signalé par son PUUID.
+    /// </summary>
+    private async Task<RapportDeGame> AvecRiotIdsDesInconnusAsync(RapportDeGame rapport, EcartDeComposition ecart)
+    {
+        var inattendus = ecart.Inattendus.ToList();
+        if (inattendus.Count == 0)
+            return rapport;
+
+        var connus = (await _players.GetByPuuidsAsync(inattendus)).Select(p => p.PUUID).ToHashSet();
+        var riotIds = new Dictionary<string, string?>();
+        foreach (var puuid in inattendus.Where(p => !connus.Contains(p)))
+        {
+            try { riotIds[puuid] = await _riot.GetRiotIdFromPuuidAsync(puuid); }
+            catch (HttpRequestException) { riotIds[puuid] = null; }
+        }
+        return rapport with
+        {
+            Joueurs = rapport.Joueurs
+                .Select(j => riotIds.TryGetValue(j.Puuid, out var riotId) ? j with { RiotId = riotId } : j)
+                .ToList()
+        };
     }
 
     private const string DejaDecide = "Ce rapport n'est plus en revue : l'organisateur a déjà décidé.";

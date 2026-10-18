@@ -5119,6 +5119,7 @@ export interface components {
         };
         JoueurInattenduResponse: {
             puuid: string;
+            riotId: null | string;
             side: string;
             championId: string;
             joueur: null | components["schemas"]["GameParticipantDto"];

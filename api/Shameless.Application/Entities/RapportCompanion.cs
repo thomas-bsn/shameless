@@ -67,7 +67,8 @@ public class RapportCompanion
                 j["side"]!.GetValue<string>(),
                 j["championId"]!.GetValue<string>(),
                 j["victoire"]!.GetValue<bool>(),
-                j["stats"]!.ToJsonString())).ToList());
+                j["stats"]!.ToJsonString(),
+                j["riotId"]?.GetValue<string>())).ToList());
     }
 
     /// <summary>L'organisateur tranche : le rapport en revue est accepté ou rejeté.</summary>
@@ -86,7 +87,8 @@ public class RapportCompanion
             ["side"] = j.Side,
             ["championId"] = j.ChampionId,
             ["victoire"] = j.Victoire,
-            ["stats"] = JsonNode.Parse(j.Stats!)
+            ["stats"] = JsonNode.Parse(j.Stats!),
+            ["riotId"] = j.RiotId
         }).ToArray())
     }.ToJsonString(new JsonSerializerOptions());
 }

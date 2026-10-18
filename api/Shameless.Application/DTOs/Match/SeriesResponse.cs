@@ -85,7 +85,7 @@ public record RapportEnRevueResponse(
             Inattendus: rapport.Joueurs
                 .Where(j => ecart.Inattendus.Contains(j.Puuid))
                 .Select(j => new JoueurInattenduResponse(
-                    j.Puuid, j.Side, j.ChampionId,
+                    j.Puuid, j.RiotId, j.Side, j.ChampionId,
                     joueursConnus.TryGetValue(j.Puuid, out var joueur) ? GameParticipantDto.From(joueur) : null))
                 .ToList(),
             MauvaisSide: ecart.MauvaisSide.Select(id => GameParticipantDto.From(participants[id])).ToList());
@@ -94,9 +94,10 @@ public record RapportEnRevueResponse(
 
 /// <summary>
 /// Un joueur détecté par le rapport qui n'est pas participant de la game : son PUUID, son Side, son
-/// champion joué, et le joueur Shameless de ce PUUID s'il est enregistré (null sinon).
+/// champion joué, son RiotId (Nom#TAG) quand Shameless a pu le retrouver, et le joueur Shameless de ce
+/// PUUID s'il est enregistré (null sinon).
 /// </summary>
-public record JoueurInattenduResponse(string Puuid, string Side, string ChampionId, GameParticipantDto? Joueur);
+public record JoueurInattenduResponse(string Puuid, string? RiotId, string Side, string ChampionId, GameParticipantDto? Joueur);
 
 /// <summary>Le champion réellement joué par un participant de la game (id Data Dragon, ex. "LeeSin").</summary>
 public record ChampionJoueResponse(int PlayerId, string ChampionId);
