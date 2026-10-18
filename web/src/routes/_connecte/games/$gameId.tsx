@@ -101,7 +101,7 @@ function Equipe({
   const label = `Équipe ${team} · ${side === "blue" ? "Blue" : "Red"} side`;
 
   return (
-    <Card role="group" aria-label={label} className={cn(won && "border-emerald-400/50")}>
+    <Card role="group" aria-label={label} className={cn(won && "border-emerald-600/50 dark:border-emerald-400/50")}>
       <CardHeader>
         <CardTitle className={cn("text-sm", sideTextClass(side))}>{label}</CardTitle>
       </CardHeader>

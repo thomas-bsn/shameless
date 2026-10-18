@@ -27,7 +27,7 @@ function HallDeLaHonte() {
             <ol aria-label="Hall de la Honte" className="divide-y">
               {hall.data.joueurs.map((ligne) => (
                 <li key={ligne.playerId} className="flex items-center gap-4 py-2">
-                  <span aria-label="Rang" className="w-8 text-right text-lg font-bold tabular-nums text-muted-foreground">
+                  <span aria-label="Rang" className="w-8 text-right text-lg font-bold chiffres text-muted-foreground">
                     {ligne.rang}
                   </span>
                   <Link
@@ -37,7 +37,7 @@ function HallDeLaHonte() {
                   >
                     {ligne.prenom} <span className="text-sm font-normal text-muted-foreground">{ligne.riotId}</span>
                   </Link>
-                  <span className="font-semibold tabular-nums">{ligne.dofd} DOFD</span>
+                  <span className="font-semibold chiffres">{ligne.dofd} DOFD</span>
                 </li>
               ))}
             </ol>

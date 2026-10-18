@@ -160,7 +160,7 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
         <CardTitle>
           Joueurs cochés{" "}
-          <span className={cn("ml-1", selected.length === SELECTION_SIZE ? "text-emerald-400" : "text-muted-foreground")}>
+          <span className={cn("ml-1", selected.length === SELECTION_SIZE ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")}>
             {selected.length}/{SELECTION_SIZE}
           </span>
         </CardTitle>
