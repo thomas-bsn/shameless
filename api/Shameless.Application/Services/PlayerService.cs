@@ -2,6 +2,7 @@
 using Shameless.Application.Cost;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Riot;
 using Microsoft.Extensions.Logging;
 
 namespace Shameless.Application.Services;
@@ -59,7 +60,7 @@ public class PlayerService : IPlayerService
             RankTier: tier,
             RankDivision: division,
             Lp: rank?.LP,
-            MainRole: await _riot.GetMainRoleFromPuuidAsync(puuid),
+            MainRole: await MainRoleOrNullAsync(puuid),
             AlreadyRegistered: await _players.ExistsByPuuidAsync(puuid));
     }
 
@@ -75,7 +76,7 @@ public class PlayerService : IPlayerService
 
         var ranks = await _riot.GetRanksFromPuuidAsync(puuid);
         var rank = ranks.Solo;
-        var mainRole = await _riot.GetMainRoleFromPuuidAsync(puuid);
+        var mainRole = await MainRoleOrNullAsync(puuid);
         var (tier, division) = NormalizeRank(rank);
         var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
 
@@ -182,25 +183,10 @@ public class PlayerService : IPlayerService
         foreach (var player in players)
         {
             if (string.IsNullOrWhiteSpace(player.Puuid)) continue;
-
-            try
-            {
-                var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid);
-
-                // Riot a répondu : une file absente de la réponse, c'est un joueur non classé dans
-                // cette file. Si l'appel échoue, les derniers rangs connus restent.
-                var (soloTier, soloDivision) = NormalizeRank(ranks.Solo);
-                await _players.UpdateRankAsync(player.Id, soloTier, soloDivision, ranks.Solo?.LP);
-                var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
-                await _players.UpdateFlexRankAsync(player.Id, flexTier, flexDivision, ranks.Flex?.LP);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to refresh rank for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            }
+            await TryRefreshRanksAsync(player);
         }
     }
-    
+
     public async Task RefreshAllMainRolesAsync()
     {
         var players = await _players.GetAllAsync();
@@ -208,16 +194,75 @@ public class PlayerService : IPlayerService
         foreach (var player in players)
         {
             if (string.IsNullOrWhiteSpace(player.Puuid)) continue;
+            await TryRefreshMainRoleAsync(player);
+        }
+    }
 
-            try
-            {
-                var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.Puuid);
-                await _players.UpdateMainRoleAsync(player.Id, mainRole);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            }
+    public async Task<ResultatActualisationJoueur?> RefreshRiotAsync(int playerId)
+    {
+        var player = await _players.GetDtoByIdAsync(playerId);
+        if (player is null) return null;
+
+        if (string.IsNullOrWhiteSpace(player.Puuid))
+            return new ResultatActualisationJoueur(player.Id, player.Prenom, false, false, ["Aucun compte Riot connu pour ce joueur."]);
+
+        var echecs = new List<string>();
+        var rangs = await TryRefreshRanksAsync(player);
+        if (rangs is not null) echecs.Add(rangs);
+        var role = await TryRefreshMainRoleAsync(player);
+        if (role is not null) echecs.Add(role);
+        return new ResultatActualisationJoueur(player.Id, player.Prenom, rangs is null, role is null, echecs);
+    }
+
+    /// <summary>Relit les rangs SoloQ et Flex ; renvoie le message d'échec, ou null si tout s'est bien passé.</summary>
+    private async Task<string?> TryRefreshRanksAsync(PlayerDto player)
+    {
+        try
+        {
+            var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid!);
+
+            // Riot a répondu : une file absente de la réponse, c'est un joueur non classé dans
+            // cette file. Si l'appel échoue, les derniers rangs connus restent.
+            var (soloTier, soloDivision) = NormalizeRank(ranks.Solo);
+            await _players.UpdateRankAsync(player.Id, soloTier, soloDivision, ranks.Solo?.LP);
+            var (flexTier, flexDivision) = NormalizeRank(ranks.Flex);
+            await _players.UpdateFlexRankAsync(player.Id, flexTier, flexDivision, ranks.Flex?.LP);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh rank for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
+            return "Rangs : Riot n'a pas répondu, les anciens rangs sont conservés.";
+        }
+    }
+
+    /// <summary>
+    /// Recalcule le rôle principal ; renvoie le message d'échec, ou null. Sur un échec de Riot ou sans
+    /// partie lisible, l'ancien rôle est conservé (jamais écrasé par null).
+    /// </summary>
+    private async Task<string?> TryRefreshMainRoleAsync(PlayerDto player)
+    {
+        try
+        {
+            var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.Puuid!);
+            if (mainRole is not null) await _players.UpdateMainRoleAsync(player.Id, mainRole);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
+            return "Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé.";
+        }
+    }
+
+    /// <summary>Le rôle principal d'un compte pas encore enregistré : null si Riot échoue.</summary>
+    private async Task<string?> MainRoleOrNullAsync(string puuid)
+    {
+        try { return await _riot.GetMainRoleFromPuuidAsync(puuid); }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Main role unavailable for PUUID {PUUID}", puuid);
+            return null;
         }
     }
 

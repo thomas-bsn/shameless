@@ -16,5 +16,7 @@ public interface IPlayerService
     Task<bool> UpdatePeakAsync(string discordUserId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task<bool> UpdatePeakForPlayerAsync(int playerId, string? peakTier, int? peakDivision, string? peakSeason, int peakLp);
     Task RefreshAllMainRolesAsync();
+    /// <summary>Relit les rangs et recalcule le rôle principal d'un joueur ; null si le joueur n'existe pas.</summary>
+    Task<Shameless.Application.Riot.ResultatActualisationJoueur?> RefreshRiotAsync(int playerId);
     Task RefreshRiotIdsAsync();
 }
