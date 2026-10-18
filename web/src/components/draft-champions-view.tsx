@@ -395,11 +395,14 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
 function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour }) {
   const tour = draft.tourCourant!;
   const [recherche, setRecherche] = useState("");
+  const [role, setRole] = useState("");
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
   const dejaJoues = new Set(draft.championsDejaJoues ?? []);
   const verbe = tour.action === "ban" ? "Bannir" : "Choisir";
   const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
+  const roles = [...new Set(champions.flatMap((c) => c.roles))].sort((a, b) => a.localeCompare(b, "fr"));
+  const championsFiltres = filtrerChampions(champions, recherche).filter((c) => !role || c.roles.includes(role));
 
   return (
     <Card className="border-primary">
@@ -421,8 +424,17 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
         />
+        <select
+          aria-label="Filtrer par rôle"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm md:max-w-xs"
+        >
+          <option value="">Tous les rôles</option>
+          {roles.map((r) => <option key={r} value={r}>{libelleRole(r)}</option>)}
+        </select>
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
-          {filtrerChampions(champions, recherche).map((c) => {
+          {championsFiltres.map((c) => {
             const indisponible = pris.has(c.id);
             const dejaJoue = dejaJoues.has(c.id);
             return (
@@ -458,4 +470,16 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
       </CardContent>
     </Card>
   );
+}
+
+function libelleRole(role: string): string {
+  const libelles: Record<string, string> = {
+    Assassin: "Assassin",
+    Fighter: "Combattant",
+    Mage: "Mage",
+    Marksman: "Tireur",
+    Support: "Soutien",
+    Tank: "Tank",
+  };
+  return libelles[role] ?? role;
 }

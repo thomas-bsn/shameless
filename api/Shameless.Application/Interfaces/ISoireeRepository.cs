@@ -5,6 +5,7 @@ namespace Shameless.Application.Interfaces;
 public interface ISoireeRepository
 {
     Task<Soiree?> GetOpenAsync();
+    Task<Soiree?> GetDerniereFermeeAsync();
     Task<Soiree?> GetByIdAsync(int id);
 
     /// <summary>La Soirée avec ses séries (sans leurs games), ou null.</summary>

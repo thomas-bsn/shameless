@@ -4784,6 +4784,7 @@ export interface components {
             key: string;
             name: string;
             imageUrl: string;
+            roles: string[];
         };
         Classement5v5: {
             joueurs: components["schemas"]["LigneClassement5v5"][];
@@ -5172,6 +5173,8 @@ export interface components {
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
+            /** @default false */
+            pickerInterrompu: boolean;
         };
         PendingGameParticipant: {
             /** Format: int32 */

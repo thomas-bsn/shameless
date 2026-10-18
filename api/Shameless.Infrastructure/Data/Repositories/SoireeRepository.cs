@@ -13,6 +13,12 @@ public class SoireeRepository : ISoireeRepository
     public Task<Soiree?> GetOpenAsync() =>
         _db.Soirees.SingleOrDefaultAsync(s => s.Status == SoireeStatus.Open);
 
+    public Task<Soiree?> GetDerniereFermeeAsync() =>
+        _db.Soirees.Where(s => s.Status == SoireeStatus.Closed && s.FermetureAutomatique)
+            .OrderByDescending(s => s.ClosedAt)
+            .Include(s => s.Picker)
+            .FirstOrDefaultAsync();
+
     public async Task<Soiree?> GetByIdAsync(int id) =>
         await _db.Soirees.FindAsync(id);
 
