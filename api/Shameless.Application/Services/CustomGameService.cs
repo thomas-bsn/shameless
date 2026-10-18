@@ -3,7 +3,6 @@ using Shameless.Application.DTOs.Match;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Stats;
-using Shameless.Infrastructure.Repositories;
 
 namespace Shameless.Application.Services;
 

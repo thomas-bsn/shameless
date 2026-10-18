@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
