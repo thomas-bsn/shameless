@@ -54,6 +54,8 @@ const october: Schemas["GameHistoryListResponse"] = {
   ],
 };
 
+afterEach(() => vi.useRealTimers());
+
 describe("Historique", () => {
   it("shows the series of the month with their teams, score and winners", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
@@ -112,11 +114,65 @@ describe("Historique", () => {
 
     renderApp("/historique?annee=2026&mois=10");
 
-    await userEvent.click(await screen.findByRole("link", { name: "← Septembre 2026" }));
+    await userEvent.click(await screen.findByRole("link", { name: "Mois précédent" }));
 
     expect(await screen.findByRole("heading", { name: "Septembre 2026" })).toBeInTheDocument();
     expect(await screen.findByText("Aucune game ce mois-ci.")).toBeInTheDocument();
     expect(fetch.mock.calls.some(([r]) => r.url.endsWith("/api/games/history/2026/9"))).toBe(true);
-    expect(screen.getByRole("link", { name: "Octobre 2026 →" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Mois suivant" })).toBeInTheDocument();
+  });
+
+  it("stops at the current month", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-18T12:00:00"));
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    await screen.findByRole("heading", { name: "Octobre 2026" });
+    expect(screen.queryByRole("link", { name: "Mois suivant" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mois suivant" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Mois précédent" })).toBeInTheDocument();
+  });
+
+  it("marks the played days of the calendar with their number of games", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    const calendrier = await screen.findByRole("group", { name: "Calendrier d'octobre 2026" });
+    expect(within(calendrier).getByRole("button", { name: "3 octobre, 4 games" })).toHaveTextContent("4");
+    expect(within(calendrier).queryByRole("button", { name: /^4 octobre/ })).not.toBeInTheDocument();
+  });
+
+  it("lists the series of the selected day with a link to each game", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /games/history/2026/10": {
+        games: [
+          { ...october.games[0]!, games: [game(11, "A", "blue")] },
+          {
+            seriesId: 0,
+            format: 1,
+            playedAt: "2026-10-10T20:00:00Z",
+            outcome: null,
+            winningTeam: null,
+            games: [{ ...game(20, "B", "blue"), seriesId: 0, playedAt: "2026-10-10T20:00:00Z" }],
+          },
+        ],
+      },
+    });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    // Par défaut : le dernier jour joué (le 10, game hors série).
+    expect(await screen.findByRole("article", { name: "Games hors série" })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: "Série BO3" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "3 octobre, 1 game" }));
+
+    const serie = await screen.findByRole("article", { name: "Série BO3" });
+    expect(within(serie).getByRole("link", { name: "Game 1" })).toHaveAttribute("href", "/games/11");
+    expect(screen.queryByRole("article", { name: "Games hors série" })).not.toBeInTheDocument();
   });
 });
