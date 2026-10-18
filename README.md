@@ -69,7 +69,7 @@ Dans le [portail développeur Discord](https://discord.com/developers/applicatio
 
 - le Client ID et le Client Secret de l'application (le secret reste masqué et n'est jamais écrit dans les logs) ;
 - l'ID du serveur Discord de la communauté (mode développeur, clic droit sur le serveur, « Copier l'identifiant ») : seuls ses membres peuvent se connecter ;
-- une connexion avec votre propre compte Discord (bouton « Se connecter avec Discord ») : ce compte devient le premier Superadministrateur. Il faut aussi déclarer, dans **OAuth2 > Redirects**, une seconde URL affichée par le wizard : `<adresse publique>/_setup/api/discord/callback`, et ouvrir le wizard à cette adresse publique (en local, `http://localhost:8080`). Le wizard ne lit que l'identifiant du compte (scope `identify`), une seule fois, et ne garde pas le jeton. Un refus ou un échec est expliqué et la connexion peut être relancée.
+- une connexion avec votre propre compte Discord (bouton « Se connecter avec Discord ») : ce compte devient le premier Superadministrateur d'une installation neuve (sur une base qui a déjà un Superadministrateur, ce compte est ignoré : utilisez la commande `superadmin ajouter`, voir plus bas). Il faut aussi déclarer, dans **OAuth2 > Redirects**, une seconde URL affichée par le wizard : `<adresse publique>/_setup/api/discord/callback`, et ouvrir le wizard à cette adresse publique (en local, `http://localhost:8080`). Le wizard ne lit que l'identifiant du compte (scope `identify`), une seule fois, et ne garde pas le jeton. Un refus ou un échec est expliqué et la connexion peut être relancée.
 
 ### Options et bot Uchuu
 

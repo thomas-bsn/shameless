@@ -265,6 +265,8 @@ export function DernieresGames({ games }: { games: Fiche["games"] }) {
                   <Badge variant={g.victoire ? "secondary" : "destructive"} className={cn(g.victoire && "text-emerald-400")}>
                     {g.victoire ? "Victoire" : "Défaite"}
                   </Badge>
+                  {g.mvp && <Badge className="bg-yellow-400 text-black">Roi/Reine</Badge>}
+                  {g.dofd && <Badge variant="destructive">DOFD</Badge>}
                   <span className={cn("font-mono tabular-nums", g.performance && noteClass[noteTone(g.performance.note)])}>
                     <span className="font-sans text-xs text-muted-foreground">Note </span>
                     {g.performance ? `${g.performance.note}/100` : "–"}

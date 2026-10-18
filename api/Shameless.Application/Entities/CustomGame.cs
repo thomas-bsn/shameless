@@ -24,6 +24,12 @@ public class CustomGame
     /// telle que saisie. La game garde ainsi la trace que ses données ne sont plus celles d'origine.
     /// </summary>
     public DateTime? ModifieeParAdminLe { get; set; }
+
+    /// <summary>
+    /// Vrai quand un Administrateur a corrigé le vainqueur ou la composition. Annuler la dernière correction
+    /// de stat ne retire la marque « modifiée par un admin » que si ce n'est pas le cas.
+    /// </summary>
+    public bool VainqueurOuCompositionCorriges { get; set; }
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }
 

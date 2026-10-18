@@ -46,6 +46,36 @@ const fiche = (overrides = {}) => ({
       role: "Jungle",
       stats: { kills: 11, deaths: 3, assists: 9 },
       performance: { note: 86, role: "Jungle", sourceDuRole: "Position", composantes: [] },
+      mvp: true,
+      dofd: false,
+    },
+    {
+      gameId: 30,
+      seriesId: 5,
+      playedAt: "2026-10-16T20:00:00Z",
+      equipe: "B",
+      victoire: false,
+      dureeSecondes: 1700,
+      championId: "LeeSin",
+      role: "Jungle",
+      stats: { kills: 2, deaths: 8, assists: 3 },
+      performance: { note: 40, role: "Jungle", sourceDuRole: "Position", composantes: [] },
+      mvp: false,
+      dofd: true,
+    },
+    {
+      gameId: 29,
+      seriesId: 4,
+      playedAt: "2026-10-15T20:00:00Z",
+      equipe: "A",
+      victoire: true,
+      dureeSecondes: 1600,
+      championId: "LeeSin",
+      role: "Jungle",
+      stats: { kills: 5, deaths: 4, assists: 6 },
+      performance: { note: 60, role: "Jungle", sourceDuRole: "Position", composantes: [] },
+      mvp: false,
+      dofd: false,
     },
   ],
   titres: { mvp: 5, dofd: 2 },
@@ -105,7 +135,7 @@ describe("Profil (variante A3)", () => {
     expect(within(customs).getByRole("link", { name: /Voir ma fiche joueur/ })).toHaveAttribute("href", "/joueurs/1");
 
     const games = await screen.findByRole("region", { name: "Dernières games" });
-    expect(await within(games).findByText("Lee Sin")).toBeInTheDocument();
+    expect((await within(games).findAllByText("Lee Sin")).length).toBeGreaterThan(0);
     expect(within(games).getByText("86/100")).toBeInTheDocument();
 
     const ordre = [cost, customs, screen.getByRole("region", { name: "Joueur lié" })];
@@ -159,6 +189,54 @@ describe("Profil (variante A3)", () => {
     expect(within(joueur).getByText("Jungle")).toBeInTheDocument();
     expect(within(joueur).getByText("Diamond IV · 10 LP")).toBeInTheDocument();
     expect(within(joueur).getByText("S25")).toBeInTheDocument();
+  });
+
+  it("affiche les titres Roi/Reine et DOFD des games où le joueur les a remportés", async () => {
+    mockApi(routes());
+    renderApp("/compte");
+
+    const games = await screen.findByRole("region", { name: "Dernières games" });
+    const lignes = await within(games).findAllByRole("link");
+    expect(within(lignes[0]!).getByText("Roi/Reine")).toBeInTheDocument();
+    expect(within(lignes[0]!).queryByText("DOFD")).not.toBeInTheDocument();
+    expect(within(lignes[1]!).getByText("DOFD")).toBeInTheDocument();
+    expect(within(lignes[1]!).queryByText("Roi/Reine")).not.toBeInTheDocument();
+    expect(within(lignes[2]!).queryByText("DOFD")).not.toBeInTheDocument();
+    expect(within(lignes[2]!).queryByText("Roi/Reine")).not.toBeInTheDocument();
+  });
+
+  it("efface le peak après confirmation", async () => {
+    let efface = false;
+    mockApi(
+      routes({
+        "GET /players/me": () => json(efface ? { ...lie, peakTier: null, peakDivision: null, peakSeason: null, peakLp: 0 } : lie),
+        "DELETE /players/peak": () => {
+          efface = true;
+          return json({ success: true });
+        },
+      }),
+    );
+    renderApp("/compte");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Effacer mon peak" }));
+    const dialogue = await screen.findByRole("dialog");
+    expect(dialogue).toHaveTextContent("Effacer mon peak ?");
+    await userEvent.click(within(dialogue).getByRole("button", { name: "Effacer" }));
+
+    await waitFor(() => expect(efface).toBe(true));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Effacer mon peak" })).not.toBeInTheDocument());
+  });
+
+  it("n'efface pas le peak quand on annule la confirmation", async () => {
+    let appele = false;
+    mockApi(routes({ "DELETE /players/peak": () => { appele = true; return json({ success: true }); } }));
+    renderApp("/compte");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Effacer mon peak" }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Annuler" }));
+
+    expect(appele).toBe(false);
+    expect(screen.getByRole("button", { name: "Effacer mon peak" })).toBeInTheDocument();
   });
 
   it("règle le peak avec sa saison depuis le Profil", async () => {

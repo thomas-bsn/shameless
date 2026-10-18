@@ -130,7 +130,9 @@ wizard. Forgeyard n'accepte qu'un sous-ensemble de Compose (`ports`, `user`, `bu
 
 ## Addendum — le premier Superadministrateur se connecte avec Discord (2026-10-19, ticket #113)
 L'étape Discord ne demande plus d'identifiants d'administrateurs (ADR 0017) : l'Opérateur se connecte avec Discord et son
-identifiant devient le premier Superadministrateur.
+identifiant devient le premier Superadministrateur d'une installation neuve. Sur une base qui a déjà un Superadministrateur,
+l'API ignore cet identifiant (l'import ne se fait que s'il n'en existe aucun) : on y ajoute un Superadministrateur avec la
+commande `superadmin ajouter`.
 - **Flux géré par le serveur du wizard.** `POST /_setup/api/discord/start` (session requise, saisie : adresse, Client ID,
   Client Secret) mémorise une tentative et renvoie l'URL d'autorisation (`scope=identify`). L'interface l'ouvre dans une
   autre fenêtre pour ne pas perdre la saisie ; elle attend ensuite l'état du wizard (`discord`, ou `discordError`).

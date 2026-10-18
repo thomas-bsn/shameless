@@ -18,13 +18,8 @@ namespace Shameless.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "banner_color",
-                table: "users");
-
-            migrationBuilder.DropColumn(
-                name: "banner_url",
-                table: "users");
+            migrationBuilder.Sql("ALTER TABLE users DROP COLUMN IF EXISTS banner_color;");
+            migrationBuilder.Sql("ALTER TABLE users DROP COLUMN IF EXISTS banner_url;");
         }
     }
 }

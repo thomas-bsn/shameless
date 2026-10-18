@@ -30,8 +30,7 @@ namespace Shameless.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "corrections_de_stats");
+            migrationBuilder.Sql("DROP TABLE IF EXISTS corrections_de_stats;");
         }
     }
 }

@@ -293,7 +293,8 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
               <div className="space-y-1">
                 <h3 className="text-sm font-medium">Premier Superadministrateur</h3>
                 <p className="text-xs text-muted-foreground">
-                  Connectez-vous avec Discord : le compte connecté devient le premier Superadministrateur de l'Instance. Il pourra ensuite nommer des Administrateurs depuis le site.
+                  Connectez-vous avec Discord : le compte connecté devient le premier Superadministrateur d'une installation neuve. Il pourra ensuite nommer des Administrateurs depuis le site.
+                  Sur une base qui a déjà un Superadministrateur, ce compte est ignoré : ajoutez-en un avec la commande « superadmin ajouter ».
                   Shameless ne lit que votre identifiant Discord, une seule fois, et ne le saisit jamais à la main.
                 </p>
               </div>

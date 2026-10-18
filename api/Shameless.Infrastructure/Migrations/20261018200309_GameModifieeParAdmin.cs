@@ -19,9 +19,7 @@ namespace Shameless.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "modifiee_par_admin_le",
-                table: "custom_games");
+            migrationBuilder.Sql("ALTER TABLE custom_games DROP COLUMN IF EXISTS modifiee_par_admin_le;");
         }
     }
 }

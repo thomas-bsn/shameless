@@ -48,6 +48,16 @@ export function Fond() {
     return () => document.removeEventListener("visibilitychange", surVisibilite);
   }, [actif]);
 
+  // Le thème clair en dépend : avec la vidéo, le Fond est assombri et le texte posé dessus devient clair (index.css).
+  const avecVideo = courant !== undefined;
+  useEffect(() => {
+    if (!avecVideo) return;
+    document.documentElement.dataset.fond = "video";
+    return () => {
+      delete document.documentElement.dataset.fond;
+    };
+  }, [avecVideo]);
+
   // Le clip suivant n'est préchargé qu'en métadonnées, hors de l'écran : un seul clip est chargé en entier.
   const suivantId = courant && lisibles.length > 1 ? lisibles[(rang + 1) % lisibles.length].id : undefined;
   useEffect(() => {

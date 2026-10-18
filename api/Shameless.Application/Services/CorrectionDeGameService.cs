@@ -77,6 +77,7 @@ public sealed class CorrectionDeGameService
         if (!change) return CommandResult<CustomGame>.Ok(game);
 
         game.ModifieeParAdminLe = _clock.GetUtcNow().UtcDateTime;
+        game.VainqueurOuCompositionCorriges = true;
         var series = game.SeriesId == null ? null : await _series.GetWithGamesAsync(game.SeriesId.Value);
         if (series != null)
         {

@@ -36,8 +36,11 @@ public sealed record FicheJoueur(
     /// d'une Série interrompue). Les Games doivent être chargées avec leurs participants et leurs
     /// Joueurs (et <c>Series.Players</c> pour le rôle de l'Autorole), comme pour <see cref="NotesDeLaGame"/>.
     /// </summary>
-    public static FicheJoueur Calculer(Player joueur, IEnumerable<CustomGame> games, TitresDuJoueur? titres = null)
+    public static FicheJoueur Calculer(
+        Player joueur, IEnumerable<CustomGame> games, IReadOnlyDictionary<int, ResultatsDesVotes>? votes = null)
     {
+        votes ??= new Dictionary<int, ResultatsDesVotes>();
+        var titres = TitresDuJoueur.Compter(votes.Values).GetValueOrDefault(joueur.Id, TitresDuJoueur.Aucun);
         var parties = games
             .Where(g => g.Status == GameStatuses.Completed)
             .Select(g => PartieDuJoueur.De(g, joueur.Id))
@@ -69,8 +72,8 @@ public sealed record FicheJoueur(
                 .OrderByDescending(r => r.Stats.GamesJouees)
                 .ThenBy(r => r.Role)
                 .ToList(),
-            parties.Select(p => p.EnLigne()).ToList(),
-            titres ?? TitresDuJoueur.Aucun);
+            parties.Select(p => p.EnLigne(votes.GetValueOrDefault(p.Game.Id))).ToList(),
+            titres);
     }
 }
 
@@ -93,6 +96,8 @@ public sealed record StatsParRole(Role Role, StatsDeCustoms Stats);
 /// <param name="Role">Le rôle joué, null si inconnu.</param>
 /// <param name="Stats">Ses stats, null sans rapport du Companion pour le Joueur.</param>
 /// <param name="Performance">Sa note de performance, null sans stats suffisantes.</param>
+/// <param name="Mvp">true si le Joueur a le titre de MVP (Roi ou Reine) de la Game : votes clos, égalités comprises.</param>
+/// <param name="Dofd">true si le Joueur a le titre de DOFD de la Game : votes clos, égalités comprises.</param>
 public sealed record GameDeLaFiche(
     int GameId,
     int? SeriesId,
@@ -103,4 +108,6 @@ public sealed record GameDeLaFiche(
     string? ChampionId,
     Role? Role,
     StatsDuParticipant? Stats,
-    NoteDePerformance? Performance);
+    NoteDePerformance? Performance,
+    bool Mvp = false,
+    bool Dofd = false);
