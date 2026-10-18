@@ -21,9 +21,14 @@ public sealed class GamesController : ControllerBase
 
     private readonly CorrectionDeGameService _corrections;
 
-    public GamesController(CustomGameService gameService, SeriesService seriesService, CorrectionDeGameService corrections)
+    private readonly CorrectionDeStatsService _correctionsDeStats;
+
+    public GamesController(
+        CustomGameService gameService, SeriesService seriesService, CorrectionDeGameService corrections,
+        CorrectionDeStatsService correctionsDeStats)
     {
         _corrections = corrections;
+        _correctionsDeStats = correctionsDeStats;
         _gameService = gameService;
         _seriesService = seriesService;
     }
@@ -62,6 +67,42 @@ public sealed class GamesController : ControllerBase
     public async Task<ActionResult<GameRecapResponse>> CorrigerGame(int id, [FromBody] CorrectGameRequest request)
     {
         var result = await _corrections.CorrigerAsync(id, request.Winner, request.TeamA, request.TeamB);
+        if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Corrige les stats d'un joueur dans une game terminée (Administrateur) : champion, voie, K/D/A, CS,
+    /// or, dégâts, vision, note. Les corrections sont stockées à part, les données du Companion restent
+    /// intactes ; la game est marquée « modifiée par un admin » et le cost du joueur est recalculé.
+    /// </summary>
+    [HttpPut("{id:int}/players/{playerId:int}/corrections")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> CorrigerStats(int id, int playerId, [FromBody] CorrectPlayerStatsRequest request)
+    {
+        var result = await _correctionsDeStats.CorrigerAsync(id, playerId, request.ToDemande());
+        if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Annule la correction d'un champ (« champion », « position », « kills », « deaths », « assists »,
+    /// « cs », « goldEarned », « damageToChampions », « visionScore », « note ») : la valeur d'origine
+    /// du Companion est rétablie (Administrateur).
+    /// </summary>
+    [HttpDelete("{id:int}/players/{playerId:int}/corrections/{champ}")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> AnnulerCorrectionDeStat(int id, int playerId, string champ)
+    {
+        var result = await _correctionsDeStats.AnnulerAsync(id, playerId, champ);
         if (!result.IsOk) return this.Refusal(result);
         return (await _gameService.GetRecapAsync(id))!;
     }

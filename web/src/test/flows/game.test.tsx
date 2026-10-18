@@ -18,6 +18,7 @@ const participant = (
   championId: null,
   stats: null,
   performance: null,
+  champsCorriges: [],
   ...overrides,
 });
 

@@ -24,6 +24,7 @@ public record GameHistoryResponse(
 /// <param name="ChampionId">Le champion joué (id Data Dragon), null sans rapport du Companion pour ce participant.</param>
 /// <param name="Stats">Ses stats pour la game, null sans rapport du Companion pour ce participant.</param>
 /// <param name="Performance">Sa note de performance sur 100 et ses composantes, null sans stats suffisantes.</param>
+/// <param name="ChampsCorriges">Les champs (champion, position, kills, deaths, assists, cs, goldEarned, damageToChampions, visionScore, note) dont la valeur affichée est corrigée par un admin ; vide si aucun.</param>
 public record GameHistoryParticipantDto(
     int PlayerId,
     string Prenom,
@@ -33,13 +34,15 @@ public record GameHistoryParticipantDto(
     decimal? Cost,
     string? ChampionId,
     StatsDuParticipant? Stats,
-    NoteDePerformance? Performance
+    NoteDePerformance? Performance,
+    List<string> ChampsCorriges
 )
 {
     public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant, NoteDePerformance? performance) =>
         new(participant.PlayerId, participant.Player.Prenom, participant.Player.RiotId, participant.Player.RankTier,
-            participant.Player.RankDivision, participant.Player.CurrentCost, participant.ChampionId,
-            StatsDuParticipant.Lire(participant.RiotParticipantData), performance);
+            participant.Player.RankDivision, participant.Player.CurrentCost, ValeursEffectives.Champion(participant),
+            ValeursEffectives.Stats(participant), performance,
+            participant.Corrections.Select(c => Entities.ChampCorrigeableExtensions.Nom(c.Champ)).Order().ToList());
 }
 
 public record GameParticipantDto(

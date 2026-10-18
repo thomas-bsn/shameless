@@ -1,4 +1,5 @@
 using Shameless.Application.Entities;
+using Shameless.Application.Stats;
 
 namespace Shameless.Application.DTOs.Match;
 
@@ -48,9 +49,9 @@ public record SeriesGameResponse(
         TeamB: game.ParticipantsOf(Equipes.B).Select(p => GameParticipantDto.From(p.Player)).ToList(),
         RiotMatchId: game.RiotMatchId,
         ChampionsJoues: game.Participants
-            .Where(p => p.ChampionId != null)
+            .Where(p => ValeursEffectives.Champion(p) != null)
             .OrderBy(p => p.PlayerId)
-            .Select(p => new ChampionJoueResponse(p.PlayerId, p.ChampionId!))
+            .Select(p => new ChampionJoueResponse(p.PlayerId, ValeursEffectives.Champion(p)!))
             .ToList(),
         RapportEnRevue: game.RapportEnRevue is { } revue
             ? RapportEnRevueResponse.From(revue, game, joueursConnus)

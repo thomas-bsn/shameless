@@ -68,7 +68,7 @@ public static class SnapshotsDuBot
         var participants = game.ParticipantsOf(equipe).OrderBy(p => p.Id).ToList();
         var notes = avecStats ? NotesDeLaGame.Calculer(game) : null;
         var duree = DonneesDuMatch.Lire(game.RiotMatchData)?.DurationSeconds;
-        var stats = participants.ToDictionary(p => p.Id, p => StatsDuParticipant.Lire(p.RiotParticipantData));
+        var stats = participants.ToDictionary(p => p.Id, p => ValeursEffectives.Stats(p));
         var killsDeLEquipe = stats.Values.Any(s => s?.Kills is not null) ? stats.Values.Sum(s => s?.Kills ?? 0) : (int?)null;
 
         return new EquipeDuSnapshot(
@@ -88,7 +88,7 @@ public static class SnapshotsDuBot
         var cs = stats is null ? null : FormulesDeStats.Cs(stats);
         return joueur with
         {
-            Champion = participant.ChampionId,
+            Champion = ValeursEffectives.Champion(participant),
             Role = note?.Role is { } role ? RoleDuContrat(role) : null,
             Kills = stats?.Kills,
             Deaths = stats?.Deaths,

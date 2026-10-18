@@ -257,6 +257,41 @@ namespace Shameless.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.CorrectionDeStat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Champ")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("champ");
+
+                    b.Property<int>("CustomGameParticipantId")
+                        .HasColumnType("integer")
+                        .HasColumnName("custom_game_participant_id");
+
+                    b.Property<string>("Valeur")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("valeur");
+
+                    b.HasKey("Id")
+                        .HasName("pk_corrections_de_stats");
+
+                    b.HasIndex("CustomGameParticipantId", "Champ")
+                        .IsUnique()
+                        .HasDatabaseName("ix_corrections_de_stats_custom_game_participant_id_champ");
+
+                    b.ToTable("corrections_de_stats", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
                     b.Property<int>("Id")
@@ -1063,6 +1098,18 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Game");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.CorrectionDeStat", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGameParticipant", "CustomGameParticipant")
+                        .WithMany("Corrections")
+                        .HasForeignKey("CustomGameParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_corrections_de_stats_custom_game_participants_custom_game_p");
+
+                    b.Navigation("CustomGameParticipant");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.BestOfSeries", "Series")
@@ -1279,6 +1326,11 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Participants");
 
                     b.Navigation("Rapports");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.CustomGameParticipant", b =>
+                {
+                    b.Navigation("Corrections");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>
