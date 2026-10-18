@@ -83,6 +83,33 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task La_liste_des_joueurs_donne_l_evolution_du_cost_depuis_le_cost_final_du_mois_precedent()
+    {
+        var client = Factory.CreateSignedInClient();
+        var admin = Factory.CreateAdminClient();
+        Factory.Clock.SetUtcNow(Mars);
+        var serie = await CreateSerieAsync(client, format: 5);
+        // A1 finit mars à 2,5 (voir le test du nouveau mois).
+        foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
+            await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante);
+        var nouveau = await CreatePlayerAsync(client, "Nouveau");
+
+        // Pendant le mois de mars, aucun mois précédent : pas d'évolution connue.
+        Assert.Equal(JsonValueKind.Null, (await JoueurDeLaListeAsync(client, serie.TeamA[0])).GetProperty("costEvolution").ValueKind);
+
+        Factory.Clock.SetUtcNow(Avril);
+        Assert.Equal(0m, (await JoueurDeLaListeAsync(client, serie.TeamA[0])).GetProperty("costEvolution").GetDecimal());
+
+        await ReadJsonAsync(await admin.PutAsJsonAsync($"/players/{serie.TeamA[0]}/cost", new { cost = 3.5m }, Ct));
+        var a1 = await JoueurDeLaListeAsync(client, serie.TeamA[0]);
+        Assert.Equal(3.5m, a1.GetProperty("currentCost").GetDecimal());
+        Assert.Equal(1m, a1.GetProperty("costEvolution").GetDecimal());
+
+        // Un joueur sans historique n'a pas d'évolution.
+        Assert.Equal(JsonValueKind.Null, (await JoueurDeLaListeAsync(client, nouveau)).GetProperty("costEvolution").ValueKind);
+    }
+
+    [Fact]
     public async Task Le_cost_de_depart_est_le_dernier_cost_final_conserve_meme_apres_un_mois_sans_game()
     {
         var client = Factory.CreateSignedInClient();
@@ -245,6 +272,10 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
 
     private async Task<JsonElement> PlayerAsync(HttpClient client, int playerId) =>
         await ReadJsonAsync(await client.GetAsync($"/players/{playerId}", Ct));
+
+    private async Task<JsonElement> JoueurDeLaListeAsync(HttpClient client, int playerId) =>
+        (await ReadJsonAsync(await client.GetAsync("/players", Ct))).EnumerateArray()
+            .Single(p => p.GetProperty("id").GetInt32() == playerId);
 
     private async Task<List<JsonElement>> HistoriqueAsync(HttpClient client, int playerId) =>
         (await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/cost/historique", Ct)))

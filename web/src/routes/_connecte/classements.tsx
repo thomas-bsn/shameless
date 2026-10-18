@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { CostRanking } from "@/components/cost-ranking";
 import { PageHeader } from "@/components/page-header";
 import { PlayerCard } from "@/components/player-card";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -8,20 +9,19 @@ import { CostTierBadge, RankBadge, RankIcon } from "@/components/rank";
 import { TierSection } from "@/components/tier-section";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { COST_POINTS, groupByCostTier } from "@/lib/cost";
 import { tierName } from "@/lib/ranks";
 import { averageCost, displayRank, groupBySoloQTier, soloQLevel } from "@/lib/soloq";
-import { costTierClasses, soloQTierClasses } from "@/lib/tier-styles";
+import { soloQTierClasses } from "@/lib/tier-styles";
 
-type Vue = "soloq" | "cost";
+type Vue = "cost" | "soloq";
 
 export const Route = createFileRoute("/_connecte/classements")({
-  validateSearch: (search: Record<string, unknown>): { vue?: Vue } => (search.vue === "cost" ? { vue: "cost" } : {}),
+  validateSearch: (search: Record<string, unknown>): { vue?: Vue } => (search.vue === "soloq" ? { vue: "soloq" } : {}),
   component: Classements,
 });
 
 function Classements() {
-  const { vue = "soloq" } = Route.useSearch();
+  const { vue = "cost" } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const players = $api.useQuery("get", "/players");
 
@@ -37,12 +37,12 @@ function Classements() {
       />
       <Tabs
         value={vue}
-        onValueChange={(value) => navigate({ search: value === "cost" ? { vue: "cost" } : {} })}
+        onValueChange={(value) => navigate({ search: value === "soloq" ? { vue: "soloq" } : {} })}
         className="mb-5"
       >
         <TabsList>
-          <TabsTrigger value="soloq">SoloQ</TabsTrigger>
           <TabsTrigger value="cost">Cost</TabsTrigger>
+          <TabsTrigger value="soloq">SoloQ</TabsTrigger>
         </TabsList>
       </Tabs>
       {players.isPending ? (
@@ -91,31 +91,6 @@ function SoloQRanking({ players }: { players: Schemas["PlayerDto"][] }) {
               />
             );
           })}
-        </TierSection>
-      ))}
-    </div>
-  );
-}
-
-function CostRanking({ players }: { players: Schemas["PlayerDto"][] }) {
-  return (
-    <div className="flex flex-col gap-3">
-      {groupByCostTier(players).map(({ tier, players }) => (
-        <TierSection
-          key={tier}
-          label={`Tier ${tier}`}
-          title={
-            <>
-              <CostTierBadge cost={COST_POINTS[tier]} className="text-base" />
-              <span className="text-sm font-normal text-muted-foreground">{COST_POINTS[tier]} pts</span>
-            </>
-          }
-          count={players.length}
-          className={costTierClasses[tier]}
-        >
-          {players.map((p) => (
-            <PlayerCard key={p.id} player={p} showCost />
-          ))}
         </TierSection>
       ))}
     </div>
