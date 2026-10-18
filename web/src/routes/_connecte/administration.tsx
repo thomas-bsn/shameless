@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ATraiter } from "@/components/administration/a-traiter";
+import { ClipsAdmin } from "@/components/administration/clips-admin";
 import { JoueursAdmin } from "@/components/administration/joueurs-admin";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,7 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  * Les onglets de la page : pour en ajouter un (ex. les Clips du Fond), l'inscrire ici.
  * Le premier est l'onglet par défaut (pas de paramètre dans l'adresse).
  */
-const ONGLETS = [{ id: "joueurs", label: "Joueurs", contenu: <JoueursAdmin /> }];
+const ONGLETS = [
+  { id: "joueurs", label: "Joueurs", contenu: <JoueursAdmin /> },
+  { id: "clips", label: "Clips du Fond", contenu: <ClipsAdmin /> },
+];
 
 const onglets: string[] = ONGLETS.map((o) => o.id);
 const ONGLET_PAR_DEFAUT = ONGLETS[0].id;

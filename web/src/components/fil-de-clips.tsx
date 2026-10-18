@@ -217,7 +217,7 @@ function Lecteur({
 }
 
 /** L'interrupteur « Dans le Fond / Masqué » d'un clip, réservé aux Administrateurs. */
-function InterrupteurDuFond({ clip }: { clip: Clip }) {
+export function InterrupteurDuFond({ clip }: { clip: Clip }) {
   const session = useQuery(sessionQuery);
   const relire = useRelireLesClips();
   const masquer = $api.useMutation("put", "/clips/{id}/masque-du-fond", { onSuccess: relire });
