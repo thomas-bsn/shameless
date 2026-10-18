@@ -33,3 +33,6 @@ public sealed record ReplacePlayerRequest(int ReplacedPlayerId, int ReplacementP
 /// "AuHasard" ou "PlusGrosCost" (le plus gros cost de l'Équipe).
 /// </summary>
 public sealed record DesignerCapitaineRequest(Application.Entities.DesignationCapitaine Designation, int? PlayerId = null);
+
+/// <summary>L'échec d'un DM de Lien capitaine rapporté par le bot : <c>compte_non_lie</c>, <c>dm_ferme</c> ou <c>autre</c>.</summary>
+public sealed record EchecDmRequest(string Raison);

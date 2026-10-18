@@ -495,6 +495,19 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("EchecDmLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("echec_dm_le");
+
+                    b.Property<int?>("EchecDmPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("echec_dm_player_id");
+
+                    b.Property<string>("EchecDmRaison")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("echec_dm_raison");
+
                     b.Property<string>("Equipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")

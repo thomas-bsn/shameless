@@ -29,7 +29,7 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
         WithGames().Where(s => s.SoireeId == soireeId).OrderBy(s => s.Id).ToListAsync();
 
     public Task<BestOfSeries?> GetWithLiensAsync(int id) =>
-        _db.BestOfSeries.Include(s => s.Liens).SingleOrDefaultAsync(s => s.Id == id);
+        _db.BestOfSeries.Include(s => s.Liens).Include(s => s.Players).SingleOrDefaultAsync(s => s.Id == id);
 
     public Task<LienAcces?> GetLienAsync(string secret) =>
         _db.LiensAcces.Include(l => l.Series).SingleOrDefaultAsync(l => l.Secret == secret);

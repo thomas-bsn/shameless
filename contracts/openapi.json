@@ -267,6 +267,107 @@
         }
       }
     },
+    "/bot/series/{id}/liens-capitaine/{equipe}/dm-echec": {
+      "post": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "equipe",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bot/games/{id}": {
       "get": {
         "tags": [
@@ -6105,6 +6206,33 @@
           }
         }
       },
+      "EchecDmRequest": {
+        "required": [
+          "raison"
+        ],
+        "type": "object",
+        "properties": {
+          "raison": {
+            "type": "string"
+          }
+        }
+      },
+      "EchecDmResponse": {
+        "required": [
+          "raison",
+          "signaleLe"
+        ],
+        "type": "object",
+        "properties": {
+          "raison": {
+            "type": "string"
+          },
+          "signaleLe": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "EntityTagHeaderValue": {
         "required": [
           "tag",
@@ -7031,7 +7159,9 @@
           "seriesId",
           "lienCapitaineA",
           "lienCapitaineB",
-          "lienSpectateur"
+          "lienSpectateur",
+          "echecDmA",
+          "echecDmB"
         ],
         "type": "object",
         "properties": {
@@ -7047,6 +7177,26 @@
           },
           "lienSpectateur": {
             "type": "string"
+          },
+          "echecDmA": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EchecDmResponse"
+              }
+            ]
+          },
+          "echecDmB": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EchecDmResponse"
+              }
+            ]
           }
         }
       },
