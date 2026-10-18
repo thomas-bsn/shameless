@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { CostRanking } from "@/components/cost-ranking";
+import { DofdRanking } from "@/components/dofd-ranking";
 import { PageHeader } from "@/components/page-header";
 import { PlayerCard } from "@/components/player-card";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -13,39 +14,55 @@ import { tierName } from "@/lib/ranks";
 import { averageCost, displayRank, groupBySoloQTier, soloQLevel } from "@/lib/soloq";
 import { soloQTierClasses } from "@/lib/tier-styles";
 
-type Vue = "cost" | "soloq";
+type Vue = "cost" | "soloq" | "dofd";
 
 export const Route = createFileRoute("/_connecte/classements")({
-  validateSearch: (search: Record<string, unknown>): { vue?: Vue } => (search.vue === "soloq" ? { vue: "soloq" } : {}),
+  validateSearch: (search: Record<string, unknown>): { vue?: Vue } => (search.vue === "soloq" || search.vue === "dofd" ? { vue: search.vue } : {}),
   component: Classements,
 });
 
 function Classements() {
   const { vue = "cost" } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const players = $api.useQuery("get", "/players");
+  const players = $api.useQuery("get", "/players", undefined, { enabled: vue !== "dofd" });
+  const hall = $api.useQuery("get", "/hall-de-la-honte", undefined, { enabled: vue === "dofd" });
 
   return (
     <>
       <PageHeader
         title="Classements"
         description={
-          (vue === "soloq" ? "Rangs SoloQ officiels, ou le peak s'il est meilleur" : "Cost des customs, pour équilibrer les équipes") +
-          (players.data ? ` · ${players.data.length} joueurs` : "")
+          vue === "dofd"
+            ? "Hall de la Honte : le cumul des titres de DOFD depuis la première game"
+            : (vue === "soloq" ? "Rangs SoloQ officiels, ou le peak s'il est meilleur" : "Cost des customs, pour équilibrer les équipes") +
+              (players.data ? ` · ${players.data.length} joueurs` : "")
         }
-        actions={players.data && (vue === "soloq" ? <SoloQLevel players={players.data} /> : <AverageCost players={players.data} />)}
+        actions={
+          vue !== "dofd" &&
+          players.data &&
+          (vue === "soloq" ? <SoloQLevel players={players.data} /> : <AverageCost players={players.data} />)
+        }
       />
       <Tabs
         value={vue}
-        onValueChange={(value) => navigate({ search: value === "soloq" ? { vue: "soloq" } : {} })}
+        onValueChange={(value) => navigate({ search: value === "soloq" || value === "dofd" ? { vue: value } : {} })}
         className="mb-5"
       >
         <TabsList>
           <TabsTrigger value="cost">Cost</TabsTrigger>
           <TabsTrigger value="soloq">SoloQ</TabsTrigger>
+          <TabsTrigger value="dofd">DOFD</TabsTrigger>
         </TabsList>
       </Tabs>
-      {players.isPending ? (
+      {vue === "dofd" ? (
+        hall.isPending ? (
+          <LoadingRows />
+        ) : hall.isError ? (
+          <ErrorAlert error={hall.error} />
+        ) : (
+          <DofdRanking joueurs={hall.data.joueurs} />
+        )
+      ) : players.isPending ? (
         <LoadingRows />
       ) : players.isError ? (
         <ErrorAlert error={players.error} />
