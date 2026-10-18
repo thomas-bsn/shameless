@@ -9,15 +9,28 @@ ko()  { echo "FAIL $1"; echec=1; }
 verifier() { local msg=$1; shift; if "$@" >/dev/null 2>&1; then ok "$msg"; else ko "$msg"; fi; }
 
 WF=.github/workflows/release.yml
-verifier "le workflow de publication existe" test -f "$WF"
+RW=.github/workflows/publier-images.yml
+AUTO=.github/workflows/publication-auto.yml
+verifier "le workflow de publication manuelle existe" test -f "$WF"
 verifier "il se déclenche sur les tags vX.Y.Z" grep -Eq "^\s*-\s*['\"]?v\*\.\*\.\*['\"]?" "$WF"
 verifier "il ne se déclenche pas sur une branche" bash -c "! grep -Eq '^\s*branches:' $WF"
-verifier "il publie sur ghcr.io avec GITHUB_TOKEN" bash -c "grep -q 'ghcr.io' $WF && grep -q 'secrets.GITHUB_TOKEN' $WF && grep -q 'packages: write' $WF"
+verifier "il appelle le workflow réutilisable" grep -q 'uses: ./.github/workflows/publier-images.yml' "$WF"
+verifier "le workflow réutilisable est un workflow_call" grep -q 'workflow_call:' "$RW"
+verifier "il publie sur ghcr.io avec GITHUB_TOKEN" bash -c "grep -q 'ghcr.io' $RW && grep -q 'secrets.GITHUB_TOKEN' $RW && grep -q 'packages: write' $RW"
 for img in api migrate proxy wizard; do
-  verifier "la matrice contient l'image $img" grep -Eq "name:\s*$img\s*$" "$WF"
+  verifier "la matrice contient l'image $img" grep -Eq "name:\s*$img\s*$" "$RW"
 done
-verifier "le tag latest est posé (versions stables)" grep -q 'latest' "$WF"
-verifier "les tags de version sont reproductibles (semver)" grep -q '{{version}}' "$WF"
+verifier "le tag latest est posé (versions stables)" grep -q 'value=latest' "$RW"
+verifier "les tags de version sont reproductibles" grep -q 'steps.versions.outputs.version' "$RW"
+verifier "latest et X.Y ne sont posés que pour les versions stables" bash -c "grep -c 'enable=\${{ steps.versions.outputs.stable }}' $RW | grep -q 2"
+
+# Publication automatique : seulement après une CI verte sur main, sur le commit testé.
+verifier "la publication auto suit le workflow CI" bash -c "grep -q 'workflow_run:' $AUTO && grep -q 'workflows: \[CI\]' $AUTO"
+verifier "elle exige une CI verte" grep -q "conclusion == 'success'" "$AUTO"
+verifier "elle se limite aux push sur main" bash -c "grep -q \"event == 'push'\" $AUTO && grep -q \"head_branch == 'main'\" $AUTO"
+verifier "elle construit le commit testé (head_sha)" grep -q 'ref: ${{ github.event.workflow_run.head_sha }}' "$AUTO"
+verifier "elle sérialise les publications" grep -q 'cancel-in-progress: false' "$AUTO"
+verifier "elle appelle le workflow réutilisable" grep -q 'uses: ./.github/workflows/publier-images.yml' "$AUTO"
 
 # Compose de déploiement : uniquement des images, aucun build.
 verifier "compose.yaml ne contient aucun build:" bash -c "! grep -Eq '^\s*(build|additional_contexts):' compose.yaml"

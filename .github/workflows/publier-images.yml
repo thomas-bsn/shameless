@@ -1,0 +1,102 @@
+name: Construire et publier les images
+
+# Workflow réutilisable : construit et publie les quatre images Shameless dans GHCR.
+# Appelé par release.yml (tag vX.Y.Z poussé à la main) et par publication-auto.yml (merge sur main).
+# Tags d'image : X.Y.Z (reproductible), X.Y, et latest pour les versions stables.
+# Une préversion (X.Y.Z-rc.1) ne pose ni latest ni X.Y.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version à publier, avec ou sans « v » (1.2.3 ou 1.2.3-rc.1)."
+        required: true
+        type: string
+      ref:
+        description: "Commit à construire (par défaut, celui du workflow appelant)."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publier:
+    name: Image ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            context: api
+            target: api
+          - name: migrate
+            context: api
+            target: migrate
+          - name: proxy
+            context: deploy/caddy
+            build-contexts: web=./web
+          - name: wizard
+            context: wizard
+            build-contexts: web=./web
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      # La version vient d'un input : elle passe par l'environnement, jamais interpolée dans le script.
+      - name: Versions à publier
+        id: versions
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          version=${VERSION#v}
+          if [[ ! $version =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version invalide : $VERSION"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "serie=${BASH_REMATCH[1]}.${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          if [[ -z ${BASH_REMATCH[4]} ]]; then
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags et labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # GHCR exige des minuscules : github.repository_owner peut en contenir.
+          images: ghcr.io/${{ github.repository_owner }}/shameless-${{ matrix.name }}
+          tags: |
+            type=raw,value=${{ steps.versions.outputs.version }}
+            type=raw,value=${{ steps.versions.outputs.serie }},enable=${{ steps.versions.outputs.stable }}
+            type=raw,value=latest,enable=${{ steps.versions.outputs.stable }}
+          flavor: |
+            latest=false
+
+      - name: Construire et publier
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          build-contexts: ${{ matrix.build-contexts }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
