@@ -87,6 +87,24 @@ public class ClipsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Le_fil_des_clips_expose_la_soiree_et_le_score_de_la_serie_de_la_game()
+    {
+        var client = OrganisateurLeSoir();
+        var serie = await CreateSerieAsync(client, format: 3);
+        var soireeId = (await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct))).GetProperty("soiree").GetProperty("id").GetInt32();
+        var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
+        await DeposerAsync(Clip("1300000000000000299", Soir.AddMinutes(50)));
+
+        var clips = await ReadJsonAsync(await client.GetAsync("/clips", Ct));
+        var clip = Assert.Single(clips.EnumerateArray());
+
+        Assert.Equal(gameId, clip.GetProperty("gameId").GetInt32());
+        Assert.Equal(soireeId, clip.GetProperty("soireeId").GetInt32());
+        Assert.Equal(1, clip.GetProperty("scoreEquipeA").GetInt32());
+        Assert.Equal(0, clip.GetProperty("scoreEquipeB").GetInt32());
+    }
+
+    [Fact]
     public async Task Un_clip_publie_le_jour_d_une_unique_game_lui_est_rattache_et_se_lit_depuis_la_game()
     {
         var client = OrganisateurLeSoir();

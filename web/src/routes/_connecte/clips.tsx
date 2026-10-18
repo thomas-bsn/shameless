@@ -25,10 +25,13 @@ function Clips() {
   const items = clips.data ?? [];
   const selectedIndex = items.findIndex((c) => c.id === selected);
   const groups = useMemo(() => {
-    const group = new Map<string, Schemas["ClipResponse"][]>();
+    const group = new Map<string, Map<string, Schemas["ClipResponse"][]>>();
     for (const clip of items) {
-      const key = clip.gameId == null ? "À rattacher" : `Game ${clip.gameId}`;
-      group.set(key, [...(group.get(key) ?? []), clip]);
+      const soiree = clip.gameId == null ? "À rattacher" : clip.soireeId == null ? "Games sans Soirée" : `Soirée #${clip.soireeId}`;
+      const game = clip.gameId == null ? "À rattacher" : `Game #${clip.gameId}${clip.scoreEquipeA != null && clip.scoreEquipeB != null ? ` · ${clip.scoreEquipeA}–${clip.scoreEquipeB}` : ""}`;
+      const games = group.get(soiree) ?? new Map<string, Schemas["ClipResponse"][]>();
+      games.set(game, [...(games.get(game) ?? []), clip]);
+      group.set(soiree, games);
     }
     return [...group.entries()];
   }, [items]);
@@ -37,7 +40,7 @@ function Clips() {
     <PageHeader title="Clips" description="Les moments partagés dans #clips, classés par partie." />
     <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={sansGame} onChange={(e) => { setSansGame(e.target.checked); setPage(1); }} /> À rattacher seulement</label><input aria-label="Filtrer par auteur" placeholder="Auteur" className="h-9 w-40 rounded-md border border-input bg-background px-3 text-sm" value={auteur} onChange={(e) => { setAuteur(e.target.value); setPage(1); }} /><input aria-label="Filtrer par soirée" placeholder="N° de soirée" inputMode="numeric" className="h-9 w-32 rounded-md border border-input bg-background px-3 text-sm" value={soireeId} onChange={(e) => { setSoireeId(e.target.value.replace(/\D/g, "")); setPage(1); }} /></div>
     {clips.isPending ? <LoadingRows /> : clips.isError ? <ErrorAlert error={clips.error} /> : items.length === 0 ? <p className="py-12 text-center text-muted-foreground">{page > 1 ? "Fin des clips." : sansGame ? "Tout est rattaché." : "Aucun clip pour l'instant. Publie une vidéo dans #clips pour la retrouver ici."}</p> : <>
-      {groups.map(([heading, entries]) => <section key={heading} className="flex flex-col gap-3"><h2 className="text-lg font-semibold">{heading}</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{entries.map((c) => <Card key={c.id} role="article" aria-label={c.nomFichier} className="overflow-hidden"><CardContent className="flex flex-col gap-3 p-3"><button className="text-left" onClick={() => setSelected(c.id)} aria-label={`Lire le clip de ${c.auteurNom}`}><ClipVideo clipId={c.id} /></button><div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span className="truncate">{c.auteurNom}</span><span>{dateHeureLabel(c.publieLe)}</span></div>{c.gameId != null && <Link className="text-sm underline" to="/games/$gameId" params={{ gameId: String(c.gameId) }}>Ouvrir la Game #{c.gameId}</Link>}{c.gameId == null && <RattacherClip clip={c} />}{session.data?.isAdmin && <FondToggle clip={c} />}</CardContent></Card>)}</div></section>)}
+      {groups.map(([soiree, games]) => <section key={soiree} aria-label={soiree} className="flex flex-col gap-3"><h2 className="text-lg font-semibold">{soiree}</h2>{[...games.entries()].map(([heading, entries]) => <div key={heading} className="flex flex-col gap-3"><h3 className="text-base font-medium">{heading}</h3><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{entries.map((c) => <Card key={c.id} role="article" aria-label={c.nomFichier} className="overflow-hidden"><CardContent className="flex flex-col gap-3 p-3"><button className="text-left" onClick={() => setSelected(c.id)} aria-label={`Lire le clip de ${c.auteurNom}`}><ClipVideo clipId={c.id} /></button><div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span className="truncate">{c.auteurNom}</span><span>{dateHeureLabel(c.publieLe)}</span></div>{c.gameId != null && <Link className="text-sm underline" to="/games/$gameId" params={{ gameId: String(c.gameId) }}>Ouvrir la Game #{c.gameId}</Link>}{c.gameId == null && <RattacherClip clip={c} />}{session.data?.isAdmin && <FondToggle clip={c} />}</CardContent></Card>)}</div></div>)}</section>)}
       <div className="flex justify-center gap-2"><Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Précédent</Button><span className="self-center text-sm">Page {page}</span><Button variant="outline" disabled={items.length < 30} onClick={() => setPage((p) => p + 1)}>Suivant</Button></div>
     </>}
     {selectedIndex >= 0 && <ClipViewer clips={items} index={selectedIndex} onClose={() => setSelected(null)} onSelect={(id) => setSelected(id)} isAdmin={!!session.data?.isAdmin} />}

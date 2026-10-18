@@ -16,6 +16,9 @@ const clip = (id: number, overrides: Partial<Schemas["ClipResponse"]> = {}): Sch
   contentType: "video/mp4",
   taille: 12_000_000,
   masqueDuFond: false,
+  soireeId: id === 42 ? 7 : null,
+  scoreEquipeA: id === 42 ? 1 : null,
+  scoreEquipeB: id === 42 ? 0 : null,
   ...overrides,
 });
 
@@ -28,6 +31,23 @@ const candidate = (gameId: number, gameNumber: number, lanceeLe: string): Schema
 });
 
 describe("Clips à rattacher", () => {
+  it("range les clips par Soirée puis Game et montre le score de la Série", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /clips/fond": [],
+      "GET /clips": [
+        clip(7, { gameId: 42, soireeId: 9, scoreEquipeA: 2, scoreEquipeB: 1 }),
+        clip(8, { gameId: 43, soireeId: 9, scoreEquipeA: 2, scoreEquipeB: 1 }),
+      ],
+    });
+
+    renderApp("/clips");
+
+    const soiree = await screen.findByRole("region", { name: "Soirée #9" });
+    expect(within(soiree).getByRole("heading", { name: "Game #42 · 2–1" })).toBeInTheDocument();
+    expect(within(soiree).getByRole("heading", { name: "Game #43 · 2–1" })).toBeInTheDocument();
+  });
+
   it("permet à un Administrateur de masquer un clip du Fond depuis sa carte", async () => {
     const api = mockApi({
       "GET /auth/me": user({ isAdmin: true }),

@@ -36,6 +36,9 @@ const clip = (id: number, overrides: Partial<Schemas["ClipResponse"]> = {}): Sch
   contentType: "video/mp4",
   taille: 12_000_000,
   masqueDuFond: false,
+  soireeId: id === 42 ? 7 : null,
+  scoreEquipeA: id === 42 ? 1 : null,
+  scoreEquipeB: id === 42 ? 0 : null,
   ...overrides,
 });
 
