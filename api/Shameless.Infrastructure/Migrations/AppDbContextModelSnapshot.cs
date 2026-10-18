@@ -235,6 +235,12 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("taille");
 
+                    b.Property<bool>("MasqueDuFond")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("masque_du_fond");
+
                     b.HasKey("Id")
                         .HasName("pk_clips");
 

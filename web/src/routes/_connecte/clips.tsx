@@ -1,55 +1,53 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { ClipVideo } from "@/components/clip-video";
 import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
-import { RattacherClip } from "@/components/rattachement-de-clip";
+import { RattacherClip, RetirerClip } from "@/components/rattachement-de-clip";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { sessionQuery } from "@/lib/session";
 import { dateHeureLabel } from "@/lib/dates";
 
-/** Les clips de #clips sans Game (aucune ou plusieurs Games plausibles), à rattacher à la main (ADR 0014). */
-export const Route = createFileRoute("/_connecte/clips")({
-  component: ClipsARattacher,
-});
+export const Route = createFileRoute("/_connecte/clips")({ component: Clips });
 
-function ClipsARattacher() {
-  const clips = $api.useQuery("get", "/clips/sans-game");
+function Clips() {
+  const [sansGame, setSansGame] = useState(false);
+  const [auteur, setAuteur] = useState("");
+  const [soireeId, setSoireeId] = useState("");
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<number | null>(null);
+  const session = useQuery(sessionQuery);
+  const clips = $api.useQuery("get", "/clips", { params: { query: { sansGame, auteur: auteur || undefined, soireeId: soireeId ? Number(soireeId) : undefined, page, pageSize: 30 } } });
+  const items = clips.data ?? [];
+  const selectedIndex = items.findIndex((c) => c.id === selected);
+  const groups = useMemo(() => {
+    const group = new Map<string, Schemas["ClipResponse"][]>();
+    for (const clip of items) {
+      const key = clip.gameId == null ? "À rattacher" : `Game ${clip.gameId}`;
+      group.set(key, [...(group.get(key) ?? []), clip]);
+    }
+    return [...group.entries()];
+  }, [items]);
 
-  return (
-    <>
-      <PageHeader
-        title="Clips à rattacher"
-        description="Les clips de #clips que Shameless n'a pas su rattacher à une Game : choisis la bonne."
-      />
-      {clips.isPending ? (
-        <LoadingRows />
-      ) : clips.isError ? (
-        <ErrorAlert error={clips.error} />
-      ) : clips.data.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aucun clip à rattacher : chaque clip a sa Game.</p>
-      ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {clips.data.map((clip) => (
-            <li key={clip.id}>
-              <ClipSansGame clip={clip} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
+  return <div className="flex max-w-6xl flex-col gap-6">
+    <PageHeader title="Clips" description="Les moments partagés dans #clips, classés par partie." />
+    <div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={sansGame} onChange={(e) => { setSansGame(e.target.checked); setPage(1); }} /> À rattacher seulement</label><input aria-label="Filtrer par auteur" placeholder="Auteur" className="h-9 w-40 rounded-md border border-input bg-background px-3 text-sm" value={auteur} onChange={(e) => { setAuteur(e.target.value); setPage(1); }} /><input aria-label="Filtrer par soirée" placeholder="N° de soirée" inputMode="numeric" className="h-9 w-32 rounded-md border border-input bg-background px-3 text-sm" value={soireeId} onChange={(e) => { setSoireeId(e.target.value.replace(/\D/g, "")); setPage(1); }} /></div>
+    {clips.isPending ? <LoadingRows /> : clips.isError ? <ErrorAlert error={clips.error} /> : items.length === 0 ? <p className="py-12 text-center text-muted-foreground">{page > 1 ? "Fin des clips." : sansGame ? "Tout est rattaché." : "Aucun clip pour l'instant. Publie une vidéo dans #clips pour la retrouver ici."}</p> : <>
+      {groups.map(([heading, entries]) => <section key={heading} className="flex flex-col gap-3"><h2 className="text-lg font-semibold">{heading}</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{entries.map((c) => <Card key={c.id} className="overflow-hidden"><CardContent className="flex flex-col gap-3 p-3"><button className="text-left" onClick={() => setSelected(c.id)} aria-label={`Lire le clip de ${c.auteurNom}`}><ClipVideo clipId={c.id} /></button><div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span className="truncate">{c.auteurNom}</span><span>{dateHeureLabel(c.publieLe)}</span></div>{c.gameId != null && <Link className="text-sm underline" to="/games/$gameId" params={{ gameId: String(c.gameId) }}>Ouvrir la Game #{c.gameId}</Link>}{c.gameId == null && <RattacherClip clip={c} />}</CardContent></Card>)}</div></section>)}
+      <div className="flex justify-center gap-2"><Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Précédent</Button><span className="self-center text-sm">Page {page}</span><Button variant="outline" disabled={items.length < 30} onClick={() => setPage((p) => p + 1)}>Suivant</Button></div>
+    </>}
+    {selectedIndex >= 0 && <ClipViewer clips={items} index={selectedIndex} onClose={() => setSelected(null)} onSelect={(id) => setSelected(id)} isAdmin={!!session.data?.isAdmin} />}
+  </div>;
 }
 
-function ClipSansGame({ clip }: { clip: Schemas["ClipResponse"] }) {
-  return (
-    <Card role="article" aria-label={clip.nomFichier}>
-      <CardContent className="flex flex-col gap-3">
-        <ClipVideo clipId={clip.id} />
-        <p className="text-xs text-muted-foreground">
-          {clip.auteurNom} · {dateHeureLabel(clip.publieLe)}
-        </p>
-        <RattacherClip clip={clip} />
-      </CardContent>
-    </Card>
-  );
+function ClipViewer({ clips, index, onClose, onSelect, isAdmin }: { clips: Schemas["ClipResponse"][]; index: number; onClose: () => void; onSelect: (id: number) => void; isAdmin: boolean }) {
+  const qc = useQueryClient();
+  const clip = clips[index]!;
+  const setFond = $api.useMutation("put", "/clips/{id}/fond", { onSuccess: () => qc.invalidateQueries() });
+  return <div role="dialog" aria-modal="true" aria-label="Lecture du clip" className="fixed inset-0 z-[70] grid place-items-center bg-black/80 p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="w-full max-w-4xl rounded-xl border border-white/20 bg-background p-4 text-foreground shadow-2xl"><div className="mb-3 flex items-center justify-between"><strong>{clip.auteurNom} · {dateHeureLabel(clip.publieLe)}</strong><Button variant="outline" onClick={onClose}>Fermer</Button></div><ClipVideo clipId={clip.id} /><div className="mt-4 flex flex-wrap items-center justify-between gap-2"><Button variant="outline" disabled={index <= 0} onClick={() => onSelect(clips[index - 1]!.id)}>Précédent</Button><div className="flex flex-wrap gap-2">{clip.gameId != null && <><Button asChild variant="outline"><Link to="/games/$gameId" params={{ gameId: String(clip.gameId) }}>Ouvrir la Game</Link></Button><RattacherClip clip={clip} sauf={clip.gameId} /><RetirerClip clip={clip} /></>}{clip.gameId == null && <RattacherClip clip={clip} />}{isAdmin && <Button variant="outline" disabled={setFond.isPending} onClick={() => setFond.mutate({ params: { path: { id: clip.id } }, body: { masque: !clip.masqueDuFond } })}>{clip.masqueDuFond ? "Réafficher dans le Fond" : "Masquer du Fond"}</Button>}</div><Button variant="outline" disabled={index >= clips.length - 1} onClick={() => onSelect(clips[index + 1]!.id)}>Suivant</Button></div></div>
+  </div>;
 }

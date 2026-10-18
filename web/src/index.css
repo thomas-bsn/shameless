@@ -1,6 +1,7 @@
 /* Design « Verre nuit » : palette sombre par défaut (classe .dark sur <html>), thème clair au choix,
    Geist embarquée avec le front et surfaces en verre dépoli. */
 @import "tailwindcss";
+
 @import "@fontsource/geist-sans/latin-400.css";
 @import "@fontsource/geist-sans/latin-500.css";
 @import "@fontsource/geist-sans/latin-600.css";
@@ -8,6 +9,11 @@
 @import "@fontsource/geist-mono/latin-400.css";
 @import "@fontsource/geist-mono/latin-500.css";
 @import "@fontsource/geist-mono/latin-600.css";
+
+.fond { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 20% 15%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 48%), linear-gradient(145deg, var(--background), color-mix(in srgb, var(--primary) 7%, var(--background))); }
+.fond-video { position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px); object-fit: cover; filter: blur(12px); opacity: .24; }
+.fond-credit { position: absolute; right: 1rem; bottom: 1rem; display: flex; align-items: center; gap: .5rem; border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); border-radius: .75rem; padding: .35rem .5rem .35rem .75rem; background: color-mix(in srgb, var(--background) 78%, transparent); color: var(--foreground); font-size: .75rem; backdrop-filter: blur(12px); pointer-events: auto; }
+@media (max-width: 767px), (prefers-reduced-motion: reduce) { .fond-video, .fond-credit { display: none; } }
 
 @custom-variant dark (&:is(.dark *));
 

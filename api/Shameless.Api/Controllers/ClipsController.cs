@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Clips;
 using Shameless.Application.Clips;
@@ -16,6 +18,29 @@ public sealed class ClipsController : ControllerBase
     private readonly ClipsService _clips;
 
     public ClipsController(ClipsService clips) => _clips = clips;
+
+    /// <summary>Liste paginée des clips pour le fil, avec filtres optionnels.</summary>
+    [HttpGet("clips")]
+    [ProducesResponseType<List<ClipResponse>>(StatusCodes.Status200OK)]
+    public async Task<List<ClipResponse>> GetTous([FromQuery] bool? sansGame, [FromQuery] bool? masques = null,
+        [FromQuery] string? auteur = null, [FromQuery] int? soireeId = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 30) =>
+        await _clips.GetTousAsync(sansGame, masques, auteur, soireeId, Math.Max(1, page), Math.Clamp(pageSize, 1, 100));
+
+    /// <summary>Clips non masqués tirés au hasard pour le Fond.</summary>
+    [HttpGet("clips/fond")]
+    [ProducesResponseType<List<ClipResponse>>(StatusCodes.Status200OK)]
+    public async Task<List<ClipResponse>> GetFond([FromQuery] int take = 10) =>
+        await _clips.GetEligiblesAuFondAsync(Math.Clamp(take, 1, 20));
+
+    [HttpPut("clips/{id:int}/fond")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<ClipResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ClipResponse>> SetFond(int id, [FromBody] FondClipRequest request)
+    {
+        var result = await _clips.MasquerDuFondAsync(id, request.Masque);
+        if (!result.IsOk) return this.Refusal(result);
+        return result.Value!;
+    }
 
     /// <summary>Les clips rattachés à une game, du plus ancien au plus récent publié.</summary>
     [HttpGet("games/{gameId:int}/clips")]
@@ -81,3 +106,5 @@ public sealed class ClipsController : ControllerBase
             ? PhysicalFile(fichier.Chemin, fichier.ContentType, enableRangeProcessing: true)
             : Problem(statusCode: StatusCodes.Status404NotFound, detail: "Ce clip n'existe pas.");
 }
+
+public sealed record FondClipRequest(bool Masque);

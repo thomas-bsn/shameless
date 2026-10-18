@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Outlet, useRouterState } from "@tanstack/re
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
+import { Fond } from "@/components/fond";
 import { Button } from "@/components/ui/button";
 import { pageParLien } from "@/lib/liens";
 
@@ -37,6 +38,7 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen md:flex">
+      <Fond />
       <Sidebar ouvert={tiroirOuvert} onFermer={fermerTiroir} />
       <div className="flex-1">
         <header className="flex items-center gap-2 px-3 py-2 md:hidden">

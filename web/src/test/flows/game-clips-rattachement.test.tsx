@@ -35,6 +35,7 @@ const clip = (id: number, overrides: Partial<Schemas["ClipResponse"]> = {}): Sch
   nomFichier: "pentakill.mp4",
   contentType: "video/mp4",
   taille: 12_000_000,
+  masqueDuFond: false,
   ...overrides,
 });
 

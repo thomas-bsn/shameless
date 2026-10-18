@@ -40,7 +40,8 @@ public sealed record ClipResponse(
     DateTime PublieLe,
     string NomFichier,
     string ContentType,
-    long Taille)
+    long Taille,
+    bool MasqueDuFond = false)
 {
     public static ClipResponse From(Clip clip) => new(
         clip.Id,
@@ -51,7 +52,8 @@ public sealed record ClipResponse(
         clip.PublieLe,
         clip.NomFichier,
         clip.ContentType,
-        clip.Taille);
+        clip.Taille,
+        clip.MasqueDuFond);
 }
 
 /// <summary>
