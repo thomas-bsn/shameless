@@ -5,7 +5,7 @@ namespace Shameless.Application.Services;
 
 /// <summary>
 /// Les liens d'accès d'une Série (ADR 0010). L'organisateur connecté les lit, renouvelle un Lien
-/// capitaine et indique avoir envoyé les Liens capitaine, ce qui rend le Lien spectateur disponible.
+/// capitaine. Le Lien spectateur est disponible dès la création de la Série (ADR 0017).
 /// <see cref="ResoudreAsync"/> traduit un lien en l'accès qu'il donne, sans session : c'est par là que
 /// passent les commandes et lectures ouvertes aux liens.
 /// </summary>
@@ -38,22 +38,8 @@ public sealed class LiensAccesService
         return await SaveAsync(series);
     }
 
-    /// <summary>L'organisateur a envoyé les Liens capitaine : le Lien spectateur devient disponible.</summary>
-    public async Task<CommandResult<BestOfSeries>> IndiquerLiensCapitaineEnvoyesAsync(int seriesId)
-    {
-        var series = await _series.GetWithLiensAsync(seriesId);
-        if (series == null)
-            return CommandResult<BestOfSeries>.NotFound("Cette Série n'existe pas.");
-        if (series.LiensCapitaineEnvoyes)
-            return CommandResult<BestOfSeries>.Ok(series);
-
-        series.LiensCapitaineEnvoyes = true;
-        return await SaveAsync(series);
-    }
-
     /// <summary>
-    /// L'accès que donne ce lien, ou null s'il n'en donne aucun : lien inconnu, renouvelé, ou Lien
-    /// spectateur pas encore disponible.
+    /// L'accès que donne ce lien, ou null s'il n'en donne aucun : lien inconnu ou renouvelé.
     /// </summary>
     public async Task<AccesParLien?> ResoudreAsync(string secret)
     {

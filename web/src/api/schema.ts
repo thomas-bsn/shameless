@@ -2057,72 +2057,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/series/{id}/liens/envoyes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["LiensSerieResponse"];
-                        "application/json": components["schemas"]["LiensSerieResponse"];
-                        "text/json": components["schemas"]["LiensSerieResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/liens/{lien}": {
         parameters: {
             query?: never;
@@ -5210,8 +5144,7 @@ export interface components {
             seriesId: number;
             lienCapitaineA: string;
             lienCapitaineB: string;
-            liensCapitaineEnvoyes: boolean;
-            lienSpectateur: null | string;
+            lienSpectateur: string;
         };
         LigneClassement5v5: {
             /** Format: int32 */

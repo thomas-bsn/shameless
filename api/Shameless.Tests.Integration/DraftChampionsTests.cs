@@ -57,7 +57,7 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     private async Task<JsonElement> LiensEnvoyesAsync(HttpClient client, int seriesId) =>
-        await ReadJsonAsync(await client.PostAsync($"/series/{seriesId}/liens/envoyes", null, Ct));
+        await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
 
     private async Task<HttpResponseMessage> OuvrirAsync(HttpClient client, int seriesId) =>
         await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct);

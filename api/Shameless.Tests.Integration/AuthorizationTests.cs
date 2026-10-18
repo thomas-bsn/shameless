@@ -150,7 +150,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var organisateur = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(organisateur);
-        var liens = await ReadJsonAsync(await organisateur.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var liens = await ReadJsonAsync(await organisateur.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
         var spectateur = Uri.EscapeDataString(liens.GetProperty("lienSpectateur").GetString()!);
         var commandes = Factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()

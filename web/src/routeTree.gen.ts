@@ -26,6 +26,7 @@ import { Route as ConnecteSoireeIndexRouteImport } from './routes/_connecte/soir
 import { Route as ConnecteSoireePickerRouteImport } from './routes/_connecte/soiree_.picker'
 import { Route as DraftCapitaineLienRouteImport } from './routes/draft/capitaine.$lien'
 import { Route as DraftSpectateurLienRouteImport } from './routes/draft/spectateur.$lien'
+import { Route as ConnecteSeriesSeriesIdPreparationRouteImport } from './routes/_connecte/series/$seriesId_.preparation'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -111,6 +112,12 @@ const DraftSpectateurLienRoute = DraftSpectateurLienRouteImport.update({
   path: '/draft/spectateur/$lien',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnecteSeriesSeriesIdPreparationRoute =
+  ConnecteSeriesSeriesIdPreparationRouteImport.update({
+    id: '/series/$seriesId_/preparation',
+    path: '/series/$seriesId/preparation',
+    getParentRoute: () => ConnecteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/joueurs/': typeof ConnecteJoueursIndexRoute
   '/soiree/': typeof ConnecteSoireeIndexRoute
+  '/series/$seriesId/preparation': typeof ConnecteSeriesSeriesIdPreparationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/joueurs': typeof ConnecteJoueursIndexRoute
   '/soiree': typeof ConnecteSoireeIndexRoute
+  '/series/$seriesId/preparation': typeof ConnecteSeriesSeriesIdPreparationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -167,6 +176,7 @@ export interface FileRoutesById {
   '/draft/spectateur/$lien': typeof DraftSpectateurLienRoute
   '/_connecte/joueurs/': typeof ConnecteJoueursIndexRoute
   '/_connecte/soiree/': typeof ConnecteSoireeIndexRoute
+  '/_connecte/series/$seriesId_/preparation': typeof ConnecteSeriesSeriesIdPreparationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/draft/spectateur/$lien'
     | '/joueurs/'
     | '/soiree/'
+    | '/series/$seriesId/preparation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/draft/spectateur/$lien'
     | '/joueurs'
     | '/soiree'
+    | '/series/$seriesId/preparation'
   id:
     | '__root__'
     | '/'
@@ -224,6 +236,7 @@ export interface FileRouteTypes {
     | '/draft/spectateur/$lien'
     | '/_connecte/joueurs/'
     | '/_connecte/soiree/'
+    | '/_connecte/series/$seriesId_/preparation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DraftSpectateurLienRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_connecte/series/$seriesId_/preparation': {
+      id: '/_connecte/series/$seriesId_/preparation'
+      path: '/series/$seriesId/preparation'
+      fullPath: '/series/$seriesId/preparation'
+      preLoaderRoute: typeof ConnecteSeriesSeriesIdPreparationRouteImport
+      parentRoute: typeof ConnecteRoute
+    }
   }
 }
 
@@ -371,6 +391,7 @@ interface ConnecteRouteChildren {
   ConnecteSoireePickerRoute: typeof ConnecteSoireePickerRoute
   ConnecteJoueursIndexRoute: typeof ConnecteJoueursIndexRoute
   ConnecteSoireeIndexRoute: typeof ConnecteSoireeIndexRoute
+  ConnecteSeriesSeriesIdPreparationRoute: typeof ConnecteSeriesSeriesIdPreparationRoute
 }
 
 const ConnecteRouteChildren: ConnecteRouteChildren = {
@@ -386,6 +407,8 @@ const ConnecteRouteChildren: ConnecteRouteChildren = {
   ConnecteSoireePickerRoute: ConnecteSoireePickerRoute,
   ConnecteJoueursIndexRoute: ConnecteJoueursIndexRoute,
   ConnecteSoireeIndexRoute: ConnecteSoireeIndexRoute,
+  ConnecteSeriesSeriesIdPreparationRoute:
+    ConnecteSeriesSeriesIdPreparationRoute,
 }
 
 const ConnecteRouteWithChildren = ConnecteRoute._addFileChildren(
