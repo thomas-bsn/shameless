@@ -53,4 +53,15 @@ public static class TestSession
         var state = QueryHelpers.ParseQuery(login.Headers.Location!.Query)["state"].ToString();
         return await client.GetAsync($"/auth/discord/callback?code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(state)}");
     }
+
+    /// <summary>Le rafraîchissement à la demande : l'API renvoie vers Discord, qui revient sur le callback avec ce code.</summary>
+    public static async Task<HttpResponseMessage> CompleteRefreshAsync(HttpClient client, string code, string returnUrl)
+    {
+        var refresh = await client.GetAsync($"/auth/discord/refresh?returnUrl={Uri.EscapeDataString(returnUrl)}");
+        if (refresh.StatusCode != HttpStatusCode.Redirect)
+            return refresh;
+
+        var state = QueryHelpers.ParseQuery(refresh.Headers.Location!.Query)["state"].ToString();
+        return await client.GetAsync($"/auth/discord/callback?code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(state)}");
+    }
 }
