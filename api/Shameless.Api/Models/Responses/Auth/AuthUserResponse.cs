@@ -1,3 +1,5 @@
+using Shameless.Application.Entities;
+
 namespace Shameless.Api.Models.Responses.Auth;
 
 public sealed record AuthUserResponse(
@@ -5,5 +7,6 @@ public sealed record AuthUserResponse(
     string? DiscordUserId,
     string? Username,
     string? AvatarUrl,
-    bool IsAdmin
+    bool IsAdmin,
+    UserRole Role
 );
