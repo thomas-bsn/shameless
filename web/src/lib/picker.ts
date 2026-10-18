@@ -6,9 +6,20 @@ type Picker = Schemas["PickerResponse"];
  * L'étape de la session de Picker, déduite de l'état de l'API : sélection des dix, choix de la
  * méthode, Draft en cours, puis Équipes formées (Autorole et validation).
  */
-export type PickerStep = "selection" | "methode" | "draft" | "equipes";
+export type PickerStep = "selection" | "methode" | "draft" | "equipes" | "autorole" | "serie";
 
-export function pickerStep(picker: Picker | null): PickerStep {
+/** Les six étapes du parcours, dans l'ordre : l'étape courante est visible dans l'écran. */
+export const PICKER_STEPS: [PickerStep, string][] = [
+  ["selection", "Joueurs"],
+  ["methode", "Méthode"],
+  ["draft", "Draft"],
+  ["equipes", "Équipes"],
+  ["autorole", "Autorole"],
+  ["serie", "Série"],
+];
+
+/** L'étape que l'API permet de déduire ; Autorole et Série ne sont distinguées que par l'écran. */
+export function pickerStep(picker: Picker | null): "selection" | "methode" | "draft" | "equipes" {
   if (!picker) return "selection";
   if (picker.canValidate) return "equipes";
   if (picker.methode === "Draft" && picker.equipeAuTrait) return "draft";
