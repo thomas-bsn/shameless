@@ -1,13 +1,16 @@
 import { ChevronLeftIcon, ChevronRightIcon, CircleCheckIcon, PlayIcon, VideoIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { ClipVideo } from "@/components/clip-video";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RattacherClip, RetirerClip, useRelireLesClips } from "@/components/rattachement-de-clip";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dateHeureLabel } from "@/lib/dates";
@@ -133,6 +136,94 @@ export function FilDeClips() {
   );
 }
 
+/** La valeur d'un champ de saisie, répercutée sur le serveur seulement une fois la frappe terminée. */
+function useRetarde<T>(valeur: T, delaiMs = 300) {
+  const [retardee, setRetardee] = useState(valeur);
+  useEffect(() => {
+    const minuteur = setTimeout(() => setRetardee(valeur), delaiMs);
+    return () => clearTimeout(minuteur);
+  }, [valeur, delaiMs]);
+  return retardee;
+}
+
+/**
+ * La vue plate des Clips (onglet « Tous ») : tous les clips, avec ou sans Game, du plus récent au plus
+ * ancien, filtrables par auteur (un morceau du nom) et par soirée (un jour).
+ */
+export function ClipsTous() {
+  const [auteur, setAuteur] = useState("");
+  const [soiree, setSoiree] = useState("");
+  const auteurFiltre = useRetarde(auteur.trim());
+  const soireeFiltre = useRetarde(soiree);
+  const clips = $api.useInfiniteQuery(
+    "get",
+    "/clips",
+    {
+      params: {
+        query: {
+          taille: TAILLE_DE_PAGE,
+          ...(auteurFiltre ? { auteur: auteurFiltre } : {}),
+          ...(soireeFiltre ? { soiree: soireeFiltre } : {}),
+        },
+      },
+    },
+    {
+      initialPageParam: 1,
+      pageParamName: "page",
+      getNextPageParam: (page) => (page.page * page.taille < page.total ? page.page + 1 : undefined),
+    },
+  );
+  const [ouvert, setOuvert] = useState<Ouvert>(null);
+  const liste = clips.data?.pages.flatMap((page) => page.items) ?? [];
+  const clipOuvert = ouvert == null ? undefined : liste.find((c) => c.id === ouvert.clipId);
+  const ouvrir = (fenetre: "lecteur" | "rattacher", clip: Clip) => setOuvert({ fenetre, clipId: clip.id });
+  const fermer = () => setOuvert(null);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="clips-auteur">Auteur</Label>
+          <Input id="clips-auteur" className="w-48" value={auteur} onChange={(e) => setAuteur(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="clips-soiree">Soirée</Label>
+          <Input id="clips-soiree" type="date" className="w-44" value={soiree} onChange={(e) => setSoiree(e.target.value)} />
+        </div>
+      </div>
+      {clips.isPending ? (
+        <LoadingRows />
+      ) : clips.isError ? (
+        <ErrorAlert error={clips.error} />
+      ) : liste.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {auteurFiltre || soireeFiltre ? "Aucun clip ne correspond à ces filtres." : "Aucun clip pour l'instant."}
+        </p>
+      ) : (
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {liste.map((clip) => (
+            <li key={clip.id} className="flex flex-col gap-1">
+              <Vignette clip={clip} onLire={() => ouvrir("lecteur", clip)} />
+              <p className="text-xs text-muted-foreground">
+                {clip.game ? libelleDeGame(clip.game) : "Sans game"} · {dateHeureLabel(clip.publieLe)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      {clips.hasNextPage && (
+        <Button variant="outline" className="self-center" disabled={clips.isFetchingNextPage} onClick={() => clips.fetchNextPage()}>
+          Charger plus de clips
+        </Button>
+      )}
+      {ouvert?.fenetre === "lecteur" && clipOuvert && (
+        <Lecteur clip={clipOuvert} ordre={liste} onChoisir={(clip) => ouvrir("lecteur", clip)} onChanger={() => ouvrir("rattacher", clipOuvert)} onFermer={fermer} />
+      )}
+      {ouvert?.fenetre === "rattacher" && clipOuvert && <FenetreDeRattachement clip={clipOuvert} onFermer={fermer} />}
+    </div>
+  );
+}
+
 function EtatVide({ icone, titre, texte }: { icone: React.ReactNode; titre: string; texte: string }) {
   return (
     <Card>
@@ -146,6 +237,8 @@ function EtatVide({ icone, titre, texte }: { icone: React.ReactNode; titre: stri
 }
 
 function Vignette({ clip, onLire }: { clip: Clip; onLire: () => void }) {
+  const session = useQuery(sessionQuery);
+  const estAdmin = session.data?.isAdmin === true;
   return (
     <button
       type="button"
@@ -157,7 +250,10 @@ function Vignette({ clip, onLire }: { clip: Clip; onLire: () => void }) {
         <PlayIcon className="size-6" />
       </span>
       <span className="text-sm font-medium">{clip.auteurNom}</span>
-      <span className="font-mono text-xs text-muted-foreground">{tailleLabel(clip.taille)}</span>
+      <span className="flex items-center gap-2">
+        <span className="font-mono text-xs text-muted-foreground">{tailleLabel(clip.taille)}</span>
+        {estAdmin && clip.masqueDuFond && <Badge variant="outline">Masqué</Badge>}
+      </span>
     </button>
   );
 }
