@@ -211,3 +211,19 @@ describe("Picker : capitaines distincts", () => {
     expect(screen.getByRole("option", { name: "Joueur3" })).not.toHaveAttribute("aria-disabled", "true");
   });
 });
+
+describe("Picker : récap sans couronne de capitaine", () => {
+  it("ne marque aucun capitaine dans les cartes d'Équipe", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /soirees/open": {
+        soiree: { id: 7, status: "Open", openedAt: "2026-10-16T19:00:00Z", closedAt: null, picker: draftTerminee() },
+      },
+      "GET /players": joueurs,
+    });
+    renderApp("/soiree/picker");
+
+    expect(await screen.findByRole("group", { name: "Équipe A" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Capitaine")).not.toBeInTheDocument();
+  });
+});

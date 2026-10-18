@@ -14,8 +14,12 @@ function PreparationPage() {
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <Link to="/series/$seriesId" params={{ seriesId }} className="text-sm text-muted-foreground hover:text-foreground">
-        ← Série
+      <Link
+        to="/series/$seriesId/organisateur"
+        params={{ seriesId }}
+        className="text-sm text-muted-foreground hover:text-foreground"
+      >
+        ← Espace organisateur
       </Link>
       {series.isPending ? (
         <LoadingRows />

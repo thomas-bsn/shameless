@@ -5,6 +5,19 @@ import { json, mockApi } from "@/test/api";
 import { user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
+const partieTerminee: Schemas["SeriesGameResponse"] = {
+  id: 90,
+  status: "completed",
+  teamASide: "Blue",
+  teamBSide: "Red",
+  winner: "A",
+  teamA: [],
+  teamB: [],
+  riotMatchId: null,
+  championsJoues: [],
+  rapportEnRevue: null,
+};
+
 const serie = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["SeriesResponse"] => ({
   seriesId: 11,
   soireeId: 7,
@@ -12,13 +25,13 @@ const serie = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["Ser
   fearless: false,
   outcome: "EnCours",
   winningTeam: null,
-  teamAWins: 0,
+  teamAWins: 1,
   teamBWins: 0,
   teamA: [],
   teamB: [],
   capitaineA: null,
   capitaineB: null,
-  games: [],
+  games: [partieTerminee],
   ...overrides,
 });
 
@@ -29,9 +42,9 @@ describe("Side automatique", () => {
       "GET /series/11": serie(),
       "POST /series/11/games": json({}, 201),
     });
-    renderApp("/series/11");
+    renderApp("/series/11/organisateur");
 
-    const lancer = await screen.findByRole("button", { name: "Lancer la game 1" });
+    const lancer = await screen.findByRole("button", { name: "Lancer la game 2" });
     expect(screen.queryByLabelText("Side de l'Équipe A")).not.toBeInTheDocument();
     expect(screen.queryByText("Alternance automatique")).not.toBeInTheDocument();
     await userEvent.click(lancer);
@@ -49,9 +62,9 @@ describe("Side automatique", () => {
       "GET /auth/me": user(),
       "GET /series/11": serie(),
     });
-    renderApp("/series/11");
+    renderApp("/series/11/organisateur");
 
-    await screen.findByRole("button", { name: "Lancer la game 1" });
+    await screen.findByRole("button", { name: "Lancer la game 2" });
     expect(screen.queryByText("Sides alternés")).not.toBeInTheDocument();
   });
 });

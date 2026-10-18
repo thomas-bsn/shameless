@@ -710,14 +710,12 @@ function Teams({ picker, highlight }: { picker: Picker; highlight?: Equipe }) {
           equipe="A"
           players={picker.teamA}
           cost={picker.teamACost}
-          capitaine={picker.capitaineA}
           highlighted={highlight === "A"}
         />
         <TeamCard
           equipe="B"
           players={picker.teamB}
           cost={picker.teamBCost}
-          capitaine={picker.capitaineB}
           highlighted={highlight === "B"}
         />
       </div>
