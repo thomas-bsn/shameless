@@ -56,8 +56,8 @@ public sealed record FicheJoueur(
             RangActuel.De(joueur.FlexRankTier, joueur.FlexRankDivision, joueur.FlexLp),
             StatsDeCustoms.Calculer(parties),
             parties
-                .Where(p => p.Participant.ChampionId is not null)
-                .GroupBy(p => p.Participant.ChampionId!)
+                .Where(p => ValeursEffectives.Champion(p.Participant) is not null)
+                .GroupBy(p => ValeursEffectives.Champion(p.Participant)!)
                 .Select(g => new StatsParChampion(g.Key, StatsDeCustoms.Calculer(g.ToList())))
                 .OrderByDescending(c => c.Stats.GamesJouees)
                 .ThenBy(c => c.ChampionId, StringComparer.OrdinalIgnoreCase)

@@ -164,6 +164,9 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => new { e.CustomGameId, e.PlayerId });
+
+            // Toute lecture d'un participant charge ses corrections : l'affichage prend la valeur corrigée.
+            entity.Navigation(e => e.Corrections).AutoInclude();
         });
 
         modelBuilder.Entity<PlayerMonthlyCost>(entity =>
@@ -193,6 +196,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
         modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
         modelBuilder.ApplyConfiguration(new LienAccesConfiguration());
+        modelBuilder.ApplyConfiguration(new CorrectionDeStatConfiguration());
         modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new RapportCompanionConfiguration());

@@ -88,7 +88,7 @@ internal sealed record PartieDuJoueur(
     {
         if (game.Participants.FirstOrDefault(p => p.PlayerId == playerId) is not { } participant) return null;
 
-        var stats = StatsDuParticipant.Lire(participant.RiotParticipantData);
+        var stats = ValeursEffectives.Stats(participant);
         var duree = NotesDeLaGame.DureeDe(game);
         var killsDeLEquipe = NotesDeLaGame.KillsDeLEquipe(game, participant.Side);
 
@@ -117,7 +117,7 @@ internal sealed record PartieDuJoueur(
         Game.EquipeOn(Participant.Side),
         Victoire,
         DureeSecondes,
-        Participant.ChampionId,
+        ValeursEffectives.Champion(Participant),
         Role,
         Stats,
         Performance);

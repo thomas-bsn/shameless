@@ -39,6 +39,7 @@ const participant = (playerId: number, prenom: string, s: Stats | null): Schemas
   championId: null,
   stats: s,
   performance: null,
+  champsCorriges: [],
 });
 
 /** Équipe A (rouge) : Alice 20 k + Chloé 10 k de dégâts ; équipe B (bleue) : Bob 15 k + Dan 5 k. Game de 30 min. */

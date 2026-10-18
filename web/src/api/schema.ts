@@ -2036,6 +2036,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/{id}/players/{playerId}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectPlayerStatsRequest"];
+                    "text/json": components["schemas"]["CorrectPlayerStatsRequest"];
+                    "application/*+json": components["schemas"]["CorrectPlayerStatsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{id}/players/{playerId}/corrections/{champ}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    playerId: number;
+                    champ: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}": {
         parameters: {
             query?: never;
@@ -5494,6 +5653,26 @@ export interface components {
             teamA: null | number[];
             teamB: null | number[];
         };
+        CorrectPlayerStatsRequest: {
+            champion: null | string;
+            position: null | string;
+            /** Format: int32 */
+            kills: null | number;
+            /** Format: int32 */
+            deaths: null | number;
+            /** Format: int32 */
+            assists: null | number;
+            /** Format: int32 */
+            cs: null | number;
+            /** Format: int32 */
+            goldEarned: null | number;
+            /** Format: int32 */
+            damageToChampions: null | number;
+            /** Format: int32 */
+            visionScore: null | number;
+            /** Format: int32 */
+            note: null | number;
+        };
         CostMensuelHistorique: {
             /** Format: date */
             mois: string;
@@ -5699,6 +5878,7 @@ export interface components {
             championId: null | string;
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+            champsCorriges: string[];
         };
         GameHistoryResponse: {
             /** Format: int32 */
