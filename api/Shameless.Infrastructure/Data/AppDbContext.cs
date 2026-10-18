@@ -87,6 +87,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Id).UseSerialColumn();
             entity.Property(e => e.DiscordUsername).HasColumnType("character varying");
             entity.Property(e => e.AvatarUrl).HasColumnType("character varying");
+            entity.Property(e => e.BannerUrl).HasColumnType("character varying");
+            entity.Property(e => e.BannerColor).HasMaxLength(7);
             entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(30).HasDefaultValue(UserRole.Utilisateur);
             entity.Property(e => e.PromotedBy).HasColumnType("character varying");
             entity.Property(e => e.PromotedAt).HasColumnType(Timestamp);

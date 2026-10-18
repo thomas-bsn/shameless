@@ -8,5 +8,7 @@ public sealed record AuthUserResponse(
     string? Username,
     string? AvatarUrl,
     bool IsAdmin,
-    UserRole Role
+    UserRole Role,
+    string? BannerUrl,
+    string? BannerColor
 );

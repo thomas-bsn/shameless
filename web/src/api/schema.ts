@@ -249,6 +249,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/discord/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    returnUrl?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Found */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me": {
         parameters: {
             query?: never;
@@ -5482,6 +5526,8 @@ export interface components {
             avatarUrl: null | string;
             isAdmin: boolean;
             role: components["schemas"]["UserRole"];
+            bannerUrl: null | string;
+            bannerColor: null | string;
         };
         AutoroleRequest: {
             variante: components["schemas"]["AutoroleVariante"];

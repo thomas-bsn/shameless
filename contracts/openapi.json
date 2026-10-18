@@ -254,6 +254,37 @@
         }
       }
     },
+    "/auth/discord/refresh": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "tags": [
@@ -6175,7 +6206,9 @@
           "username",
           "avatarUrl",
           "isAdmin",
-          "role"
+          "role",
+          "bannerUrl",
+          "bannerColor"
         ],
         "type": "object",
         "properties": {
@@ -6205,6 +6238,18 @@
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
+          },
+          "bannerUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bannerColor": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
