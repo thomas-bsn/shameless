@@ -1,9 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet, useRouterState } from "@tanstack/react-router";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import { pageParLien } from "@/lib/liens";
 
 export interface RouterContext {
