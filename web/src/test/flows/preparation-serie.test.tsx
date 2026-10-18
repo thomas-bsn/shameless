@@ -26,7 +26,6 @@ const serie = (overrides: Partial<Series> = {}): Series => ({
   soireeId: 7,
   format: 3,
   fearless: true,
-  alternateSides: true,
   outcome: "EnCours",
   winningTeam: null,
   teamAWins: 0,
