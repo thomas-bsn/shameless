@@ -31,13 +31,19 @@ public class UserRepository : IUserRepository
         return ToDto(user);
     }
 
-    public async Task<UserDto> SignInAsync(long discordId, string? username, string? avatarUrl)
+    public async Task<UserDto> SignInAsync(long discordId, string? username, string? avatarUrl, string? bannerUrl, string? bannerColor)
     {
         var user = await _db.Users.OrderBy(u => u.Id).FirstOrDefaultAsync(u => u.DiscordId == discordId);
-        if (user is null) return await CreateAsync(discordId, username, avatarUrl);
+        if (user is null)
+        {
+            user = new User { DiscordId = discordId };
+            _db.Users.Add(user);
+        }
 
         user.DiscordUsername = username;
         user.AvatarUrl = avatarUrl;
+        user.BannerUrl = bannerUrl;
+        user.BannerColor = bannerColor;
         await _db.SaveChangesAsync();
         return ToDto(user);
     }
@@ -88,6 +94,8 @@ public class UserRepository : IUserRepository
         DiscordId = u.DiscordId,
         DiscordUsername = u.DiscordUsername,
         AvatarUrl = u.AvatarUrl,
+        BannerUrl = u.BannerUrl,
+        BannerColor = u.BannerColor,
         Role = u.Role,
         PromotedBy = u.PromotedBy,
         PromotedAt = u.PromotedAt

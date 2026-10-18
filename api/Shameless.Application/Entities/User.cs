@@ -6,6 +6,12 @@ public class User
     public long DiscordId { get; set; }
     public string? DiscordUsername { get; set; }
     public string? AvatarUrl { get; set; }
+
+    /// <summary>Bannière Discord (GIF si animée) ; null si l'Utilisateur n'en a pas.</summary>
+    public string? BannerUrl { get; set; }
+
+    /// <summary>Couleur d'accent Discord (« #RRGGBB »), repli quand il n'y a pas de bannière.</summary>
+    public string? BannerColor { get; set; }
     public Player? Player { get; set; }
 
     public UserRole Role { get; set; } = UserRole.Utilisateur;
