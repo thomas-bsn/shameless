@@ -1070,6 +1070,10 @@ namespace Shameless.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("users_pk");
 
+                    b.HasIndex("DiscordId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_discord_id");
+
                     b.ToTable("users", (string)null);
                 });
 

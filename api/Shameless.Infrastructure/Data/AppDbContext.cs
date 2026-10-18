@@ -85,6 +85,7 @@ public class AppDbContext : DbContext
             entity.ToTable("users");
             entity.HasKey(e => e.Id).HasName("users_pk");
             entity.Property(e => e.Id).UseSerialColumn();
+            entity.HasIndex(e => e.DiscordId).IsUnique();
             entity.Property(e => e.DiscordUsername).HasColumnType("character varying");
             entity.Property(e => e.AvatarUrl).HasColumnType("character varying");
             entity.Property(e => e.BannerUrl).HasColumnType("character varying");
