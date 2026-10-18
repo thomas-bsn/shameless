@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
+import { OngletReplay, OngletStats } from "@/components/game-stats-onglets";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -40,16 +41,26 @@ function Recit({ game }: { game: Recap }) {
   return (
     <>
       <Banniere game={game} />
-      {/*
-        Un onglet par vue des stats. Résumé est le premier ; Dégâts, Objectifs, Vision et Replay
-        viennent s'ajouter ici comme autant de TabsTrigger + TabsContent (ticket suivant).
-      */}
       <Tabs defaultValue="resume">
         <TabsList>
           <TabsTrigger value="resume">Résumé</TabsTrigger>
+          <TabsTrigger value="degats">Dégâts</TabsTrigger>
+          <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
+          <TabsTrigger value="vision">Vision</TabsTrigger>
+          <TabsTrigger value="replay" className="opacity-60">
+            Replay
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="resume" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <ResumeScoreboard game={game} />}
+        </TabsContent>
+        {(["degats", "objectifs", "vision"] as const).map((onglet) => (
+          <TabsContent key={onglet} value={onglet} className="flex flex-col gap-4">
+            {saisieAMain ? <ResumeSansStats game={game} /> : <OngletStats game={game} onglet={onglet} />}
+          </TabsContent>
+        ))}
+        <TabsContent value="replay">
+          <OngletReplay />
         </TabsContent>
       </Tabs>
       <div className="grid items-start gap-6 lg:grid-cols-3">
