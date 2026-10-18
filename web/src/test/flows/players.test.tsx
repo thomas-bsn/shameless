@@ -49,6 +49,23 @@ describe("Joueurs", () => {
     for (const tier of ["D", "C", "B", "A", "S", "SS"]) expect(within(table).getByText(tier)).toBeVisible();
   });
 
+  it("shows custom winrate from the 5v5 ranking and sorts that column", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [player({ id: 1, prenom: "Alice" }), player({ id: 2, prenom: "Bob" })],
+      "GET /classements/5v5": { joueurs: [
+        { playerId: 1, prenom: "Alice", riotId: "Alice#EUW", gamesJouees: 4, victoires: 1, defaites: 3, winrate: 25 },
+        { playerId: 2, prenom: "Bob", riotId: "Bob#EUW", gamesJouees: 2, victoires: 2, defaites: 0, winrate: 100 },
+      ] },
+    });
+    renderApp("/joueurs");
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("25%")).toBeInTheDocument();
+    expect(within(table).getByText("100%")).toBeInTheDocument();
+    await userEvent.click(within(table).getByRole("button", { name: "Winrate customs" }));
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("Bob");
+  });
+
   it("shows all player profile sections and keeps missing statistics empty", async () => {
     const profile = {
       playerId: 7, prenom: "Kélio", riotId: "Kelio#EUW", discord: { discordId: "900", username: "kelio", avatarUrl: null }, cost: 4,
