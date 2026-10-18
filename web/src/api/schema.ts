@@ -3780,13 +3780,7 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["PlayGameRequest"];
-                    "text/json": components["schemas"]["PlayGameRequest"];
-                    "application/*+json": components["schemas"]["PlayGameRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Created */
                 201: {
@@ -4943,8 +4937,6 @@ export interface components {
             format: number;
             /** @default false */
             fearless: boolean;
-            /** @default false */
-            alternateSides: boolean;
         };
         CreateSeriesResponse: {
             /** Format: int32 */
@@ -5388,9 +5380,6 @@ export interface components {
             /** Format: int32 */
             lp: null | number;
         };
-        PlayGameRequest: {
-            teamASide: null | string;
-        };
         /** @enum {unknown} */
         PorteeLien: "Capitaine" | "Spectateur";
         ProblemDetails: {
@@ -5496,8 +5485,6 @@ export interface components {
             format: number;
             /** @default false */
             fearless: boolean;
-            /** @default false */
-            alternateSides: boolean;
         };
         ReplacePlayerRequest: {
             /** Format: int32 */
@@ -5586,7 +5573,6 @@ export interface components {
             /** Format: int32 */
             format: number;
             fearless: boolean;
-            alternateSides: boolean;
             outcome: components["schemas"]["SeriesOutcome"];
             winningTeam: null | string;
             /** Format: int32 */
@@ -5774,8 +5760,6 @@ export interface components {
             format: number;
             /** @default false */
             fearless: boolean;
-            /** @default false */
-            alternateSides: boolean;
         };
         VoixDuJoueur: {
             /** Format: int32 */

@@ -77,7 +77,6 @@ function SerieView({ series }: { series: Series }) {
           <h1 className="flex items-center gap-2 text-2xl font-bold">
             Série BO{series.format}
             {series.fearless && <Badge variant="outline">Fearless</Badge>}
-            {series.alternateSides && <Badge variant="outline">Sides alternés</Badge>}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{outcomeLabel(series)}</p>
         </div>
@@ -119,21 +118,17 @@ function SerieView({ series }: { series: Series }) {
   );
 }
 
-/** Lance la prochaine game avec le Side de chaque Équipe, ou saisit le résultat de la game en cours. */
+/** Lance la prochaine game (Side automatique : pile ou face, puis alternance), ou saisit le résultat de la game en cours. */
 function GamePanel({ series }: { series: Series }) {
   const refresh = useRefreshSeries();
   const pending = pendingGame(series);
   const number = series.games.length + (pending ? 0 : 1);
-  const [side, setSide] = useState<string>(series.alternateSides ? "auto" : "blue");
   const play = $api.useMutation("post", "/series/{id}/games", { onSuccess: refresh });
   const result = $api.useMutation("put", "/games/{id}/result", { onSuccess: refresh });
 
   function onPlay(event: FormEvent) {
     event.preventDefault();
-    play.mutate({
-      params: { path: { id: series.seriesId } },
-      body: { teamASide: side === "auto" ? null : side },
-    });
+    play.mutate({ params: { path: { id: series.seriesId } } });
   }
 
   return (
@@ -169,19 +164,6 @@ function GamePanel({ series }: { series: Series }) {
             </>
           ) : (
             <form onSubmit={onPlay} className="flex flex-wrap items-end gap-3">
-              <div className="flex min-w-56 flex-col gap-2">
-                <Label htmlFor="side-equipe-a">Side de l'Équipe A</Label>
-                <Select value={side} onValueChange={setSide}>
-                  <SelectTrigger id="side-equipe-a" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {series.alternateSides && <SelectItem value="auto">Alternance automatique</SelectItem>}
-                    <SelectItem value="blue">Blue side (B en Red)</SelectItem>
-                    <SelectItem value="red">Red side (B en Blue)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <Button type="submit" disabled={play.isPending}>
                 Lancer la game {number}
               </Button>
@@ -336,7 +318,7 @@ function RevanchePanel({ series }: { series: Series }) {
         </CardHeader>
         <CardContent>
           <SeriesOptionsForm
-            initial={{ format: series.format, fearless: series.fearless, alternateSides: series.alternateSides }}
+            initial={{ format: series.format, fearless: series.fearless }}
             submitLabel="Lancer la revanche"
             pending={rematch.isPending}
             error={rematch.isError ? rematch.error : null}
