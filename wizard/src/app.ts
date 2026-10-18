@@ -9,6 +9,8 @@ import { genererSecretsUchuu } from "./secrets.ts";
 import { construireRecapUchuu, type RecapUchuu } from "./uchuu.ts";
 
 export type DiscordCheck = "ok" | "refused" | "unreachable";
+/** Résultat de l'échange du code OAuth Discord (scope identify) contre l'identité de l'Opérateur. */
+export type DiscordLogin = { ok: true; id: string; username: string } | { ok: false; reason: "refused" | "unreachable" };
 export type Phase = "locked" | "configuring" | "installing" | "done" | "failed";
 
 export interface WizardOptions {
@@ -22,6 +24,8 @@ export interface WizardOptions {
   /** Nombre d'essais de code ratés avant d'en générer un nouveau. */
   maxAttempts: number;
   checkDiscord: (clientId: string, clientSecret: string) => Promise<DiscordCheck>;
+  /** Échange le code du retour OAuth contre l'identifiant Discord de l'Opérateur (jamais journalisé). */
+  loginDiscord: (demande: { code: string; clientId: string; clientSecret: string; redirectUri: string }) => Promise<DiscordLogin>;
   /** Vrai quand l'API répond « en bonne santé » (via le réseau Compose). */
   probeApi: () => Promise<boolean>;
   pollIntervalMs: number;
@@ -35,6 +39,8 @@ const API = "/_setup/api/";
 const ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 const ALNUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const MAX_BODY = 16 * 1024;
+const STATE_TTL_MS = 10 * 60_000;
+const CALLBACK = "discord/callback";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -88,6 +94,10 @@ export function createWizard(o: WizardOptions) {
   // Récapitulatif Uchuu (contient les secrets) : en mémoire seulement, jamais journalisé.
   let recapUchuu: RecapUchuu | null = null;
   let termine = false;
+  // Connexion Discord de l'Opérateur : une seule tentative en cours, en mémoire seulement.
+  let pending: { state: string; clientId: string; clientSecret: string; redirectUri: string; at: number } | null = null;
+  let superadmin: { id: string; username: string } | null = null;
+  let discordError = "";
 
   const emettreCode = (raison: string) => {
     code = nouveauCode();
@@ -113,6 +123,8 @@ export function createWizard(o: WizardOptions) {
       ...(phase === "failed" ? { failure } : {}),
       ...(warnings.length > 0 ? { warnings } : {}),
       ...(recapUchuu ? { uchuu: recapUchuu } : {}),
+      ...(superadmin ? { discord: superadmin } : {}),
+      ...(discordError ? { discordError } : {}),
     };
   };
 
@@ -128,6 +140,7 @@ export function createWizard(o: WizardOptions) {
         setTimeout(() => {
           termine = true;
           session = null;
+          pending = null;
           o.onFinished();
         }, o.finishGraceMs);
         return;
@@ -173,6 +186,7 @@ export function createWizard(o: WizardOptions) {
 
   async function api(req: IncomingMessage, res: ServerResponse, route: string) {
     if (req.method === "GET" && route === "state") return repondre(res, 200, etat(req));
+    if (req.method === "GET" && route === CALLBACK) return retourDiscord(req, res);
 
     if (req.method !== "POST") return repondre(res, 405, { message: "Méthode non autorisée." });
     if (!/^application\/json/.test(req.headers["content-type"] ?? ""))
@@ -208,11 +222,28 @@ export function createWizard(o: WizardOptions) {
       return repondre(res, 200, { errors, warnings, callbackUrl: callback(corps) });
     }
 
+    if (route === "discord/start") {
+      const { errors } = validateConfig(corps);
+      const redirectUri = callback(corps)?.replace("/api/auth/discord/callback", `/_setup/api/${CALLBACK}`);
+      const bloquantes = Object.fromEntries(Object.entries(errors).filter(([k]) => ["publicUrl", "clientId", "clientSecret"].includes(k)));
+      if (Object.keys(bloquantes).length > 0 || !redirectUri) return repondre(res, 422, { errors: bloquantes });
+      const clientId = String(corps.clientId).trim();
+      const clientSecret = String(corps.clientSecret).trim();
+      pending = { state: tirer(ALNUM, 40), clientId, clientSecret, redirectUri, at: o.now() };
+      discordError = "";
+      const authorize = new URL("https://discord.com/oauth2/authorize");
+      authorize.search = new URLSearchParams({ client_id: clientId, response_type: "code", scope: "identify", redirect_uri: redirectUri, state: pending.state, prompt: "consent" }).toString();
+      return repondre(res, 200, { authorizeUrl: authorize.toString(), redirectUri });
+    }
+
     if (route === "install") {
       if (phase !== "configuring" && phase !== "failed") return repondre(res, 409, { message: "Une installation est déjà en cours." });
       const verdict = validateConfig(corps);
       const { errors, value } = verdict;
       if (!value) return repondre(res, 422, { errors });
+      if (!superadmin)
+        return repondre(res, 422, { errors: { discord: "Connectez-vous avec Discord à l'étape Discord : votre compte devient le premier Superadministrateur de l'Instance." } });
+      value.superadminId = superadmin.id;
 
       warnings = [...verdict.warnings];
       const discord = await o.checkDiscord(value.clientId, value.clientSecret);
@@ -237,6 +268,56 @@ export function createWizard(o: WizardOptions) {
     }
 
     return repondre(res, 404, { message: "Inconnu." });
+  }
+
+  const pageDiscord = (res: ServerResponse, status: number, titre: string, detail: string) => {
+    const echapper = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    res.writeHead(status, {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "referrer-policy": "no-referrer",
+    });
+    res.end(
+      `<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Installation de Shameless</title>` +
+        `<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem"><h1>${echapper(titre)}</h1><p>${echapper(detail)}</p>` +
+        `<p>Vous pouvez fermer cette fenêtre et revenir à l'installation.</p></body></html>`,
+    );
+  };
+
+  // Retour de Discord : une navigation venue d'un autre site, donc sans cookie de session (SameSite=Strict).
+  // Le state à usage unique, lié à la tentative démarrée par l'Opérateur, est la seule preuve.
+  async function retourDiscord(req: IncomingMessage, res: ServerResponse) {
+    const params = new URL(req.url ?? "", "http://wizard").searchParams;
+    const attendu = pending;
+    const state = params.get("state") ?? "";
+    if (!attendu || termine || !egal(state, attendu.state))
+      return pageDiscord(res, 400, "Connexion Discord impossible", "Cette connexion n'est pas reconnue : elle a été remplacée ou a déjà servi. Relancez-la depuis le wizard.");
+    pending = null;
+    if (o.now() > attendu.at + STATE_TTL_MS)
+      return pageDiscord(res, 400, "Connexion Discord expirée", "La connexion a expiré (10 minutes). Relancez-la depuis le wizard.");
+    const echec = (message: string) => {
+      superadmin = null;
+      discordError = message;
+      o.log("Connexion Discord de l'Opérateur : échec.");
+      return pageDiscord(res, 200, "Connexion Discord échouée", message);
+    };
+    if (params.get("error") === "access_denied")
+      return echec("Vous avez refusé l'autorisation sur Discord. Relancez la connexion et acceptez-la : Shameless ne lit que votre identifiant.");
+    const code = params.get("code");
+    if (!code) return echec("Discord n'a pas renvoyé de code d'autorisation. Relancez la connexion depuis le wizard.");
+    const r = await o.loginDiscord({ code, clientId: attendu.clientId, clientSecret: attendu.clientSecret, redirectUri: attendu.redirectUri });
+    if (!r.ok)
+      return echec(
+        r.reason === "refused"
+          ? `Discord a refusé la connexion. Vérifiez que l'URL de redirection ${attendu.redirectUri} figure bien dans OAuth2, Redirects, et que le Client ID et le Client Secret sont corrects.`
+          : "Le wizard n'a pas pu joindre Discord. Vérifiez la connexion internet du serveur puis relancez la connexion.",
+      );
+    superadmin = { id: r.id, username: r.username };
+    discordError = "";
+    o.log("Connexion Discord de l'Opérateur : réussie.");
+    return pageDiscord(res, 200, `Connecté en tant que ${r.username}`, "Ce compte deviendra le premier Superadministrateur de l'Instance.");
   }
 
   const callback = (corps: Record<string, unknown>) => {
