@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Shameless.Api.Auth;
 using Shameless.Api.Interfaces;
 using Shameless.Api.Models.Responses.Auth;
+using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
 using Shameless.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -60,6 +62,7 @@ public sealed class AuthController : ControllerBase
     public async Task<IActionResult> DiscordCallback(
         [FromQuery] string? code,
         [FromQuery] string? state,
+        [FromServices] IUserRepository users,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -91,6 +94,9 @@ public sealed class AuthController : ControllerBase
             new Claim(ClaimsPrincipalExtensions.AvatarClaim, avatarUrl)
         ], CookieAuthenticationDefaults.AuthenticationScheme);
 
+        // La ligne Utilisateur naît à la première connexion ; pseudo et photo sont relus à chaque connexion.
+        await users.SignInAsync(long.Parse(me.Id), me.Username, avatarUrl);
+
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity),
@@ -106,14 +112,16 @@ public sealed class AuthController : ControllerBase
 
     [HttpGet("me")]
     [ProducesResponseType<AuthUserResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCurrentUser([FromServices] IAuthorizationService authorization)
+    public async Task<IActionResult> GetCurrentUser([FromServices] IUserRepository users)
     {
+        var role = (await users.GetByDiscordIdAsync(User.DiscordIdOrNull() ?? 0))?.Role ?? UserRole.Utilisateur;
         return Ok(new AuthUserResponse(
             Valid: true,
             DiscordUserId: User.DiscordId(),
             Username: User.Username(),
             AvatarUrl: User.AvatarUrl(),
-            IsAdmin: await authorization.IsAdminAsync(User)
+            IsAdmin: role is UserRole.Administrateur or UserRole.Superadministrateur,
+            Role: role
         ));
     }
 

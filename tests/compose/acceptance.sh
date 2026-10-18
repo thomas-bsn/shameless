@@ -137,6 +137,12 @@ parcours() {
   [ -n "$PG_PASSWORD" ] || fail "le mot de passe de base généré est introuvable dans instance.env"
   ok "« docker compose exec api cat /instance/instance.env » relit la configuration ; un mot de passe de base a été généré"
   [ -n "$(env_value SHAMELESS_TIMEZONE)" ] || fail "SHAMELESS_TIMEZONE absent d'instance.env"
+
+  echo "== Commande superadmin de l'image de l'API ($nom)"
+  PREMIER_ADMIN=$(env_value Auth__AdminDiscordIds | cut -d, -f1)
+  dc exec -T api dotnet Shameless.Api.dll superadmin lister 2>/dev/null | grep -q "^$PREMIER_ADMIN " ||
+    fail "« superadmin lister » ne montre pas l'identifiant de la configuration ($PREMIER_ADMIN) comme Superadministrateur"
+  ok "« docker compose exec api dotnet Shameless.Api.dll superadmin lister » montre le Superadministrateur importé de la configuration"
 }
 
 # Secrets à ne jamais voir dans les logs ; chaque parcours complète la liste.

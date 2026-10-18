@@ -4844,6 +4844,168 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/utilisateurs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"][];
+                        "application/json": components["schemas"]["UtilisateurResponse"][];
+                        "text/json": components["schemas"]["UtilisateurResponse"][];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/utilisateurs/{discordId}/administrateur": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    discordId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"];
+                        "application/json": components["schemas"]["UtilisateurResponse"];
+                        "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    discordId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"];
+                        "application/json": components["schemas"]["UtilisateurResponse"];
+                        "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}/votes": {
         parameters: {
             query?: never;
@@ -5160,6 +5322,7 @@ export interface components {
             username: null | string;
             avatarUrl: null | string;
             isAdmin: boolean;
+            role: components["schemas"]["UserRole"];
         };
         AutoroleRequest: {
             variante: components["schemas"]["AutoroleVariante"];
@@ -6169,6 +6332,17 @@ export interface components {
             peakSeason: null | string;
             /** Format: int32 */
             peakLp: number;
+        };
+        /** @enum {unknown} */
+        UserRole: "Utilisateur" | "Administrateur" | "Superadministrateur";
+        UtilisateurResponse: {
+            discordUserId: string;
+            username: null | string;
+            avatarUrl: null | string;
+            role: components["schemas"]["UserRole"];
+            promotedBy: null | string;
+            /** Format: date-time */
+            promotedAt: null | string;
         };
         ValidatePickerRequest: {
             /** Format: int32 */

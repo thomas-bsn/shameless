@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Shameless.Api.Interfaces;
 using Shameless.Application.BackgroundJobs;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Services;
 using Shameless.Infrastructure.Data;
 using Shameless.Infrastructure.Integrations.Bot;
 using Testcontainers.PostgreSql;
@@ -82,6 +83,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
             "TRUNCATE pronostics, clips, bulletins_de_vote, spectateurs_de_game, evenements_bot, rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");
+
+        // La base vide est celle d'un premier démarrage : la configuration redonne son Superadministrateur de test.
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<RolesService>()
+            .ImportConfiguredSuperadminsAsync([long.Parse(TestSession.AdminDiscordId)]);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

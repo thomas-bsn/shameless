@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddHostedService<RefreshRanksJob>();
         services.AddHostedService<FermetureAutomatiqueSoireeJob>();
         services.AddHostedService<PublicationWebhooksBotJob>();
+        services.AddHostedService<Shameless.Api.Auth.ImportDesSuperadministrateursDeLaConfiguration>();
 
         // Repositories
         services.AddScoped<IPlayerRepository, PlayerRepository>();
@@ -57,6 +58,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<PronosticsService>();
         services.AddScoped<HallDeLaHonteService>();
         services.AddScoped<ClipsService>();
+        services.AddScoped<RolesService>();
 
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
