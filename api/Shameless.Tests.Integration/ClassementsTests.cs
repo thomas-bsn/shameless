@@ -17,7 +17,7 @@ public class ClassementsTests(ApiFactory factory) : IntegrationTest(factory)
         await PlayAndWinAsync(client, serie.SeriesId, "A");
         var equipeC = await CreatePlayersAsync(client, "C1", "C2", "C3", "C4", "C5");
         var revanche = await ReadJsonAsync(await client.PostAsJsonAsync("/series",
-            new { teamA = equipeC, teamB = serie.TeamB, format = 1, fearless = false, alternateSides = false }, Ct));
+            new { teamA = equipeC, teamB = serie.TeamB, format = 1, fearless = false }, Ct));
         await PlayAndWinAsync(client, revanche.GetProperty("seriesId").GetInt32(), "B");
 
         var lignes = await Classement5v5Async(client);

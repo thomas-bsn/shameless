@@ -21,9 +21,6 @@ public class BestOfSeries
     /// <summary>Simple étiquette : la Série se joue en Fearless.</summary>
     public bool Fearless { get; set; }
 
-    /// <summary>Les Sides s'inversent automatiquement à chaque game.</summary>
-    public bool AlternateSides { get; set; }
-
     public SeriesOutcome Outcome { get; set; } = SeriesOutcome.EnCours;
 
     /// <summary>L'Équipe gagnante ("A" | "B") quand la Série est gagnée, sinon null.</summary>

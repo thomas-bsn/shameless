@@ -103,7 +103,7 @@ public class DedoublonnageRapportsTests(ApiFactory factory) : IntegrationTest(fa
         var game1 = await PlayGameAsync(client, serie1.SeriesId, teamASide: "blue");
         var code1 = await CodeCompanionAsync(client, serie1.SeriesId);
         var serie2Id = (await ReadJsonAsync(await client.PostAsJsonAsync("/series",
-            new { teamA = serie1.TeamA, teamB = serie1.TeamB, format = 3, fearless = false, alternateSides = false }, Ct)))
+            new { teamA = serie1.TeamA, teamB = serie1.TeamB, format = 3, fearless = false }, Ct)))
             .GetProperty("seriesId").GetInt32();
         var game2 = await PlayGameAsync(client, serie2Id, teamASide: "blue");
         var code2 = await CodeCompanionAsync(client, serie2Id);

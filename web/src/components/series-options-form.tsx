@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-/** Les options d'une Série : son format, l'étiquette Fearless et l'alternance automatique des Sides. */
+/** Les options d'une Série : son format et l'étiquette Fearless. */
 export interface SeriesOptions {
   format: number;
   fearless: boolean;
-  alternateSides: boolean;
 }
 
 const formats = [1, 2, 3, 5] as const;
 
 /** Le formulaire des options d'une nouvelle Série : validation du Picker et Revanche. */
 export function SeriesOptionsForm({
-  initial = { format: 3, fearless: false, alternateSides: false },
+  initial = { format: 3, fearless: false },
   submitLabel,
   pending,
   error,
@@ -30,11 +29,10 @@ export function SeriesOptionsForm({
   const id = useId();
   const [format, setFormat] = useState(String(initial.format));
   const [fearless, setFearless] = useState(initial.fearless);
-  const [alternateSides, setAlternateSides] = useState(initial.alternateSides);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onSubmit({ format: Number(format), fearless, alternateSides });
+    onSubmit({ format: Number(format), fearless });
   }
 
   return (
@@ -63,14 +61,6 @@ export function SeriesOptionsForm({
       <div className="flex items-center gap-2">
         <Checkbox id={`${id}-fearless`} checked={fearless} onCheckedChange={(v) => setFearless(v === true)} />
         <Label htmlFor={`${id}-fearless`}>Fearless</Label>
-      </div>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id={`${id}-alternance`}
-          checked={alternateSides}
-          onCheckedChange={(v) => setAlternateSides(v === true)}
-        />
-        <Label htmlFor={`${id}-alternance`}>Alterner les Sides à chaque game</Label>
       </div>
       {error ? <ErrorAlert error={error} /> : null}
       <div>
