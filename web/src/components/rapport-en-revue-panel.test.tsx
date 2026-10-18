@@ -29,7 +29,7 @@ const revue = (overrides: Partial<Schemas["RapportEnRevueResponse"]> = {}): Sche
   ...overrides,
 });
 
-const champions = [{ id: "Thresh", key: "412", name: "Thresh", imageUrl: "https://ddragon/Thresh.png" }];
+const champions = [{ id: "Thresh", key: "412", name: "Thresh", imageUrl: "https://ddragon/Thresh.png", classes: [] }];
 
 describe("RapportEnRevuePanel", () => {
   it("montre l'écart entre les joueurs détectés et la composition de la game", async () => {

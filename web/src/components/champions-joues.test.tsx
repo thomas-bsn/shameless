@@ -38,7 +38,7 @@ const champion = (id: string, name: string): Schemas["ChampionResponse"] => ({
   key: id,
   name,
   imageUrl: `https://ddragon/${id}.png`,
-  roles: [],
+  classes: [],
 });
 
 describe("ChampionsJoues", () => {

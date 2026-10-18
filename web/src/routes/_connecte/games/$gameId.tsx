@@ -36,6 +36,7 @@ function GamePage() {
 
 function Recit({ game }: { game: Recap }) {
   const [tab, setTab] = useState("resume");
+  const champions = $api.useQuery("get", "/champions");
   const votes = $api.useQuery("get", "/games/{id}/votes", { params: { path: { id: game.id } } });
   const winner = gameWinner(game);
   const mvp = new Set(votes.data?.statut === "clos" ? votes.data.mvp.gagnants : []);
@@ -77,6 +78,7 @@ function Recit({ game }: { game: Recap }) {
           team={aOnBlue ? "A" : "B"}
           side="blue"
           players={aOnBlue ? game.teamA : game.teamB}
+          champions={champions.data ?? []}
           won={winner === (aOnBlue ? "A" : "B")}
           mvp={mvp} dofd={dofd}
         />
@@ -84,6 +86,7 @@ function Recit({ game }: { game: Recap }) {
           team={aOnBlue ? "B" : "A"}
           side="red"
           players={aOnBlue ? game.teamB : game.teamA}
+          champions={champions.data ?? []}
           won={winner === (aOnBlue ? "B" : "A")}
           mvp={mvp} dofd={dofd}
         />
@@ -108,6 +111,7 @@ function Equipe({
   team,
   side,
   players,
+  champions,
   won,
   mvp,
   dofd,
@@ -115,6 +119,7 @@ function Equipe({
   team: string;
   side: "blue" | "red";
   players: Schemas["GameHistoryParticipantDto"][];
+  champions: Schemas["ChampionResponse"][];
   won: boolean;
   mvp: Set<number>;
   dofd: Set<number>;
@@ -132,8 +137,8 @@ function Equipe({
         {gameSansStats(players) && <p className="mb-3 text-sm text-muted-foreground">Game saisie à la main : les stats détaillées et les notes de performance ne sont pas disponibles.</p>}
         <table className="w-full min-w-[620px] text-left text-xs">
           <thead className="text-muted-foreground"><tr><th className="pb-2">Joueur</th><th>Champion · niv.</th><th>K / D / A</th><th>CS</th><th>Or</th><th>Dégâts</th><th>Note</th></tr></thead>
-          <tbody className="divide-y divide-border/60">{players.map((p) => { const stats = p.stats; const damage = stats?.damageToChampions ?? null; const titles = [mvp.has(p.playerId) ? "MVP" : null, dofd.has(p.playerId) ? "DOFD" : null].filter(Boolean); return <tr key={p.playerId} className={cn("h-11", titles.length > 0 && "outline outline-1 outline-primary/70 outline-offset-[-2px]")}>
-            <th scope="row" className="pr-2 font-medium"><span>{p.prenom}</span>{titles.map((title) => <Badge key={title} aria-label={`${title} ${p.prenom}`} className="ml-1" variant="outline">{title}</Badge>)}</th><td>{p.championId ?? "—"}{stats?.champLevel != null && <span className="ml-1 text-muted-foreground">· {stats.champLevel}</span>}</td>
+          <tbody className="divide-y divide-border/60">{players.map((p) => { const stats = p.stats; const damage = stats?.damageToChampions ?? null; const titles = [mvp.has(p.playerId) ? "MVP" : null, dofd.has(p.playerId) ? "DOFD" : null].filter(Boolean); const champion = champions.find((c) => c.id === p.championId); return <tr key={p.playerId} className={cn("h-11", titles.length > 0 && "outline outline-1 outline-primary/70 outline-offset-[-2px]")}>
+            <th scope="row" className="pr-2 font-medium"><span>{p.prenom}</span>{titles.map((title) => <Badge key={title} aria-label={`${title} ${p.prenom}`} className="ml-1" variant="outline">{title}</Badge>)}</th><td>{p.championId ? <span className="inline-flex items-center gap-1" title={champion?.name ?? p.championId}>{champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}{champion?.name ?? p.championId}</span> : "—"}{stats?.champLevel != null && <span className="ml-1 text-muted-foreground">· {stats.champLevel}</span>}</td>
             <td className="font-mono">{stats ? kdaLabel(stats) : "—"}</td><td className="font-mono">{stats ? valeur((stats.minionsKilled ?? 0) + (stats.neutralMinionsKilled ?? 0)) : "—"}</td>
             <td className="font-mono">{valeur(stats?.goldEarned)}</td><td><span className="font-mono">{valeur(damage)}</span>{damage != null && <progress className="ml-2 h-1.5 w-12 align-middle accent-primary" aria-label={`Dégâts de ${p.prenom}`} value={damage} max={maxDamage} />}</td>
             <td>{p.performance ? <Badge variant="outline">{p.performance.note}/100</Badge> : "—"}</td>

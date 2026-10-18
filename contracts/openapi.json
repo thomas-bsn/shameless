@@ -5510,7 +5510,7 @@
           "key",
           "name",
           "imageUrl",
-          "roles"
+          "classes"
         ],
         "type": "object",
         "properties": {
@@ -5526,7 +5526,7 @@
           "imageUrl": {
             "type": "string"
           },
-          "roles": {
+          "classes": {
             "type": "array",
             "items": {
               "type": "string"

@@ -21,13 +21,13 @@ public sealed class ChampionsController : ControllerBase
         _catalog = catalog;
     }
 
-    /// <summary>Tous les champions, triés par nom.</summary>
+    /// <summary>Tous les champions, triés par nom, avec leurs classes Data Dragon (pas leurs voies jouées).</summary>
     [HttpGet]
     [ProducesResponseType<List<ChampionResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
     public async Task<ActionResult<List<ChampionResponse>>> GetAll(CancellationToken cancellationToken)
     {
         var champions = await _catalog.GetAllAsync(cancellationToken);
-        return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl, c.Roles ?? [])).ToList();
+        return champions.Select(c => new ChampionResponse(c.Id, c.Key, c.Name, c.ImageUrl, c.Classes ?? [])).ToList();
     }
 }

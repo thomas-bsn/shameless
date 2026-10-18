@@ -5,7 +5,9 @@ import { PageHeader } from "@/components/page-header";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { FormulaireNouveauJoueur } from "@/components/formulaire-nouveau-joueur";
 
 export const Route = createFileRoute("/_connecte/joueurs/")({
   component: Joueurs,
@@ -15,8 +17,9 @@ function Joueurs() {
   const players = $api.useQuery("get", "/players");
   const ranking = $api.useQuery("get", "/classements/5v5");
   const [search, setSearch] = useState("");
+  const [ajoutOuvert, setAjoutOuvert] = useState(false);
   const [sort, setSort] = useState<"name" | "cost" | "role" | "rank" | "peak" | "winrate">("name");
-  const winrates = new Map((ranking.data?.joueurs ?? []).map((line) => [line.playerId, line.winrate]));
+  const winrates = useMemo(() => new Map((ranking.data?.joueurs ?? []).map((line) => [line.playerId, line.winrate])), [ranking.data]);
   const visible = useMemo(() => [...(players.data ?? [])].filter((p) => `${p.prenom} ${p.riotId} ${p.mainRole ?? ""}`.toLocaleLowerCase("fr-FR").includes(search.toLocaleLowerCase("fr-FR"))).sort((a, b) => {
     if (sort === "cost") return b.currentCost - a.currentCost || a.prenom.localeCompare(b.prenom);
     if (sort === "role") return (a.mainRole ?? "").localeCompare(b.mainRole ?? "") || a.prenom.localeCompare(b.prenom);
@@ -24,7 +27,7 @@ function Joueurs() {
     if (sort === "peak") return (b.peakTier ?? "").localeCompare(a.peakTier ?? "") || (a.peakDivision ?? 0) - (b.peakDivision ?? 0) || a.prenom.localeCompare(b.prenom);
     if (sort === "winrate") return (winrates.get(b.id) ?? -1) - (winrates.get(a.id) ?? -1) || a.prenom.localeCompare(b.prenom);
     return a.prenom.localeCompare(b.prenom);
-  }), [players.data, search, sort, ranking.data]);
+  }), [players.data, search, sort, winrates]);
 
   return (
     <>
@@ -32,11 +35,17 @@ function Joueurs() {
         title="Joueurs"
         description={players.data ? `${players.data.length} joueurs, rangés par tier de cost` : undefined}
         actions={
-          <Button asChild>
-            <Link to="/joueurs/nouveau">Ajouter un joueur</Link>
+          <Button onClick={() => setAjoutOuvert(true)}>
+            Ajouter un joueur
           </Button>
         }
       />
+      <Dialog open={ajoutOuvert} onOpenChange={setAjoutOuvert}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <div><DialogTitle>Ajouter un joueur</DialogTitle><DialogDescription>Le compte Riot est vérifié avant l'enregistrement.</DialogDescription></div>
+          <FormulaireNouveauJoueur />
+        </DialogContent>
+      </Dialog>
       {players.isPending ? (
         <LoadingRows />
       ) : players.isError ? (

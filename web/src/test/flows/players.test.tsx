@@ -170,6 +170,28 @@ describe("Joueurs", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/joueurs/12"));
   });
 
+  it("adds a player from the roster in a dialog and keeps Riot verification before save", async () => {
+    let saved = false;
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [],
+      "GET /classements/5v5": { joueurs: [] },
+      "GET /players/riot-preview": () => json({ riotId: "Test#EUW", rankTier: "GOLD", rankDivision: 2, lp: 40, mainRole: "MIDDLE", alreadyRegistered: false }),
+      "POST /players": async () => { saved = true; return json({ id: 13, prenom: "Test", riotId: "Test#EUW" }); },
+      "GET /players/13": player({ id: 13, prenom: "Test", riotId: "Test#EUW" }),
+    });
+    renderApp("/joueurs");
+    await userEvent.click(await screen.findByRole("button", { name: "Ajouter un joueur" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Prénom"), "Test");
+    await userEvent.type(screen.getByLabelText("RiotId"), "Test#EUW");
+    await userEvent.click(screen.getByRole("button", { name: "Prévisualiser" }));
+    expect(await screen.findByRole("region", { name: "Compte Riot" })).toBeInTheDocument();
+    expect(saved).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+    await waitFor(() => expect(saved).toBe(true));
+  });
+
   it("does not save an account that is already a player, nor an unknown account", async () => {
     mockApi({
       "GET /auth/me": user(),

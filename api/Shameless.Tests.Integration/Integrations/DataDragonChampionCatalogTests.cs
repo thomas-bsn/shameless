@@ -28,7 +28,7 @@ public class DataDragonChampionCatalogTests
 
         var ahri = Assert.Single(champions);
         Assert.Equal("https://ddragon.test/cdn/15.1.1/img/champion/Ahri.png", ahri.ImageUrl);
-        Assert.Equal(["Mage", "Assassin"], ahri.Roles);
+        Assert.Equal(["Mage", "Assassin"], ahri.Classes);
     }
 
     public static TheoryData<string> Pannes => ["erreur http", "json invalide", "aucune version", "aucun champion"];

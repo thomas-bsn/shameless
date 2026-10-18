@@ -4784,7 +4784,7 @@ export interface components {
             key: string;
             name: string;
             imageUrl: string;
-            roles: string[];
+            classes: string[];
         };
         Classement5v5: {
             joueurs: components["schemas"]["LigneClassement5v5"][];

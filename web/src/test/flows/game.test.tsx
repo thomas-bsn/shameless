@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi, problem } from "@/test/api";
@@ -65,6 +65,18 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
 });
 
 describe("Page d'une Game", () => {
+  it("affiche le nom et l'icône du champion résolus depuis le catalogue", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /games/42": recap(),
+      "GET /champions": [{ id: "Ahri", key: "103", name: "Ahri", imageUrl: "https://ddragon.test/Ahri.png", classes: ["Mage"] }],
+    });
+    renderApp("/games/42");
+    const team = await screen.findByRole("group", { name: "Équipe A · Red side" });
+    expect(within(team).getByText("Ahri")).toBeInTheDocument();
+    await waitFor(() => expect(within(team).getByRole("cell", { name: "Ahri" }).querySelector("img")).toHaveAttribute("src", "https://ddragon.test/Ahri.png"));
+  });
+
   it("montre la Game dans sa Série, son vainqueur et les stats de chaque joueur", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap() });
 

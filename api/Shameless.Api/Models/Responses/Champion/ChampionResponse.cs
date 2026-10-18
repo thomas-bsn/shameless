@@ -6,5 +6,5 @@ public sealed record ChampionResponse(
     string Key, // clé numérique Riot, ex. "64"
     string Name,
     string ImageUrl,
-    IReadOnlyList<string> Roles
+    IReadOnlyList<string> Classes
 );

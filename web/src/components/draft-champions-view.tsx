@@ -395,14 +395,14 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
 function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour }) {
   const tour = draft.tourCourant!;
   const [recherche, setRecherche] = useState("");
-  const [role, setRole] = useState("");
+  const [classe, setClasse] = useState("");
   const [choisi, setChoisi] = useState<string | null>(null);
   const pris = championsPris(draft.actions);
   const dejaJoues = new Set(draft.championsDejaJoues ?? []);
   const verbe = tour.action === "ban" ? "Bannir" : "Choisir";
   const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
-  const roles = [...new Set(champions.flatMap((c) => c.roles))].sort((a, b) => a.localeCompare(b, "fr"));
-  const championsFiltres = filtrerChampions(champions, recherche).filter((c) => !role || c.roles.includes(role));
+  const classes = [...new Set(champions.flatMap((c) => c.classes))].sort((a, b) => a.localeCompare(b, "fr"));
+  const championsFiltres = filtrerChampions(champions, recherche).filter((c) => !classe || c.classes.includes(classe));
 
   return (
     <Card className="border-primary">
@@ -425,13 +425,13 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           onChange={(e) => setRecherche(e.target.value)}
         />
         <select
-          aria-label="Filtrer par rôle"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
+          aria-label="Filtrer par classe"
+          value={classe}
+          onChange={(e) => setClasse(e.target.value)}
           className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm md:max-w-xs"
         >
-          <option value="">Tous les rôles</option>
-          {roles.map((r) => <option key={r} value={r}>{libelleRole(r)}</option>)}
+          <option value="">Toutes les classes</option>
+          {classes.map((c) => <option key={c} value={c}>{libelleClasse(c)}</option>)}
         </select>
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
           {championsFiltres.map((c) => {
@@ -472,7 +472,7 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
   );
 }
 
-function libelleRole(role: string): string {
+function libelleClasse(classe: string): string {
   const libelles: Record<string, string> = {
     Assassin: "Assassin",
     Fighter: "Combattant",
@@ -481,5 +481,5 @@ function libelleRole(role: string): string {
     Support: "Soutien",
     Tank: "Tank",
   };
-  return libelles[role] ?? role;
+  return libelles[classe] ?? classe;
 }
