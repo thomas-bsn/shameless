@@ -28,6 +28,7 @@ const game = (id: number, overrides: Partial<Schemas["SeriesGameResponse"]> = {}
   riotMatchId: null,
   championsJoues: [],
   rapportEnRevue: null,
+  startedAt: null,
   ...overrides,
 });
 

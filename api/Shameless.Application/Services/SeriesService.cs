@@ -153,13 +153,40 @@ public sealed class SeriesService
                 .ToList()
         };
         _games.Add(game);
-        // Le lancement est le début de la Game (ADR 0013) : pronostics clos, présences ouvertes côté bot.
-        _evenements.GameStarted(game);
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
 
         return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+    }
+
+    /// <summary>
+    /// Le Début de la Game (ADR 0017) : le signal « partie lancée » du Companion, ou de l'organisateur à
+    /// la main. Il renseigne <c>StartedAt</c>, clôt les pronostics et émet <c>game_started</c>. Idempotent :
+    /// un second signal répond le même début sans rien ré-émettre. Refusé sans game en attente.
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> SignalerDebutAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : aucune partie ne peut commencer.");
+
+        var game = series.Games.SingleOrDefault(g => g.Status == GameStatuses.Pending);
+        if (game == null)
+            return CommandResult<CustomGame>.Conflict(
+                "Aucune game de cette Série n'est en attente : lancez la draft avant de signaler le début de la partie.");
+        if (game.StartedAt != null)
+            return CommandResult<CustomGame>.Ok(game);
+
+        game.StartedAt = _clock.GetUtcNow().UtcDateTime;
+        // Le début de la Game : pronostics clos, fenêtre de présence du bot ouverte.
+        _evenements.GameStarted(game);
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<CustomGame>.Ok(game);
     }
 
     /// <summary>

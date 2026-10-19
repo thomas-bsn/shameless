@@ -93,7 +93,7 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
   - [x] Capitaines, liens et draft de champions, avec le filtre de voie via Meraki (#105)
   - [ ] Parcours de série : Écran de préparation, Page de la Série allégée, Espace organisateur
   - [ ] Capitaines : jamais le même joueur des deux côtés ; liens envoyés en DM par le bot, « rejoint » mémorisé
-  - [ ] Game créée au lancement de la draft, `game_started` au signal du Companion, Side sans choix manuel
+  - [x] Game créée au lancement de la draft, `game_started` au signal du Companion, Side sans choix manuel
 
 ## Backlog
 - Teaser vidéo avec vraies captures

@@ -16,6 +16,7 @@ const partieTerminee: Schemas["SeriesGameResponse"] = {
   riotMatchId: null,
   championsJoues: [],
   rapportEnRevue: null,
+  startedAt: null,
 };
 
 const serie = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["SeriesResponse"] => ({

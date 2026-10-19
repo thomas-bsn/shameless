@@ -14,7 +14,14 @@ public class CustomGame
     /// <summary>Les données Riot brutes de la partie (JSON), données par le rapport du Companion.</summary>
     public string? RiotMatchData { get; set; }
     public string Status { get; set; } = GameStatuses.Pending; // voir GameStatuses
+    /// <summary>Le lancement de la Game dans la Série (« Lancer la draft », ADR 0017).</summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Le début de la Game : le signal « partie lancée » du Companion ou de l'organisateur (ADR 0017).
+    /// Null tant que la partie n'est pas lancée ; c'est ce moment qui clôt les pronostics.
+    /// </summary>
+    public DateTime? StartedAt { get; set; }
 
     /// <summary>Quand le résultat a été saisi, null tant que la game n'est pas terminée.</summary>
     public DateTime? CompletedAt { get; set; }

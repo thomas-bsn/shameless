@@ -21,7 +21,7 @@ public sealed record PronosticsDeLaGame(
 {
     /// <summary>
     /// Évalue les pronostics d'une Game (chargée avec sa Série et ses games) d'après ses votes. Un
-    /// pronostic déposé après le lancement de la Game (<c>CreatedAt</c>) est ignoré : il arrivait trop
+    /// pronostic déposé après le début de la Game (<c>StartedAt</c>, ADR 0017) est ignoré : il arrivait trop
     /// tard. Un MVP ou un DOFD est juste si le Joueur pronostiqué est l'un des gagnants, égalités
     /// comprises ; faux si personne n'a été élu.
     /// </summary>
@@ -36,7 +36,7 @@ public sealed record PronosticsDeLaGame(
                 : null;
 
         var evalues = pronostics
-            .Where(p => p.PronostiqueLe <= game.CreatedAt)
+            .Where(p => game.StartedAt is not { } debut || p.PronostiqueLe <= debut)
             .Select(p => new PronosticEvalue(
                 DiscordId.Texte(p.PronostiqueurDiscordId),
                 p.PronostiqueurNom,

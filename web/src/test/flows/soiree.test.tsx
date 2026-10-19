@@ -45,6 +45,7 @@ const serie = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["Ser
       riotMatchId: null,
       championsJoues: [],
       rapportEnRevue: null,
+      startedAt: null,
     },
     {
       id: 22,
@@ -57,6 +58,7 @@ const serie = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["Ser
       riotMatchId: null,
       championsJoues: [],
       rapportEnRevue: null,
+      startedAt: null,
     },
   ],
   ...overrides,

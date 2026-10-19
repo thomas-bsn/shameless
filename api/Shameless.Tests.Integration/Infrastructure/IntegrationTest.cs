@@ -105,6 +105,10 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
         (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
             .GetProperty("code").GetString()!;
 
+    /// <summary>Le Companion, sans connexion, signale « partie lancée » avec ce code (Début de la Game, ADR 0017).</summary>
+    protected async Task<HttpResponseMessage> SignalerDebutAsync(string code) =>
+        await Factory.CreateAnonymousClient().PostAsync($"/companion/{Uri.EscapeDataString(code)}/debut", null, Ct);
+
     /// <summary>Le Companion, sans connexion, envoie un rapport de fin de game avec ce code.</summary>
     protected async Task<HttpResponseMessage> EnvoyerRapportAsync(string code, object rapport) =>
         await Factory.CreateAnonymousClient().PostAsJsonAsync(

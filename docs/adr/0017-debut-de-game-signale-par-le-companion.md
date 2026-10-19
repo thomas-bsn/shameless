@@ -36,6 +36,13 @@ reflèterait pas le vrai début de partie.
 - `StartedAt` de `GET /bot/games/{id}` ne vaut plus `CreatedAt` : il est vide jusqu'au
   signal du Companion. Les pronostics déposés avant `StartedAt` restent valables.
 - Une Game peut exister (en Draft de champions) sans avoir commencé.
+- Le signal : `POST /companion/{code}/debut` (Code Companion, sans connexion) ou, en secours,
+  `POST /series/{id}/debut` (organisateur connecté, bouton de l'Espace organisateur). Réponse
+  200 `{ seriesId, gameId, startedAt }` ; idempotent (un second signal répond le même début
+  sans ré-émettre `game_started`) ; 409 sans Game en attente ; 404 pour un code inconnu,
+  renouvelé ou de Série terminée. `startedAt` figure aussi dans les games de `GET /series/{id}`.
+- Les pronostics restent ouverts de « Lancer la draft » au signal, sur la Game en attente.
+- Les games existantes à la migration ont `StartedAt = CreatedAt`.
 - Une route Companion s'ajoute à `[AccesParCodeCompanion]` pour le signal de début ; elle
   n'accepte rien d'autre et refuse sans Game en attente.
 - Une Série annulée ou une Game en attente supprimée emporte son `game_started` non livré

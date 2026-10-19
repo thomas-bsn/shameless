@@ -73,13 +73,20 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Les_pronostics_sont_verrouilles_au_lancement_de_la_game()
+    public async Task Les_pronostics_restent_ouverts_apres_le_lancement_de_la_draft_et_se_closent_au_debut_de_la_game()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, null));
 
         var gameId = await PlayGameAsync(client, serie.SeriesId);
+
+        // Draft lancée, partie pas commencée : le pronostic de la game 1 est encore possible.
+        var avant = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/series/{serie.SeriesId}/pronostics", Ct));
+        Assert.Equal(1, avant.GetProperty("gameNumber").GetInt32());
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null, null));
+
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
 
         await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null, null), HttpStatusCode.Conflict);
         await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 2, "B", null, null), HttpStatusCode.Conflict);
