@@ -224,7 +224,8 @@ public class PlayerService : IPlayerService
         var rangs = await TryRefreshRanksAsync(player);
 
         // Une clé refusée l'est pour tous les appels : inutile de demander le rôle (jusqu'à 16 requêtes).
-        var role = rangs is { Cause: CauseEchecRiot.CleRefusee } ? rangs : await TryRefreshMainRoleAsync(player);
+        // Un PUUID périmé non résolu le reste pour le rôle : même économie de requêtes.
+        var role = rangs is { Cause: CauseEchecRiot.CleRefusee or CauseEchecRiot.PuuidPerime } ? rangs : await TryRefreshMainRoleAsync(player);
         if (rangs is not null && ReferenceEquals(role, rangs))
             echecs.Add($"Rangs et rôle principal : Riot n'a pas été interrogé pour le rôle, les anciens rangs et rôle sont conservés. Cause : {rangs.Texte}.");
         else
@@ -243,7 +244,7 @@ public class PlayerService : IPlayerService
     {
         try
         {
-            var ranks = await _riot.GetRanksFromPuuidAsync(player.Puuid!);
+            var ranks = await AvecPuuidResoluAsync(player, _riot.GetRanksFromPuuidAsync);
 
             // Riot a répondu : une file absente de la réponse, c'est un joueur non classé dans
             // cette file. Si l'appel échoue, les derniers rangs connus restent.
@@ -260,6 +261,41 @@ public class PlayerService : IPlayerService
         }
     }
 
+    /// <summary>
+    /// Lit chez Riot avec le PUUID du joueur. Si Riot le refuse comme périmé (chiffré par une autre clé), il est
+    /// résolu à nouveau depuis le RiotId de ce joueur seulement, enregistré, puis la lecture est reprise une fois.
+    /// Sans résolution possible, l'exception <see cref="CauseEchecRiot.PuuidPerime"/> remonte et rien n'est modifié.
+    /// </summary>
+    private async Task<T> AvecPuuidResoluAsync<T>(PlayerDto player, Func<string, Task<T>> lecture)
+    {
+        try { return await lecture(player.Puuid!); }
+        catch (RiotException ex) when (ex.Cause == CauseEchecRiot.PuuidPerime)
+        {
+            player.Puuid = await ResoudreLePuuidAsync(player, ex);
+            return await lecture(player.Puuid);
+        }
+    }
+
+    private async Task<string> ResoudreLePuuidAsync(PlayerDto player, RiotException perime)
+    {
+        string? nouveau;
+        try { nouveau = await _riot.GetPuuidFromRiotIdAsync(player.RiotId); }
+        catch (ArgumentException) { nouveau = null; }
+
+        if (string.IsNullOrWhiteSpace(nouveau))
+            throw new RiotException(CauseEchecRiot.PuuidPerime, perime.Statut,
+                detail: $"Riot ID {player.RiotId} introuvable chez Riot (404), anciennes données conservées");
+
+        // Un PUUID déjà porté par un autre joueur ne doit jamais être attribué à celui-ci.
+        if (nouveau != player.Puuid && await _players.ExistsByPuuidAsync(nouveau))
+            throw new RiotException(CauseEchecRiot.PuuidPerime, perime.Statut,
+                detail: $"le PUUID de {player.RiotId} appartient déjà à un autre joueur, rien n'est modifié");
+
+        await _players.UpdatePuuidAsync(player.Id, nouveau);
+        _logger.LogWarning("PUUID of player {PlayerId} resolved again from its Riot ID", player.Id);
+        return nouveau;
+    }
+
     private static EchecRiotLisible CauseLisible(Exception ex) =>
         ex is RiotException riot
             ? new EchecRiotLisible(riot.Message, riot.Cause, riot.Bloque)
@@ -273,7 +309,7 @@ public class PlayerService : IPlayerService
     {
         try
         {
-            var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.Puuid!);
+            var mainRole = await AvecPuuidResoluAsync(player, _riot.GetMainRoleFromPuuidAsync);
             // Riot a répondu sans match : plus de rôle. Une erreur passe par le catch et garde l'ancien.
             await _players.UpdateMainRoleAsync(player.Id, mainRole);
             return null;

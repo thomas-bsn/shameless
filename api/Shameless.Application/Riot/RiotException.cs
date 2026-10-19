@@ -13,6 +13,11 @@ public enum CauseEchecRiot
     Introuvable,
     /// <summary>Délai dépassé, réseau coupé ou disjoncteur ouvert après des échecs répétés.</summary>
     Injoignable,
+    /// <summary>
+    /// 400 « Exception decrypting » : un PUUID est chiffré par clé d'API, et celui du joueur vient d'une autre clé.
+    /// À résoudre à nouveau depuis son RiotId.
+    /// </summary>
+    PuuidPerime,
     /// <summary>Toute autre réponse inattendue (400, 405, ...).</summary>
     Inattendue
 }
@@ -21,8 +26,8 @@ public enum CauseEchecRiot
 /// Riot a échoué, avec la cause. L'appelant garde alors les anciennes valeurs : c'est différent d'une
 /// réponse sans donnée (pas de match, pas de rang), qui n'est pas une erreur.
 /// </summary>
-public sealed class RiotException(CauseEchecRiot cause, int? statut = null, TimeSpan? reessayerApres = null, Exception? inner = null)
-    : Exception(Decrire(cause, statut, reessayerApres), inner)
+public sealed class RiotException(CauseEchecRiot cause, int? statut = null, TimeSpan? reessayerApres = null, Exception? inner = null, string? detail = null)
+    : Exception(detail is null ? Decrire(cause, statut, reessayerApres) : $"{Decrire(cause, statut, reessayerApres)} ; {detail}", inner)
 {
     public CauseEchecRiot Cause { get; } = cause;
     public int? Statut { get; } = statut;
@@ -47,6 +52,7 @@ public sealed class RiotException(CauseEchecRiot cause, int? statut = null, Time
             : "limite de requêtes Riot atteinte (429)",
         CauseEchecRiot.Panne => $"panne côté Riot ({statut})",
         CauseEchecRiot.Introuvable => "joueur introuvable chez Riot (404)",
+        CauseEchecRiot.PuuidPerime => "PUUID périmé (clé Riot différente de celle d'origine), à resynchroniser",
         CauseEchecRiot.Injoignable => "Riot injoignable (délai dépassé ou service coupé)",
         _ => statut is null ? "réponse inattendue de Riot" : $"réponse inattendue de Riot ({statut})"
     };
