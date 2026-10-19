@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
@@ -32,7 +32,7 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
         _db.BestOfSeries.Include(s => s.Liens).Include(s => s.Players).SingleOrDefaultAsync(s => s.Id == id);
 
     public Task<LienAcces?> GetLienAsync(string secret) =>
-        _db.LiensAcces.Include(l => l.Series).SingleOrDefaultAsync(l => l.Secret == secret);
+        _db.LiensAcces.Include(l => l.Series).ThenInclude(s => s.Liens).SingleOrDefaultAsync(l => l.Secret == secret);
 
     public Task<BestOfSeries?> GetByCodeCompanionAsync(string code) =>
         _db.BestOfSeries.Include(s => s.Players).ThenInclude(p => p.Player)

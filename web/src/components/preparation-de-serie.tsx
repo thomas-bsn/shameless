@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { lienCapitaineUrl, lienSpectateurUrl } from "@/lib/liens";
 
-/** Fréquence de lecture de l'écran : « capitaine rejoint » et échecs de DM, comme la Draft de champions. */
+/** Fréquence de lecture de l'écran : « rejoint » et « prêt » des Capitaines et échecs de DM, comme la Draft de champions. */
 const POLLING_PREPARATION_MS = 3000;
 
 const heureLabel = (iso: string) => new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -28,15 +28,8 @@ const equipes = ["A", "B"] as const;
 export function PreparationDeSerie({ series }: { series: Series }) {
   const queryClient = useQueryClient();
   const params = { params: { path: { id: series.seriesId } } };
-  // Relu toutes les 3 s : l'état « rejoint » des Capitaines et les DM que le bot n'a pas pu envoyer.
+  // Relu toutes les 3 s : l'état « rejoint » et « prêt » des Capitaines et les DM que le bot n'a pas pu envoyer.
   const liens = $api.useQuery("get", "/series/{id}/liens", params, { refetchInterval: POLLING_PREPARATION_MS });
-  const lancer = $api.useMutation("post", "/series/{id}/games", {
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get", "/series/{id}"] }),
-  });
-  const lesDeuxOntRejoint = liens.data?.capitaineARejointLe != null && liens.data.capitaineBRejointLe != null;
-  const dejaLancee = series.games.length > 0;
-  const lesDeuxSontDesignes = series.capitaineA != null && series.capitaineB != null;
-  const peutLancer = lesDeuxSontDesignes && lesDeuxOntRejoint;
   const renouveler = $api.useMutation("post", "/series/{id}/liens/{equipe}/renouveler", {
     onSuccess: (data: Schemas["LiensSerieResponse"]) =>
       queryClient.setQueryData(["get", "/series/{id}/liens", params], data),
@@ -70,6 +63,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
                   <EtatCapitaine
                     equipe={equipe}
                     rejointLe={equipe === "A" ? liens.data.capitaineARejointLe : liens.data.capitaineBRejointLe}
+                    pretLe={equipe === "A" ? liens.data.capitaineAPretLe : liens.data.capitaineBPretLe}
                   />
                 )}
                 {liens.isPending ? (
@@ -121,39 +115,39 @@ export function PreparationDeSerie({ series }: { series: Series }) {
       </section>
 
       <CodeCompanionPanel seriesId={series.seriesId} />
-
-      {!dejaLancee && (
-        <div className="flex flex-col gap-2">
-          <Button
-            size="lg"
-            disabled={!peutLancer || lancer.isPending}
-            onClick={() => lancer.mutate({ params: { path: { id: series.seriesId } } })}
-          >
-            Lancer la draft
-          </Button>
-          {!lesDeuxSontDesignes ? (
-            <p className="text-sm text-muted-foreground">Désigne les deux capitaines.</p>
-          ) : (
-            !lesDeuxOntRejoint && (
-              <p className="text-sm text-muted-foreground">Les deux Capitaines doivent avoir ouvert leur lien.</p>
-            )
-          )}
-          {lancer.isError && <ErrorAlert error={lancer.error} />}
-        </div>
-      )}
     </div>
   );
 }
 
-/** Le Capitaine a-t-il ouvert son lien ? L'heure de sa première ouverture, ou « Pas encore rejoint ». */
-function EtatCapitaine({ equipe, rejointLe }: { equipe: Equipe; rejointLe: string | null }) {
+/**
+ * L'état d'un Capitaine : a-t-il rejoint (ouvert son lien) et est-il prêt ? Les deux arrivent par la
+ * lecture régulière des liens ; quand les deux sont prêts, la draft démarre sans action de l'organisateur.
+ */
+function EtatCapitaine({ equipe, rejointLe, pretLe }: { equipe: Equipe; rejointLe: string | null; pretLe: string | null }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <Etat
+        label={`État du Capitaine de l'Équipe ${equipe}`}
+        ok={rejointLe != null}
+        texte={rejointLe ? `Rejoint à ${heureLabel(rejointLe)}` : "Pas encore rejoint"}
+      />
+      <Etat
+        label={`Prêt du Capitaine de l'Équipe ${equipe}`}
+        ok={pretLe != null}
+        texte={pretLe ? `Prêt à ${heureLabel(pretLe)}` : "Pas encore prêt"}
+      />
+    </div>
+  );
+}
+
+function Etat({ label, ok, texte }: { label: string; ok: boolean; texte: string }) {
   return (
     <p
       role="status"
-      aria-label={`État du Capitaine de l'Équipe ${equipe}`}
-      className={rejointLe ? "text-sm font-medium text-emerald-600 dark:text-emerald-400" : "text-sm text-muted-foreground"}
+      aria-label={label}
+      className={ok ? "text-sm font-medium text-emerald-600 dark:text-emerald-400" : "text-sm text-muted-foreground"}
     >
-      {rejointLe ? `Rejoint à ${heureLabel(rejointLe)}` : "Pas encore rejoint"}
+      {texte}
     </p>
   );
 }

@@ -3095,6 +3095,105 @@
         }
       }
     },
+    "/liens/{lien}/pret": {
+      "put": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/soirees/open/picker/candidats-vocaux": {
       "get": {
         "tags": [
@@ -6329,7 +6428,9 @@
         "required": [
           "seriesId",
           "portee",
-          "equipe"
+          "equipe",
+          "pret",
+          "adversairePret"
         ],
         "type": "object",
         "properties": {
@@ -6345,6 +6446,12 @@
               "null",
               "string"
             ]
+          },
+          "pret": {
+            "type": "boolean"
+          },
+          "adversairePret": {
+            "type": "boolean"
           }
         }
       },
@@ -7147,6 +7254,17 @@
           "startedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "DefinirPretRequest": {
+        "required": [
+          "pret"
+        ],
+        "type": "object",
+        "properties": {
+          "pret": {
+            "type": "boolean"
           }
         }
       },
@@ -8401,7 +8519,9 @@
           "echecDmA",
           "echecDmB",
           "capitaineARejointLe",
-          "capitaineBRejointLe"
+          "capitaineBRejointLe",
+          "capitaineAPretLe",
+          "capitaineBPretLe"
         ],
         "type": "object",
         "properties": {
@@ -8446,6 +8566,20 @@
             "format": "date-time"
           },
           "capitaineBRejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "capitaineAPretLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "capitaineBPretLe": {
             "type": [
               "null",
               "string"

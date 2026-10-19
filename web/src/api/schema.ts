@@ -2782,6 +2782,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/liens/{lien}/pret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DefinirPretRequest"];
+                    "text/json": components["schemas"]["DefinirPretRequest"];
+                    "application/*+json": components["schemas"]["DefinirPretRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AccesParLienResponse"];
+                        "application/json": components["schemas"]["AccesParLienResponse"];
+                        "text/json": components["schemas"]["AccesParLienResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/soirees/open/picker/candidats-vocaux": {
         parameters: {
             query?: never;
@@ -5691,6 +5772,8 @@ export interface components {
             seriesId: number;
             portee: components["schemas"]["PorteeLien"];
             equipe: null | string;
+            pret: boolean;
+            adversairePret: boolean;
         };
         ActionDraftResponse: {
             /** Format: int32 */
@@ -5898,6 +5981,9 @@ export interface components {
             gameId: number;
             /** Format: date-time */
             startedAt: string;
+        };
+        DefinirPretRequest: {
+            pret: boolean;
         };
         /** @enum {unknown} */
         DesignationCapitaine: "Manuel" | "AuHasard" | "PlusGrosCost";
@@ -6201,6 +6287,10 @@ export interface components {
             capitaineARejointLe: null | string;
             /** Format: date-time */
             capitaineBRejointLe: null | string;
+            /** Format: date-time */
+            capitaineAPretLe: null | string;
+            /** Format: date-time */
+            capitaineBPretLe: null | string;
         };
         LigneClassement5v5: {
             /** Format: int32 */

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
+using Shameless.Api.Models.Requests.Series;
 using Shameless.Api.Models.Responses.Series;
 using Shameless.Application.Services;
 
@@ -13,8 +14,13 @@ namespace Shameless.Api.Controllers;
 public sealed class LiensController : ControllerBase
 {
     private readonly LiensAccesService _liens;
+    private readonly SeriesService _series;
 
-    public LiensController(LiensAccesService liens) => _liens = liens;
+    public LiensController(LiensAccesService liens, SeriesService series)
+    {
+        _liens = liens;
+        _series = series;
+    }
 
     /// <summary>Les deux Liens capitaine de la Série et son Lien spectateur.</summary>
     [HttpGet("series/{id:int}/liens")]
@@ -53,6 +59,26 @@ public sealed class LiensController : ControllerBase
     {
         // Ouvrir un Lien capitaine, c'est rejoindre la Série (ADR 0017).
         await _liens.MarquerRejointAsync(lien);
-        return AccesParLienResponse.From(this.AccesParLien());
+        return AccesParLienResponse.From(this.AccesParLien(), await _liens.EtatDuPretAsync(lien));
+    }
+
+    /// <summary>
+    /// Sans connexion, par un Lien capitaine : le Capitaine se met « prêt » pour la game à venir, ou se
+    /// remet « pas prêt ». Quand les deux sont prêts, la Game est créée et la Draft de champions démarre.
+    /// Pas encore rejoint, Équipe sans Capitaine, draft déjà démarrée ou Série terminée : 409 ; Lien
+    /// spectateur : 403.
+    /// </summary>
+    [HttpPut("liens/{lien}/pret")]
+    [AccesParLien(CapitaineRequis = true)]
+    [ProducesResponseType<AccesParLienResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<AccesParLienResponse>> DefinirPret(string lien, [FromBody] DefinirPretRequest request)
+    {
+        var result = await _series.DefinirPretAsync(lien, request.Pret);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return AccesParLienResponse.From(this.AccesParLien(), result.Value!);
     }
 }

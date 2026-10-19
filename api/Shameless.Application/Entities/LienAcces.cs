@@ -28,6 +28,14 @@ public class LienAcces
     /// </summary>
     public DateTime? RejointLe { get; set; }
 
+    /// <summary>
+    /// Quand le Capitaine s'est mis « prêt » pour la game à venir ; null tant qu'il ne l'est pas. Remis à
+    /// null s'il se remet « pas prêt », quand la game est terminée, et si le Capitaine ou son lien change.
+    /// </summary>
+    public DateTime? PretLe { get; set; }
+
+    public bool EstPret => PretLe != null;
+
     public static LienAcces Capitaine(string equipe) => new() { Portee = PorteeLien.Capitaine, Equipe = equipe };
 
     public static LienAcces Spectateur() => new() { Portee = PorteeLien.Spectateur };
@@ -45,6 +53,7 @@ public class LienAcces
     {
         Secret = SecretAleatoire.Nouveau();
         RejointLe = null;
+        PretLe = null;
         EchecDmRaison = null;
         EchecDmLe = null;
         EchecDmPlayerId = null;
@@ -59,6 +68,9 @@ public class LienAcces
 
     /// <summary>Les raisons d'échec d'un DM que le bot peut rapporter.</summary>
     public static readonly IReadOnlyList<string> RaisonsEchecDm = ["compte_non_lie", "dm_ferme", "autre"];
+
+    /// <summary>Le Capitaine se met prêt (ou ne l'est plus) ; se mettre prêt deux fois garde la première heure.</summary>
+    public void DefinirPret(bool pret, DateTime maintenant) => PretLe = pret ? PretLe ?? maintenant : null;
 
     /// <summary>Mémorise la première ouverture du Lien capitaine ; les suivantes ne changent rien.</summary>
     public void Rejoindre(DateTime maintenant)
@@ -89,3 +101,16 @@ public enum PorteeLien
 /// C'est la seule chose qu'une commande ou une lecture par lien connaît de l'appelant.
 /// </summary>
 public sealed record AccesParLien(int SeriesId, PorteeLien Portee, string? Equipe);
+
+/// <summary>
+/// Où en est le « prêt » d'un Capitaine : le sien et celui de l'Équipe adverse. Faux pour les deux
+/// quand le lien est un Lien spectateur.
+/// </summary>
+public sealed record EtatDuPret(bool Pret, bool AdversairePret)
+{
+    public static readonly EtatDuPret Aucun = new(false, false);
+
+    public static EtatDuPret De(BestOfSeries series, string equipe) => new(
+        series.LienCapitaine(equipe).EstPret,
+        series.LienCapitaine(equipe == Equipes.A ? Equipes.B : Equipes.A).EstPret);
+}

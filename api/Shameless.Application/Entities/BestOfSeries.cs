@@ -64,6 +64,17 @@ public class BestOfSeries
     public bool CapitainesOntRejoint =>
         Liens.Where(l => l.Portee == PorteeLien.Capitaine).All(l => l.RejointLe != null);
 
+    /// <summary>Les deux Capitaines sont prêts : la Game est créée et la Draft de champions démarre.</summary>
+    public bool CapitainesSontPrets =>
+        Liens.Where(l => l.Portee == PorteeLien.Capitaine).All(l => l.EstPret);
+
+    /// <summary>Remet les deux Capitaines « pas prêts » : la game est terminée, la suivante les attend de nouveau.</summary>
+    public void RemettrePasPrets()
+    {
+        foreach (var lien in Liens.Where(l => l.Portee == PorteeLien.Capitaine))
+            lien.PretLe = null;
+    }
+
     public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
 
     /// <summary>L'accès que donne ce lien de la Série (ADR 0017 : le Lien spectateur vaut dès la création).</summary>
@@ -139,7 +150,10 @@ public class BestOfSeries
     public void DesignerCapitaine(SeriesPlayer capitaine)
     {
         if (!capitaine.Capitaine)
+        {
             LienCapitaine(capitaine.Equipe).RejointLe = null;
+            LienCapitaine(capitaine.Equipe).PretLe = null;
+        }
         foreach (var player in PlayersOf(capitaine.Equipe))
             player.Capitaine = player == capitaine;
     }
