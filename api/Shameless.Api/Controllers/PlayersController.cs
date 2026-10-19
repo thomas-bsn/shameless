@@ -84,17 +84,18 @@ public sealed class PlayersController : ControllerBase
 
     [HttpPost("link")]
     [ProducesResponseType<PlayerLinkResponse>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request, [FromServices] IAuthorizationService authorization)
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<IActionResult> LinkPlayer([FromBody] LinkPlayerRequest request)
     {
-        var isAdmin = await authorization.IsAdminAsync(User);
-        var result = await _playerService.LinkPlayerAsync(User.DiscordId(), request.PlayerId, User.Username(), User.AvatarUrl(), canTakeOver: isAdmin);
+        var result = await _playerService.LinkPlayerAsync(User.DiscordId(), request.PlayerId, User.Username(), User.AvatarUrl());
 
         return result switch
         {
             LinkResult.PlayerNotFound => JoueurIntrouvable(),
-            LinkResult.AlreadyLinkedToAnotherUser => Problem(
+            LinkResult.AlreadyLinkedToAnotherPlayer => Problem(
                 statusCode: StatusCodes.Status409Conflict,
-                detail: "Ce joueur est déjà lié à un autre compte Discord. Demande à un admin."),
+                detail: "Ton compte Discord est déjà lié à un autre joueur. Délie-le d'abord."),
             _ => Ok(new PlayerLinkResponse(Success: true))
         };
     }

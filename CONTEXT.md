@@ -16,8 +16,13 @@ la première connexion.
 - **Compte Discord** : ce qu'un Utilisateur présente de lui : pseudo, photo, bannière.  
 Ils sont relus depuis Discord à chaque connexion, et à la demande depuis le Profil.
 - **Compte Riot** : le compte LoL d'un Joueur, identifié par son RiotId et son PUUID.
-- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot.  
-**Délier** retire l'association ; le Joueur et ses stats restent.
+- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot. Un  
+Utilisateur n'a qu'un Joueur, mais plusieurs Utilisateurs peuvent se lier au même Joueur,  
+sans aucune vérification (ADR 0018). **Délier** retire l'association de cet Utilisateur ;  
+le Joueur, ses stats et les autres liens restent.
+- **Discord principal** : parmi les Comptes Discord liés à un Joueur, celui lié depuis le  
+plus longtemps. Sa photo et son identité s'affichent partout pour le Joueur. S'il se  
+délie, le suivant devient principal (ADR 0018).
 - **Profil** : la page où un Utilisateur voit et gère son Compte Discord et son Joueur  
 lié.
 - **Administrateur** : un Utilisateur qui a reçu ce rôle d'un autre Administrateur ou d'un  
@@ -28,7 +33,8 @@ d'ordinaire l'Opérateur. Aucun Administrateur ne peut lui retirer ses droits ; 
 existe toujours au moins un.
 - **Joueur** : une personne qui joue les customs, identifiée par son compte Riot  
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
-joueur ; un joueur peut exister sans utilisateur lié.
+joueur ; un joueur peut avoir plusieurs Comptes Discord liés (le Discord principal fait foi  
+pour l'identité affichée) ou aucun.
 - **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
 des pronostics ; identifié par le bot comme présent en vocal pendant la game, il vote  
 aussi pour son MVP et son DOFD.

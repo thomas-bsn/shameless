@@ -21,11 +21,13 @@ public sealed class PronosticsService
     private readonly IPronosticsRepository _pronostics;
     private readonly ICustomGameRepository _games;
     private readonly VotesService _votes;
+    private readonly IPlayerRepository _players;
     private readonly TimeProvider _clock;
 
-    public PronosticsService(IPronosticsRepository pronostics, ICustomGameRepository games, VotesService votes, TimeProvider clock)
+    public PronosticsService(IPronosticsRepository pronostics, ICustomGameRepository games, VotesService votes, IPlayerRepository players, TimeProvider clock)
     {
         _pronostics = pronostics;
+        _players = players;
         _games = games;
         _votes = votes;
         _clock = clock;
@@ -63,7 +65,7 @@ public sealed class PronosticsService
 
         if (DiscordId.Lire(pronostiqueurDiscordId)?.Valeur is not { } pronostiqueur)
             return CommandResult<PronosticDuSpectateur>.Invalid($"« {pronostiqueurDiscordId} » n'est pas un ID Discord.");
-        if (series.Players.Any(p => p.Player.User?.DiscordId == pronostiqueur))
+        if (await _players.GetPlayerIdByDiscordIdAsync(pronostiqueur) is { } joueurId && series.Players.Any(p => p.PlayerId == joueurId))
             return CommandResult<PronosticDuSpectateur>.Invalid("Les pronostics sont réservés aux Spectateurs : les Joueurs de la Série ne pronostiquent pas.");
 
         if (equipeGagnante != null && !Equipes.IsValid(equipeGagnante))

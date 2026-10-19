@@ -28,13 +28,19 @@ public sealed class CandidatsVocauxService
         var lies = vocal.MemberIds.Count == 0
             ? []
             : await _players.GetByDiscordIdsAsync(vocal.MemberIds);
-        var parDiscordId = lies.Where(p => p.User != null).ToDictionary(p => p.User!.DiscordId);
+        // Chaque Compte Discord lié compte comme son Joueur (ADR 0018) ; un Joueur n'est proposé qu'une fois,
+        // avec le premier de ses comptes présents en vocal.
+        var parDiscordId = lies
+            .SelectMany(p => p.Users.Select(u => (u.DiscordId, Player: p)))
+            .ToDictionary(x => x.DiscordId, x => x.Player);
 
-        var joueurs = vocal.MemberIds
-            .Where(parDiscordId.ContainsKey)
-            .Select(id => new CandidatVocal(parDiscordId[id].Id, parDiscordId[id].Prenom, DiscordId.Texte(id)))
-            .ToList();
-        return new CandidatsVocaux(vocal.ChannelId, joueurs, vocal.MemberIds.Count - joueurs.Count);
+        var joueurs = new List<CandidatVocal>();
+        foreach (var id in vocal.MemberIds)
+        {
+            if (!parDiscordId.TryGetValue(id, out var joueur) || joueurs.Any(j => j.PlayerId == joueur.Id)) continue;
+            joueurs.Add(new CandidatVocal(joueur.Id, joueur.Prenom, DiscordId.Texte(id)));
+        }
+        return new CandidatsVocaux(vocal.ChannelId, joueurs, vocal.MemberIds.Count(id => !parDiscordId.ContainsKey(id)));
     }
 }
 

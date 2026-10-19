@@ -95,9 +95,21 @@ public class AppDbContext : DbContext
             entity.Property(e => e.PromotedBy).HasColumnType("character varying");
             entity.Property(e => e.PromotedAt).HasColumnType(Timestamp);
 
+            entity.Property(e => e.PlayerLinkedAt).HasColumnType(Timestamp);
+            entity.HasIndex(e => e.PlayerId);
+
+            // Source de vérité du lien (ADR 0018) : plusieurs Utilisateurs pour un Joueur, un Joueur au plus par Utilisateur.
             entity.HasOne(u => u.Player)
+                  .WithMany(p => p.Users)
+                  .HasForeignKey(u => u.PlayerId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .HasConstraintName("users_player_id_fkey");
+
+            // Le Discord principal d'un Joueur, dénormalisé : l'identité affichée s'inclut par Player.User.
+            entity.HasMany<Player>()
                   .WithOne(p => p.User)
-                  .HasForeignKey<Player>(p => p.UserId)
+                  .HasForeignKey(p => p.UserId)
+                  .OnDelete(DeleteBehavior.SetNull)
                   .HasConstraintName("players_user_id_fkey");
         });
 
