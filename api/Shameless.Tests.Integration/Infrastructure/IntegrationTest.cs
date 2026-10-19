@@ -120,9 +120,35 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
         (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
             .GetProperty("code").GetString()!;
 
-    /// <summary>Le Companion, sans connexion, signale « partie lancée » avec ce code (Début de la Game, ADR 0017).</summary>
-    protected async Task<HttpResponseMessage> SignalerDebutAsync(string code) =>
-        await Factory.CreateAnonymousClient().PostAsync($"/companion/{Uri.EscapeDataString(code)}/debut", null, Ct);
+    private static readonly string[] VingtChampions =
+    [
+        "Ahri", "Garen", "LeeSin", "Jinx", "Thresh", "Annie", "Ashe", "Braum", "Darius", "Ezreal",
+        "Fiora", "Galio", "Irelia", "Janna", "Karma", "Lulu", "Malphite", "Nami", "Orianna", "Pyke"
+    ];
+
+    /// <summary>
+    /// Les capitaines jouent les tours de la Draft de champions de la game en attente, du tour courant au
+    /// tour <paramref name="jusquau"/> (le dernier par défaut). La fin de la draft est le Début de la Game
+    /// (ADR 0017).
+    /// </summary>
+    protected async Task JouerLaDraftAsync(HttpClient client, int seriesId, int gameId, int jusquau = 20)
+    {
+        if ((await client.GetAsync($"/games/{gameId}/draft-champions", Ct)).StatusCode == HttpStatusCode.NotFound)
+            (await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct)).EnsureSuccessStatusCode();
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+        while (true)
+        {
+            var etat = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/draft-champions", Ct));
+            if (etat.GetProperty("tourCourant").ValueKind == JsonValueKind.Null) return;
+            var tour = etat.GetProperty("tourCourant");
+            var numero = tour.GetProperty("numero").GetInt32();
+            if (numero > jusquau) return;
+            var lien = liens.GetProperty($"lienCapitaine{tour.GetProperty("equipe").GetString()}").GetString()!;
+            await ReadJsonAsync(await Factory.CreateAnonymousClient().PostAsJsonAsync(
+                $"/liens/{Uri.EscapeDataString(lien)}/draft-champions/actions",
+                new { tour = numero, championId = VingtChampions[numero - 1] }, Ct));
+        }
+    }
 
     /// <summary>Le Companion, sans connexion, envoie un rapport de fin de game avec ce code.</summary>
     protected async Task<HttpResponseMessage> EnvoyerRapportAsync(string code, object rapport) =>

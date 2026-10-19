@@ -37,7 +37,7 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
 - [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit)
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
-- [ ] Signal de début de partie (lancement détecté dans LoL) et de fin, sans retour sur le site (ADR 0017)
+- [ ] Signal de fin de partie (Rapport), sans retour sur le site ; le début est donné par la fin de la draft (ADR 0017)
 - [ ] Side détecté par le Companion ; joueur inconnu signalé à l'organisateur dans le Rapport en revue
 
 ### 1c. Stats et historique

@@ -1331,72 +1331,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/companion/{code}/debut": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    code: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["DebutDeGameResponse"];
-                        "application/json": components["schemas"]["DebutDeGameResponse"];
-                        "text/json": components["schemas"]["DebutDeGameResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/series/{id}/code-companion": {
         parameters: {
             query?: never;
@@ -5057,72 +4991,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/series/{id}/debut": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["DebutDeGameResponse"];
-                        "application/json": components["schemas"]["DebutDeGameResponse"];
-                        "text/json": components["schemas"]["DebutDeGameResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/series/{id}/replacements": {
         parameters: {
             query?: never;
@@ -6422,14 +6290,6 @@ export interface components {
         };
         /** @enum {unknown} */
         CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
-        DebutDeGameResponse: {
-            /** Format: int32 */
-            seriesId: number;
-            /** Format: int32 */
-            gameId: number;
-            /** Format: date-time */
-            startedAt: string;
-        };
         DefinirPretRequest: {
             pret: boolean;
         };

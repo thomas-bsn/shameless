@@ -9,9 +9,8 @@ using Shameless.Tests.Integration.Infrastructure;
 namespace Shameless.Tests.Integration;
 
 /// <summary>
-/// Le Début de la Game (ADR 0017) : le signal « partie lancée » du Companion (code Companion) ou, en
-/// secours, de l'organisateur. Il renseigne <c>StartedAt</c> (vide avant), émet <c>game_started</c> une
-/// seule fois et n'est accepté que pour une game en attente.
+/// Le Début de la Game (ADR 0017) : la fin de la Draft de champions (dernier pick). Elle renseigne
+/// <c>StartedAt</c> (vide avant), émet <c>game_started</c> une seule fois et clôt les pronostics.
 /// </summary>
 public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
 {
@@ -25,20 +24,20 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/games/{gameId}", Ct));
 
     [Fact]
-    public async Task Le_signal_du_companion_renseigne_le_debut_et_emet_game_started()
+    public async Task Le_dernier_pick_de_la_draft_renseigne_le_debut_et_emet_game_started()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId);
-        var code = await CodeCompanionAsync(client, serie.SeriesId);
+
+        // Pendant la draft : le bot lit un début vide, rien n'est émis.
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId, jusquau: 19);
         Assert.Equal(JsonValueKind.Null, (await GameDuBotAsync(gameId)).GetProperty("startedAt").ValueKind);
+        await PublierAsync();
+        Assert.Equal(0, NbGameStarted());
 
-        var reponse = await SignalerDebutAsync(code);
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
 
-        var corps = await ReadJsonAsync(reponse);
-        Assert.Equal(gameId, corps.GetProperty("gameId").GetInt32());
-        Assert.Equal(serie.SeriesId, corps.GetProperty("seriesId").GetInt32());
-        Assert.False(reponse.Headers.Contains("Set-Cookie"));
         var debut = (await GameDuBotAsync(gameId)).GetProperty("startedAt").GetDateTime();
         Assert.Equal(Factory.Clock.GetUtcNow().UtcDateTime, debut);
         await PublierAsync();
@@ -46,82 +45,35 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Un_second_signal_repond_le_meme_debut_sans_reemettre()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 3);
-        await PlayGameAsync(client, serie.SeriesId);
-        var code = await CodeCompanionAsync(client, serie.SeriesId);
-        var premier = await ReadJsonAsync(await SignalerDebutAsync(code));
-        await PublierAsync();
-        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
-
-        var second = await ReadJsonAsync(await SignalerDebutAsync(code));
-        await PublierAsync();
-
-        Assert.Equal(premier.GetProperty("startedAt").GetDateTime(), second.GetProperty("startedAt").GetDateTime());
-        Assert.Equal(1, NbGameStarted());
-    }
-
-    [Fact]
-    public async Task Le_signal_est_refuse_sans_game_en_attente()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 3);
-        var code = await CodeCompanionAsync(client, serie.SeriesId);
-
-        await AssertRefusAsync(await SignalerDebutAsync(code), HttpStatusCode.Conflict);
-
-        await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await AssertRefusAsync(await SignalerDebutAsync(code), HttpStatusCode.Conflict);
-        await PublierAsync();
-        // Seul le début de la game terminée à la main est émis (résultat sans signal de début) ; le refus n'émet rien.
-        Assert.Equal(1, NbGameStarted());
-    }
-
-    [Fact]
-    public async Task Un_code_invalide_ou_renouvele_est_refuse_et_ne_signale_rien()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client, format: 3);
-        await PlayGameAsync(client, serie.SeriesId);
-        var ancien = await CodeCompanionAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/code-companion/renouveler", null, Ct));
-
-        await AssertRefusAsync(await SignalerDebutAsync("code-inconnu"), HttpStatusCode.NotFound);
-        await AssertRefusAsync(await SignalerDebutAsync(ancien), HttpStatusCode.NotFound);
-
-        await PublierAsync();
-        Assert.Equal(0, NbGameStarted());
-    }
-
-    [Fact]
-    public async Task L_organisateur_peut_signaler_le_debut_a_la_main_et_c_est_idempotent()
+    public async Task Les_pronostics_se_closent_a_la_fin_de_la_draft_et_pas_avant()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId);
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId, jusquau: 19);
 
-        var premier = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/debut", null, Ct));
-        var second = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/debut", null, Ct));
+        var pendant = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/series/{serie.SeriesId}/pronostics", Ct));
+        Assert.Equal(1, pendant.GetProperty("gameNumber").GetInt32());
 
-        Assert.Equal(gameId, premier.GetProperty("gameId").GetInt32());
-        Assert.Equal(premier.GetProperty("startedAt").GetDateTime(), second.GetProperty("startedAt").GetDateTime());
-        Assert.NotEqual(JsonValueKind.Null, (await GameDuBotAsync(gameId)).GetProperty("startedAt").ValueKind);
-        await PublierAsync();
-        Assert.Equal(1, NbGameStarted());
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
+
+        var apres = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/series/{serie.SeriesId}/pronostics", Ct));
+        Assert.Equal(JsonValueKind.Null, apres.GetProperty("gameNumber").ValueKind);
     }
 
     [Fact]
-    public async Task Le_signal_manuel_est_refuse_sans_game_en_attente_et_sans_session()
+    public async Task Le_signal_du_companion_et_la_commande_manuelle_n_existent_plus()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId);
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        await AssertRefusAsync(await client.PostAsync($"/series/{serie.SeriesId}/debut", null, Ct), HttpStatusCode.Conflict);
-        await AssertRefusAsync(await client.PostAsync("/series/999/debut", null, Ct), HttpStatusCode.NotFound);
-        var anonyme = await Factory.CreateAnonymousClient().PostAsync($"/series/{serie.SeriesId}/debut", null, Ct);
-        Assert.Equal(HttpStatusCode.Unauthorized, anonyme.StatusCode);
+        var companion = await Factory.CreateAnonymousClient().PostAsync($"/companion/{Uri.EscapeDataString(code)}/debut", null, Ct);
+        var manuel = await client.PostAsync($"/series/{serie.SeriesId}/debut", null, Ct);
+
+        Assert.Contains(companion.StatusCode, new[] { HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed, HttpStatusCode.Unauthorized });
+        Assert.Contains(manuel.StatusCode, new[] { HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed, HttpStatusCode.Unauthorized });
     }
 
     [Fact]
@@ -130,8 +82,8 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await PlayGameAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
         await PublierAsync();
@@ -145,7 +97,7 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
             .Where(t => t is "game_started" or "game_completed");
 
     [Fact]
-    public async Task Un_resultat_saisi_sans_signal_de_debut_renseigne_le_debut_et_emet_game_started_avant_game_completed()
+    public async Task Un_resultat_saisi_avant_la_fin_de_la_draft_renseigne_le_debut_et_emet_game_started_avant_game_completed()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
@@ -161,13 +113,13 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Un_debut_deja_signale_n_est_ni_ecrase_ni_reemis_a_la_fin_de_la_game()
+    public async Task Un_debut_deja_donne_par_la_draft_n_est_ni_ecrase_ni_reemis_a_la_fin_de_la_game()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId);
         var debut = Factory.Clock.GetUtcNow().UtcDateTime;
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
         Factory.Clock.Advance(TimeSpan.FromMinutes(30));
 
         await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));

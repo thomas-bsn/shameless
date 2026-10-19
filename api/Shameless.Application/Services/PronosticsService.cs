@@ -9,7 +9,7 @@ namespace Shameless.Application.Services;
 
 /// <summary>
 /// Les pronostics des Spectateurs (déposés par le bot, ADR 0013) : sur la prochaine Game d'une Série
-/// en cours, tant que sa partie n'a pas commencé — le Début de la Game (signal du Companion, ADR 0017)
+/// en cours, tant que sa partie n'a pas commencé — le Début de la Game (fin de la Draft de champions, ADR 0017)
 /// verrouille les pronostics, et non son lancement dans la Série.
 /// Un Spectateur choisit, chacun facultatif, l'Équipe gagnante, le MVP et le DOFD parmi la composition
 /// courante. Les Joueurs de la Série ne pronostiquent pas. Ni points ni classement.
@@ -109,7 +109,7 @@ public sealed class PronosticsService
 
     /// <summary>
     /// Le numéro de la Game ouverte aux pronostics si la Série est en cours : la prochaine, ou la game en
-    /// attente tant que sa partie n'a pas commencé (draft lancée, pas de signal). Sinon null.
+    /// attente tant que sa partie n'a pas commencé (draft en cours). Sinon null.
     /// </summary>
     private static int? ProchaineGameOuverte(BestOfSeries series)
     {

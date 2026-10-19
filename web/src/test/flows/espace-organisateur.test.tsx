@@ -140,20 +140,15 @@ describe("Espace organisateur", () => {
     expect(await appels(fetch, "PUT", "/api/games/22/result")[0]![0].clone().json()).toEqual({ winner: "B" });
   });
 
-  it("signale à la main le début de la partie quand le Companion ne l'a pas fait", async () => {
-    const fetch = mockApi({
-      ...routes(serie({ games: [game(21), attente(22)] })),
-      "POST /series/5/debut": json({ seriesId: 5, gameId: 22, startedAt: "2026-10-19T20:00:00" }),
-    });
+  it("annonce que la partie commence à la fin de la draft, sans commande manuelle", async () => {
+    mockApi(routes(serie({ games: [game(21), attente(22)] })));
     renderApp("/series/5/organisateur");
 
-    expect(await screen.findByText(/partie n'est pas encore lancée/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Signaler le début de la partie" }));
-
-    await waitFor(() => expect(appels(fetch, "POST", "/api/series/5/debut")).toHaveLength(1));
+    expect(await screen.findByText(/commence à son dernier pick/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Signaler le début de la partie" })).not.toBeInTheDocument();
   });
 
-  it("n'offre plus le signal manuel une fois la partie commencée", async () => {
+  it("montre l'heure de début une fois la partie commencée", async () => {
     mockApi(routes(serie({ games: [game(21), attente(22, { startedAt: "2026-10-19T20:00:00" })] })));
     renderApp("/series/5/organisateur");
 

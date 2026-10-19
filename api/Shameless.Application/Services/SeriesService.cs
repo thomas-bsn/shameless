@@ -226,38 +226,6 @@ public sealed class SeriesService
     }
 
     /// <summary>
-    /// Le Début de la Game (ADR 0017) : le signal « partie lancée » du Companion, ou de l'organisateur à
-    /// la main. Il renseigne <c>StartedAt</c>, clôt les pronostics et émet <c>game_started</c>. Idempotent :
-    /// un second signal répond le même début sans rien ré-émettre. Refusé sans game en attente.
-    /// </summary>
-    public async Task<CommandResult<CustomGame>> SignalerDebutAsync(int seriesId)
-    {
-        var series = await _series.GetWithGamesAsync(seriesId);
-        if (series == null)
-            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
-        if (!series.IsEnCours)
-            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : aucune partie ne peut commencer.");
-
-        var game = series.Games.SingleOrDefault(g => g.Status == GameStatuses.Pending);
-        if (game == null)
-            return CommandResult<CustomGame>.Conflict(
-                "Aucune game de cette Série n'est en attente : lancez la draft avant de signaler le début de la partie.");
-        if (game.StartedAt != null)
-            return CommandResult<CustomGame>.Ok(game);
-
-        // Arrondi à la microseconde, la précision de PostgreSQL : le début répondu au premier signal est
-        // celui que relira le second.
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        game.StartedAt = maintenant.AddTicks(-(maintenant.Ticks % 10));
-        // Le début de la Game : pronostics clos, fenêtre de présence du bot ouverte.
-        _evenements.GameStarted(game);
-        if (!await _series.TrySaveChangesAsync())
-            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
-
-        return CommandResult<CustomGame>.Ok(game);
-    }
-
-    /// <summary>
     /// Saisit l'Équipe gagnante d'une game en attente, met à jour le score et l'issue de sa Série,
     /// puis recalcule le cost des joueurs.
     /// </summary>
@@ -295,8 +263,8 @@ public sealed class SeriesService
         game.CompletedAt = maintenant.AddTicks(-(maintenant.Ticks % 10)); // microseconde, comme PostgreSQL
         if (game.StartedAt == null)
         {
-            // Résultat sans signal de début : la partie a forcément commencé. Le bot reçoit toujours les deux
-            // événements, game_started d'abord ; un début déjà signalé n'est jamais écrasé ni ré-émis.
+            // Résultat avant la fin de la draft : la partie a forcément commencé. Le bot reçoit toujours les deux
+            // événements, game_started d'abord ; un début déjà donné n'est jamais écrasé ni ré-émis.
             game.StartedAt = game.CompletedAt;
             _evenements.GameStarted(game);
         }

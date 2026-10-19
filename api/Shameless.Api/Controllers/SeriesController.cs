@@ -53,22 +53,6 @@ public sealed class SeriesController : ControllerBase
     }
 
     /// <summary>
-    /// Secours manuel du signal « partie lancée » du Companion : l'organisateur signale le Début de la
-    /// Game en attente (ADR 0017). Mêmes effets et mêmes refus que le signal du Companion, idempotent.
-    /// </summary>
-    [HttpPost("{id:int}/debut")]
-    [ProducesResponseType<DebutDeGameResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<DebutDeGameResponse>> SignalerDebut(int id)
-    {
-        var result = await _seriesService.SignalerDebutAsync(id);
-        if (!result.IsOk) return this.Refusal(result);
-
-        return DebutDeGameResponse.From(result.Value!);
-    }
-
-    /// <summary>
     /// Remplace un joueur d'une Équipe entre deux games d'une Série en cours. La composition
     /// courante change pour la prochaine game ; les games jouées et le score restent inchangés.
     /// </summary>

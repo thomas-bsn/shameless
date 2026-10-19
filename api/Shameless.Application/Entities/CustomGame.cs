@@ -18,7 +18,7 @@ public class CustomGame
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Le début de la Game : le signal « partie lancée » du Companion ou de l'organisateur (ADR 0017).
+    /// Le début de la Game : la fin de la Draft de champions (ADR 0017).
     /// Null tant que la partie n'est pas lancée ; c'est ce moment qui clôt les pronostics.
     /// </summary>
     public DateTime? StartedAt { get; set; }

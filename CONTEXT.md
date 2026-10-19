@@ -245,10 +245,9 @@ webhooks `teams_formed`, `captain_link`, `spectator_link`, `game_started`, `game
 - **Lancement de la Game** : sa création dans la Série, quand les deux Capitaines sont prêts  
 (`PUT /liens/{lien}/pret`). Elle porte alors la Draft de champions, ouverte dans la foulée. Les  
 games suivantes d'une Série se lancent encore depuis l'Espace organisateur (`POST /series/{id}/games`).
-- **Début de la Game** : le moment où le Companion détecte le lancement de la partie  
-dans le client LoL et le signale à l'API. C'est là que part `game_started` et que les  
-pronostics se closent (ADR 0017, qui révise l'ADR 0013). Sans Companion, l'organisateur  
-le signale à la main.
+- **Début de la Game** : la fin de la Draft de champions (tous les bans et picks faits). C'est  
+là que part `game_started` et que les pronostics se closent ; ils restent ouverts pendant la  
+draft (ADR 0017, qui révise l'ADR 0013). Ni le Companion ni l'organisateur ne le signalent.
 - **Fin de la Game** : le Rapport du Companion à la fin de la partie ; l'organisateur  
 n'a pas à revenir sur le site, sauf pour consulter ou pour un Remplacement entre deux  
 games.
