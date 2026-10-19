@@ -35,15 +35,14 @@ disparaît avec sa Série ou sa Game (Série annulée, game en attente supprimé
   Revanche), avant la Draft de champions.
 - `captain_link` et `spectator_link` : à toute création de Série, un Lien capitaine par Équipe
   (DM) et le Lien spectateur (salon général) ; contrat et échec de DM dans l'ADR 0017.
-- `game_started` : au Début de la Game, le signal « partie lancée » du Companion ou de l'organisateur (`POST /companion/{code}/debut`, `POST /series/{id}/debut`) ; révisé par l'ADR 0017.
+- `game_started` : au Début de la Game, la fin de la Draft de champions ; révisé par l'ADR 0017.
 - `game_completed` : à sa fin, quelle que soit la source du résultat (saisie, Companion,
   revue acceptée), avec le score de la Série à l'issue de cette Game.
 
 **Début de la Game.** *Révisé par l'ADR 0017.* Ce n'est plus le lancement de la Game dans la
-Série (qui porte la Draft de champions) mais le signal « partie lancée » du Companion, ou de
-l'organisateur à la main. `game_started` part alors, la fenêtre de présence du bot s'ouvre, et
+Série (qui porte la Draft de champions) mais la fin de la Draft de champions. `game_started` part alors, la fenêtre de présence du bot s'ouvre, et
 les pronostics (#62) se closent à ce même instant. `StartedAt` de `GET /bot/games/{id}` est
-vide (`null`) jusqu'à ce signal ; il ne vaut plus `CreatedAt` (le lancement de la Game).
+vide (`null`) jusqu'à la fin de la draft ; il ne vaut plus `CreatedAt` (le lancement de la Game).
 
 **Bot → API.** Le bot présente `SHAMELESS_BOT_TO_API_KEY` (config `Bot:ApiKey`) en
 `Authorization: Bearer` sur les routes `/bot/…`, et seulement sur elles. Ce n'est pas un

@@ -1,3 +1,4 @@
+using Shameless.Application.Bot;
 using Shameless.Application.ChampionDraft;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -15,17 +16,20 @@ public sealed class DraftChampionsService
     private readonly IBestOfSeriesRepository _series;
     private readonly IChampionCatalog _catalog;
     private readonly TimeProvider _clock;
+    private readonly EvenementsBot _evenements;
 
     public DraftChampionsService(
         IDraftChampionsRepository drafts,
         IBestOfSeriesRepository series,
         IChampionCatalog catalog,
-        TimeProvider clock)
+        TimeProvider clock,
+        EvenementsBot evenements)
     {
         _drafts = drafts;
         _series = series;
         _catalog = catalog;
         _clock = clock;
+        _evenements = evenements;
     }
 
     /// <summary>
@@ -141,6 +145,17 @@ public sealed class DraftChampionsService
             return CommandResult<DraftChampions>.Conflict("Ce champion est déjà banni ou pick dans cette game.");
 
         draft.Jouer(championId, Maintenant());
+        if (draft.EstTerminee)
+        {
+            // Le dernier pick est le Début de la Game (ADR 0017) : pronostics clos, fenêtre de présence du
+            // bot ouverte. Une game qui a déjà un début (résultat saisi avant) n'en reçoit pas un second.
+            var game = draft.Game;
+            if (game.StartedAt == null)
+            {
+                game.StartedAt = Maintenant();
+                _evenements.GameStarted(game);
+            }
+        }
         if (!await _drafts.TrySaveChangesAsync())
             return CommandResult<DraftChampions>.Conflict(
                 "Ce tour vient d'être joué par une autre commande : rechargez la Draft de champions.");

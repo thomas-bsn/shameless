@@ -1,6 +1,6 @@
-# 0017 — Début de la Game signalé par le Companion
+# 0017 — Début de la Game à la fin de la Draft de champions
 
-Statut : acceptée — 2026-10-19
+Statut : acceptée — 2026-10-19 ; révisée (spec #136, ticket #142) : le Début de la Game n'est plus signalé par le Companion mais donné par la fin de la Draft de champions
 
 ## Contexte
 L'ADR 0013 fixait le début d'une Game à son lancement dans la Série, avant la Draft de
@@ -11,14 +11,21 @@ Or la Draft de champions se joue avant la partie : si `game_started` partait à 
 partie, il partirait bien après la Draft, et le Side (le camp bleu choisit en premier)
 doit être connu avant elle, alors que le Companion ne le lit qu'après.
 
+*Révision (#136, #142).* La première version faisait du signal « partie lancée » du Companion
+le Début de la Game, avec une commande manuelle de secours. Le Companion n'existe pas encore
+(roadmap 1b), et la fin de la Draft de champions est un moment net, connu de l'API : tous les
+bans et picks sont faits, la partie va se lancer. Le signal et la commande manuelle sont
+retirés.
+
 ## Décision
 - **Lancement de la Game** et **Début de la Game** sont deux moments distincts. La Game
   est créée quand les deux Capitaines sont prêts (spec #136, ticket #141 : plus de bouton
   « Lancer la draft » sur l'écran de préparation) et porte la Draft de champions, ouverte
   dans la foulée.
-- Le **Début de la Game** est le signal « partie lancée » du Companion (Code Companion).
-  C'est lui qui émet `game_started` et clôt les pronostics, ses fenêtres de présence
-  s'ouvrant à ce moment. Sans Companion, l'organisateur le signale à la main.
+- Le **Début de la Game** est la fin de la Draft de champions : le dernier pick (tous les
+  bans et picks faits). C'est lui qui renseigne `StartedAt`, émet `game_started` et clôt les
+  pronostics, les fenêtres de présence du bot s'ouvrant à ce moment. Plus de signal du
+  Companion ni de commande manuelle. Le Companion garde la fin de game (Rapport) et le Side.
 - Le **Side** n'est plus choisi à la main : alternance automatique, celui de la première
   game tiré à pile ou face. Le Rapport du Companion fait foi après la partie et corrige le
   Side s'il diffère.
@@ -28,23 +35,24 @@ doit être connu avant elle, alors que le Companion ne le lit qu'après.
   l'organisateur copie les liens à la main.
 - La première ouverture de chaque Lien capitaine est mémorisée côté API.
 
-Alternative écartée : garder `game_started` au lancement de la Game. Simple, mais les
-pronostics se closeraient avant une Draft de champions qui peut durer, et le signal ne
-reflèterait pas le vrai début de partie.
+Alternatives écartées : garder `game_started` au lancement de la Game (les pronostics se
+closeraient avant une Draft de champions qui peut durer) ; le signal du Companion (il n'existe
+pas encore, et il ferait dépendre le début d'une app que tout le monde n'a pas).
 
 ## Conséquences
-- `StartedAt` de `GET /bot/games/{id}` ne vaut plus `CreatedAt` : il est vide jusqu'au
-  signal du Companion. Les pronostics déposés avant `StartedAt` restent valables.
+- `StartedAt` de `GET /bot/games/{id}` ne vaut plus `CreatedAt` : il est vide tant que la
+  Draft de champions n'est pas terminée. Les pronostics déposés avant `StartedAt` restent valables.
 - Une Game peut exister (en Draft de champions) sans avoir commencé.
-- Le signal : `POST /companion/{code}/debut` (Code Companion, sans connexion) ou, en secours,
-  `POST /series/{id}/debut` (organisateur connecté, bouton de l'Espace organisateur). Réponse
-  200 `{ seriesId, gameId, startedAt }` ; idempotent (un second signal répond le même début
-  sans ré-émettre `game_started`) ; 409 sans Game en attente ; 404 pour un code inconnu,
-  renouvelé ou de Série terminée. `startedAt` figure aussi dans les games de `GET /series/{id}`.
-- Les pronostics restent ouverts de « Lancer la draft » au signal, sur la Game en attente.
+- Le dernier pick (`POST /liens/{secret}/draft-champions/actions` ou le jeu à la place d'un
+  capitaine par l'organisateur) émet `game_started` une seule fois ; `startedAt` figure aussi dans
+  les games de `GET /series/{id}`. `POST /companion/{code}/debut` et `POST /series/{id}/debut`
+  n'existent plus.
+- Les pronostics restent ouverts de la création de la Game (« prêt » des deux Capitaines) au dernier
+  pick, sur la Game en attente.
+- Une Game dont le résultat est saisi avant la fin de la draft reçoit `StartedAt` = sa fin et son
+  `game_started` à cet instant, avant `game_completed` (la partie a forcément commencé) ; un début
+  déjà donné par la draft n'est jamais écrasé ni ré-émis.
 - Les games existantes à la migration ont `StartedAt = CreatedAt`.
-- Une route Companion s'ajoute à `[AccesParCodeCompanion]` pour le signal de début ; elle
-  n'accepte rien d'autre et refuse sans Game en attente.
 - Une Série annulée ou une Game en attente supprimée emporte son `game_started` non livré
   (ADR 0009 inchangé).
 
