@@ -6,7 +6,6 @@ import { DraftChampionsOrganisateur } from "@/components/draft-champions-organis
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RapportEnRevuePanel } from "@/components/rapport-en-revue-panel";
 import { SeriesOptionsForm } from "@/components/series-options-form";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { problemStatus } from "@/lib/problem";
 import { pendingGame,outcomeLabel, replacementCandidates, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 
@@ -113,18 +111,12 @@ function EspaceOrganisateur({ series }: { series: Series }) {
   );
 }
 
-/** Lance la prochaine game (Side automatique : pile ou face, puis alternance), ou saisit le résultat de la game en cours. */
+/** Saisit le résultat de la game en cours ; la game suivante s'ouvre quand les deux Capitaines sont prêts (Side automatique : pile ou face, puis alternance). */
 function GamePanel({ series }: { series: Series }) {
   const refresh = useRefreshSeries();
   const pending = pendingGame(series);
   const number = series.games.length + (pending ? 0 : 1);
-  const play = $api.useMutation("post", "/series/{id}/games", { onSuccess: refresh });
   const result = $api.useMutation("put", "/games/{id}/result", { onSuccess: refresh });
-
-  function onPlay(event: FormEvent) {
-    event.preventDefault();
-    play.mutate({ params: { path: { id: series.seriesId } } });
-  }
 
   return (
     <section aria-labelledby="game-en-cours">
@@ -170,38 +162,11 @@ function GamePanel({ series }: { series: Series }) {
               </div>
               {result.isError && <ErrorAlert error={result.error} />}
             </>
-          ) : series.games.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              La draft n'est pas lancée : elle se lance depuis « Liens et code », quand les deux Capitaines ont rejoint.
-            </p>
           ) : (
-            <form onSubmit={onPlay} className="flex flex-wrap items-end gap-3">
-              <Button type="submit" disabled={play.isPending}>
-                Lancer la game {number}
-              </Button>
-              {play.isError && (
-                <div className="w-full">
-                  {problemStatus(play.error) === 409 ? (
-                    <Alert variant="destructive">
-                      <AlertDescription>
-                        <span>
-                          Les capitaines ne sont pas prêts : les deux doivent être désignés et avoir ouvert leur lien.
-                        </span>
-                        <Link
-                          to="/series/$seriesId/preparation"
-                          params={{ seriesId: String(series.seriesId) }}
-                          className="font-medium underline"
-                        >
-                          Liens et code
-                        </Link>
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <ErrorAlert error={play.error} />
-                  )}
-                </div>
-              )}
-            </form>
+            <p className="text-sm text-muted-foreground">
+              La game {number} s'ouvre toute seule quand les deux Capitaines sont prêts : chacun se déclare prêt depuis
+              son Lien capitaine, game après game. Rien à lancer ici.
+            </p>
           )}
         </CardContent>
       </Card>

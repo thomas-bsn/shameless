@@ -10,7 +10,7 @@ using Shameless.Application.Services;
 namespace Shameless.Api.Controllers;
 
 /// <summary>
-/// La Draft de champions d'une game. L'organisateur connecté l'ouvre et la lit ; les capitaines la
+/// La Draft de champions d'une game. Elle s'ouvre quand les deux Capitaines sont prêts ; l'organisateur connecté la lit ; les capitaines la
 /// jouent et la lisent par leur Lien capitaine, le spectateur la lit par le Lien spectateur (ADR 0010).
 /// Passé l'échéance d'un tour (60 secondes), l'organisateur peut le jouer à la place de l'Équipe attendue.
 /// </summary>
@@ -107,23 +107,6 @@ public sealed class DraftChampionsController : ControllerBase
         var acces = this.AccesParLien();
         var result = await _drafts.RepondreResetAsync(acces.SeriesId, acces.Equipe!, request.Accepte);
         return result.IsOk ? NoContent() : this.Refusal(result);
-    }
-
-    /// <summary>
-    /// Ouvre la Draft de champions de la game en attente de la Série : Side connu et deux capitaines
-    /// désignés. Une seule Draft de champions par game.
-    /// </summary>
-    [HttpPost("series/{id:int}/draft-champions")]
-    [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<DraftChampionsResponse>> Ouvrir(int id)
-    {
-        var result = await _drafts.OuvrirAsync(id);
-        if (!result.IsOk) return this.Refusal(result);
-
-        var draft = Reponse(result.Value!);
-        return Created($"/games/{draft.GameId}/draft-champions", draft);
     }
 
     /// <summary>La Draft de champions d'une game, en cours ou terminée.</summary>

@@ -2,7 +2,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { $api, type Schemas } from "@/api/client";
 import { DraftChampionsView, useMaintenant } from "@/components/draft-champions-view";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mainALOrganisateur } from "@/lib/draft-champions";
 import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
@@ -13,9 +12,9 @@ type Draft = Schemas["DraftChampionsResponse"];
 
 
 /**
- * La Draft de champions de la game en attente, côté organisateur : il l'ouvre une fois le Side
- * connu et les deux capitaines désignés, la suit en direct, et joue le tour à la place de l'Équipe
- * attendue une fois son échéance atteinte.
+ * La Draft de champions de la game en attente, côté organisateur : elle s'ouvre quand les deux
+ * Capitaines sont prêts ; il la suit en direct, et joue le tour à la place de l'Équipe attendue une
+ * fois son échéance atteinte.
  */
 export function DraftChampionsOrganisateur({ series, gameId }: { series: Series; gameId: number }) {
   const queryClient = useQueryClient();
@@ -25,7 +24,6 @@ export function DraftChampionsOrganisateur({ series, gameId }: { series: Series;
     refetchInterval: (query) => (query.state.data && !query.state.data.terminee ? POLLING_DRAFT_MS : false),
   });
   const onDraft = (data: Draft) => queryClient.setQueryData(["get", "/games/{gameId}/draft-champions", params], data);
-  const ouvrir = $api.useMutation("post", "/series/{id}/draft-champions", { onSuccess: onDraft });
   const nonOuverte = draft.isError && !draft.data && problemStatus(draft.error) === 404;
 
   return (
@@ -38,12 +36,7 @@ export function DraftChampionsOrganisateur({ series, gameId }: { series: Series;
           {draft.isPending ? (
             <LoadingRows />
           ) : nonOuverte ? (
-            <OuvrirDraft
-              series={series}
-              pending={ouvrir.isPending}
-              error={ouvrir.isError ? ouvrir.error : null}
-              onOuvrir={() => ouvrir.mutate({ params: { path: { id: series.seriesId } } })}
-            />
+            <DraftPasOuverte series={series} />
           ) : draft.data ? (
             <>
               {draft.isError && <ErrorAlert error={draft.error} />}
@@ -79,32 +72,16 @@ export function DraftChampionsTerminee({ gameId }: { gameId: number }) {
   );
 }
 
-/** Ouvre la Draft de champions de la game en attente : il faut un capitaine par Équipe. */
-function OuvrirDraft({
-  series,
-  pending,
-  error,
-  onOuvrir,
-}: {
-  series: Series;
-  pending: boolean;
-  error: unknown;
-  onOuvrir: () => void;
-}) {
+/** La game n'a pas encore de draft : elle s'ouvre quand les deux Capitaines sont prêts. */
+function DraftPasOuverte({ series }: { series: Series }) {
   const capitaines = series.capitaineA !== null && series.capitaineB !== null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        {capitaines
-          ? "Envoyez les Liens capitaine, puis ouvrez la Draft : chaque capitaine a 60 secondes par tour."
-          : "Désignez le capitaine de chaque Équipe avant d'ouvrir la Draft de champions."}
-      </p>
-      <Button className="self-start" disabled={pending || !capitaines} onClick={onOuvrir}>
-        Ouvrir la Draft de champions
-      </Button>
-      {error != null && <ErrorAlert error={error} />}
-    </div>
+    <p className="text-sm text-muted-foreground">
+      {capitaines
+        ? "La Draft de champions s'ouvre quand les deux Capitaines sont prêts, depuis leur Lien capitaine."
+        : "Désignez le capitaine de chaque Équipe : la Draft s'ouvre quand les deux sont prêts."}
+    </p>
   );
 }
 

@@ -87,8 +87,9 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
         var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
         Assert.Equal(gameId, game.GetProperty("id").GetInt32());
         Assert.Equal(("red", "blue", "A"), (game.GetProperty("teamASide").GetString(), game.GetProperty("teamBSide").GetString(), game.GetProperty("winner").GetString()));
-        var suivante = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct));
-        Assert.Equal("blue", suivante.GetProperty("teamASide").GetString());
+        var suivante = await PlayGameAsync(client, serie.SeriesId, teamASide: null);
+        var jeu = await ReadJsonAsync(await client.GetAsync($"/games/{suivante}", Ct));
+        Assert.Equal("blue", jeu.GetProperty("teamASide").GetString());
     }
 
     [Fact]

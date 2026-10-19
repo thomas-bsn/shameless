@@ -55,11 +55,11 @@ const draft: Schemas["DraftChampionsResponse"] = {
 function mock() {
   mockApi({
     "GET /champions": champions,
-    "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false },
+    "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, pretPossible: false },
     "GET /liens/lien-a/draft-champions": draft,
-    "GET /liens/lien-b": { seriesId: 5, portee: "Capitaine", equipe: "B", pret: false, adversairePret: false },
+    "GET /liens/lien-b": { seriesId: 5, portee: "Capitaine", equipe: "B", pret: false, adversairePret: false, pretPossible: false },
     "GET /liens/lien-b/draft-champions": draft,
-    "GET /liens/lien-spec": { seriesId: 5, portee: "Spectateur", equipe: null, pret: false, adversairePret: false },
+    "GET /liens/lien-spec": { seriesId: 5, portee: "Spectateur", equipe: null, pret: false, adversairePret: false, pretPossible: false },
     "GET /liens/lien-spec/draft-champions": draft,
   });
 }
@@ -99,9 +99,9 @@ describe("Draft de champions par lien", () => {
 describe("Prêt du Capitaine", () => {
   const attente = (acces: Partial<Schemas["AccesParLienResponse"]> = {}) => ({
     "GET /champions": champions,
-    "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, ...acces },
+    "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, pretPossible: true, ...acces },
     "GET /liens/lien-a/draft-champions": json({ status: 404 }, 404),
-    "GET /liens/lien-spec": { seriesId: 5, portee: "Spectateur", equipe: null, pret: false, adversairePret: false },
+    "GET /liens/lien-spec": { seriesId: 5, portee: "Spectateur", equipe: null, pret: false, adversairePret: false, pretPossible: false },
     "GET /liens/lien-spec/draft-champions": json({ status: 404 }, 404),
   });
 
@@ -111,7 +111,7 @@ describe("Prêt du Capitaine", () => {
       ...attente(),
       "PUT /liens/lien-a/pret": async (request: Request) => {
         envoye = await request.json();
-        return json({ seriesId: 5, portee: "Capitaine", equipe: "A", pret: true, adversairePret: false });
+        return json({ seriesId: 5, portee: "Capitaine", equipe: "A", pret: true, adversairePret: false, pretPossible: true });
       },
     });
     renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
@@ -129,7 +129,7 @@ describe("Prêt du Capitaine", () => {
       ...attente({ pret: true }),
       "PUT /liens/lien-a/pret": async (request: Request) => {
         envoye = await request.json();
-        return json({ seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false });
+        return json({ seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, pretPossible: true });
       },
     });
     renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
@@ -145,6 +145,29 @@ describe("Prêt du Capitaine", () => {
     renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
 
     expect(await screen.findByText("L'autre Capitaine est prêt.")).toBeInTheDocument();
+  });
+
+  it("propose « Je suis prêt » pour la game suivante quand la draft précédente est terminée et la Série en cours", async () => {
+    mockApi({
+      "GET /champions": champions,
+      "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, pretPossible: true },
+      "GET /liens/lien-a/draft-champions": { ...draft, terminee: true, tourCourant: null },
+    });
+    renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
+
+    expect(await screen.findByRole("button", { name: "Je suis prêt" })).toBeInTheDocument();
+  });
+
+  it("n'offre pas « Je suis prêt » pendant la draft ni quand la Série est terminée", async () => {
+    mockApi({
+      "GET /champions": champions,
+      "GET /liens/lien-a": { seriesId: 5, portee: "Capitaine", equipe: "A", pret: false, adversairePret: false, pretPossible: false },
+      "GET /liens/lien-a/draft-champions": { ...draft, terminee: true, tourCourant: null },
+    });
+    renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
+
+    expect(await screen.findByText(/Série 5/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /prêt/ })).not.toBeInTheDocument();
   });
 
   it("n'offre aucun bouton au spectateur", async () => {

@@ -256,14 +256,17 @@ public class RapportsEnRevueTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/B",
             new { designation = "Manuel", playerId = enRevue.Serie.TeamB[0] }, Ct));
 
-        await AssertRefusAsync(await client.PostAsync($"/series/{seriesId}/games", null, Ct), HttpStatusCode.Conflict);
-        await AssertRefusAsync(await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct), HttpStatusCode.Conflict);
+        await RejoindreLesCapitainesAsync(client, seriesId);
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+        var lienA = Uri.EscapeDataString(liens.GetProperty("lienCapitaineA").GetString()!);
+        await AssertRefusAsync(await Factory.CreateAnonymousClient().PutAsJsonAsync($"/liens/{lienA}/pret", new { pret = true }, Ct),
+            HttpStatusCode.Conflict);
         await AssertRefusAsync(await client.PutAsJsonAsync($"/games/{enRevue.GameId}/result", new { winner = "B" }, Ct), HttpStatusCode.Conflict);
 
         await ReadJsonAsync(await client.PostAsync($"/rapports/{enRevue.RapportId}/accepter", null, Ct));
 
-        await PlayGameAsync(client, seriesId, teamASide: "red");
-        Assert.Equal(HttpStatusCode.Created, (await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct)).StatusCode);
+        var suivante = await PlayGameAsync(client, seriesId, teamASide: "red");
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/games/{suivante}/draft-champions", Ct)).StatusCode);
     }
 
     [Fact]

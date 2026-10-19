@@ -22,7 +22,6 @@ public class DraftChampionsChatTests(ApiFactory factory) : IntegrationTest(facto
             new { designation = "Manuel", playerId = serie.TeamB[0] }, Ct));
         await PlayGameAsync(client, serie.SeriesId, "blue");
         var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
-        (await client.PostAsync($"/series/{serie.SeriesId}/draft-champions", null, Ct)).EnsureSuccessStatusCode();
         return new Preparee(serie.SeriesId,
             liens.GetProperty("lienCapitaineA").GetString()!,
             liens.GetProperty("lienCapitaineB").GetString()!,
@@ -149,7 +148,7 @@ public class DraftChampionsChatTests(ApiFactory factory) : IntegrationTest(facto
         (await anonyme.PostAsJsonAsync($"/liens/{Uri.EscapeDataString(preparee.LienB)}/draft-champions/reset/reponse",
             new { accepte = true }, Ct)).EnsureSuccessStatusCode();
 
-        (await client.PostAsync($"/series/{preparee.SeriesId}/draft-champions", null, Ct)).EnsureSuccessStatusCode();
+        await SeMettreTousPretsAsync(client, preparee.SeriesId);
         Assert.Empty(await LireAsync(preparee.LienSpectateur));
         Assert.Empty(await LireAsync(preparee.LienB));
     }
