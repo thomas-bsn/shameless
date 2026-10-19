@@ -175,6 +175,10 @@ Le front tourne sur http://localhost:5173 et relaie `/api` vers l'API lancée av
 | `npm test` | Tests Vitest. |
 | `npm run build` | Build de production dans `dist/`. |
 
+### Sons de la draft de champions
+
+Les sons de LoL sont des fichiers de Riot sous copyright : ils ne sont pas dans le dépôt (licence MIT). Pour les activer, héberger `debut.ogg`, `tour.ogg`, `verrouille.ogg` et `fin.ogg` à un emplacement de son choix et définir, au build du front, `VITE_DRAFT_SONS_URL` (ex. `VITE_DRAFT_SONS_URL=https://exemple.fr/sons npm run build`). Sans cette variable, la draft marche en silence et le bouton de son n'apparaît pas. Rien ne se joue avant une première action sur la page ; le choix « couper le son » est retenu sur l'appareil.
+
 Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `fetchClient`, typés par le client généré. Les routes sont des fichiers dans `src/routes/` (TanStack Router) ; `src/routeTree.gen.ts` est régénéré par Vite et commité. Les composants shadcn/ui s'ajoutent avec `npx shadcn@latest add <composant>`.
 
 ## CI
