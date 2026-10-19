@@ -21,6 +21,7 @@ public abstract record AuteurChat
 public sealed class ChatDraftChampionsService
 {
     private const int LongueurMaxJeton = 64;
+    private const int EssaisMax = 5;
 
     private readonly IDraftChampionsRepository _drafts;
     private readonly TimeProvider _clock;
@@ -69,19 +70,35 @@ public sealed class ChatDraftChampionsService
             return CommandResult<MessageDraftChampions>.TooManyRequests(
                 "Vous écrivez trop vite : patientez quelques secondes avant d'envoyer un autre message.");
 
-        var message = new MessageDraftChampions
+        // Un nouveau spectateur sans connexion reçoit le numéro suivant ; si un autre arrive en même temps et
+        // prend le même numéro, la base refuse et on recalcule (le pseudo d'un spectateur déjà connu est repris).
+        for (var essai = 0; essai < EssaisMax; essai++)
         {
-            DraftChampionsId = draft.Id,
-            Emetteur = emetteur,
-            Auteur = nom,
-            AvatarUrl = avatar,
-            Equipe = equipe,
-            Contenu = texte,
-            EnvoyeLe = maintenant
-        };
-        _drafts.AddMessage(message);
-        await _drafts.TrySaveChangesAsync();
-        return CommandResult<MessageDraftChampions>.Ok(message);
+            var message = new MessageDraftChampions
+            {
+                DraftChampionsId = draft.Id,
+                Emetteur = emetteur,
+                Auteur = nom,
+                AvatarUrl = avatar,
+                Equipe = equipe,
+                Contenu = texte,
+                EnvoyeLe = maintenant
+            };
+            if (emetteur.StartsWith(MessageDraftChampions.PrefixeAnonyme))
+            {
+                var connu = await _drafts.GetAuteurAsync(draft.Id, emetteur);
+                if (connu != null)
+                    message.Auteur = connu;
+                else
+                {
+                    message.NumeroSpectateur = await _drafts.DernierNumeroSpectateurAsync(draft.Id) + 1;
+                    message.Auteur = $"Spectateur {message.NumeroSpectateur}";
+                }
+            }
+            if (await _drafts.TryAddMessageAsync(message))
+                return CommandResult<MessageDraftChampions>.Ok(message);
+        }
+        return CommandResult<MessageDraftChampions>.Conflict("Le chat est très sollicité : réessayez dans un instant.");
     }
 
     private async Task<CommandResult<(string Emetteur, string Nom, string? Avatar, string? Equipe)>> IdentiteAsync(
@@ -100,10 +117,8 @@ public sealed class ChatDraftChampionsService
             case AuteurChat.Discord d:
                 return Ok(MessageDraftChampions.PrefixeDiscord + d.DiscordId, d.Nom, d.AvatarUrl, null);
             case AuteurChat.Anonyme { Jeton: { Length: > 0 and <= LongueurMaxJeton } jeton }:
-                var emetteur = MessageDraftChampions.PrefixeAnonyme + jeton;
-                var pseudo = await _drafts.GetAuteurAsync(draft.Id, emetteur)
-                    ?? $"Spectateur {await _drafts.CountSpectateursAnonymesAsync(draft.Id) + 1}";
-                return Ok(emetteur, pseudo, null, null);
+                // Le pseudo « Spectateur N » est attribué à l'enregistrement, dans EcrireAsync.
+                return Ok(MessageDraftChampions.PrefixeAnonyme + jeton, "", null, null);
             default:
                 return CommandResult<(string Emetteur, string Nom, string? Avatar, string? Equipe)>.Invalid(
                     "Identifiant de spectateur manquant ou trop long.");

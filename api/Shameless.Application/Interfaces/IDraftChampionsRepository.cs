@@ -25,15 +25,15 @@ public interface IDraftChampionsRepository
     /// <summary>Les messages du chat de la Draft de champions, du plus ancien au plus récent.</summary>
     Task<List<MessageDraftChampions>> GetMessagesAsync(int draftId);
 
-    /// <summary>Ajoute un message au chat ; effectif au prochain enregistrement.</summary>
-    void AddMessage(MessageDraftChampions message);
-
     /// <summary>Combien de messages cet émetteur a écrits depuis <paramref name="depuis"/>.</summary>
     Task<int> CountMessagesDepuisAsync(int draftId, string emetteur, DateTime depuis);
 
     /// <summary>Le pseudo déjà attribué à cet émetteur dans ce chat, null s'il n'a rien écrit.</summary>
     Task<string?> GetAuteurAsync(int draftId, string emetteur);
 
-    /// <summary>Combien de spectateurs sans connexion ont déjà écrit dans ce chat.</summary>
-    Task<int> CountSpectateursAnonymesAsync(int draftId);
+    /// <summary>Le plus grand numéro de « Spectateur N » déjà attribué dans la draft (0 si aucun).</summary>
+    Task<int> DernierNumeroSpectateurAsync(int draftId);
+
+    /// <summary>Ajoute le message et l'enregistre ; false (message détaché) si la base le refuse, par exemple un numéro de spectateur déjà pris.</summary>
+    Task<bool> TryAddMessageAsync(MessageDraftChampions message);
 }

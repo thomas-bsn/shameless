@@ -679,8 +679,21 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(1)")
                         .HasColumnName("equipe");
 
+                    b.Property<int?>("NumeroSpectateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero_spectateur");
+
                     b.HasKey("Id")
                         .HasName("pk_drafts_champions_messages");
+
+                    b.HasIndex("DraftChampionsId", "Emetteur")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_emetteur")
+                        .HasFilter("numero_spectateur IS NOT NULL");
+
+                    b.HasIndex("DraftChampionsId", "NumeroSpectateur")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_numero_spectat");
 
                     b.HasIndex("DraftChampionsId", "Emetteur", "EnvoyeLe")
                         .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_emetteur_envoy");

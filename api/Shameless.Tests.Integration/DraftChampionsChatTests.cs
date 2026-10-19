@@ -116,6 +116,57 @@ public class DraftChampionsChatTests(ApiFactory factory) : IntegrationTest(facto
         (await EcrireAsync(preparee.LienSpectateur, "m5", "spam")).EnsureSuccessStatusCode();
     }
 
+    private async Task<int> GameIdAsync(HttpClient client, int seriesId) =>
+        (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct))).GetProperty("games")[0].GetProperty("id").GetInt32();
+
+    [Fact]
+    public async Task Une_fois_la_draft_terminee_le_chat_est_vide_et_ferme()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await OuvrirDraftAsync(client);
+        (await EcrireAsync(preparee.LienSpectateur, "avant la fin", "tok-1")).EnsureSuccessStatusCode();
+        var gameId = await GameIdAsync(client, preparee.SeriesId);
+
+        await JouerLaDraftAsync(client, preparee.SeriesId, gameId);
+
+        Assert.Empty(await LireAsync(preparee.LienSpectateur));
+        Assert.Empty(await LireAsync(preparee.LienA));
+        var refuse = await EcrireAsync(preparee.LienSpectateur, "apres", "tok-1");
+        Assert.Equal(HttpStatusCode.Conflict, refuse.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await EcrireAsync(preparee.LienB, "apres")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Un_reset_accepte_efface_le_chat()
+    {
+        var client = Factory.CreateSignedInClient();
+        var preparee = await OuvrirDraftAsync(client);
+        (await EcrireAsync(preparee.LienSpectateur, "avant le reset", "tok-1")).EnsureSuccessStatusCode();
+        (await EcrireAsync(preparee.LienA, "gl")).EnsureSuccessStatusCode();
+        var anonyme = Factory.CreateAnonymousClient();
+
+        (await anonyme.PostAsync($"/liens/{Uri.EscapeDataString(preparee.LienA)}/draft-champions/reset", null, Ct)).EnsureSuccessStatusCode();
+        (await anonyme.PostAsJsonAsync($"/liens/{Uri.EscapeDataString(preparee.LienB)}/draft-champions/reset/reponse",
+            new { accepte = true }, Ct)).EnsureSuccessStatusCode();
+
+        (await client.PostAsync($"/series/{preparee.SeriesId}/draft-champions", null, Ct)).EnsureSuccessStatusCode();
+        Assert.Empty(await LireAsync(preparee.LienSpectateur));
+        Assert.Empty(await LireAsync(preparee.LienB));
+    }
+
+    [Fact]
+    public async Task Des_spectateurs_qui_arrivent_en_meme_temps_ont_chacun_un_numero_different()
+    {
+        var preparee = await OuvrirDraftAsync(Factory.CreateSignedInClient());
+
+        var reponses = await Task.WhenAll(Enumerable.Range(0, 8).Select(i =>
+            EcrireAsync(preparee.LienSpectateur, $"m{i}", $"tok-{i}")));
+        foreach (var r in reponses) r.EnsureSuccessStatusCode();
+
+        var pseudos = (await LireAsync(preparee.LienSpectateur)).Select(m => m.GetProperty("auteur").GetString()).ToArray();
+        Assert.Equal(8, pseudos.Distinct().Count());
+    }
+
     [Fact]
     public async Task Un_lien_inconnu_est_refuse()
     {

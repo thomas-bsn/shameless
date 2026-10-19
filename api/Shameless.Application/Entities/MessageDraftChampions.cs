@@ -23,6 +23,12 @@ public class MessageDraftChampions
     /// <summary>Qui écrit, pour limiter le débit et garder un pseudo stable : capitaine:A, discord:ID ou anonyme:jeton.</summary>
     public string Emetteur { get; set; } = "";
 
+    /// <summary>
+    /// Le numéro de « Spectateur N », porté par le premier message d'un spectateur sans connexion (vide sinon).
+    /// Unique dans la draft : la base refuse deux spectateurs simultanés au même numéro.
+    /// </summary>
+    public int? NumeroSpectateur { get; set; }
+
     public string Auteur { get; set; } = "";
     public string? AvatarUrl { get; set; }
 

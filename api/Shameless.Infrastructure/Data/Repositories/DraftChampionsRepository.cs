@@ -25,8 +25,6 @@ public class DraftChampionsRepository : IDraftChampionsRepository
     public Task<List<MessageDraftChampions>> GetMessagesAsync(int draftId) =>
         _db.MessagesDraftChampions.AsNoTracking().Where(m => m.DraftChampionsId == draftId).OrderBy(m => m.Id).ToListAsync();
 
-    public void AddMessage(MessageDraftChampions message) => _db.MessagesDraftChampions.Add(message);
-
     public Task<int> CountMessagesDepuisAsync(int draftId, string emetteur, DateTime depuis) =>
         _db.MessagesDraftChampions.CountAsync(m => m.DraftChampionsId == draftId && m.Emetteur == emetteur && m.EnvoyeLe > depuis);
 
@@ -34,10 +32,11 @@ public class DraftChampionsRepository : IDraftChampionsRepository
         _db.MessagesDraftChampions.Where(m => m.DraftChampionsId == draftId && m.Emetteur == emetteur)
             .Select(m => (string?)m.Auteur).FirstOrDefaultAsync();
 
-    public Task<int> CountSpectateursAnonymesAsync(int draftId) =>
-        _db.MessagesDraftChampions
-            .Where(m => m.DraftChampionsId == draftId && m.Emetteur.StartsWith(MessageDraftChampions.PrefixeAnonyme))
-            .Select(m => m.Emetteur).Distinct().CountAsync();
+    public async Task<int> DernierNumeroSpectateurAsync(int draftId) =>
+        await _db.MessagesDraftChampions.Where(m => m.DraftChampionsId == draftId)
+            .MaxAsync(m => m.NumeroSpectateur) ?? 0;
+
+    public Task<bool> TryAddMessageAsync(MessageDraftChampions message) => _db.TryAddAsync(message);
 
     private IQueryable<DraftChampions> Complete() =>
         _db.DraftsChampions

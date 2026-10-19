@@ -18,6 +18,9 @@ public sealed class MessageDraftChampionsConfiguration : IEntityTypeConfiguratio
         entity.Property(e => e.Contenu).IsRequired().HasMaxLength(MessageDraftChampions.LongueurMax);
         entity.Property(e => e.EnvoyeLe).HasColumnType("timestamp without time zone");
         entity.HasIndex(e => new { e.DraftChampionsId, e.Emetteur, e.EnvoyeLe });
+        entity.HasIndex(e => new { e.DraftChampionsId, e.NumeroSpectateur }).IsUnique();
+        entity.HasIndex(e => new { e.DraftChampionsId, e.Emetteur }).IsUnique()
+              .HasFilter("numero_spectateur IS NOT NULL");
 
         entity.HasOne<DraftChampions>()
               .WithMany()
