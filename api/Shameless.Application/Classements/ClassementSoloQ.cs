@@ -23,7 +23,7 @@ public record ClassementSoloQ(List<LigneClassementSoloQ> Solo, List<LigneClassem
             .OrderByDescending(l => l.Rang) // non classé (null) en dernier
             .ThenBy(l => l.Joueur.Prenom, StringComparer.OrdinalIgnoreCase)
             .Select(l => new LigneClassementSoloQ(
-                l.Joueur.Id, l.Joueur.Prenom, l.Joueur.RiotId, l.Rang?.Tier, l.Rang?.Division, l.Rang?.Lp))
+                l.Joueur.Id, l.Joueur.Prenom, l.Joueur.RiotId, l.Rang?.Tier, l.Rang?.Division, l.Rang?.Lp, l.Joueur.User?.AvatarUrl))
             .ToList();
 }
 
@@ -37,4 +37,5 @@ public record LigneClassementSoloQ(
     string RiotId,
     string? Tier,
     int? Division,
-    int? Lp);
+    int? Lp,
+    string? AvatarUrl = null);

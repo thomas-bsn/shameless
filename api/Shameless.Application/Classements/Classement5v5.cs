@@ -30,7 +30,7 @@ public record Classement5v5(List<LigneClassement5v5> Joueurs)
             .ThenBy(l => l.Joueur.Prenom, StringComparer.OrdinalIgnoreCase)
             .Select(l => new LigneClassement5v5(
                 l.Joueur.Id, l.Joueur.Prenom, l.Joueur.RiotId, l.Games, l.Victoires, l.Games - l.Victoires,
-                l.Ratio is { } r ? Math.Round(r * 100, 1) : null))
+                l.Ratio is { } r ? Math.Round(r * 100, 1) : null, l.Joueur.User?.AvatarUrl))
             .ToList();
 
         return new Classement5v5(lignes);
@@ -46,4 +46,5 @@ public record LigneClassement5v5(
     int GamesJouees,
     int Victoires,
     int Defaites,
-    double? Winrate);
+    double? Winrate,
+    string? AvatarUrl = null);

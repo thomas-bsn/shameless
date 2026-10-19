@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Schemas } from "@/api/client";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { points } from "@/lib/cost";
@@ -76,14 +77,17 @@ export function PlayersTable({
           return (
             <TableRow key={p.id}>
               <TableCell>
-                <Link
-                  to="/joueurs/$playerId"
-                  params={{ playerId: String(p.id) }}
-                  className="flex flex-col hover:underline"
-                >
-                  <span className="font-semibold">{p.prenom}</span>
-                  <span className="text-xs text-muted-foreground">{p.riotId}</span>
-                </Link>
+                <span className="flex items-center gap-2.5">
+                  <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-8 text-xs" />
+                  <Link
+                    to="/joueurs/$playerId"
+                    params={{ playerId: String(p.id) }}
+                    className="flex flex-col hover:underline"
+                  >
+                    <span className="font-semibold">{p.prenom}</span>
+                    <span className="text-xs text-muted-foreground">{p.riotId}</span>
+                  </Link>
+                </span>
               </TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-2">
