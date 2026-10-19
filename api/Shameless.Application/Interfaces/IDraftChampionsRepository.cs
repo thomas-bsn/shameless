@@ -7,6 +7,9 @@ public interface IDraftChampionsRepository
     /// <summary>Ajoute la Draft de champions ; effectif au prochain enregistrement.</summary>
     void Add(DraftChampions draft);
 
+    /// <summary>Supprime la Draft de champions et ses actions (Reset accepté) ; effectif au prochain enregistrement.</summary>
+    void Remove(DraftChampions draft);
+
     /// <summary>La Draft de champions de la game, avec ses actions, sa game et la Série de la game (composition comprise).</summary>
     Task<DraftChampions?> GetByGameAsync(int gameId);
 

@@ -33,6 +33,36 @@ public class DraftChampions
     /// </summary>
     public int Version { get; set; }
 
+    /// <summary>L'Équipe dont le Capitaine a demandé un Reset de la draft ; null sans demande.</summary>
+    public string? ResetDemandeParEquipe { get; set; }
+
+    /// <summary>Quand le Reset a été demandé ; null sans demande.</summary>
+    public DateTime? ResetDemandeLe { get; set; }
+
+    /// <summary>Le délai dont dispose l'autre Capitaine pour répondre à une demande de Reset.</summary>
+    public static readonly TimeSpan DelaiReponseReset = TimeSpan.FromSeconds(60);
+
+    /// <summary>Une demande de Reset attend la réponse de l'autre Capitaine à <paramref name="maintenant"/>.</summary>
+    public bool ResetEnAttente(DateTime maintenant) =>
+        ResetDemandeLe is { } le && maintenant < le + DelaiReponseReset;
+
+    /// <summary>Quand la demande de Reset expire ; null sans demande.</summary>
+    public DateTime? ResetExpireLe => ResetDemandeLe + DelaiReponseReset;
+
+    public void DemanderReset(string equipe, DateTime maintenant)
+    {
+        ResetDemandeParEquipe = equipe;
+        ResetDemandeLe = maintenant;
+        Version++;
+    }
+
+    public void AnnulerDemandeReset()
+    {
+        ResetDemandeParEquipe = null;
+        ResetDemandeLe = null;
+        Version++;
+    }
+
     public ICollection<ActionDraftChampions> Actions { get; set; } = new List<ActionDraftChampions>();
 
     /// <summary>L'Équipe côté blue pour la game.</summary>

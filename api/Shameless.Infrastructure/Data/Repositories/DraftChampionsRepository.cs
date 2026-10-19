@@ -12,6 +12,8 @@ public class DraftChampionsRepository : IDraftChampionsRepository
 
     public void Add(DraftChampions draft) => _db.DraftsChampions.Add(draft);
 
+    public void Remove(DraftChampions draft) => _db.DraftsChampions.Remove(draft);
+
     public Task<DraftChampions?> GetByGameAsync(int gameId) =>
         Complete().SingleOrDefaultAsync(d => d.GameId == gameId);
 
