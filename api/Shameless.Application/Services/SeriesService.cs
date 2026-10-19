@@ -182,7 +182,10 @@ public sealed class SeriesService
         if (game.StartedAt != null)
             return CommandResult<CustomGame>.Ok(game);
 
-        game.StartedAt = _clock.GetUtcNow().UtcDateTime;
+        // Arrondi à la microseconde, la précision de PostgreSQL : le début répondu au premier signal est
+        // celui que relira le second.
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        game.StartedAt = maintenant.AddTicks(-(maintenant.Ticks % 10));
         // Le début de la Game : pronostics clos, fenêtre de présence du bot ouverte.
         _evenements.GameStarted(game);
         if (!await _series.TrySaveChangesAsync())
@@ -225,7 +228,8 @@ public sealed class SeriesService
     {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
-        game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        game.CompletedAt = maintenant.AddTicks(-(maintenant.Ticks % 10)); // microseconde, comme PostgreSQL
         if (game.StartedAt == null)
         {
             // Résultat sans signal de début : la partie a forcément commencé. Le bot reçoit toujours les deux
