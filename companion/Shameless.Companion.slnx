@@ -2,8 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/Shameless.Companion.App/Shameless.Companion.App.csproj" />
     <Project Path="src/Shameless.Companion.Core/Shameless.Companion.Core.csproj" />
+    <Project Path="src/Shameless.Companion.Lcu/Shameless.Companion.Lcu.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Shameless.Companion.Core.Tests/Shameless.Companion.Core.Tests.csproj" />
+    <Project Path="tests/Shameless.Companion.Lcu.Tests/Shameless.Companion.Lcu.Tests.csproj" />
   </Folder>
 </Solution>

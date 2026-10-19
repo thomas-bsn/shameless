@@ -1,18 +1,33 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Avalonia.Threading;
 using Shameless.Companion.Core;
 
 namespace Shameless.Companion.App;
 
 /// <summary>Colle la bibliothèque (ConnexionCompanion) à la fenêtre : de la présentation, pas de logique.</summary>
-public sealed class FenetreViewModel(ConnexionCompanion connexion, IStockageIdentifiants stockage) : INotifyPropertyChanged
+public sealed class FenetreViewModel : INotifyPropertyChanged
 {
+    private readonly ConnexionCompanion _connexion;
+    private readonly IStockageIdentifiants _stockage;
     private string _urlInstance = "";
     private string _code = "";
     private string _etatConnexion = "Non connecté";
-    private string _etatClientLol = "";
+    private string _etatClientLol = LibelleClientLol(false);
     private string _serie = "";
     private bool _occupe;
+
+    public FenetreViewModel(ConnexionCompanion connexion, IStockageIdentifiants stockage, SurveillanceFinDeGame surveillance)
+    {
+        _connexion = connexion;
+        _stockage = stockage;
+        // L'événement arrive d'un fil d'arrière-plan : la fenêtre ne se met à jour que depuis le fil d'interface.
+        surveillance.ClientDetecteChange += detecte =>
+            Dispatcher.UIThread.Post(() => EtatClientLol = LibelleClientLol(detecte));
+    }
+
+    private static string LibelleClientLol(bool detecte) =>
+        detecte ? "Client LoL : détecté" : "Client LoL : non détecté";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -25,17 +40,17 @@ public sealed class FenetreViewModel(ConnexionCompanion connexion, IStockageIden
 
     public async Task DemarrerAsync()
     {
-        var identifiants = stockage.Lire();
+        var identifiants = _stockage.Lire();
         if (identifiants is not null)
         {
             UrlInstance = identifiants.UrlInstance;
             Code = identifiants.Code;
         }
-        await Executer(() => connexion.DemarrerAsync());
+        await Executer(() => _connexion.DemarrerAsync());
     }
 
     public Task ConnecterAsync() =>
-        Executer(() => connexion.SeConnecterAsync(UrlInstance.Trim(), Code.Trim()));
+        Executer(() => _connexion.SeConnecterAsync(UrlInstance.Trim(), Code.Trim()));
 
     private async Task Executer(Func<Task<EtatCompanion>> action)
     {
@@ -52,7 +67,6 @@ public sealed class FenetreViewModel(ConnexionCompanion connexion, IStockageIden
 
     private void Afficher(EtatCompanion etat)
     {
-        EtatClientLol = etat.ClientLolDetecte ? "Client LoL : détecté" : "Client LoL : non détecté";
         switch (etat.Connexion)
         {
             case Connexion.SerieReconnue reconnue:
