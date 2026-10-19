@@ -5,7 +5,8 @@
         x:DataType="app:FenetreViewModel"
         Title="Shameless Companion"
         Icon="/Assets/companion.png"
-        Width="460" Height="420" CanResize="False"
+        Width="460" SizeToContent="Height" CanResize="False"
+        Background="#09090b" Foreground="#fafafa"
         WindowStartupLocation="CenterScreen">
   <StackPanel Margin="20" Spacing="10">
     <TextBlock Text="URL de l'Instance" />
@@ -17,5 +18,6 @@
     <TextBlock Text="{Binding EtatClientLol}" />
     <TextBlock Text="{Binding EtatConnexion}" TextWrapping="Wrap" FontWeight="SemiBold" />
     <TextBlock Text="{Binding Serie}" TextWrapping="Wrap" />
+    <app:EncartEnvoi x:Name="EncartEnvoi" />
   </StackPanel>
 </Window>
