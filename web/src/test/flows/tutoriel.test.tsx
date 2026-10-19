@@ -25,7 +25,7 @@ describe("Tutoriel", () => {
     }
   });
 
-  it.each(["Companion", "LoL Proximity Chat"])("présente %s avec l'étiquette Bientôt et les trois blocs", async (titre) => {
+  it.each(["LoL Proximity Chat"])("présente %s avec l'étiquette Bientôt et les trois blocs", async (titre) => {
     mockApi({ "GET /auth/me": problem(401) });
     renderApp("/tutoriel");
 
@@ -48,5 +48,36 @@ describe("Tutoriel", () => {
     for (const mot of [/Picker/, /Capitaines/, /prêt/, /Reset/, /pause/, /automatiquement/, /chaque game/, /rien à lancer/]) {
       expect(sujet).toHaveTextContent(mot);
     }
+  });
+
+  it("explique le Companion : installation Windows, avertissement, connexion, état prêt et procédure d'échec", async () => {
+    mockApi({ "GET /auth/me": problem(401) });
+    renderApp("/tutoriel");
+
+    const sujet = await screen.findByRole("region", { name: "Companion" });
+    expect(within(sujet).queryByText("Bientôt")).not.toBeInTheDocument();
+    for (const bloc of ["À quoi ça sert", "Pourquoi", "Comment ça marche"]) {
+      expect(within(sujet).getByRole("heading", { name: bloc })).toBeInTheDocument();
+    }
+    for (const mot of [
+      /Windows 10 ou 11 seulement/,
+      /éditeur inconnu/,
+      /Informations complémentaires/,
+      /Exécuter quand même/,
+      /adresse de l'Instance/,
+      /Code Companion/,
+      /client LoL détecté/,
+      /Série reconnue/,
+      /customs 5v5/,
+      /Fichier de Rapport/,
+      /Superadministrateur ou Administrateur/,
+      /importe/,
+    ]) {
+      expect(sujet).toHaveTextContent(mot);
+    }
+    expect(within(sujet).getByRole("link", { name: /Télécharger le Companion/ })).toHaveAttribute(
+      "href",
+      "https://github.com/thomas-bsn/shameless/releases/latest/download/shameless-companion.exe",
+    );
   });
 });

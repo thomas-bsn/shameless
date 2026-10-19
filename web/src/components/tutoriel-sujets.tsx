@@ -26,7 +26,7 @@ export function TroisBlocs({ aQuoiCaSert, pourquoi, comment }: { aQuoiCaSert: Re
       {blocs.map(([titre, texte]) => (
         <div key={titre}>
           <h3 className="text-sm font-semibold">{titre}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{texte}</p>
+          <div className="mt-1 text-sm text-muted-foreground">{texte}</div>
         </div>
       ))}
     </div>
@@ -88,12 +88,37 @@ export const sujets: Sujet[] = [
   {
     id: "companion",
     titre: "Companion",
-    bientot: true,
     corps: (
       <TroisBlocs
-        aQuoiCaSert="Le Companion est une petite app PC qui lit les stats de fin de game dans le client LoL et les envoie à Shameless."
-        pourquoi="Les stats sont celles du jeu, sans saisie à la main, et les classements restent justes."
-        comment="Un seul joueur équipé par game suffit. Il saisit le Code Companion de la Série dans l'app, qui envoie le rapport à la fin de la partie."
+        aQuoiCaSert="Le Companion est une petite app PC qui lit les stats de fin de game dans le client LoL et les envoie à Shameless. Il ne sert que pour les customs 5v5, et seulement sous Windows 10 ou 11."
+        pourquoi="Les stats sont celles du jeu, sans saisie à la main, et les classements restent justes. Un seul joueur équipé par game suffit."
+        comment={
+          <ol className="flex list-decimal flex-col gap-2 pl-5">
+            <li>
+              Télécharge le Companion (Windows 10 ou 11 seulement) :{" "}
+              <a className="font-medium text-foreground underline" href="https://github.com/thomas-bsn/shameless/releases/latest/download/shameless-companion.exe">
+                Télécharger le Companion
+              </a>
+              , puis lance le fichier shameless-companion.exe. Le même bouton est dans l'Écran de préparation de la Série.
+            </li>
+            <li>
+              Windows peut afficher « Windows a protégé votre ordinateur » avec un éditeur inconnu : le fichier n'est pas signé. Clique sur
+              Informations complémentaires, puis sur Exécuter quand même.
+            </li>
+            <li>
+              Saisis l'adresse de l'Instance (l'adresse du site) et le Code Companion de la Série : tous deux sont à copier dans l'Écran de
+              préparation.
+            </li>
+            <li>
+              Quand tout est prêt, l'app affiche client LoL détecté et Série reconnue. Lance ensuite la game normalement : le rapport part tout
+              seul à la fin de la partie.
+            </li>
+            <li>
+              Si l'envoi échoue, l'app propose d'ouvrir un Fichier de Rapport. Donne-le à un Superadministrateur ou Administrateur (l'app affiche
+              leurs pseudos) : il l'importe sur le site à ta place.
+            </li>
+          </ol>
+        }
       />
     ),
   },
