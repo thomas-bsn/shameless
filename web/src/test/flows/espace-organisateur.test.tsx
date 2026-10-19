@@ -12,6 +12,7 @@ const participant = (playerId: number, prenom: string): Participant => ({
   playerId,
   prenom,
   riotId: `${prenom}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost: 3,
