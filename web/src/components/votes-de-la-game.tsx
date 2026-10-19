@@ -3,6 +3,7 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 const heureLabel = (iso: string) => new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
@@ -70,6 +71,7 @@ function Titre({ titre, resultat }: { titre: string; resultat: Schemas["Resultat
               return (
                 <li key={v.playerId} className="flex items-center justify-between gap-2 text-sm">
                   <span className={cn("flex items-center gap-2", gagnant && "font-semibold")}>
+                    <AvatarJoueur prenom={v.prenom} avatarUrl={v.avatarUrl} className="size-6 text-[10px]" />
                     <span>{v.prenom}</span>
                     {gagnant && <Badge variant="secondary">Gagnant</Badge>}
                   </span>

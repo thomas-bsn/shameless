@@ -2,6 +2,7 @@ import type { Schemas } from "@/api/client";
 import { useChampions } from "@/lib/draft-champions-queries";
 import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 type Game = Schemas["SeriesGameResponse"];
 type Champion = Schemas["ChampionResponse"];
@@ -34,6 +35,7 @@ export function ChampionsJoues({ game }: { game: Game }) {
               return (
                 <li key={j.playerId} className="flex items-center gap-2">
                   <ChampionJoue championId={championId} champion={championId ? parId.get(championId) : undefined} />
+                  <AvatarJoueur prenom={j.prenom} avatarUrl={j.avatarUrl} className="size-5 text-[9px]" />
                   <span className="font-medium">{j.prenom}</span>
                 </li>
               );

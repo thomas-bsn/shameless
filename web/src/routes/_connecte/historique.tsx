@@ -12,6 +12,7 @@ import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 import { dateHeureLabel } from "@/lib/dates";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 const currentMonth = (): Month => {
   const now = new Date();
@@ -273,6 +274,7 @@ function TeamColumn({
       {players.map((p) => (
         <div key={p.riotId} className="flex items-center justify-between gap-2 text-sm">
           <span className="flex min-w-0 items-center gap-1.5">
+            <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
             <span className="truncate">{p.prenom}</span>
             {mvp.includes(p.playerId) && <Badge variant="secondary">MVP</Badge>}
             {dofd.includes(p.playerId) && <Badge variant="outline">DOFD</Badge>}

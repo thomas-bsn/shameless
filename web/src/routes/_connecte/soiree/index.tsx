@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { pickerProgress } from "@/lib/picker";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 export const Route = createFileRoute("/_connecte/soiree/")({
   component: SoireePage,
@@ -163,7 +164,10 @@ function Equipe({ nom, joueurs, className }: { nom: string; joueurs: Schemas["Ga
       <ul className="flex flex-wrap gap-1.5 sm:justify-end">
         {joueurs.map((j) => (
           <li key={j.playerId}>
-            <Badge variant="secondary">{j.prenom}</Badge>
+            <Badge variant="secondary" className="gap-1.5 pl-1">
+              <AvatarJoueur prenom={j.prenom} avatarUrl={j.avatarUrl} className="size-5 text-[9px]" />
+              {j.prenom}
+            </Badge>
           </li>
         ))}
       </ul>

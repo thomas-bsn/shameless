@@ -12,6 +12,7 @@ const participant = (playerId: number, prenom: string, overrides: Partial<Partic
   playerId,
   prenom,
   riotId: `${prenom}#EUW`,
+  avatarUrl: null,
   rankTier: "GOLD",
   rankDivision: 2,
   cost: 3,
