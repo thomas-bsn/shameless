@@ -48,10 +48,41 @@ public class PronosticsTests
     {
         var game = GameTerminee();
         game.StartedAt = null;
+        game.CompletedAt = null;
+        game.Status = GameStatuses.Pending;
+        game.WinningTeam = null;
 
         var evalues = PronosticsDeLaGame.Evaluer(game, [Pronostic(1, Lancement.AddHours(1), equipe: "A")], VotesClos([], []));
 
         Assert.Single(evalues.Pronostics);
+    }
+
+    [Fact]
+    public void Une_game_terminee_sans_debut_borne_les_pronostics_a_sa_cloture()
+    {
+        var game = GameTerminee();
+        game.StartedAt = null;
+
+        var evalues = PronosticsDeLaGame.Evaluer(
+            game,
+            [Pronostic(1, Lancement.AddMinutes(30), equipe: "A"), Pronostic(2, Lancement.AddMinutes(31), equipe: "A")],
+            VotesClos([], []));
+
+        Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
+    }
+
+    [Fact]
+    public void Une_game_migree_borne_les_pronostics_a_son_lancement()
+    {
+        var game = GameTerminee();
+        game.StartedAt = game.CreatedAt;
+
+        var evalues = PronosticsDeLaGame.Evaluer(
+            game,
+            [Pronostic(1, game.CreatedAt, equipe: "A"), Pronostic(2, game.CreatedAt.AddMinutes(1), equipe: "A")],
+            VotesClos([], []));
+
+        Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
     }
 
     [Fact]

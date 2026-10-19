@@ -224,6 +224,13 @@ public sealed class SeriesService
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
         game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
+        if (game.StartedAt == null)
+        {
+            // Résultat sans signal de début : la partie a forcément commencé. Le bot reçoit toujours les deux
+            // événements, game_started d'abord ; un début déjà signalé n'est jamais écrasé ni ré-émis.
+            game.StartedAt = game.CompletedAt;
+            _evenements.GameStarted(game);
+        }
         series?.ApplyResults(series.Games);
         series?.Touch();
         _evenements.GameCompleted(game);

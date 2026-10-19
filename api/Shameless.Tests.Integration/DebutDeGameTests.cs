@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -74,7 +75,8 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
         await PlayAndWinAsync(client, serie.SeriesId, "A");
         await AssertRefusAsync(await SignalerDebutAsync(code), HttpStatusCode.Conflict);
         await PublierAsync();
-        Assert.Equal(0, NbGameStarted());
+        // Seul le début de la game terminée à la main est émis (résultat sans signal de début) ; le refus n'émet rien.
+        Assert.Equal(1, NbGameStarted());
     }
 
     [Fact]
@@ -134,6 +136,44 @@ public class DebutDeGameTests(ApiFactory factory) : IntegrationTest(factory)
 
         await PublierAsync();
 
-        Assert.Equal(0, NbGameStarted());
+        // Reste le début de la première game, terminée à la main : celui de la game en attente est emporté.
+        Assert.Equal(1, NbGameStarted());
+    }
+
+    private IEnumerable<string?> TypesEmis() =>
+        Factory.Bot.Webhooks.Select(w => JsonDocument.Parse(w.Body).RootElement.GetProperty("type").GetString())
+            .Where(t => t is "game_started" or "game_completed");
+
+    [Fact]
+    public async Task Un_resultat_saisi_sans_signal_de_debut_renseigne_le_debut_et_emet_game_started_avant_game_completed()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        Factory.Clock.Advance(TimeSpan.FromMinutes(30));
+
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+
+        Assert.Equal(Factory.Clock.GetUtcNow().UtcDateTime, (await GameDuBotAsync(gameId)).GetProperty("startedAt").GetDateTime());
+        await PublierAsync();
+        Assert.Equal(["game_started", "game_completed"], TypesEmis());
+        Assert.Contains(Factory.Bot.Webhooks, w => System.Text.Encoding.UTF8.GetString(w.Body).Contains($"game_started:game:{gameId}"));
+    }
+
+    [Fact]
+    public async Task Un_debut_deja_signale_n_est_ni_ecrase_ni_reemis_a_la_fin_de_la_game()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        var debut = Factory.Clock.GetUtcNow().UtcDateTime;
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        Factory.Clock.Advance(TimeSpan.FromMinutes(30));
+
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+
+        Assert.Equal(debut, (await GameDuBotAsync(gameId)).GetProperty("startedAt").GetDateTime());
+        await PublierAsync();
+        Assert.Equal(["game_started", "game_completed"], TypesEmis());
     }
 }

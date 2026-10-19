@@ -22,7 +22,7 @@ public sealed record PronosticsDeLaGame(
     /// <summary>
     /// Évalue les pronostics d'une Game (chargée avec sa Série et ses games) d'après ses votes. Un
     /// pronostic déposé après le début de la Game (<c>StartedAt</c>, ADR 0017) est ignoré : il arrivait trop
-    /// tard. Un MVP ou un DOFD est juste si le Joueur pronostiqué est l'un des gagnants, égalités
+    /// tard (à défaut de début, la clôture d'une game terminée). Un MVP ou un DOFD est juste si le Joueur pronostiqué est l'un des gagnants, égalités
     /// comprises ; faux si personne n'a été élu.
     /// </summary>
     public static PronosticsDeLaGame Evaluer(CustomGame game, IEnumerable<Pronostic> pronostics, ResultatsDesVotes votes)
@@ -35,8 +35,12 @@ public sealed record PronosticsDeLaGame(
                 ? new JoueurPronostique(id, player?.Prenom ?? "", votesClos ? titre.Gagnants.Contains(id) : null)
                 : null;
 
+        // Une game terminée a toujours commencé : sans début enregistré, sa clôture borne les pronostics. Une
+        // game en attente sans début garde les siens ouverts (ADR 0017).
+        var limite = game.StartedAt ?? (game.Status == GameStatuses.Completed ? game.CompletedAt : null);
+
         var evalues = pronostics
-            .Where(p => game.StartedAt is not { } debut || p.PronostiqueLe <= debut)
+            .Where(p => limite is not { } debut || p.PronostiqueLe <= debut)
             .Select(p => new PronosticEvalue(
                 DiscordId.Texte(p.PronostiqueurDiscordId),
                 p.PronostiqueurNom,
