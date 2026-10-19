@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, History, Pause, Timer } from "lucide-react";
+import { Ban, History, Pause, Timer, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { ChatDeLaDraft } from "@/components/draft-champions-chat";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { TeamCard } from "@/components/team-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,6 +23,7 @@ import {
   type Voie,
 } from "@/lib/draft-champions";
 import { POLLING_DRAFT_MS, useChampions } from "@/lib/draft-champions-queries";
+import { useSonsDeLaDraft } from "@/lib/draft-sons";
 import { problemStatus } from "@/lib/problem";
 import { sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
@@ -110,6 +112,16 @@ export function DraftParLien({
       queryClient.setQueryData(["get", "/liens/{lien}", path], data),
   });
 
+  const draftOuverte =
+    draft.isError && problemStatus(draft.error) === 404
+      ? null
+      : draft.data;
+  const equipeDuLien =
+    portee === "Capitaine" && acces.data?.portee === "Capitaine"
+      ? acces.data.equipe
+      : null;
+  const sons = useSonsDeLaDraft(draftOuverte, equipeDuLien);
+
   const titre =
     portee === "Capitaine"
       ? "Draft de champions — capitaine"
@@ -147,6 +159,7 @@ export function DraftParLien({
     <Page
       titre={titre}
       meta={meta}
+      sons={sons}
       badge={
         equipe
           ? `Tu es le capitaine de l'Équipe ${equipe}`
@@ -233,6 +246,7 @@ export function DraftParLien({
                 : null
             }
           />
+          {!draft.data!.terminee && <ChatDeLaDraft lien={lien} />}
         </div>
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
@@ -403,7 +417,29 @@ function PauseDuCapitaine({
   );
 }
 
-function Page({ titre, meta, badge, children }: { titre: string; meta?: string; badge?: string; children: ReactNode }) {
+function BoutonSon({ coupe, basculer }: { coupe: boolean; basculer: () => void }) {
+  const Icone = coupe ? VolumeX : Volume2;
+  return (
+    <Button variant="outline" size="sm" onClick={basculer}>
+      <Icone className="size-4" />
+      {coupe ? "Remettre le son" : "Couper le son"}
+    </Button>
+  );
+}
+
+function Page({
+  titre,
+  meta,
+  badge,
+  sons,
+  children,
+}: {
+  titre: string;
+  meta?: string;
+  badge?: string;
+  sons?: ReturnType<typeof useSonsDeLaDraft>;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -411,7 +447,10 @@ function Page({ titre, meta, badge, children }: { titre: string; meta?: string; 
           <h1 className="text-2xl font-bold">{titre}</h1>
           {meta && <p className="mt-1 text-sm text-muted-foreground">{meta}</p>}
         </div>
-        {badge && <Badge variant="outline">{badge}</Badge>}
+        <div className="flex flex-wrap items-center gap-2">
+          {sons?.disponible && <BoutonSon coupe={sons.coupe} basculer={sons.basculer} />}
+          {badge && <Badge variant="outline">{badge}</Badge>}
+        </div>
       </div>
       {children}
     </div>

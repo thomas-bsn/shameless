@@ -22,6 +22,23 @@ public class DraftChampionsRepository : IDraftChampionsRepository
 
     public Task<bool> TrySaveChangesAsync() => _db.TrySaveChangesAsync();
 
+    public Task<List<MessageDraftChampions>> GetMessagesAsync(int draftId) =>
+        _db.MessagesDraftChampions.AsNoTracking().Where(m => m.DraftChampionsId == draftId).OrderBy(m => m.Id).ToListAsync();
+
+    public void AddMessage(MessageDraftChampions message) => _db.MessagesDraftChampions.Add(message);
+
+    public Task<int> CountMessagesDepuisAsync(int draftId, string emetteur, DateTime depuis) =>
+        _db.MessagesDraftChampions.CountAsync(m => m.DraftChampionsId == draftId && m.Emetteur == emetteur && m.EnvoyeLe > depuis);
+
+    public Task<string?> GetAuteurAsync(int draftId, string emetteur) =>
+        _db.MessagesDraftChampions.Where(m => m.DraftChampionsId == draftId && m.Emetteur == emetteur)
+            .Select(m => (string?)m.Auteur).FirstOrDefaultAsync();
+
+    public Task<int> CountSpectateursAnonymesAsync(int draftId) =>
+        _db.MessagesDraftChampions
+            .Where(m => m.DraftChampionsId == draftId && m.Emetteur.StartsWith(MessageDraftChampions.PrefixeAnonyme))
+            .Select(m => m.Emetteur).Distinct().CountAsync();
+
     private IQueryable<DraftChampions> Complete() =>
         _db.DraftsChampions
             .Include(d => d.Actions.OrderBy(a => a.Numero))
