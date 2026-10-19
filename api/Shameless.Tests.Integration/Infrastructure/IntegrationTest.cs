@@ -80,10 +80,25 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     /// <summary>Les deux Capitaines ouvrent leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
     protected async Task RejoindreLesCapitainesAsync(HttpClient client, int seriesId)
     {
+        await DesignerLesCapitainesAbsentsAsync(client, seriesId);
         var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
         foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB" })
             (await Factory.CreateAnonymousClient()
                 .GetAsync($"/liens/{Uri.EscapeDataString(liens.GetProperty(nom).GetString()!)}", Ct)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Désigne le premier joueur de chaque Équipe comme Capitaine, quand elle n'en a pas encore.</summary>
+    protected async Task DesignerLesCapitainesAbsentsAsync(HttpClient client, int seriesId)
+    {
+        var serie = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
+        foreach (var equipe in new[] { "A", "B" })
+            if (serie.GetProperty($"capitaine{equipe}").ValueKind == JsonValueKind.Null)
+                await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/{equipe}",
+                    new
+                    {
+                        designation = "Manuel",
+                        playerId = serie.GetProperty($"team{equipe}")[0].GetProperty("playerId").GetInt32()
+                    }, Ct));
     }
 
     /// <summary>Lance la prochaine game de la Série et saisit l'Équipe gagnante.</summary>

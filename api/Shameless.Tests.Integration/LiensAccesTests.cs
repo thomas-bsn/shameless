@@ -273,6 +273,7 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
+        await DesignerLesCapitainesAbsentsAsync(client, serie.SeriesId);
         var liens = await LiensAsync(client, serie.SeriesId);
 
         Assert.Equal(HttpStatusCode.Conflict, (await LancerAsync(client, serie.SeriesId)).StatusCode);

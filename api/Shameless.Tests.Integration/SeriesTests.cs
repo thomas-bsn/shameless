@@ -272,6 +272,22 @@ public class SeriesTests(ApiFactory factory) : IntegrationTest(factory)
     private static string?[] Prenoms(JsonElement team) =>
         team.EnumerateArray().Select(p => p.GetProperty("prenom").GetString()).Order().ToArray();
 
+    [Fact]
+    public async Task Le_lancement_d_une_game_est_refuse_tant_qu_une_equipe_n_a_pas_de_capitaine()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+
+        await AssertRefusAsync(await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct), HttpStatusCode.Conflict);
+
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A",
+            new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct));
+        var reponse = await client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
+        var detail = (await reponse.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("detail").GetString();
+        Assert.Equal(HttpStatusCode.Conflict, reponse.StatusCode);
+        Assert.Contains("Désigne les deux capitaines", detail);
+    }
+
     private static (string?, string?, string?) Sides(JsonElement game) =>
         (game.GetProperty("teamASide").GetString(),
          game.GetProperty("teamBSide").GetString(),

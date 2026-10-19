@@ -342,8 +342,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
 
         await PublierAsync();
 
-        // Sans Capitaine désigné, les liens capitaine attendent : seul le Lien spectateur part.
-        Assert.Equal(["teams_formed", "spectator_link", "game_started", "game_completed"],
+        Assert.Equal(["teams_formed", "captain_link", "captain_link", "spectator_link", "game_started", "game_completed"],
             Factory.Bot.Webhooks.Select(w => JsonDocument.Parse(w.Body).RootElement.GetProperty("type").GetString()));
     }
 

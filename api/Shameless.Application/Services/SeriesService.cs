@@ -131,6 +131,8 @@ public sealed class SeriesService
         if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
 
+        if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
+            return CommandResult<CustomGame>.Conflict("Désigne les deux capitaines avant de lancer la draft.");
         if (!series.CapitainesOntRejoint)
             return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
 

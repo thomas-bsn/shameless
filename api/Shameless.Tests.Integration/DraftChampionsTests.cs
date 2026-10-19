@@ -121,18 +121,6 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Ouvrir_sans_deux_capitaines_designes_repond_409()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client);
-        await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A",
-            new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct));
-        await PlayGameAsync(client, serie.SeriesId);
-
-        await AssertRefusAsync(await OuvrirAsync(client, serie.SeriesId), HttpStatusCode.Conflict);
-    }
-
-    [Fact]
     public async Task Une_seule_draft_de_champions_par_game()
     {
         var client = Factory.CreateSignedInClient();
