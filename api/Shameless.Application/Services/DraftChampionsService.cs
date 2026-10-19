@@ -177,11 +177,9 @@ public sealed class DraftChampionsService
     /// </summary>
     public async Task<CommandResult<bool>> DemanderResetAsync(int seriesId, string equipe)
     {
-        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        var (draft, refus) = await ChargerDraftDeResetAsync(seriesId);
         if (draft == null)
-            return CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série.");
-        if (draft.EstTerminee)
-            return CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro.");
+            return refus!;
         if (draft.ResetEnAttente(Maintenant()))
             return CommandResult<bool>.Conflict("Une demande de Reset est déjà en attente de réponse.");
 
@@ -196,11 +194,9 @@ public sealed class DraftChampionsService
     /// </summary>
     public async Task<CommandResult<bool>> RepondreResetAsync(int seriesId, string equipe, bool accepte)
     {
-        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        var (draft, refus) = await ChargerDraftDeResetAsync(seriesId);
         if (draft == null)
-            return CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série.");
-        if (draft.EstTerminee)
-            return CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro.");
+            return refus!;
         if (!draft.ResetEnAttente(Maintenant()))
             return CommandResult<bool>.Conflict("Aucune demande de Reset n'attend de réponse.");
         if (draft.ResetDemandeParEquipe == equipe)
@@ -219,10 +215,23 @@ public sealed class DraftChampionsService
         return await EnregistrerAsync(draft);
     }
 
+    /// <summary>La dernière draft de la Série si elle est en cours, sinon le refus à renvoyer (aucune draft, ou terminée).</summary>
+    private async Task<(DraftChampions? Draft, CommandResult<bool>? Refus)> ChargerDraftDeResetAsync(int seriesId)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return (null, CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série."));
+        if (draft.EstTerminee)
+            return (null, CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro."));
+        return (draft, null);
+    }
+
     private async Task<CommandResult<bool>> EnregistrerAsync(DraftChampions draft) =>
         await _drafts.TrySaveChangesAsync()
             ? CommandResult<bool>.Ok(true)
             : CommandResult<bool>.Conflict("La draft vient d'être modifiée par une autre commande : réessayez.");
+
+    /// <summary>
     /// Par un Lien capitaine : met la draft en pause tout de suite, sans accord. Une pause par Capitaine
     /// et par draft, 5 minutes au plus ; le temps restant du tour est gelé.
     /// </summary>
@@ -307,11 +316,5 @@ public sealed class DraftChampionsService
             await _drafts.TrySaveChangesAsync();
     }
 
-    // Tronqué à la microseconde, la précision de Postgres : l'échéance renvoyée juste après
-    // une action est ainsi la même que celle relue en base ensuite.
-    private DateTime Maintenant()
-    {
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        return maintenant.AddTicks(-(maintenant.Ticks % 10));
-    }
+    private DateTime Maintenant() => _clock.MaintenantUtc();
 }

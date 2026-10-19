@@ -205,16 +205,16 @@ public sealed class SeriesService
                 return CommandResult<EtatDuPret>.Conflict("Ton Équipe n'a pas de Capitaine : l'organisateur le désigne dans le Picker.");
         }
 
-        lien.DefinirPret(pret, _clock.GetUtcNow().UtcDateTime);
+        var maintenant = _clock.MaintenantUtc();
+        lien.DefinirPret(pret, maintenant);
         if (series.CapitainesSontPrets)
         {
-            var maintenant = _clock.GetUtcNow().UtcDateTime;
             // Les deux Capitaines sont là : la Game et sa Draft de champions démarrent ensemble.
             // Après un Reset accepté, la Game est restée : on lui rouvre sa draft au lieu d'en créer une autre.
             var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending) ?? NouvelleGame(series);
             game.DraftChampions = new DraftChampions
             {
-                TourCommenceLe = maintenant.AddTicks(-(maintenant.Ticks % 10)) // microseconde, comme PostgreSQL
+                TourCommenceLe = maintenant
             };
         }
 
@@ -259,8 +259,7 @@ public sealed class SeriesService
     {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        game.CompletedAt = maintenant.AddTicks(-(maintenant.Ticks % 10)); // microseconde, comme PostgreSQL
+        game.CompletedAt = _clock.MaintenantUtc();
         if (game.StartedAt == null)
         {
             // Résultat avant la fin de la draft : la partie a forcément commencé. Le bot reçoit toujours les deux
