@@ -4,12 +4,14 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Shameless.Companion.Core;
+using Shameless.Companion.Lcu;
 
 namespace Shameless.Companion.App;
 
 public sealed class App : Application
 {
     private MainWindow? _fenetre;
+    private readonly CancellationTokenSource _arret = new();
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -21,8 +23,10 @@ public sealed class App : Application
             bureau.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             var stockage = CreerStockage();
+            var journal = new JournalFichier();
             var connexion = new ConnexionCompanion(stockage, new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
-            var modele = new FenetreViewModel(connexion, stockage);
+            var surveillance = new SurveillanceFinDeGame(new ClientLolLcu(journal: journal), journal);
+            var modele = new FenetreViewModel(connexion, stockage, surveillance);
 
             _fenetre = new MainWindow { DataContext = modele };
             _fenetre.Closing += (_, e) =>
@@ -34,6 +38,9 @@ public sealed class App : Application
             TrayIcon.SetIcons(this, [CreerIcone(bureau)]);
             _fenetre.Show();
             _ = modele.DemarrerAsync();
+            // Le Rapport construit attend #162 (envoi à l'API) : en attendant, seul le journal en garde la trace.
+            _ = surveillance.ExecuterAsync(_arret.Token);
+            bureau.Exit += (_, _) => _arret.Cancel();
         }
         base.OnFrameworkInitializationCompleted();
     }

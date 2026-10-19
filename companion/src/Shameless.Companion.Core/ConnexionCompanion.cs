@@ -41,8 +41,7 @@ public abstract record Connexion
     public sealed record Injoignable(string Message) : Connexion;
 }
 
-/// <param name="ClientLolDetecte">Valeur fixe tant que la détection du client LoL n'existe pas.</param>
-public sealed record EtatCompanion(Connexion Connexion, bool ClientLolDetecte = true);
+public sealed record EtatCompanion(Connexion Connexion);
 
 public sealed class ConnexionCompanion(IStockageIdentifiants stockage, HttpClient http)
 {

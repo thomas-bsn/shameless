@@ -85,14 +85,6 @@ public class ConnexionTests
         Assert.Null(api.DerniereUrl);
     }
 
-    [Fact]
-    public async Task Le_client_LoL_est_signale_detecte_en_valeur_fixe()
-    {
-        var etat = await new ConnexionCompanion(new StockageEnMemoire(), new ApiSimulee().Client()).DemarrerAsync(TestContext.Current.CancellationToken);
-
-        Assert.True(etat.ClientLolDetecte);
-    }
-
     private sealed class StockageEnMemoire : IStockageIdentifiants
     {
         private IdentifiantsCompanion? _valeur;

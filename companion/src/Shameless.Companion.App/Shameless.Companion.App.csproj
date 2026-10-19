@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shameless.Companion.Core\Shameless.Companion.Core.csproj" />
+    <ProjectReference Include="..\Shameless.Companion.Lcu\Shameless.Companion.Lcu.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.9" />
