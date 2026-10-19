@@ -13,7 +13,7 @@ Fin du projet "v1.0" = V3 terminée. Tout ce qui vient après va dans "Backlog".
 - [x] Sécurité backend : [Authorize] sur games/series, expiration JWT corrigée, token hors de l'URL de callback, gestion globale des erreurs
 - [x] OpenAPI + client TypeScript généré
 - [x] CI GitHub Actions + premiers tests d'intégration (Testcontainers)
-- [ ] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible) (compose fait, déploiement NAS à confirmer)
+- [x] docker-compose (api, web, postgres), déploiement NAS (Forgeyard si possible) (compose fait, déploiement NAS à confirmer)
 - [x] Images publiées sur GHCR à chaque tag `vX.Y.Z` (api, migrate, proxy, wizard) (#69) ; un seul workflow `ci.yml` (auto après les tests, ou bouton Run workflow)
 - [x] Publication automatique des images à chaque commit sur `main` (CI verte), avec bump de version et tag `vX.Y.Z` (#107)
 - [x] Wizard d'installation Docker Compose : Discord, options, bot facultatif, un seul `compose.yaml` pour Docker Compose et Forgeyard (#70, #71, #72)
@@ -73,7 +73,7 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 - [ ] Positions : proxchat + Companion ; timeline match-v5 si clé Production obtenue
 
 ## Refonte du front (hors phases 0 à 3)
-- [ ] Refonte du front : thème sombre natif shadcn, sidebar, Fond vidéo, pages redessinées (spec #104)
+- [x] Refonte du front : thème sombre natif shadcn, sidebar, Fond vidéo, pages redessinées (spec #104)
   - [x] Socle : thèmes, Geist embarquée, sidebar et tiroir mobile (#85)
   - [x] Fond : les clips de #clips en arrière-plan (#86)
   - [x] Clips : onglet en fil par soirée et vue « Tous » filtrable (#87)
