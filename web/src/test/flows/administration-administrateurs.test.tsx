@@ -130,4 +130,28 @@ describe("Administration : onglet Administrateurs", () => {
 
     expect(await screen.findByText(/ne s'est jamais connecté/)).toBeInTheDocument();
   });
+
+  it("envoie l'identifiant Discord exact (snowflake > 2^53) pour promouvoir puis retirer", async () => {
+    const id = "1234567890123456789";
+    let liste = [utilisateur({ discordUserId: id })];
+    mockApi({
+      "GET /auth/me": moi(),
+      ...calme,
+      "GET /utilisateurs": () => json(liste),
+      [`PUT /utilisateurs/${id}/administrateur`]: () => {
+        liste = [utilisateur({ discordUserId: id, role: "Administrateur", promotedBy: "Thomas", promotedAt: "2026-10-19T09:00:00Z" })];
+        return json(liste[0]);
+      },
+      [`DELETE /utilisateurs/${id}/administrateur`]: () => {
+        liste = [utilisateur({ discordUserId: id })];
+        return json(liste[0]);
+      },
+    });
+    renderApp("/administration?onglet=administrateurs");
+
+    await userEvent.click(within(await ligne("Camille")).getByRole("button", { name: "Promouvoir Camille" }));
+    await userEvent.click(await within(await ligne("Camille")).findByRole("button", { name: "Retirer le rôle de Camille" }));
+
+    expect(await within(await ligne("Camille")).findByRole("button", { name: "Promouvoir Camille" })).toBeInTheDocument();
+  });
 });

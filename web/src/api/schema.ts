@@ -5829,7 +5829,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    discordId: number;
+                    discordId: string;
                 };
                 cookie?: never;
             };
@@ -5844,6 +5844,15 @@ export interface paths {
                         "text/plain": components["schemas"]["UtilisateurResponse"];
                         "application/json": components["schemas"]["UtilisateurResponse"];
                         "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Forbidden */
@@ -5881,7 +5890,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    discordId: number;
+                    discordId: string;
                 };
                 cookie?: never;
             };
@@ -5896,6 +5905,15 @@ export interface paths {
                         "text/plain": components["schemas"]["UtilisateurResponse"];
                         "application/json": components["schemas"]["UtilisateurResponse"];
                         "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Forbidden */
