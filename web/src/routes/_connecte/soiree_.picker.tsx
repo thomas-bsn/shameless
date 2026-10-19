@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { points } from "@/lib/cost";
-import { ajouterCandidats, PICKER_STEPS, type PickerStep, pickerStep } from "@/lib/picker";
+import { ajouterCandidats, type PickerStep, pickerStep, pickerSteps } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +37,7 @@ const stepDescriptions: Record<PickerStep, string> = {
   methode: "Forme les deux Équipes par Draft ou par Roulette.",
   draft: "Les capitaines choisissent leurs joueurs à tour de rôle.",
   equipes: "Voilà les équipes : garde-les, relance le tirage ou change de méthode.",
+  capitaines: "Désigne le Capitaine de chaque Équipe : ils mèneront la draft de champions.",
   autorole: "Attribue les rôles (hors rôle ou aléatoire), ou passe cette étape.",
   serie: "Choisis le format et Fearless, puis crée la Série.",
 };
@@ -87,7 +88,9 @@ function PickerSession({ picker }: { picker: Picker | null }) {
   const [editingSelection, setEditingSelection] = useState(false);
   const [changingMethode, setChangingMethode] = useState(false);
   // Autorole et Série ne se lisent pas dans l'état de l'API : l'écran s'en souvient.
-  const [apresEquipes, setApresEquipes] = useState<"equipes" | "autorole" | "serie">("equipes");
+  const [apresEquipes, setApresEquipes] = useState<"equipes" | "capitaines" | "autorole" | "serie">("equipes");
+  // Après une Roulette, les Capitaines se désignent ici ; après une Draft, ils le sont déjà.
+  const [capitaines, setCapitaines] = useState<CapitainesChoisis | null>(null);
   const [tirage, setTirage] = useState(false);
   const [pileOuFace, setPileOuFace] = useState(false);
   const base = editingSelection ? "selection" : pickerStep(picker);
@@ -96,12 +99,13 @@ function PickerSession({ picker }: { picker: Picker | null }) {
   // Un nouveau tirage ou une nouvelle Draft repart des Équipes ; le mouvement s'arrête si demandé.
   const nouveauxTirage = () => {
     setApresEquipes("equipes");
+    setCapitaines(null);
     if (!reduireLesAnimations()) setTirage(true);
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Picker" description={stepDescriptions[step]} actions={<Steps current={step} />} />
+      <PageHeader title="Picker" description={stepDescriptions[step]} actions={<Steps current={step} picker={picker} />} />
       {tirage && picker && <TirageDialog picker={picker} onClose={() => setTirage(false)} />}
       {step === "selection" || !picker ? (
         <Selection
@@ -137,8 +141,21 @@ function PickerSession({ picker }: { picker: Picker | null }) {
             <EquipesFormees
               picker={picker}
               onRelancer={nouveauxTirage}
-              onGarder={() => setApresEquipes("autorole")}
+              onGarder={() => setApresEquipes(picker.methode === "Roulette" ? "capitaines" : "autorole")}
             />
+          )}
+          {step === "capitaines" && (
+            <div className="flex flex-col gap-4">
+              <Teams picker={picker} />
+              <DesignerCapitaines
+                picker={picker}
+                onDone={(choisis) => {
+                  setCapitaines(choisis);
+                  setApresEquipes("autorole");
+                }}
+                onBack={() => setApresEquipes("equipes")}
+              />
+            </div>
           )}
           {step === "autorole" && (
             <div className="flex flex-col gap-4">
@@ -149,7 +166,7 @@ function PickerSession({ picker }: { picker: Picker | null }) {
           {step === "serie" && (
             <div className="flex flex-col gap-4">
               <Teams picker={picker} />
-              <Valider />
+              <Valider capitaines={picker.methode === "Roulette" ? capitaines : null} />
               <div>
                 <Button variant="ghost" onClick={() => setApresEquipes("autorole")}>
                   Retour à l'Autorole
@@ -170,11 +187,12 @@ function PickerSession({ picker }: { picker: Picker | null }) {
   );
 }
 
-function Steps({ current }: { current: PickerStep }) {
-  const courante = PICKER_STEPS.findIndex(([step]) => step === current);
+function Steps({ current, picker }: { current: PickerStep; picker: Picker | null }) {
+  const etapes = pickerSteps(picker);
+  const courante = etapes.findIndex(([step]) => step === current);
   return (
     <ol aria-label="Étapes du Picker" className="flex flex-wrap gap-3 text-sm">
-      {PICKER_STEPS.map(([step, label], i) => {
+      {etapes.map(([step, label], i) => {
         const faite = i < courante;
         const active = i === courante;
         return (
@@ -357,6 +375,47 @@ function Methode({
         </div>
       )}
     </div>
+  );
+}
+
+type CapitainesChoisis = Record<Equipe, number>;
+
+/**
+ * Après une Roulette : un Capitaine par Équipe, choisi parmi les joueurs de cette Équipe. Les deux
+ * listes s'excluent donc (une Équipe n'a aucun joueur de l'autre) ; l'API le refuse aussi.
+ */
+function DesignerCapitaines({
+  picker,
+  onDone,
+  onBack,
+}: {
+  picker: Picker;
+  onDone: (choisis: CapitainesChoisis) => void;
+  onBack: () => void;
+}) {
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Capitaines</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3">
+          <CapitaineSelect label="Capitaine A" players={picker.teamA} value={a} exclu={b} onChange={setA} />
+          <CapitaineSelect label="Capitaine B" players={picker.teamB} value={b} exclu={a} onChange={setB} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={a === "" || b === "" || a === b} onClick={() => onDone({ A: Number(a), B: Number(b) })}>
+            Valider les capitaines
+          </Button>
+          <Button variant="ghost" onClick={onBack}>
+            Retour aux équipes
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -673,7 +732,7 @@ function Autorole({ picker, onDone }: { picker: Picker; onDone: () => void }) {
   );
 }
 
-function Valider() {
+function Valider({ capitaines }: { capitaines: CapitainesChoisis | null }) {
   const refresh = usePickerRefresh();
   const navigate = useNavigate();
   const validate = $api.useMutation("post", "/soirees/open/picker/validate", {
@@ -693,7 +752,11 @@ function Valider() {
           submitLabel="Créer la série"
           pending={validate.isPending}
           error={validate.isError ? validate.error : null}
-          onSubmit={(options) => validate.mutate({ body: options })}
+          onSubmit={(options) =>
+            validate.mutate({
+              body: { ...options, capitaineA: capitaines?.A ?? null, capitaineB: capitaines?.B ?? null },
+            })
+          }
         />
       </CardContent>
     </Card>

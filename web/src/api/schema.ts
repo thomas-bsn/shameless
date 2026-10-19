@@ -6783,6 +6783,10 @@ export interface components {
             format: number;
             /** @default false */
             fearless: boolean;
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
         };
         VoixDuJoueur: {
             /** Format: int32 */

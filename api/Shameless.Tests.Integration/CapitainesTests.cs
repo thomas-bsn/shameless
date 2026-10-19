@@ -45,6 +45,53 @@ public class CapitainesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(dix[7], Capitaine(serie, "B"));
     }
 
+    private async Task<(int[] Dix, JsonElement Picker)> RouletteAsync(HttpClient client)
+    {
+        await OpenSoireeAsync(client);
+        var dix = await CreatePlayersAsync(client, "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10");
+        await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds = dix }, Ct));
+        var picker = await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/roulette",
+            new { variante = "Aleatoire" }, Ct));
+        return (dix, picker);
+    }
+
+    private static int[] Equipe(JsonElement picker, string nom) =>
+        picker.GetProperty($"team{nom}").EnumerateArray().Select(p => p.GetProperty("playerId").GetInt32()).ToArray();
+
+    [Fact]
+    public async Task Une_serie_creee_apres_une_roulette_garde_les_capitaines_designes_au_picker()
+    {
+        var client = Factory.CreateSignedInClient();
+        var (_, picker) = await RouletteAsync(client);
+        var (a, b) = (Equipe(picker, "A")[2], Equipe(picker, "B")[4]);
+
+        var created = await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/validate",
+            new { format = 3, capitaineA = a, capitaineB = b }, Ct));
+
+        var serie = await SerieAsync(client, created.GetProperty("seriesId").GetInt32());
+        Assert.Equal(a, Capitaine(serie, "A"));
+        Assert.Equal(b, Capitaine(serie, "B"));
+    }
+
+    [Fact]
+    public async Task Valider_apres_une_roulette_refuse_un_capitaine_hors_de_son_equipe_ou_le_meme_des_deux_cotes()
+    {
+        var client = Factory.CreateSignedInClient();
+        var (_, picker) = await RouletteAsync(client);
+        var (equipeA, equipeB) = (Equipe(picker, "A"), Equipe(picker, "B"));
+
+        var horsEquipe = await client.PostAsJsonAsync("/soirees/open/picker/validate",
+            new { format = 3, capitaineA = equipeB[0], capitaineB = equipeA[0] }, Ct);
+        var doublon = await client.PostAsJsonAsync("/soirees/open/picker/validate",
+            new { format = 3, capitaineA = equipeA[0], capitaineB = equipeA[0] }, Ct);
+        var incomplet = await client.PostAsJsonAsync("/soirees/open/picker/validate",
+            new { format = 3, capitaineA = equipeA[0] }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, horsEquipe.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, doublon.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, incomplet.StatusCode);
+    }
+
     private async Task<HttpResponseMessage> DesignerAsync(HttpClient client, int seriesId, string equipe, object body) =>
         await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/{equipe}", body, Ct);
 
