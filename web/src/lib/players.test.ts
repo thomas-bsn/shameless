@@ -45,6 +45,14 @@ describe("sortPlayers", () => {
     expect(names(sortPlayers([alice, bob, chloe], "winrate", "desc", winrates))).toEqual(["Bob", "Alice", "Chloé"]);
     expect(names(sortPlayers([alice, bob, chloe], "winrate", "asc", winrates))).toEqual(["Alice", "Bob", "Chloé"]);
   });
+
+  it("sorts by tier before LP, for the rank and for the peak", () => {
+    const gm = player({ id: 7, prenom: "Gm", rankTier: "GRANDMASTER", rankDivision: null, lp: 1100, peakTier: "GRANDMASTER", peakDivision: null, peakLp: 1100 });
+    const master = player({ id: 8, prenom: "Master", rankTier: "MASTER", rankDivision: null, lp: 1700, peakTier: "MASTER", peakDivision: null, peakLp: 1700 });
+    expect(names(sortPlayers([master, gm], "rang", "desc", winrates))).toEqual(["Gm", "Master"]);
+    expect(names(sortPlayers([master, gm], "peak", "desc", winrates))).toEqual(["Gm", "Master"]);
+    expect(names(sortPlayers([gm, master], "peak", "asc", winrates))).toEqual(["Master", "Gm"]);
+  });
 });
 
 describe("matchesPlayerOrRole", () => {

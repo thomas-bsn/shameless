@@ -36,4 +36,10 @@ public interface IDraftChampionsRepository
 
     /// <summary>Ajoute le message et l'enregistre ; false (message détaché) si la base le refuse, par exemple un numéro de spectateur déjà pris.</summary>
     Task<bool> TryAddMessageAsync(MessageDraftChampions message);
+
+    /// <summary>
+    /// Ajoute le message d'un spectateur sans connexion : reprend son pseudo s'il en a déjà un, sinon lui donne le
+    /// numéro suivant. Les arrivées simultanées dans une même draft sont mises en file, jamais refusées pour un numéro.
+    /// </summary>
+    Task<bool> TryAddMessageSpectateurAsync(MessageDraftChampions message);
 }
