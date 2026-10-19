@@ -144,7 +144,7 @@ public sealed class RapportsCompanionService
         foreach (var puuid in inattendus.Where(p => !connus.Contains(p)))
         {
             try { riotIds[puuid] = await _riot.GetRiotIdFromPuuidAsync(puuid); }
-            catch (HttpRequestException) { riotIds[puuid] = null; }
+            catch (Exception ex) when (ex is HttpRequestException or Riot.RiotException) { riotIds[puuid] = null; }
         }
         return rapport with
         {

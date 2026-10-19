@@ -85,6 +85,76 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
         Assert.Equal("GOLD", (await JoueurAsync(admin, id)).GetProperty("rankTier").GetString());
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden, "clé Riot refusée (403)")]
+    [InlineData(HttpStatusCode.TooManyRequests, "limite de requêtes Riot atteinte (429)")]
+    [InlineData(HttpStatusCode.InternalServerError, "panne côté Riot (500)")]
+    [InlineData(HttpStatusCode.NotFound, "joueur introuvable chez Riot (404)")]
+    public async Task L_echec_sur_le_role_expose_la_cause_et_garde_l_ancien_role(HttpStatusCode statut, string cause)
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var id = await CreatePlayerAsync(admin, "Cause");
+        Factory.Riot.AddAccount("Cause#EUW", "GOLD", "II", mainRole: "TOP");
+        await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct);
+        Factory.Riot.RolesIndisponibles.Add("Cause#EUW");
+        Factory.Riot.StatutRoles = statut;
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct));
+
+        Assert.True(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.False(reponse.GetProperty("roleActualise").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, reponse.GetProperty("causeRangs").ValueKind);
+        Assert.Contains(cause, reponse.GetProperty("causeRole").GetString());
+        var message = Assert.Single(reponse.GetProperty("echecs").EnumerateArray()).GetString();
+        Assert.Contains(cause, message);
+        Assert.Contains("l'ancien rôle est conservé", message);
+        Assert.Equal("TOP", (await JoueurAsync(admin, id)).GetProperty("mainRole").GetString());
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden, "clé Riot refusée (403)")]
+    [InlineData(HttpStatusCode.TooManyRequests, "limite de requêtes Riot atteinte (429)")]
+    [InlineData(HttpStatusCode.InternalServerError, "panne côté Riot (500)")]
+    public async Task L_echec_sur_les_rangs_expose_la_cause_et_garde_les_anciens_rangs(HttpStatusCode statut, string cause)
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var id = await CreatePlayerAsync(admin, "Cause", "GOLD", "II");
+        Factory.Riot.AddAccount("Cause#EUW", "MASTER", null, mainRole: "MIDDLE");
+        Factory.Riot.RangsIndisponibles = true;
+        Factory.Riot.StatutRangs = statut;
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct));
+
+        Assert.False(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.True(reponse.GetProperty("roleActualise").GetBoolean());
+        Assert.Contains(cause, reponse.GetProperty("causeRangs").GetString());
+        Assert.Equal(JsonValueKind.Null, reponse.GetProperty("causeRole").ValueKind);
+        var message = Assert.Single(reponse.GetProperty("echecs").EnumerateArray()).GetString();
+        Assert.Contains(cause, message);
+        Assert.Contains("Riot n'a pas répondu, les anciens rangs sont conservés", message);
+        Assert.Equal("GOLD", (await JoueurAsync(admin, id)).GetProperty("rankTier").GetString());
+    }
+
+    [Fact]
+    public async Task Tout_actualiser_liste_la_cause_de_chaque_echec_par_joueur()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        await CreatePlayerAsync(admin, "Refuse");
+        Factory.Riot.AddAccount("Refuse#EUW", "GOLD", "II");
+        Factory.Riot.RangsIndisponibles = true;
+        Factory.Riot.StatutRangs = HttpStatusCode.Forbidden;
+
+        await admin.PostAsync("/admin/riot/tous", null, Ct);
+        var fin = await AttendreLaFinAsync(admin);
+
+        var echec = Assert.Single(fin.GetProperty("echecs").EnumerateArray());
+        Assert.Equal("Refuse", echec.GetProperty("prenom").GetString());
+        Assert.Contains("clé Riot refusée (403)", echec.GetProperty("message").GetString());
+    }
+
     [Fact]
     public async Task Un_joueur_sans_match_n_a_plus_de_role_principal()
     {

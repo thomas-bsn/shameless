@@ -222,13 +222,15 @@ public class PlayerService : IPlayerService
 
         var echecs = new List<string>();
         var rangs = await TryRefreshRanksAsync(player);
-        if (rangs is not null) echecs.Add(rangs);
+        if (rangs is not null)
+            echecs.Add($"Rangs : Riot n'a pas répondu, les anciens rangs sont conservés. Cause : {rangs}.");
         var role = await TryRefreshMainRoleAsync(player);
-        if (role is not null) echecs.Add(role);
-        return new ResultatActualisationJoueur(player.Id, player.Prenom, rangs is null, role is null, echecs);
+        if (role is not null)
+            echecs.Add($"Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé. Cause : {role}.");
+        return new ResultatActualisationJoueur(player.Id, player.Prenom, rangs is null, role is null, echecs, rangs, role);
     }
 
-    /// <summary>Relit les rangs SoloQ et Flex ; renvoie le message d'échec, ou null si tout s'est bien passé.</summary>
+    /// <summary>Relit les rangs SoloQ et Flex ; renvoie la cause de l'échec, ou null si tout s'est bien passé.</summary>
     private async Task<string?> TryRefreshRanksAsync(PlayerDto player)
     {
         try
@@ -246,12 +248,15 @@ public class PlayerService : IPlayerService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh rank for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            return "Rangs : Riot n'a pas répondu, les anciens rangs sont conservés.";
+            return CauseLisible(ex);
         }
     }
 
+    private static string CauseLisible(Exception ex) =>
+        ex is RiotException riot ? riot.Description : "erreur inattendue";
+
     /// <summary>
-    /// Recalcule le rôle principal ; renvoie le message d'échec, ou null. Sur un échec de Riot, l'ancien
+    /// Recalcule le rôle principal ; renvoie la cause de l'échec, ou null. Sur un échec de Riot, l'ancien
     /// rôle est conservé ; une réponse sans match donne « aucun » (null).
     /// </summary>
     private async Task<string?> TryRefreshMainRoleAsync(PlayerDto player)
@@ -266,7 +271,7 @@ public class PlayerService : IPlayerService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            return "Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé.";
+            return CauseLisible(ex);
         }
     }
 

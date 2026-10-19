@@ -79,8 +79,8 @@ public static class AuthenticationExtensions
                 if (!string.IsNullOrWhiteSpace(riot.ApiKey))
                     client.DefaultRequestHeaders.Add("X-Riot-Token", riot.ApiKey);
             })
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy());
+            .AddPolicyHandler(RiotHttpPolicies.Retry())
+            .AddPolicyHandler(RiotHttpPolicies.CircuitBreaker());
 
         services.AddHttpClient<IDiscordOAuthClient, DiscordOAuthClient>((sp, client) =>
             {
@@ -122,17 +122,6 @@ public static class AuthenticationExtensions
                 {
                     Console.WriteLine($"Retry {retryAttempt} after {timespan.TotalSeconds}s due to {outcome.Result?.StatusCode}");
                 }
-            );
-    }
-
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            .CircuitBreakerAsync(
-                handledEventsAllowedBeforeBreaking: 5,
-                durationOfBreak: TimeSpan.FromSeconds(30)
             );
     }
 }
