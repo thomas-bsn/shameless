@@ -1777,6 +1777,126 @@
         }
       }
     },
+    "/companion/{code}/presence": {
+      "post": {
+        "tags": [
+          "Companion"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companion/connectes": {
+      "get": {
+        "tags": [
+          "Companion"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanionConnecteResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanionConnecteResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanionConnecteResponse"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/liens/{lien}/draft-champions/messages": {
       "get": {
         "tags": [
@@ -7669,6 +7789,34 @@
           }
         }
       },
+      "CompanionConnecteResponse": {
+        "required": [
+          "seriesId",
+          "joueur",
+          "vuIlYASecondes"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "joueur": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JoueurDuCompanionResponse"
+              }
+            ]
+          },
+          "vuIlYASecondes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ComposanteDeNote": {
         "required": [
           "critere",
@@ -9210,6 +9358,26 @@
           }
         }
       },
+      "JoueurDuCompanionResponse": {
+        "required": [
+          "id",
+          "prenom",
+          "riotId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "riotId": {
+            "type": "string"
+          }
+        }
+      },
       "JoueurDuRapportRequest": {
         "required": [
           "puuid",
@@ -10236,6 +10404,17 @@
           "Capitaine",
           "Spectateur"
         ]
+      },
+      "PresenceRequest": {
+        "required": [
+          "puuid"
+        ],
+        "type": "object",
+        "properties": {
+          "puuid": {
+            "type": "string"
+          }
+        }
       },
       "ProblemDetails": {
         "type": "object",
