@@ -6271,6 +6271,8 @@ export interface components {
             prenom: string;
             discordId: string;
         };
+        /** @enum {unknown} */
+        CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "Inattendue" | null;
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;
@@ -7085,6 +7087,10 @@ export interface components {
             echecs: string[];
             causeRangs: null | string;
             causeRole: null | string;
+            codeCauseRangs: null | components["schemas"]["CauseEchecRiot"];
+            codeCauseRole: null | components["schemas"]["CauseEchecRiot"];
+            /** @default false */
+            riotBloque: boolean;
         };
         ResultatDuTitre: {
             gagnants: number[];

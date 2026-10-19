@@ -52,8 +52,16 @@ public sealed class FakeRiotService : HttpMessageHandler
     /// <summary>Quand elle est posée, la lecture des rangs attend sa libération : fige une actualisation en cours.</summary>
     public TaskCompletionSource? Barriere { get; set; }
 
+    /// <summary>Le Retry-After que Riot joint à une 429 sur les rangs (aucun par défaut).</summary>
+    public TimeSpan? RetryAfterRangs { get; set; }
+
+    /// <summary>Les chemins des requêtes reçues, pour compter les appels faits à Riot.</summary>
+    public System.Collections.Concurrent.ConcurrentQueue<string> Requetes { get; } = new();
+
     public void Reset()
     {
+        Requetes.Clear();
+        RetryAfterRangs = null;
         _accounts.Clear();
         RolesIndisponibles.Clear();
         RangsIndisponibles = false;
@@ -66,6 +74,7 @@ public sealed class FakeRiotService : HttpMessageHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var chemin = request.RequestUri!.AbsolutePath;
+        Requetes.Enqueue(chemin);
 
         if (chemin.StartsWith("/riot/account/v1/accounts/by-riot-id/"))
         {
@@ -85,7 +94,12 @@ public sealed class FakeRiotService : HttpMessageHandler
         if (chemin.StartsWith("/lol/league/v4/entries/by-puuid/"))
         {
             if (Barriere is { } barriere) await barriere.Task;
-            if (RangsIndisponibles) return new(StatutRangs);
+            if (RangsIndisponibles)
+            {
+                var echec = new HttpResponseMessage(StatutRangs);
+                if (RetryAfterRangs is { } attente) echec.Headers.RetryAfter = new(attente);
+                return echec;
+            }
             var compte = Par(chemin.Split('/')[^1]);
             var files = new List<object>();
             if (compte?.SoloTier is { } solo)

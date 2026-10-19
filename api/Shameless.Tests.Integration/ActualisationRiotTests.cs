@@ -113,7 +113,6 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.Forbidden, "clé Riot refusée (403)")]
     [InlineData(HttpStatusCode.TooManyRequests, "limite de requêtes Riot atteinte (429)")]
     [InlineData(HttpStatusCode.InternalServerError, "panne côté Riot (500)")]
     public async Task L_echec_sur_les_rangs_expose_la_cause_et_garde_les_anciens_rangs(HttpStatusCode statut, string cause)
@@ -153,6 +152,102 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
         var echec = Assert.Single(fin.GetProperty("echecs").EnumerateArray());
         Assert.Equal("Refuse", echec.GetProperty("prenom").GetString());
         Assert.Contains("clé Riot refusée (403)", echec.GetProperty("message").GetString());
+    }
+
+    private int AppelsRole() => Factory.Riot.Requetes.Count(c => c.Contains("/lol/match/v5/"));
+
+    private int AppelsRangs() => Factory.Riot.Requetes.Count(c => c.Contains("/lol/league/v4/"));
+
+    [Fact]
+    public async Task Une_cle_refusee_sur_les_rangs_n_appelle_pas_le_role_et_expose_le_code()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var id = await CreatePlayerAsync(admin, "Refuse", "GOLD", "II");
+        Factory.Riot.AddAccount("Refuse#EUW", "MASTER", null, mainRole: "MIDDLE");
+        Factory.Riot.RangsIndisponibles = true;
+        Factory.Riot.StatutRangs = HttpStatusCode.Forbidden;
+        Factory.Riot.Requetes.Clear();
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct));
+
+        Assert.Equal(1, AppelsRangs());
+        Assert.Equal(0, AppelsRole());
+        Assert.False(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.False(reponse.GetProperty("roleActualise").GetBoolean());
+        Assert.Equal("CleRefusee", reponse.GetProperty("codeCauseRangs").GetString());
+        Assert.Equal("CleRefusee", reponse.GetProperty("codeCauseRole").GetString());
+        Assert.True(reponse.GetProperty("riotBloque").GetBoolean());
+        Assert.Contains("clé Riot refusée (403)", reponse.GetProperty("causeRangs").GetString());
+    }
+
+    [Fact]
+    public async Task Tout_actualiser_s_arrete_a_la_premiere_cle_refusee_et_marque_les_autres_non_tentes()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        foreach (var nom in new[] { "Un", "Deux", "Trois" })
+        {
+            await CreatePlayerAsync(admin, nom);
+            Factory.Riot.AddAccount($"{nom}#EUW", "GOLD", "II");
+        }
+        Factory.Riot.RangsIndisponibles = true;
+        Factory.Riot.StatutRangs = HttpStatusCode.Forbidden;
+
+        Factory.Riot.Requetes.Clear();
+        await admin.PostAsync("/admin/riot/tous", null, Ct);
+        var fin = await AttendreLaFinAsync(admin);
+
+        Assert.Equal(1, AppelsRangs());
+        Assert.Equal(0, AppelsRole());
+        Assert.Equal(3, fin.GetProperty("termines").GetInt32());
+        var echecs = fin.GetProperty("echecs").EnumerateArray().Select(e => e.GetProperty("message").GetString()!).ToList();
+        Assert.Equal(3, echecs.Count);
+        Assert.Contains("clé Riot refusée (403)", echecs[0]);
+        Assert.All(echecs.Skip(1), m => Assert.Contains("Non tentée", m));
+    }
+
+    [Fact]
+    public async Task Tout_actualiser_s_arrete_sur_une_limite_dont_l_attente_depasse_la_politique()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        foreach (var nom in new[] { "Un", "Deux" })
+        {
+            await CreatePlayerAsync(admin, nom);
+            Factory.Riot.AddAccount($"{nom}#EUW", "GOLD", "II");
+        }
+        Factory.Riot.RangsIndisponibles = true;
+        Factory.Riot.StatutRangs = HttpStatusCode.TooManyRequests;
+        Factory.Riot.RetryAfterRangs = TimeSpan.FromSeconds(120);
+
+        Factory.Riot.Requetes.Clear();
+        await admin.PostAsync("/admin/riot/tous", null, Ct);
+        var fin = await AttendreLaFinAsync(admin);
+
+        Assert.Equal(1, AppelsRangs());
+        var echecs = fin.GetProperty("echecs").EnumerateArray().Select(e => e.GetProperty("message").GetString()!).ToList();
+        Assert.Contains("limite de requêtes Riot atteinte", echecs[0]);
+        Assert.Contains("Non tentée", Assert.Single(echecs.Skip(1)));
+    }
+
+    [Fact]
+    public async Task Une_panne_de_riot_n_arrete_pas_tout_actualiser()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        foreach (var nom in new[] { "Un", "Deux" })
+        {
+            await CreatePlayerAsync(admin, nom);
+            Factory.Riot.AddAccount($"{nom}#EUW", "GOLD", "II");
+        }
+        Factory.Riot.RangsIndisponibles = true;
+
+        Factory.Riot.Requetes.Clear();
+        await admin.PostAsync("/admin/riot/tous", null, Ct);
+        await AttendreLaFinAsync(admin);
+
+        Assert.Equal(2, AppelsRangs());
     }
 
     [Fact]

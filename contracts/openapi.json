@@ -7139,6 +7139,17 @@
           }
         }
       },
+      "CauseEchecRiot": {
+        "enum": [
+          "CleRefusee",
+          "LimiteAtteinte",
+          "Panne",
+          "Introuvable",
+          "Injoignable",
+          "Inattendue",
+          null
+        ]
+      },
       "ChampionJoueResponse": {
         "required": [
           "playerId",
@@ -10425,7 +10436,10 @@
           "roleActualise",
           "echecs",
           "causeRangs",
-          "causeRole"
+          "causeRole",
+          "codeCauseRangs",
+          "codeCauseRole",
+          "riotBloque"
         ],
         "type": "object",
         "properties": {
@@ -10459,6 +10473,30 @@
               "null",
               "string"
             ]
+          },
+          "codeCauseRangs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CauseEchecRiot"
+              }
+            ]
+          },
+          "codeCauseRole": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CauseEchecRiot"
+              }
+            ]
+          },
+          "riotBloque": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

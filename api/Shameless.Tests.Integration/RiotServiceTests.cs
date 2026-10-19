@@ -89,7 +89,7 @@ public class RiotServiceTests
         var erreur = await Assert.ThrowsAsync<RiotException>(() => service.GetRanksFromPuuidAsync(Puuid));
 
         Assert.Equal(TimeSpan.FromSeconds(42), erreur.ReessayerApres);
-        Assert.Contains("42 s", erreur.Description);
+        Assert.Contains("42 s", erreur.Message);
     }
 
     [Fact]

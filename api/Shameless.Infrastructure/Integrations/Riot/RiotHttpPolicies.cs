@@ -1,6 +1,7 @@
 using System.Net;
 using Polly;
 using Polly.Extensions.Http;
+using Shameless.Application.Riot;
 
 namespace Shameless.Infrastructure.Integrations.Riot;
 
@@ -10,9 +11,6 @@ namespace Shameless.Infrastructure.Integrations.Riot;
 /// </summary>
 public static class RiotHttpPolicies
 {
-    /// <summary>Au-delà de ce Retry-After, attendre bloquerait l'écran : la 429 est rendue telle quelle.</summary>
-    public static readonly TimeSpan AttenteMaximale = TimeSpan.FromSeconds(10);
-
     /// <summary>
     /// Reprend les pannes (5xx, 408) avec une attente croissante, et une 429 après le Retry-After de Riot
     /// quand il est court. Une 403 ou 404 n'est jamais reprise. <paramref name="attente"/> remplace l'attente
@@ -24,7 +22,7 @@ public static class RiotHttpPolicies
         return HttpPolicyExtensions
             .HandleTransientHttpError()
             .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests
-                             && (DelaiDeRiot(msg) ?? TimeSpan.Zero) <= AttenteMaximale)
+                             && (DelaiDeRiot(msg) ?? TimeSpan.Zero) <= RiotException.AttenteMaximale)
             .WaitAndRetryAsync(
                 retryCount: 3,
                 sleepDurationProvider: (n, resultat, _) => DelaiDeRiot(resultat.Result) ?? attente(n),
@@ -37,7 +35,8 @@ public static class RiotHttpPolicies
             .HandleTransientHttpError()
             .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
 
-    private static TimeSpan? DelaiDeRiot(HttpResponseMessage? reponse)
+    /// <summary>Le délai que Riot demande par Retry-After (en secondes ou en date) ; null hors d'une 429 sans l'en-tête.</summary>
+    internal static TimeSpan? DelaiDeRiot(HttpResponseMessage? reponse)
     {
         if (reponse is not { StatusCode: HttpStatusCode.TooManyRequests }) return null;
         var retryAfter = reponse.Headers.RetryAfter;

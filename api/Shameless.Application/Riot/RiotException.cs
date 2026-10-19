@@ -29,8 +29,15 @@ public sealed class RiotException(CauseEchecRiot cause, int? statut = null, Time
     /// <summary>Le délai demandé par Riot (en-tête Retry-After) pour une limite atteinte.</summary>
     public TimeSpan? ReessayerApres { get; } = reessayerApres;
 
-    /// <summary>La cause en français, courte, pour l'écran.</summary>
-    public string Description => Message;
+    /// <summary>Au-delà de ce Retry-After, attendre bloquerait l'écran : la 429 n'est pas reprise.</summary>
+    public static readonly TimeSpan AttenteMaximale = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Insister est inutile : la clé est refusée (pour tout le monde), ou Riot demande d'attendre plus longtemps
+    /// que <see cref="AttenteMaximale"/>. Une actualisation de plusieurs joueurs s'arrête alors.
+    /// </summary>
+    public bool Bloque => Cause == CauseEchecRiot.CleRefusee
+        || (Cause == CauseEchecRiot.LimiteAtteinte && ReessayerApres > AttenteMaximale);
 
     private static string Decrire(CauseEchecRiot cause, int? statut, TimeSpan? reessayerApres) => cause switch
     {

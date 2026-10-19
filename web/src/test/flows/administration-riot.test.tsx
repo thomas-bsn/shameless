@@ -72,6 +72,9 @@ describe("Administration : actualisation Riot", () => {
         ],
         causeRangs: null,
         causeRole: "clé Riot refusée (403), elle est invalide ou expirée",
+        codeCauseRangs: null,
+        codeCauseRole: "CleRefusee",
+        riotBloque: true,
       }),
     });
     renderApp("/administration");

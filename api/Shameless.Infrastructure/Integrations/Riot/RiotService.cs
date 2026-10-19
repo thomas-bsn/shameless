@@ -112,9 +112,7 @@ public sealed class RiotService : IRiotService
                     >= HttpStatusCode.InternalServerError => CauseEchecRiot.Panne,
                     _ => CauseEchecRiot.Inattendue
                 };
-                var retryAfter = res.Headers.RetryAfter;
-                var attente = retryAfter?.Delta ?? (retryAfter?.Date is { } date ? date - DateTimeOffset.UtcNow : null);
-                var echec = new RiotException(cause, statut, cause == CauseEchecRiot.LimiteAtteinte ? attente : null);
+                var echec = new RiotException(cause, statut, RiotHttpPolicies.DelaiDeRiot(res));
                 _logger.LogWarning("Riot answered {Status} for {Url}: {Cause}", statut, url, echec.Message);
                 throw echec;
             }
