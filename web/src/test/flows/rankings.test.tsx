@@ -24,6 +24,34 @@ const players = [
   player({ id: 5, prenom: "Éva", rankTier: "GOLD", rankDivision: 3, lp: 0, currentCost: 4.5, costEvolution: 1.2 }),
 ];
 
+describe("Classements, Master+", () => {
+  it("keeps the Grandmaster peak above a Master current rank with more LP", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [
+        player({
+          id: 1,
+          prenom: "Alice",
+          rankTier: "MASTER",
+          rankDivision: null,
+          lp: 1700,
+          peakTier: "GRANDMASTER",
+          peakDivision: null,
+          peakLp: 1100,
+          peakSeason: "S25",
+        }),
+        player({ id: 2, prenom: "Bob", rankTier: "MASTER", rankDivision: null, lp: 1800 }),
+      ],
+    });
+    renderApp("/classements?vue=soloq");
+
+    const tiers = await screen.findAllByRole("region", { name: /^Tier / });
+    expect(tiers.map((t) => t.getAttribute("aria-label"))).toEqual(["Tier Grandmaster", "Tier Master"]);
+    expect(within(tiers[0]!).getByText("Peak S25")).toBeInTheDocument();
+    expect(within(tiers[0]!).getByRole("link")).toHaveTextContent("Alice");
+  });
+});
+
 describe("Classements", () => {
   beforeEach(() => {
     mockApi({ "GET /auth/me": user(), "GET /players": players });

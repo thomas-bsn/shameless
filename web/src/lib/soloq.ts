@@ -18,12 +18,38 @@ interface RankedPlayer {
   peakLp: number;
 }
 
-/** Score linéaire d'un rang : 400 par tier, 100 par division, plus les LP. */
+/** Les LP de Master+ n'ont pas de plafond et leurs seuils changent d'une saison à l'autre. */
+const MASTER_PLUS_LP_CAP = 399;
+
+/**
+ * Compare deux rangs : le tier d'abord (un tier supérieur gagne toujours, quels que soient les LP),
+ * puis la division (I au-dessus de IV), puis les LP. Positif si `a` est meilleur. Non classé = tout en bas.
+ */
+export function compareRanks(
+  a: { tier: string | null; division: number | null; lp: number | null },
+  b: { tier: string | null; division: number | null; lp: number | null },
+): number {
+  const tierOf = (tier: string | null) => ASCENDING.indexOf(normalizeTier(tier) as (typeof ASCENDING)[number]);
+  const byTier = tierOf(a.tier) - tierOf(b.tier);
+  if (byTier !== 0 || tierOf(a.tier) < 0) return byTier;
+  if (!isMasterPlus(normalizeTier(a.tier))) {
+    const byDivision = (b.division ?? 4) - (a.division ?? 4);
+    if (byDivision !== 0) return byDivision;
+  }
+  return (a.lp ?? 0) - (b.lp ?? 0);
+}
+
+/**
+ * Score linéaire d'un rang : 400 par tier, 100 par division, plus les LP. Approximation réservée aux
+ * niveaux médian et moyen (`soloQLevel`) ; pour comparer deux rangs, utiliser `compareRanks`.
+ * Les LP de Master+ sont plafonnés à 399 pour que le score reste dans la tranche de son tier.
+ */
 export function rankScore(tier: string, division: number | null, lp: number | null): number {
   const normalized = normalizeTier(tier);
   const tierScore = Math.max(0, ASCENDING.indexOf(normalized as (typeof ASCENDING)[number])) * 400;
   const divisionScore = isMasterPlus(normalized) ? 0 : (4 - (division ?? 4)) * 100;
-  return tierScore + divisionScore + (lp ?? 0);
+  const lpScore = isMasterPlus(normalized) ? Math.min(lp ?? 0, MASTER_PLUS_LP_CAP) : (lp ?? 0);
+  return tierScore + divisionScore + lpScore;
 }
 
 export function scoreToRank(score: number): Rank {
@@ -50,16 +76,14 @@ export function displayRank(player: RankedPlayer) {
     return current.tier === "UNRANKED" ? { ...current, division: null, lp: null } : current;
   }
   if (current.tier === "UNRANKED") return peak;
-  return rankScore(peak.tier, peak.division, peak.lp) > rankScore(current.tier, current.division, current.lp)
-    ? peak
-    : current;
+  return compareRanks(peak, current) > 0 ? peak : current;
 }
 
 /** Les tiers non vides, de Challenger à Unranked ; dans un tier, le meilleur rang d'abord. */
 export function groupBySoloQTier<P extends RankedPlayer>(players: P[]) {
   const ranked = players
     .map((player) => ({ player, rank: displayRank(player) }))
-    .sort((a, b) => rankScore(b.rank.tier, b.rank.division, b.rank.lp) - rankScore(a.rank.tier, a.rank.division, a.rank.lp));
+    .sort((a, b) => compareRanks(b.rank, a.rank));
 
   return SOLOQ_TIERS.map((tier) => ({
     tier,
