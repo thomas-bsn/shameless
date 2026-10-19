@@ -30,5 +30,6 @@ export const player = (overrides: Partial<Schemas["PlayerDto"]> = {}): Schemas["
   peakLp: 0,
   currentCost: 3,
   costEvolution: null,
+  avatarUrl: null,
   ...overrides,
 });

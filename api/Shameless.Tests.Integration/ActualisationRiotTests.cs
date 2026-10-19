@@ -86,7 +86,7 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
     }
 
     [Fact]
-    public async Task Un_joueur_sans_historique_garde_son_role_principal()
+    public async Task Un_joueur_sans_match_n_a_plus_de_role_principal()
     {
         Factory.CleRiotConfiguree = true;
         var admin = Factory.CreateAdminClient();
@@ -97,7 +97,7 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
 
         await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct);
 
-        Assert.Equal("SUPPORT", (await JoueurAsync(admin, id)).GetProperty("mainRole").GetString());
+        Assert.Equal(JsonValueKind.Null, (await JoueurAsync(admin, id)).GetProperty("mainRole").ValueKind);
     }
 
     [Fact]

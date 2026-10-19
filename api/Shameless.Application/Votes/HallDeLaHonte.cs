@@ -26,7 +26,7 @@ public sealed record HallDeLaHonte(List<LigneHallDeLaHonte> Joueurs)
         {
             var rang = i > 0 && classes[i].Dofd == classes[i - 1].Dofd ? lignes[i - 1].Rang : i + 1;
             var (joueur, dofd) = classes[i];
-            lignes.Add(new LigneHallDeLaHonte(rang, joueur.Id, joueur.Prenom, joueur.RiotId, dofd));
+            lignes.Add(new LigneHallDeLaHonte(rang, joueur.Id, joueur.Prenom, joueur.RiotId, dofd, joueur.User?.AvatarUrl));
         }
         return new HallDeLaHonte(lignes);
     }
@@ -35,4 +35,5 @@ public sealed record HallDeLaHonte(List<LigneHallDeLaHonte> Joueurs)
 /// <summary>La ligne d'un Joueur au Hall de la Honte.</summary>
 /// <param name="Rang">Partagé par les ex æquo (1, 1, 3).</param>
 /// <param name="Dofd">Nombre de titres de DOFD remportés, égalités comprises.</param>
-public sealed record LigneHallDeLaHonte(int Rang, int PlayerId, string Prenom, string RiotId, int Dofd);
+/// <param name="AvatarUrl">Photo Discord du compte lié au Joueur ; null s'il n'est pas lié.</param>
+public sealed record LigneHallDeLaHonte(int Rang, int PlayerId, string Prenom, string RiotId, int Dofd, string? AvatarUrl = null);

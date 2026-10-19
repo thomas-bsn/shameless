@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { Schemas } from "@/api/client";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
 
 /**
@@ -25,6 +26,7 @@ export function PlayerCard({
       className="flex w-56 flex-col gap-1.5 rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
     >
       <span className="flex items-center gap-2">
+        <AvatarJoueur prenom={player.prenom} avatarUrl={player.avatarUrl} className="size-6 text-[10px]" />
         {showCost && <CostTierBadge cost={player.currentCost} className="text-xs" />}
         <span className="flex-1 truncate font-semibold">{player.prenom}</span>
         <RoleIcon role={player.mainRole} />

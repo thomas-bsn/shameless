@@ -23,7 +23,7 @@ public class CustomGameParticipantRepository : ICustomGameParticipantRepository
     public async Task<List<CustomGameParticipant>> GetByGameIdAsync(int gameId)
     {
         return await _db.CustomGameParticipants
-            .Include(p => p.Player)
+            .Include(p => p.Player).ThenInclude(p => p.User)
             .Where(p => p.CustomGameId == gameId)
             .ToListAsync();
     }

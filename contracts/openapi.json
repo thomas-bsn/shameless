@@ -1450,75 +1450,6 @@
         }
       }
     },
-    "/companion/{code}/debut": {
-      "post": {
-        "tags": [
-          "Companion"
-        ],
-        "parameters": [
-          {
-            "name": "code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Erreur",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/series/{id}/code-companion": {
       "get": {
         "tags": [
@@ -1766,6 +1697,150 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reset": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reset/reponse": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2204,6 +2279,322 @@
           },
           "503": {
             "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/pause": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reprise": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reprise/acceptation": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reprise/refus": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3074,6 +3465,105 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/pret": {
+      "put": {
+        "tags": [
+          "Liens"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirPretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccesParLienResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5013,76 +5503,6 @@
         }
       }
     },
-    "/series/{id}/debut": {
-      "post": {
-        "tags": [
-          "Series"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DebutDeGameResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Erreur",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/series/{id}/replacements": {
       "post": {
         "tags": [
@@ -6329,7 +6749,9 @@
         "required": [
           "seriesId",
           "portee",
-          "equipe"
+          "equipe",
+          "pret",
+          "adversairePret"
         ],
         "type": "object",
         "properties": {
@@ -6345,6 +6767,12 @@
               "null",
               "string"
             ]
+          },
+          "pret": {
+            "type": "boolean"
+          },
+          "adversairePret": {
+            "type": "boolean"
           }
         }
       },
@@ -7128,25 +7556,14 @@
           "ObjectifsParMinute"
         ]
       },
-      "DebutDeGameResponse": {
+      "DefinirPretRequest": {
         "required": [
-          "seriesId",
-          "gameId",
-          "startedAt"
+          "pret"
         ],
         "type": "object",
         "properties": {
-          "seriesId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "gameId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
+          "pret": {
+            "type": "boolean"
           }
         }
       },
@@ -7234,7 +7651,12 @@
           "teamB",
           "capitaineA",
           "capitaineB",
-          "championsDejaJoues"
+          "championsDejaJoues",
+          "resetDemande",
+          "pause",
+          "repriseDemandee",
+          "pauseDisponibleA",
+          "pauseDisponibleB"
         ],
         "type": "object",
         "properties": {
@@ -7314,6 +7736,42 @@
             "items": {
               "type": "string"
             }
+          },
+          "resetDemande": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResetDemandeResponse"
+              }
+            ]
+          },
+          "pause": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PauseResponse"
+              }
+            ]
+          },
+          "repriseDemandee": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RepriseDemandeeResponse"
+              }
+            ]
+          },
+          "pauseDisponibleA": {
+            "type": "boolean"
+          },
+          "pauseDisponibleB": {
+            "type": "boolean"
           }
         }
       },
@@ -7872,7 +8330,8 @@
           "championId",
           "stats",
           "performance",
-          "champsCorriges"
+          "champsCorriges",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -7937,6 +8396,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8044,7 +8509,8 @@
           "rankDivision",
           "cost",
           "playerId",
-          "role"
+          "role",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8086,6 +8552,12 @@
               {
                 "$ref": "#/components/schemas/Role"
               }
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -8338,7 +8810,8 @@
         "required": [
           "playerId",
           "prenom",
-          "correct"
+          "correct",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8353,6 +8826,12 @@
             "type": [
               "null",
               "boolean"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -8401,7 +8880,9 @@
           "echecDmA",
           "echecDmB",
           "capitaineARejointLe",
-          "capitaineBRejointLe"
+          "capitaineBRejointLe",
+          "capitaineAPretLe",
+          "capitaineBPretLe"
         ],
         "type": "object",
         "properties": {
@@ -8451,6 +8932,20 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "capitaineAPretLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "capitaineBPretLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -8462,7 +8957,8 @@
           "gamesJouees",
           "victoires",
           "defaites",
-          "winrate"
+          "winrate",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8494,6 +8990,12 @@
               "number"
             ],
             "format": "double"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8504,7 +9006,8 @@
           "riotId",
           "tier",
           "division",
-          "lp"
+          "lp",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8537,6 +9040,12 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8546,7 +9055,8 @@
           "playerId",
           "prenom",
           "riotId",
-          "dofd"
+          "dofd",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8567,6 +9077,12 @@
           "dofd": {
             "type": "integer",
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8647,6 +9163,32 @@
                 "$ref": "#/components/schemas/SoireeResponse"
               }
             ]
+          }
+        }
+      },
+      "PauseResponse": {
+        "required": [
+          "parEquipe",
+          "commenceLe",
+          "finLe",
+          "tempsRestantTourMs"
+        ],
+        "type": "object",
+        "properties": {
+          "parEquipe": {
+            "type": "string"
+          },
+          "commenceLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tempsRestantTourMs": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -8983,6 +9525,7 @@
           "peakSeason",
           "peakLp",
           "currentCost",
+          "avatarUrl",
           "costEvolution"
         ],
         "type": "object",
@@ -9075,6 +9618,12 @@
           "currentCost": {
             "type": "number",
             "format": "double"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "costEvolution": {
             "type": [
@@ -9577,6 +10126,54 @@
           "replacementPlayerId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "RepondreResetRequest": {
+        "required": [
+          "accepte"
+        ],
+        "type": "object",
+        "properties": {
+          "accepte": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RepriseDemandeeResponse": {
+        "required": [
+          "parEquipe",
+          "expireLe"
+        ],
+        "type": "object",
+        "properties": {
+          "parEquipe": {
+            "type": "string"
+          },
+          "expireLe": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ResetDemandeResponse": {
+        "required": [
+          "equipe",
+          "demandeLe",
+          "expireLe"
+        ],
+        "type": "object",
+        "properties": {
+          "equipe": {
+            "type": "string"
+          },
+          "demandeLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expireLe": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -10707,7 +11304,9 @@
       "ValidatePickerRequest": {
         "required": [
           "format",
-          "fearless"
+          "fearless",
+          "capitaineA",
+          "capitaineB"
         ],
         "type": "object",
         "properties": {
@@ -10718,6 +11317,20 @@
           "fearless": {
             "type": "boolean",
             "default": false
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -10725,7 +11338,8 @@
         "required": [
           "playerId",
           "prenom",
-          "voix"
+          "voix",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -10739,6 +11353,12 @@
           "voix": {
             "type": "integer",
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -86,7 +86,7 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(1, avant.GetProperty("gameNumber").GetInt32());
         await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null, null));
 
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
 
         await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null, null), HttpStatusCode.Conflict);
         await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 2, "B", null, null), HttpStatusCode.Conflict);

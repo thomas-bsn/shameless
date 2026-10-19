@@ -168,7 +168,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Le_signal_de_partie_lancee_envoie_game_started_avec_ses_participants()
+    public async Task La_fin_de_la_draft_envoie_game_started_avec_ses_participants()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
@@ -178,7 +178,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
         await PublierAsync();
         Assert.Empty(Envoyes("game_started"));
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
 
         await PublierAsync();
 
@@ -337,7 +337,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         var gameId = await PlayGameAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
         await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
 
         await PublierAsync();
@@ -364,8 +364,8 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        await PlayGameAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        await JouerLaDraftAsync(client, serie.SeriesId, gameId);
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
         await PublierAsync();

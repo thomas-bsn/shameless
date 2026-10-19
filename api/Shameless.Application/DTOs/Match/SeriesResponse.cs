@@ -35,7 +35,7 @@ public record SeriesGameResponse(
     string? RiotMatchId, // l'identifiant Riot de la partie, donné par le rapport du Companion ; null sans rapport
     List<ChampionJoueResponse> ChampionsJoues, // vide sans rapport du Companion
     RapportEnRevueResponse? RapportEnRevue, // le rapport du Companion qui attend la décision de l'organisateur
-    DateTime? StartedAt // le Début de la Game (signal « partie lancée », ADR 0017), null avant ce signal
+    DateTime? StartedAt // le Début de la Game (fin de la Draft de champions, ADR 0017), null avant
 )
 {
     /// <param name="joueursConnus">Les joueurs enregistrés, par PUUID, pour reconnaître les joueurs inattendus d'un rapport en revue.</param>

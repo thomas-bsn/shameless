@@ -18,6 +18,7 @@ const game = (id: number, status: string, winner: string | null): Schemas["Serie
 const participant = (playerId: number): Schemas["GameParticipantDto"] => ({
   prenom: `J${playerId}`,
   riotId: `J${playerId}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost: null,

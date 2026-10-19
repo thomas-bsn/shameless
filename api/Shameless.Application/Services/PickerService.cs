@@ -173,20 +173,34 @@ public sealed class PickerService
     }
 
     /// <summary>Valide la composition courante : crée la Série entre les deux Équipes et clôt la session.</summary>
-    public async Task<CommandResult<BestOfSeries>> ValidateAsync(int format, bool fearless)
+    public async Task<CommandResult<BestOfSeries>> ValidateAsync(
+        int format, bool fearless, int? capitaineA = null, int? capitaineB = null)
     {
         var (session, refus) = await GetSessionOfOpenSoireeAsync();
         if (session == null) return refus!.As<BestOfSeries>();
         if (!session.CanValidate)
             return CommandResult<BestOfSeries>.Conflict("Les deux Équipes ne sont pas encore formées : tirez-les avant de valider.");
 
+        Capitaines? capitaines = null;
+        if (session.Methode == PickerMethode.Draft)
+            capitaines = new Capitaines(session.CapitaineOf(Equipes.A)!.Value, session.CapitaineOf(Equipes.B)!.Value);
+        else if (capitaineA != null || capitaineB != null)
+        {
+            // Après une Roulette, les Capitaines se désignent ici : un par Équipe, dans son Équipe.
+            if (capitaineA == null || capitaineB == null)
+                return CommandResult<BestOfSeries>.Invalid("Désigne les deux Capitaines, ou aucun.");
+            if (capitaineA == capitaineB)
+                return CommandResult<BestOfSeries>.Invalid("Les deux Capitaines sont deux joueurs distincts.");
+            if (!session.PlayerIdsOf(Equipes.A).Contains(capitaineA.Value) ||
+                !session.PlayerIdsOf(Equipes.B).Contains(capitaineB.Value))
+                return CommandResult<BestOfSeries>.Invalid("Chaque Capitaine fait partie de son Équipe.");
+            capitaines = new Capitaines(capitaineA.Value, capitaineB.Value);
+        }
+
         var created = await _series.PrepareAsync(
             session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless,
             session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value),
-            // Les capitaines de la Draft restent ceux de la Série ; après une Roulette, il n'y en a pas.
-            session.Methode == PickerMethode.Draft
-                ? new Capitaines(session.CapitaineOf(Equipes.A)!.Value, session.CapitaineOf(Equipes.B)!.Value)
-                : null);
+            capitaines);
         if (!created.IsOk) return created;
 
         // La Série et la fin de la session s'enregistrent ensemble, ou pas du tout.

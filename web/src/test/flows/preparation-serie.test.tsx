@@ -12,6 +12,7 @@ const participant = (playerId: number, prenom: string): Participant => ({
   playerId,
   prenom,
   riotId: `${prenom}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost: 3,
@@ -47,6 +48,8 @@ const liens: Schemas["LiensSerieResponse"] = {
   echecDmB: null,
   capitaineARejointLe: null,
   capitaineBRejointLe: null,
+  capitaineAPretLe: null,
+  capitaineBPretLe: null,
 };
 
 const rejoint = (equipes: { a?: string; b?: string }): Schemas["LiensSerieResponse"] => ({
@@ -94,27 +97,17 @@ describe("Écran de préparation", () => {
     const a = await screen.findByRole("group", { name: "Équipe A" });
     expect(within(a).getByText("Aldric")).toBeInTheDocument();
     expect(within(screen.getByRole("group", { name: "Équipe B" })).getByText("Elio")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Capitaine de l'Équipe A" })).toHaveTextContent("Kuro");
-    expect(screen.getByRole("combobox", { name: "Capitaine de l'Équipe B" })).toHaveTextContent("Mina");
+    expect(screen.getByLabelText("Capitaine de l'Équipe A")).toHaveTextContent("Kuro");
+    expect(screen.getByLabelText("Capitaine de l'Équipe B")).toHaveTextContent("Mina");
   });
 
-  it("désigne ou change le Capitaine d'une Équipe parmi ses joueurs", async () => {
-    let corps: unknown = null;
-    const fetchMock = mockApi({
-      ...routes(),
-      "PUT /series/5/capitaines/A": async (req) => {
-        corps = await req.json();
-        return json(serie({ capitaineA: 2 }));
-      },
-    });
+  it("n'a plus de changement de Capitaine : les Capitaines sont en lecture seule", async () => {
+    mockApi(routes(serie({ capitaineA: 2, capitaineB: 3 })));
     renderApp("/series/5/preparation");
 
-    await userEvent.click(await screen.findByRole("combobox", { name: "Capitaine de l'Équipe A" }));
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Aldric", "Kuro"]);
-    await userEvent.click(screen.getByRole("option", { name: "Kuro" }));
+    await screen.findByLabelText("Capitaine de l'Équipe A");
 
-    await vi.waitFor(() => expect(corps).toEqual({ designation: "Manuel", playerId: 2 }));
-    expect(fetchMock.mock.calls.some(([r]) => r.method === "PUT" && r.url.endsWith("/capitaines/B"))).toBe(false);
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("montre les deux Liens capitaine, les copie et les renouvelle", async () => {
@@ -208,67 +201,42 @@ describe("Écran de préparation", () => {
     expect(screen.getByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Pas encore rejoint");
   });
 
-  it("grise « Lancer la draft » tant que les deux Capitaines n'ont pas rejoint", async () => {
-    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z" }) });
-    renderApp("/series/5/preparation");
-
-    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
-    expect(screen.getByText("Les deux Capitaines doivent avoir ouvert leur lien.")).toBeInTheDocument();
-  });
-
-  it("grise « Lancer la draft » en disant pourquoi tant que les deux capitaines ne sont pas désignés", async () => {
+  it("n'a plus de bouton « Lancer la draft » : la draft démarre quand les deux Capitaines sont prêts", async () => {
     const quand = "2026-10-19T21:04:00Z";
-    mockApi({ ...routes(serie({ capitaineA: 1 })), "GET /series/5/liens": rejoint({ a: quand, b: quand }) });
-    renderApp("/series/5/preparation");
-
-    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
-    expect(screen.getByText("Désigne les deux capitaines.")).toBeInTheDocument();
-  });
-
-  it("active « Lancer la draft » sans recharger la page dès que le deuxième Capitaine a rejoint", async () => {
-    let reponse = rejoint({ a: "2026-10-19T21:04:00Z" });
-    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": () => json(reponse) });
-    renderApp("/series/5/preparation");
-    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
-
-    reponse = rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" });
-
-    await vi.waitFor(() => expect(screen.getByRole("button", { name: "Lancer la draft" })).toBeEnabled(), {
-      timeout: 8000,
-    });
-    expect(screen.getByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Rejoint à");
-  }, 10000);
-
-  it("crée la game au clic sur « Lancer la draft », puis ne propose plus le bouton", async () => {
-    let lancee = false;
-    mockApi({
-      ...routes(),
-      "GET /series/5": () =>
-        json(lancee ? avecCapitaines({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] }) : avecCapitaines()),
-      "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }),
-      "POST /series/5/games": () => {
-        lancee = true;
-        return json({ id: 12 }, 201);
-      },
-    });
-    renderApp("/series/5/preparation");
-
-    await userEvent.click(await screen.findByRole("button", { name: "Lancer la draft" }));
-
-    await vi.waitFor(() => expect(screen.queryByRole("button", { name: "Lancer la draft" })).not.toBeInTheDocument());
-    expect(lancee).toBe(true);
-  });
-
-  it("ne propose pas « Lancer la draft » quand la draft est déjà lancée (Liens et code)", async () => {
-    mockApi({
-      ...routes(serie({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] })),
-      "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }),
-    });
+    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": rejoint({ a: quand, b: quand }) });
     renderApp("/series/5/preparation");
 
     await screen.findByRole("heading", { name: "Prépare la Série" });
     expect(screen.queryByRole("button", { name: "Lancer la draft" })).not.toBeInTheDocument();
   });
+
+  it("montre « prêt » de chaque Capitaine : pas encore prêt, ou l'heure où il l'est devenu", async () => {
+    const quand = "2026-10-19T21:04:00Z";
+    const pret = "2026-10-19T21:07:00Z";
+    mockApi({
+      ...routes(avecCapitaines()),
+      "GET /series/5/liens": { ...rejoint({ a: quand, b: quand }), capitaineAPretLe: pret },
+    });
+    renderApp("/series/5/preparation");
+
+    expect(await screen.findByLabelText("Prêt du Capitaine de l'Équipe A")).toHaveTextContent(`Prêt à ${heure(pret)}`);
+    expect(screen.getByLabelText("Prêt du Capitaine de l'Équipe B")).toHaveTextContent("Pas encore prêt");
+  });
+
+  it("met « rejoint » et « prêt » à jour sans recharger la page", async () => {
+    let reponse = rejoint({ a: "2026-10-19T21:04:00Z" });
+    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": () => json(reponse) });
+    renderApp("/series/5/preparation");
+    expect(await screen.findByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Pas encore rejoint");
+
+    reponse = { ...rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }), capitaineBPretLe: "2026-10-19T21:08:00Z" };
+
+    await vi.waitFor(
+      () => expect(screen.getByLabelText("Prêt du Capitaine de l'Équipe B")).toHaveTextContent("Prêt à"),
+      { timeout: 8000 },
+    );
+    expect(screen.getByLabelText("État du Capitaine de l'Équipe B")).toHaveTextContent("Rejoint à");
+  }, 10000);
 
   it("est réservé à l'organisateur connecté", async () => {
     mockApi({ "GET /auth/me": json({ status: 401 }, 401) });

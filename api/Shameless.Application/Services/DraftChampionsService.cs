@@ -1,3 +1,4 @@
+using Shameless.Application.Bot;
 using Shameless.Application.ChampionDraft;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
@@ -15,17 +16,20 @@ public sealed class DraftChampionsService
     private readonly IBestOfSeriesRepository _series;
     private readonly IChampionCatalog _catalog;
     private readonly TimeProvider _clock;
+    private readonly EvenementsBot _evenements;
 
     public DraftChampionsService(
         IDraftChampionsRepository drafts,
         IBestOfSeriesRepository series,
         IChampionCatalog catalog,
-        TimeProvider clock)
+        TimeProvider clock,
+        EvenementsBot evenements)
     {
         _drafts = drafts;
         _series = series;
         _catalog = catalog;
         _clock = clock;
+        _evenements = evenements;
     }
 
     /// <summary>
@@ -64,18 +68,22 @@ public sealed class DraftChampionsService
     public async Task<CommandResult<DraftChampions>> GetByGameAsync(int gameId)
     {
         var draft = await _drafts.GetByGameAsync(gameId);
-        return draft == null
-            ? CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.")
-            : CommandResult<DraftChampions>.Ok(draft);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.");
+
+        await ActualiserAsync(draft);
+        return CommandResult<DraftChampions>.Ok(draft);
     }
 
     /// <summary>Par un lien de la Série : sa dernière Draft de champions, en cours ou terminée.</summary>
     public async Task<CommandResult<DraftChampions>> GetParLienAsync(AccesParLien acces)
     {
         var draft = await _drafts.GetDerniereOfSeriesAsync(acces.SeriesId);
-        return draft == null
-            ? CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.")
-            : CommandResult<DraftChampions>.Ok(draft);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.");
+
+        await ActualiserAsync(draft);
+        return CommandResult<DraftChampions>.Ok(draft);
     }
 
     /// <summary>
@@ -114,9 +122,12 @@ public sealed class DraftChampionsService
     private async Task<CommandResult<DraftChampions>> JouerAsync(
         DraftChampions draft, int tour, string? championId, JoueurDraft joueur)
     {
+        await ActualiserAsync(draft);
         var courant = draft.TourCourant;
         if (courant == null)
             return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est terminée.");
+        if (draft.EnPause)
+            return CommandResult<DraftChampions>.Conflict("La Draft de champions est en pause : personne ne joue avant la reprise.");
         if (tour < courant.Numero)
             return CommandResult<DraftChampions>.Conflict($"Le tour {tour} est déjà joué : c'est au tour {courant.Numero}.");
         if (tour > courant.Numero)
@@ -141,6 +152,17 @@ public sealed class DraftChampionsService
             return CommandResult<DraftChampions>.Conflict("Ce champion est déjà banni ou pick dans cette game.");
 
         draft.Jouer(championId, Maintenant());
+        if (draft.EstTerminee)
+        {
+            // Le dernier pick est le Début de la Game (ADR 0017) : pronostics clos, fenêtre de présence du
+            // bot ouverte. Une game qui a déjà un début (résultat saisi avant) n'en reçoit pas un second.
+            var game = draft.Game;
+            if (game.StartedAt == null)
+            {
+                game.StartedAt = Maintenant();
+                _evenements.GameStarted(game);
+            }
+        }
         if (!await _drafts.TrySaveChangesAsync())
             return CommandResult<DraftChampions>.Conflict(
                 "Ce tour vient d'être joué par une autre commande : rechargez la Draft de champions.");
@@ -148,11 +170,151 @@ public sealed class DraftChampionsService
         return CommandResult<DraftChampions>.Ok(draft);
     }
 
-    // Tronqué à la microseconde, la précision de Postgres : l'échéance renvoyée juste après
-    // une action est ainsi la même que celle relue en base ensuite.
-    private DateTime Maintenant()
+    /// <summary>
+    /// Le Capitaine de l'Équipe <paramref name="equipe"/> demande à remettre la draft en cours à zéro ;
+    /// l'autre Capitaine a <see cref="DraftChampions.DelaiReponseReset"/> pour répondre. Refusé une fois la
+    /// draft terminée, ou si une demande attend déjà sa réponse.
+    /// </summary>
+    public async Task<CommandResult<bool>> DemanderResetAsync(int seriesId, string equipe)
     {
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        return maintenant.AddTicks(-(maintenant.Ticks % 10));
+        var (draft, refus) = await ChargerDraftDeResetAsync(seriesId);
+        if (draft == null)
+            return refus!;
+        if (draft.ResetEnAttente(Maintenant()))
+            return CommandResult<bool>.Conflict("Une demande de Reset est déjà en attente de réponse.");
+
+        draft.DemanderReset(equipe, Maintenant());
+        return await EnregistrerAsync(draft);
     }
+
+    /// <summary>
+    /// Le Capitaine de l'Équipe <paramref name="equipe"/> répond à la demande de Reset de l'autre Équipe.
+    /// Accepté : la draft est effacée (bans, picks, chrono) et les deux Capitaines redeviennent « pas prêts » ;
+    /// la Game reste la même. Refusé : la demande tombe, rien d'autre ne change.
+    /// </summary>
+    public async Task<CommandResult<bool>> RepondreResetAsync(int seriesId, string equipe, bool accepte)
+    {
+        var (draft, refus) = await ChargerDraftDeResetAsync(seriesId);
+        if (draft == null)
+            return refus!;
+        if (!draft.ResetEnAttente(Maintenant()))
+            return CommandResult<bool>.Conflict("Aucune demande de Reset n'attend de réponse.");
+        if (draft.ResetDemandeParEquipe == equipe)
+            return CommandResult<bool>.Conflict("Seul l'autre Capitaine peut répondre à ta demande de Reset.");
+
+        if (!accepte)
+        {
+            draft.AnnulerDemandeReset();
+            return await EnregistrerAsync(draft);
+        }
+
+        var series = await _series.GetWithGamesAsync(seriesId);
+        series?.RemettrePasPrets();
+        series?.Touch();
+        _drafts.Remove(draft);
+        return await EnregistrerAsync(draft);
+    }
+
+    /// <summary>La dernière draft de la Série si elle est en cours, sinon le refus à renvoyer (aucune draft, ou terminée).</summary>
+    private async Task<(DraftChampions? Draft, CommandResult<bool>? Refus)> ChargerDraftDeResetAsync(int seriesId)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return (null, CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série."));
+        if (draft.EstTerminee)
+            return (null, CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro."));
+        return (draft, null);
+    }
+
+    private async Task<CommandResult<bool>> EnregistrerAsync(DraftChampions draft) =>
+        await _drafts.TrySaveChangesAsync()
+            ? CommandResult<bool>.Ok(true)
+            : CommandResult<bool>.Conflict("La draft vient d'être modifiée par une autre commande : réessayez.");
+
+    /// <summary>
+    /// Par un Lien capitaine : met la draft en pause tout de suite, sans accord. Une pause par Capitaine
+    /// et par draft, 5 minutes au plus ; le temps restant du tour est gelé.
+    /// </summary>
+    public Task<CommandResult<DraftChampions>> MettreEnPauseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            if (draft.EnPause)
+                return "La Draft de champions est déjà en pause.";
+            if (draft.EstTerminee)
+                return "La Draft de champions de cette game est terminée.";
+            if (!draft.PauseDisponible(equipe))
+                return "Vous avez déjà utilisé votre pause de cette draft.";
+            draft.MettreEnPause(equipe, Maintenant());
+            return null;
+        });
+
+    /// <summary>Par un Lien capitaine : demande la reprise anticipée, que l'autre Capitaine accepte ou refuse sous 60 secondes.</summary>
+    public Task<CommandResult<DraftChampions>> DemanderRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            if (!draft.EnPause)
+                return "La Draft de champions n'est pas en pause.";
+            if (draft.RepriseDemandeeParEquipe != null)
+                return "Une demande de reprise est déjà en cours.";
+            draft.DemanderReprise(equipe, Maintenant());
+            return null;
+        });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : accepte la demande, la draft reprend avec le temps restant.</summary>
+    public Task<CommandResult<DraftChampions>> AccepterRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = RepriseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            draft.ReprendreAnticipe(Maintenant());
+            return null;
+        });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : refuse la demande, la pause continue.</summary>
+    public Task<CommandResult<DraftChampions>> RefuserRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = RepriseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            draft.RefuserReprise();
+            return null;
+        });
+
+    private static string? RepriseARepondre(DraftChampions draft, string equipe)
+    {
+        if (draft.RepriseDemandeeParEquipe == null)
+            return "Aucune demande de reprise n'est en cours.";
+        if (draft.RepriseDemandeeParEquipe == equipe)
+            return "La demande de reprise attend la réponse de l'autre Capitaine.";
+        return null;
+    }
+
+    /// <summary>Charge la dernière draft de la Série à jour, applique <paramref name="action"/> (un refus, ou null) et l'enregistre.</summary>
+    private async Task<CommandResult<DraftChampions>> AppliquerAsync(int seriesId, Func<DraftChampions, string?> action)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.");
+
+        draft.Actualiser(Maintenant());
+        var refus = action(draft);
+        if (refus != null)
+        {
+            await _drafts.TrySaveChangesAsync();
+            return CommandResult<DraftChampions>.Conflict(refus);
+        }
+        if (!await _drafts.TrySaveChangesAsync())
+            return CommandResult<DraftChampions>.Conflict("La Draft de champions vient de changer : rechargez-la.");
+
+        return CommandResult<DraftChampions>.Ok(draft);
+    }
+
+    /// <summary>Applique la reprise automatique et la chute des demandes sans réponse, et les enregistre.</summary>
+    private async Task ActualiserAsync(DraftChampions draft)
+    {
+        if (draft.Actualiser(Maintenant()))
+            await _drafts.TrySaveChangesAsync();
+    }
+
+    private DateTime Maintenant() => _clock.MaintenantUtc();
 }

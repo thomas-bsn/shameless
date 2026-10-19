@@ -49,7 +49,7 @@ public class CustomGameRepository : ICustomGameRepository
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
-                .ThenInclude(p => p.Player)
+                .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .FirstOrDefaultAsync(g => g.Id == id);
     }
 
@@ -74,7 +74,7 @@ public class CustomGameRepository : ICustomGameRepository
     
         return await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Where(g => g.PlayedAt >= startOfMonth && g.PlayedAt < startOfNextMonth)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
@@ -84,7 +84,7 @@ public class CustomGameRepository : ICustomGameRepository
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Include(g => g.Series)
             .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
             .Where(g => g.Status == GameStatuses.Completed
@@ -100,7 +100,7 @@ public class CustomGameRepository : ICustomGameRepository
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Where(g => g.Status == GameStatuses.Pending)
             .OrderByDescending(g => g.PlayedAt)
             .ToListAsync();
@@ -110,7 +110,7 @@ public class CustomGameRepository : ICustomGameRepository
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Where(g => g.SeriesId == seriesId)
             .OrderBy(g => g.Id)
             .ToListAsync();
@@ -125,7 +125,7 @@ public class CustomGameRepository : ICustomGameRepository
     public async Task<List<CustomGame>> GetCompletedGamesOfPlayerAsync(int playerId) =>
         await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Include(g => g.Series)
             .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
             .Where(g => g.Status == GameStatuses.Completed && g.Participants.Any(p => p.PlayerId == playerId))
@@ -136,7 +136,7 @@ public class CustomGameRepository : ICustomGameRepository
         await _db.CustomGames
             .AsNoTracking()
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Where(g => g.Status == GameStatuses.Completed)
             .AsSplitQuery()
             .ToListAsync();
@@ -145,7 +145,7 @@ public class CustomGameRepository : ICustomGameRepository
     {
         return await _db.CustomGames
             .Include(g => g.Participants)
-            .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Include(g => g.Series)
             .ThenInclude(s => s!.Players) // rôle de l'Autorole, repli de la note de performance
             .Where(g => g.PlayedAt.Year == year

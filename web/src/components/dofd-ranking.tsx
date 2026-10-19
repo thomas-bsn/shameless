@@ -1,5 +1,6 @@
 import type { Schemas } from "@/api/client";
-import { Initiale, Marche, PlayerLink } from "@/components/podium";
+import { AvatarJoueur } from "@/components/avatar-joueur";
+import { Marche, PlayerLink } from "@/components/podium";
 import { Card } from "@/components/ui/card";
 import { placeText } from "@/lib/cost";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ function MarcheDofd({ ligne, exAequo }: { ligne: Ligne; exAequo: boolean }) {
     <Marche label={`${libelle} : ${ligne.prenom}`} premier={premier} bordure="border-amber-700/70 ring-amber-700/40">
       <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{libelle}</span>
       <Bouse className={premier ? "size-16" : "size-12"} />
-      <Initiale prenom={ligne.prenom} className="size-10 text-lg" />
+      <AvatarJoueur prenom={ligne.prenom} avatarUrl={ligne.avatarUrl} className="size-10 text-lg" />
       <PlayerLink playerId={ligne.playerId} prenom={ligne.prenom} className="max-w-full truncate" />
       <span className={cn("font-mono font-bold tabular-nums", premier ? "text-3xl" : "text-2xl")}>{ligne.dofd}</span>
       <span className="text-xs text-muted-foreground">DOFD</span>
@@ -65,7 +66,7 @@ export function DofdRanking({ joueurs }: { joueurs: Ligne[] }) {
                   </span>
                   {exAequo(ligne) && <span className="text-[10px] text-muted-foreground">ex æquo</span>}
                 </span>
-                <Initiale prenom={ligne.prenom} className="size-8 text-sm" />
+                <AvatarJoueur prenom={ligne.prenom} avatarUrl={ligne.avatarUrl} className="size-8 text-sm" />
                 <PlayerLink playerId={ligne.playerId} prenom={ligne.prenom} className="flex-1 truncate" />
                 <span className="font-mono font-semibold tabular-nums">{ligne.dofd} DOFD</span>
               </li>

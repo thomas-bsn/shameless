@@ -12,6 +12,7 @@ const participant = (playerId: number, cost: number, overrides: Partial<Particip
   playerId,
   prenom: `Joueur${playerId}`,
   riotId: `J${playerId}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost,
@@ -63,6 +64,11 @@ const etapes = () => within(screen.getByRole("list", { name: "Étapes du Picker"
 
 // jsdom n'a pas ResizeObserver, dont les cases à cocher de Radix ont besoin dans un formulaire.
 beforeEach(() => {
+  // Ni ces API, que le menu déroulant de Radix appelle.
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.setPointerCapture ??= () => {};
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -179,6 +185,67 @@ describe("Picker : Roulette", () => {
   });
 });
 
+/** Après une Roulette, « Garder ces équipes » mène à la désignation des deux Capitaines. */
+async function designerLesCapitaines(a = "Joueur2", b = "Joueur7") {
+  await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+  await userEvent.click(screen.getByRole("combobox", { name: "Capitaine A" }));
+  await userEvent.click(await screen.findByRole("option", { name: a }));
+  await userEvent.click(screen.getByRole("combobox", { name: "Capitaine B" }));
+  await userEvent.click(await screen.findByRole("option", { name: b }));
+  await userEvent.click(screen.getByRole("button", { name: "Valider les capitaines" }));
+}
+
+describe("Picker : Capitaines après une Roulette", () => {
+  function mockRoulette() {
+    let creation: Record<string, unknown> | null = null;
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /soirees/open": soireeAvec(tirage()),
+      "GET /players": joueurs,
+      "POST /soirees/open/picker/validate": async (req) => {
+        creation = await req.json();
+        return json({ seriesId: 5 });
+      },
+    });
+    return () => creation;
+  }
+
+  it("propose de désigner un Capitaine par Équipe, parmi les joueurs de cette Équipe", async () => {
+    stubMotion(true);
+    mockRoulette();
+    renderApp("/soiree/picker");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+
+    expect(etapes().getByText("Capitaines").closest("li")).toHaveAttribute("aria-current", "step");
+    await userEvent.click(screen.getByRole("combobox", { name: "Capitaine A" }));
+    const options = within(await screen.findByRole("listbox")).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["Joueur1", "Joueur2", "Joueur3", "Joueur4", "Joueur5"]);
+  });
+
+  it("n'avance pas tant que les deux Capitaines ne sont pas désignés", async () => {
+    stubMotion(true);
+    mockRoulette();
+    renderApp("/soiree/picker");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+
+    expect(screen.getByRole("button", { name: "Valider les capitaines" })).toBeDisabled();
+  });
+
+  it("envoie les deux Capitaines à la création de la série", async () => {
+    stubMotion(true);
+    const creation = mockRoulette();
+    renderApp("/soiree/picker");
+    await designerLesCapitaines("Joueur2", "Joueur7");
+    await userEvent.click(screen.getByRole("button", { name: "Passer" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Créer la série" }));
+
+    await vi.waitFor(() => expect(creation()).toMatchObject({ capitaineA: 2, capitaineB: 7 }));
+  });
+});
+
 describe("Picker : Autorole puis Série", () => {
   function mockEquipes() {
     let creation: unknown = null;
@@ -200,7 +267,7 @@ describe("Picker : Autorole puis Série", () => {
     mockEquipes();
     renderApp("/soiree/picker");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+    await designerLesCapitaines();
     expect(etapes().getByText("Autorole").closest("li")).toHaveAttribute("aria-current", "step");
     await userEvent.click(screen.getByRole("button", { name: "Passer" }));
 
@@ -213,7 +280,7 @@ describe("Picker : Autorole puis Série", () => {
     const { fetchMock } = mockEquipes();
     renderApp("/soiree/picker");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+    await designerLesCapitaines();
     await userEvent.click(screen.getByRole("button", { name: "Lancer l'Autorole" }));
 
     await vi.waitFor(() => expect(fetchMock.mock.calls.some(([r]) => r.url.endsWith("/picker/autorole"))).toBe(true));
@@ -224,7 +291,7 @@ describe("Picker : Autorole puis Série", () => {
     stubMotion(true);
     const { creation } = mockEquipes();
     renderApp("/soiree/picker");
-    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+    await designerLesCapitaines();
     await userEvent.click(screen.getByRole("button", { name: "Passer" }));
 
     await userEvent.click(screen.getByRole("radio", { name: "BO5" }));
@@ -238,7 +305,7 @@ describe("Picker : Autorole puis Série", () => {
     stubMotion(true);
     mockEquipes();
     const { router } = renderApp("/soiree/picker");
-    await userEvent.click(await screen.findByRole("button", { name: "Garder ces équipes" }));
+    await designerLesCapitaines();
     await userEvent.click(screen.getByRole("button", { name: "Passer" }));
 
     await userEvent.click(screen.getByRole("button", { name: "Créer la série" }));

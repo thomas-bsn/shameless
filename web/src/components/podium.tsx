@@ -3,15 +3,6 @@ import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-/** L'initiale d'un Joueur dans un rond, décorative. */
-export function Initiale({ prenom, className }: { prenom: string; className: string }) {
-  return (
-    <span aria-hidden className={cn("flex items-center justify-center rounded-full bg-muted font-semibold uppercase", className)}>
-      {prenom.charAt(0)}
-    </span>
-  );
-}
-
 /** Le prénom d'un Joueur, lien vers sa fiche. */
 export function PlayerLink({ playerId, prenom, className }: { playerId: number; prenom: string; className?: string }) {
   return (

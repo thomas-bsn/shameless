@@ -1331,72 +1331,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/companion/{code}/debut": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    code: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["DebutDeGameResponse"];
-                        "application/json": components["schemas"]["DebutDeGameResponse"];
-                        "text/json": components["schemas"]["DebutDeGameResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/series/{id}/code-companion": {
         parameters: {
             query?: never;
@@ -1616,6 +1550,154 @@ export interface paths {
                 };
                 /** @description Bad Request */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/reset/reponse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RepondreResetRequest"];
+                    "text/json": components["schemas"]["RepondreResetRequest"];
+                    "application/*+json": components["schemas"]["RepondreResetRequest"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2003,6 +2085,306 @@ export interface paths {
                 };
                 /** @description Service Unavailable */
                 503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/reprise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/reprise/acceptation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/draft-champions/reprise/refus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DraftChampionsResponse"];
+                        "application/json": components["schemas"]["DraftChampionsResponse"];
+                        "text/json": components["schemas"]["DraftChampionsResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2775,6 +3157,87 @@ export interface paths {
             };
         };
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/liens/{lien}/pret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DefinirPretRequest"];
+                    "text/json": components["schemas"]["DefinirPretRequest"];
+                    "application/*+json": components["schemas"]["DefinirPretRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AccesParLienResponse"];
+                        "application/json": components["schemas"]["AccesParLienResponse"];
+                        "text/json": components["schemas"]["AccesParLienResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -4528,72 +4991,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/series/{id}/debut": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["DebutDeGameResponse"];
-                        "application/json": components["schemas"]["DebutDeGameResponse"];
-                        "text/json": components["schemas"]["DebutDeGameResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Erreur */
-                default: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/series/{id}/replacements": {
         parameters: {
             query?: never;
@@ -5691,6 +6088,8 @@ export interface components {
             seriesId: number;
             portee: components["schemas"]["PorteeLien"];
             equipe: null | string;
+            pret: boolean;
+            adversairePret: boolean;
         };
         ActionDraftResponse: {
             /** Format: int32 */
@@ -5891,13 +6290,8 @@ export interface components {
         };
         /** @enum {unknown} */
         CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
-        DebutDeGameResponse: {
-            /** Format: int32 */
-            seriesId: number;
-            /** Format: int32 */
-            gameId: number;
-            /** Format: date-time */
-            startedAt: string;
+        DefinirPretRequest: {
+            pret: boolean;
         };
         /** @enum {unknown} */
         DesignationCapitaine: "Manuel" | "AuHasard" | "PlusGrosCost";
@@ -5934,6 +6328,11 @@ export interface components {
             /** Format: int32 */
             capitaineB: null | number;
             championsDejaJoues: null | string[];
+            resetDemande: null | components["schemas"]["ResetDemandeResponse"];
+            pause: null | components["schemas"]["PauseResponse"];
+            repriseDemandee: null | components["schemas"]["RepriseDemandeeResponse"];
+            pauseDisponibleA: boolean;
+            pauseDisponibleB: boolean;
         };
         DraftPickResponse: {
             /** Format: int32 */
@@ -6083,6 +6482,7 @@ export interface components {
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
             champsCorriges: string[];
+            avatarUrl: null | string;
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -6114,6 +6514,7 @@ export interface components {
             /** Format: int32 */
             playerId: number;
             role: null | components["schemas"]["Role"];
+            avatarUrl: null | string;
         };
         GameRecapResponse: {
             /** Format: int32 */
@@ -6179,6 +6580,7 @@ export interface components {
             playerId: number;
             prenom: string;
             correct: null | boolean;
+            avatarUrl: null | string;
         };
         JsonElement: unknown;
         LancerDraftRequest: {
@@ -6201,6 +6603,10 @@ export interface components {
             capitaineARejointLe: null | string;
             /** Format: date-time */
             capitaineBRejointLe: null | string;
+            /** Format: date-time */
+            capitaineAPretLe: null | string;
+            /** Format: date-time */
+            capitaineBPretLe: null | string;
         };
         LigneClassement5v5: {
             /** Format: int32 */
@@ -6215,6 +6621,7 @@ export interface components {
             defaites: number;
             /** Format: double */
             winrate: null | number;
+            avatarUrl: null | string;
         };
         LigneClassementSoloQ: {
             /** Format: int32 */
@@ -6226,6 +6633,7 @@ export interface components {
             division: null | number;
             /** Format: int32 */
             lp: null | number;
+            avatarUrl: null | string;
         };
         LigneHallDeLaHonte: {
             /** Format: int32 */
@@ -6236,6 +6644,7 @@ export interface components {
             riotId: string;
             /** Format: int32 */
             dofd: number;
+            avatarUrl: null | string;
         };
         LinkPlayerRequest: {
             /** Format: int32 */
@@ -6255,6 +6664,15 @@ export interface components {
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
+        };
+        PauseResponse: {
+            parEquipe: string;
+            /** Format: date-time */
+            commenceLe: string;
+            /** Format: date-time */
+            finLe: string;
+            /** Format: int32 */
+            tempsRestantTourMs: number;
         };
         PeakSaisonsResponse: {
             saisons: string[];
@@ -6365,6 +6783,7 @@ export interface components {
             peakLp: number;
             /** Format: double */
             currentCost: number;
+            avatarUrl: null | string;
             /** Format: double */
             costEvolution: null | number;
         };
@@ -6493,6 +6912,21 @@ export interface components {
             replacedPlayerId: number;
             /** Format: int32 */
             replacementPlayerId: number;
+        };
+        RepondreResetRequest: {
+            accepte: boolean;
+        };
+        RepriseDemandeeResponse: {
+            parEquipe: string;
+            /** Format: date-time */
+            expireLe: string;
+        };
+        ResetDemandeResponse: {
+            equipe: string;
+            /** Format: date-time */
+            demandeLe: string;
+            /** Format: date-time */
+            expireLe: string;
         };
         ResultatActualisationJoueur: {
             /** Format: int32 */
@@ -6783,6 +7217,10 @@ export interface components {
             format: number;
             /** @default false */
             fearless: boolean;
+            /** Format: int32 */
+            capitaineA: null | number;
+            /** Format: int32 */
+            capitaineB: null | number;
         };
         VoixDuJoueur: {
             /** Format: int32 */
@@ -6790,6 +7228,7 @@ export interface components {
             prenom: string;
             /** Format: int32 */
             voix: number;
+            avatarUrl: null | string;
         };
         VoterRequest: {
             votantDiscordId: string;

@@ -136,6 +136,21 @@ public sealed class SeriesService
         if (!series.CapitainesOntRejoint)
             return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
 
+        var game = NouvelleGame(series);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+    }
+
+    /// <summary>
+    /// La prochaine game de la Série, avec sa composition courante et son Side automatique : celui de
+    /// l'Équipe A est tiré à pile ou face pour la première game, puis l'inverse de celui de la précédente.
+    /// Ajoutée au contexte, non enregistrée.
+    /// </summary>
+    private CustomGame NouvelleGame(BestOfSeries series)
+    {
         var side = Sides.ProchainDeLEquipeA(series.Games.LastOrDefault()?.TeamASide, _random);
 
         var now = _clock.GetUtcNow().UtcDateTime;
@@ -158,43 +173,56 @@ public sealed class SeriesService
                 .ToList()
         };
         _games.Add(game);
-        series.Touch();
-        if (!await _series.TrySaveChangesAsync())
-            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
-
-        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+        return game;
     }
 
     /// <summary>
-    /// Le Début de la Game (ADR 0017) : le signal « partie lancée » du Companion, ou de l'organisateur à
-    /// la main. Il renseigne <c>StartedAt</c>, clôt les pronostics et émet <c>game_started</c>. Idempotent :
-    /// un second signal répond le même début sans rien ré-émettre. Refusé sans game en attente.
+    /// Un Capitaine se met « prêt » pour la game à venir, ou se remet « pas prêt » (le Lien capitaine fait
+    /// foi de son Équipe). Il doit avoir rejoint et être le Capitaine de son Équipe. Quand les deux
+    /// Capitaines sont prêts, la Game est créée et sa Draft de champions ouverte dans la même
+    /// transaction : aucun autre clic. Refusé une fois la game créée.
     /// </summary>
-    public async Task<CommandResult<CustomGame>> SignalerDebutAsync(int seriesId)
+    public async Task<CommandResult<EtatDuPret>> DefinirPretAsync(string secret, bool pret)
     {
-        var series = await _series.GetWithGamesAsync(seriesId);
+        var lien = await _series.GetLienAsync(secret);
+        if (lien is not { Portee: PorteeLien.Capitaine, Equipe: { } equipe })
+            return CommandResult<EtatDuPret>.NotFound("Ce lien n'est pas un Lien capitaine.");
+
+        var series = await _series.GetWithGamesAsync(lien.SeriesId);
         if (series == null)
-            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
+            return CommandResult<EtatDuPret>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
-            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : aucune partie ne peut commencer.");
+            return CommandResult<EtatDuPret>.Conflict("Cette Série est terminée : plus personne n'a à être prêt.");
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending && g.DraftChampions != null))
+            return CommandResult<EtatDuPret>.Conflict("La draft a déjà démarré : on ne change plus d'avis.");
 
-        var game = series.Games.SingleOrDefault(g => g.Status == GameStatuses.Pending);
-        if (game == null)
-            return CommandResult<CustomGame>.Conflict(
-                "Aucune game de cette Série n'est en attente : lancez la draft avant de signaler le début de la partie.");
-        if (game.StartedAt != null)
-            return CommandResult<CustomGame>.Ok(game);
+        lien = series.LienCapitaine(equipe);
+        if (pret)
+        {
+            if (lien.RejointLe == null)
+                return CommandResult<EtatDuPret>.Conflict("Ouvre ton Lien capitaine pour rejoindre la Série avant d'être prêt.");
+            if (series.CapitaineOf(equipe) == null)
+                return CommandResult<EtatDuPret>.Conflict("Ton Équipe n'a pas de Capitaine : l'organisateur le désigne dans le Picker.");
+        }
 
-        // Arrondi à la microseconde, la précision de PostgreSQL : le début répondu au premier signal est
-        // celui que relira le second.
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        game.StartedAt = maintenant.AddTicks(-(maintenant.Ticks % 10));
-        // Le début de la Game : pronostics clos, fenêtre de présence du bot ouverte.
-        _evenements.GameStarted(game);
+        var maintenant = _clock.MaintenantUtc();
+        lien.DefinirPret(pret, maintenant);
+        if (series.CapitainesSontPrets)
+        {
+            // Les deux Capitaines sont là : la Game et sa Draft de champions démarrent ensemble.
+            // Après un Reset accepté, la Game est restée : on lui rouvre sa draft au lieu d'en créer une autre.
+            var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending) ?? NouvelleGame(series);
+            game.DraftChampions = new DraftChampions
+            {
+                TourCommenceLe = maintenant
+            };
+        }
+
+        series.Touch();
         if (!await _series.TrySaveChangesAsync())
-            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+            return CommandResult<EtatDuPret>.Conflict(ModifieeEntreTemps);
 
-        return CommandResult<CustomGame>.Ok(game);
+        return CommandResult<EtatDuPret>.Ok(EtatDuPret.De(series, equipe));
     }
 
     /// <summary>
@@ -231,16 +259,16 @@ public sealed class SeriesService
     {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
-        var maintenant = _clock.GetUtcNow().UtcDateTime;
-        game.CompletedAt = maintenant.AddTicks(-(maintenant.Ticks % 10)); // microseconde, comme PostgreSQL
+        game.CompletedAt = _clock.MaintenantUtc();
         if (game.StartedAt == null)
         {
-            // Résultat sans signal de début : la partie a forcément commencé. Le bot reçoit toujours les deux
-            // événements, game_started d'abord ; un début déjà signalé n'est jamais écrasé ni ré-émis.
+            // Résultat avant la fin de la draft : la partie a forcément commencé. Le bot reçoit toujours les deux
+            // événements, game_started d'abord ; un début déjà donné n'est jamais écrasé ni ré-émis.
             game.StartedAt = game.CompletedAt;
             _evenements.GameStarted(game);
         }
         series?.ApplyResults(series.Games);
+        series?.RemettrePasPrets();
         series?.Touch();
         _evenements.GameCompleted(game);
         if (!await _games.TrySaveChangesAsync())

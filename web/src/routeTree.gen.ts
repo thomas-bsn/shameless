@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConnecteRouteImport } from './routes/_connecte'
 import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as TutorielRouteImport } from './routes/tutoriel'
 import { Route as ConnecteAdministrationRouteImport } from './routes/_connecte/administration'
 import { Route as ConnecteClassementsRouteImport } from './routes/_connecte/classements'
 import { Route as ConnecteClipsRouteImport } from './routes/_connecte/clips'
@@ -41,6 +42,11 @@ const ConnecteRoute = ConnecteRouteImport.update({
 const ConnexionRoute = ConnexionRouteImport.update({
   id: '/connexion',
   path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorielRoute = TutorielRouteImport.update({
+  id: '/tutoriel',
+  path: '/tutoriel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnecteAdministrationRoute = ConnecteAdministrationRouteImport.update({
@@ -129,6 +135,7 @@ const ConnecteSeriesSeriesIdPreparationRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/connexion': typeof ConnexionRoute
+  '/tutoriel': typeof TutorielRoute
   '/administration': typeof ConnecteAdministrationRoute
   '/classements': typeof ConnecteClassementsRoute
   '/clips': typeof ConnecteClipsRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connexion': typeof ConnexionRoute
+  '/tutoriel': typeof TutorielRoute
   '/administration': typeof ConnecteAdministrationRoute
   '/classements': typeof ConnecteClassementsRoute
   '/clips': typeof ConnecteClipsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_connecte': typeof ConnecteRouteWithChildren
   '/connexion': typeof ConnexionRoute
+  '/tutoriel': typeof TutorielRoute
   '/_connecte/administration': typeof ConnecteAdministrationRoute
   '/_connecte/classements': typeof ConnecteClassementsRoute
   '/_connecte/clips': typeof ConnecteClipsRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/connexion'
+    | '/tutoriel'
     | '/administration'
     | '/classements'
     | '/clips'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/connexion'
+    | '/tutoriel'
     | '/administration'
     | '/classements'
     | '/clips'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_connecte'
     | '/connexion'
+    | '/tutoriel'
     | '/_connecte/administration'
     | '/_connecte/classements'
     | '/_connecte/clips'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConnecteRoute: typeof ConnecteRouteWithChildren
   ConnexionRoute: typeof ConnexionRoute
+  TutorielRoute: typeof TutorielRoute
   DraftCapitaineLienRoute: typeof DraftCapitaineLienRoute
   DraftSpectateurLienRoute: typeof DraftSpectateurLienRoute
 }
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/connexion'
       fullPath: '/connexion'
       preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tutoriel': {
+      id: '/tutoriel'
+      path: '/tutoriel'
+      fullPath: '/tutoriel'
+      preLoaderRoute: typeof TutorielRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_connecte/administration': {
@@ -442,6 +462,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConnecteRoute: ConnecteRouteWithChildren,
   ConnexionRoute: ConnexionRoute,
+  TutorielRoute: TutorielRoute,
   DraftCapitaineLienRoute: DraftCapitaineLienRoute,
   DraftSpectateurLienRoute: DraftSpectateurLienRoute,
 }

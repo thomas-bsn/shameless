@@ -27,11 +27,141 @@ public class DraftChampions
     /// <summary>L'échéance du tour courant est atteinte à <paramref name="maintenant"/>.</summary>
     public bool EcheanceAtteinte(DateTime maintenant) => maintenant >= Echeance;
 
+    /// <summary>Durée maximale d'une pause : passé ce délai, la draft reprend toute seule.</summary>
+    public static readonly TimeSpan DureeMaxPause = TimeSpan.FromMinutes(5);
+
+    /// <summary>Délai de réponse à une demande de reprise anticipée : passé ce délai, elle tombe.</summary>
+    public static readonly TimeSpan DelaiDemandeReprise = TimeSpan.FromSeconds(60);
+
+    /// <summary>Quand la pause en cours a commencé ; null hors pause.</summary>
+    public DateTime? PauseCommenceLe { get; set; }
+
+    /// <summary>L'Équipe dont le Capitaine a mis la draft en pause ; null hors pause.</summary>
+    public string? PauseParEquipe { get; set; }
+
+    /// <summary>Le temps qui restait au tour courant quand la pause a commencé ; null hors pause.</summary>
+    public TimeSpan? TempsRestantAvantPause { get; set; }
+
+    /// <summary>Chaque Capitaine a droit à une seule pause par draft.</summary>
+    public bool PauseUtiliseeA { get; set; }
+    public bool PauseUtiliseeB { get; set; }
+
+    /// <summary>L'Équipe dont le Capitaine demande la reprise anticipée ; null sans demande en cours.</summary>
+    public string? RepriseDemandeeParEquipe { get; set; }
+
+    public DateTime? RepriseDemandeeLe { get; set; }
+
+    public bool EnPause => PauseCommenceLe != null;
+
+    public bool PauseDisponible(string equipe) => !(equipe == Equipes.A ? PauseUtiliseeA : PauseUtiliseeB);
+
+    /// <summary>Quand la pause en cours finit toute seule ; null hors pause.</summary>
+    public DateTime? PauseFinLe => PauseCommenceLe + DureeMaxPause;
+
+    /// <summary>Quand la demande de reprise en cours tombe ; null sans demande.</summary>
+    public DateTime? RepriseExpireLe => RepriseDemandeeLe + DelaiDemandeReprise;
+
+    /// <summary>
+    /// Met l'état de la pause à <paramref name="maintenant"/> : la demande de reprise sans réponse
+    /// tombe, et la pause de 5 minutes reprend la draft. Vrai si l'état a changé.
+    /// </summary>
+    public bool Actualiser(DateTime maintenant)
+    {
+        var change = false;
+        if (RepriseDemandeeLe != null && maintenant >= RepriseExpireLe)
+        {
+            EffacerDemandeReprise();
+            change = true;
+        }
+        if (EnPause && maintenant >= PauseFinLe)
+        {
+            Reprendre(PauseFinLe!.Value);
+            change = true;
+        }
+        if (change) Version++;
+        return change;
+    }
+
+    /// <summary>Met la draft en pause : le temps restant du tour est gelé. Une pause par Capitaine.</summary>
+    public void MettreEnPause(string equipe, DateTime maintenant)
+    {
+        PauseCommenceLe = maintenant;
+        PauseParEquipe = equipe;
+        TempsRestantAvantPause = Echeance > maintenant ? Echeance - maintenant : TimeSpan.Zero;
+        if (equipe == Equipes.A) PauseUtiliseeA = true; else PauseUtiliseeB = true;
+        Version++;
+    }
+
+    public void DemanderReprise(string equipe, DateTime maintenant)
+    {
+        RepriseDemandeeParEquipe = equipe;
+        RepriseDemandeeLe = maintenant;
+        Version++;
+    }
+
+    public void RefuserReprise()
+    {
+        EffacerDemandeReprise();
+        Version++;
+    }
+
+    public void ReprendreAnticipe(DateTime maintenant)
+    {
+        Reprendre(maintenant);
+        Version++;
+    }
+
+    /// <summary>Rétablit le tour avec le temps restant gelé, à partir de <paramref name="quand"/>.</summary>
+    private void Reprendre(DateTime quand)
+    {
+        TourCommenceLe = quand + TempsRestantAvantPause!.Value - DelaiParTour;
+        PauseCommenceLe = null;
+        PauseParEquipe = null;
+        TempsRestantAvantPause = null;
+        EffacerDemandeReprise();
+    }
+
+    private void EffacerDemandeReprise()
+    {
+        RepriseDemandeeParEquipe = null;
+        RepriseDemandeeLe = null;
+    }
+
     /// <summary>
     /// Jeton de concurrence : chaque action l'incrémente ; de deux actions simultanées sur le même
     /// tour, une seule est enregistrée.
     /// </summary>
     public int Version { get; set; }
+
+    /// <summary>L'Équipe dont le Capitaine a demandé un Reset de la draft ; null sans demande.</summary>
+    public string? ResetDemandeParEquipe { get; set; }
+
+    /// <summary>Quand le Reset a été demandé ; null sans demande.</summary>
+    public DateTime? ResetDemandeLe { get; set; }
+
+    /// <summary>Le délai dont dispose l'autre Capitaine pour répondre à une demande de Reset.</summary>
+    public static readonly TimeSpan DelaiReponseReset = TimeSpan.FromSeconds(60);
+
+    /// <summary>Une demande de Reset attend la réponse de l'autre Capitaine à <paramref name="maintenant"/>.</summary>
+    public bool ResetEnAttente(DateTime maintenant) =>
+        ResetDemandeLe is { } le && maintenant < le + DelaiReponseReset;
+
+    /// <summary>Quand la demande de Reset expire ; null sans demande.</summary>
+    public DateTime? ResetExpireLe => ResetDemandeLe + DelaiReponseReset;
+
+    public void DemanderReset(string equipe, DateTime maintenant)
+    {
+        ResetDemandeParEquipe = equipe;
+        ResetDemandeLe = maintenant;
+        Version++;
+    }
+
+    public void AnnulerDemandeReset()
+    {
+        ResetDemandeParEquipe = null;
+        ResetDemandeLe = null;
+        Version++;
+    }
 
     public ICollection<ActionDraftChampions> Actions { get; set; } = new List<ActionDraftChampions>();
 

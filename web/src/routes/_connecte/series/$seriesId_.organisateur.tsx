@@ -120,7 +120,6 @@ function GamePanel({ series }: { series: Series }) {
   const number = series.games.length + (pending ? 0 : 1);
   const play = $api.useMutation("post", "/series/{id}/games", { onSuccess: refresh });
   const result = $api.useMutation("put", "/games/{id}/result", { onSuccess: refresh });
-  const debut = $api.useMutation("post", "/series/{id}/debut", { onSuccess: refresh });
 
   function onPlay(event: FormEvent) {
     event.preventDefault();
@@ -146,21 +145,9 @@ function GamePanel({ series }: { series: Series }) {
                   {new Date(pending.startedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.
                 </p>
               ) : (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    La partie n'est pas encore lancée : le Companion le signale tout seul. Secours, sans Companion :
-                  </p>
-                  <div>
-                    <Button
-                      variant="outline"
-                      disabled={debut.isPending}
-                      onClick={() => debut.mutate({ params: { path: { id: series.seriesId } } })}
-                    >
-                      Signaler le début de la partie
-                    </Button>
-                  </div>
-                  {debut.isError && <ErrorAlert error={debut.error} />}
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  La draft de champions est en cours : la partie commence à son dernier pick.
+                </p>
               )}
               {pending.rapportEnRevue && (
                 <p className="text-sm text-muted-foreground">

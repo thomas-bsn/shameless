@@ -11,6 +11,7 @@ const ligne = (rang: number, playerId: number, prenom: string, dofd: number) => 
   prenom,
   riotId: `${prenom}#EUW`,
   dofd,
+  avatarUrl: null,
 });
 
 const hall: Schemas["HallDeLaHonte"] = {

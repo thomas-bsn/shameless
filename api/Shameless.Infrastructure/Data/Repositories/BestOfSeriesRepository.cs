@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Shameless.Application.Entities;
 using Shameless.Application.Interfaces;
 
@@ -32,10 +32,10 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
         _db.BestOfSeries.Include(s => s.Liens).Include(s => s.Players).SingleOrDefaultAsync(s => s.Id == id);
 
     public Task<LienAcces?> GetLienAsync(string secret) =>
-        _db.LiensAcces.Include(l => l.Series).SingleOrDefaultAsync(l => l.Secret == secret);
+        _db.LiensAcces.Include(l => l.Series).ThenInclude(s => s.Liens).SingleOrDefaultAsync(l => l.Secret == secret);
 
     public Task<BestOfSeries?> GetByCodeCompanionAsync(string code) =>
-        _db.BestOfSeries.Include(s => s.Players).ThenInclude(p => p.Player)
+        _db.BestOfSeries.Include(s => s.Players).ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .SingleOrDefaultAsync(s => s.CodeCompanion == code);
 
     /// <summary>
@@ -44,9 +44,9 @@ public class BestOfSeriesRepository : IBestOfSeriesRepository
     /// </summary>
     private IQueryable<BestOfSeries> WithGames() =>
         _db.BestOfSeries
-            .Include(s => s.Players).ThenInclude(p => p.Player)
+            .Include(s => s.Players).ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Include(s => s.Liens)
-            .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.Participants).ThenInclude(p => p.Player)
+            .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.Participants).ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.DraftChampions).ThenInclude(d => d!.Actions)
             .Include(s => s.Games.OrderBy(g => g.Id)).ThenInclude(g => g.Rapports)
             .AsSplitQuery();

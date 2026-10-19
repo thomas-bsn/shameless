@@ -65,6 +65,13 @@ public sealed class LiensAccesService
         return await SaveAsync(series);
     }
 
+    /// <summary>L'état du « prêt » du lien : celui du Capitaine et de son adversaire, rien pour un Lien spectateur.</summary>
+    public async Task<EtatDuPret> EtatDuPretAsync(string secret)
+    {
+        var lien = await _series.GetLienAsync(secret);
+        return lien is { Portee: PorteeLien.Capitaine, Equipe: { } equipe } ? EtatDuPret.De(lien.Series, equipe) : EtatDuPret.Aucun;
+    }
+
     /// <summary>
     /// L'accès que donne ce lien, ou null s'il n'en donne aucun : lien inconnu ou renouvelé.
     /// </summary>

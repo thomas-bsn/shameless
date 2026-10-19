@@ -15,7 +15,9 @@ public sealed record LiensSerieResponse(
     EchecDmResponse? EchecDmA,
     EchecDmResponse? EchecDmB,
     DateTime? CapitaineARejointLe,
-    DateTime? CapitaineBRejointLe)
+    DateTime? CapitaineBRejointLe,
+    DateTime? CapitaineAPretLe,
+    DateTime? CapitaineBPretLe)
 {
     public static LiensSerieResponse From(BestOfSeries series) => new(
         SeriesId: series.Id,
@@ -25,7 +27,9 @@ public sealed record LiensSerieResponse(
         EchecDmA: EchecDmResponse.From(series.LienEnEchecDm(Equipes.A)),
         EchecDmB: EchecDmResponse.From(series.LienEnEchecDm(Equipes.B)),
         CapitaineARejointLe: series.LienCapitaine(Equipes.A).RejointLe,
-        CapitaineBRejointLe: series.LienCapitaine(Equipes.B).RejointLe);
+        CapitaineBRejointLe: series.LienCapitaine(Equipes.B).RejointLe,
+        CapitaineAPretLe: series.LienCapitaine(Equipes.A).PretLe,
+        CapitaineBPretLe: series.LienCapitaine(Equipes.B).PretLe);
 }
 
 /// <summary>Un DM de Lien capitaine non parti : <c>Raison</c> vaut <c>compte_non_lie</c>, <c>dm_ferme</c> ou <c>autre</c>.</summary>
@@ -35,8 +39,13 @@ public sealed record EchecDmResponse(string Raison, DateTime SignaleLe)
         lien is { EchecDmRaison: { } raison, EchecDmLe: { } le } ? new EchecDmResponse(raison, le) : null;
 }
 
-/// <summary>Ce que donne un lien : sa Série, sa portée et, pour un Lien capitaine, son Équipe ("A" | "B").</summary>
-public sealed record AccesParLienResponse(int SeriesId, PorteeLien Portee, string? Equipe)
+/// <summary>
+/// Ce que donne un lien : sa Série, sa portée et, pour un Lien capitaine, son Équipe ("A" | "B"), avec
+/// l'état du « prêt » : celui du Capitaine (<c>Pret</c>) et celui de son adversaire (<c>AdversairePret</c>),
+/// faux pour un Lien spectateur.
+/// </summary>
+public sealed record AccesParLienResponse(int SeriesId, PorteeLien Portee, string? Equipe, bool Pret, bool AdversairePret)
 {
-    public static AccesParLienResponse From(AccesParLien acces) => new(acces.SeriesId, acces.Portee, acces.Equipe);
+    public static AccesParLienResponse From(AccesParLien acces, EtatDuPret pret) =>
+        new(acces.SeriesId, acces.Portee, acces.Equipe, pret.Pret, pret.AdversairePret);
 }
