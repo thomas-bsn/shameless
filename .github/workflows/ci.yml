@@ -95,6 +95,26 @@ jobs:
       - name: Arbre des routes à jour
         run: git diff --exit-code -- src/routeTree.gen.ts
 
+  companion:
+    name: Companion (build et tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: companion
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: companion/global.json
+
+      # L'app Avalonia et son stockage DPAPI se compilent sous Linux ; seule la logique est testée ici.
+      - name: Build
+        run: dotnet build Shameless.Companion.slnx -c Release
+
+      - name: Test
+        run: dotnet test --solution Shameless.Companion.slnx --no-build -c Release
+
   images:
     name: Images du compose
     runs-on: ubuntu-latest
@@ -153,7 +173,7 @@ jobs:
   version:
     name: Version et tag
     # Après tous les jobs de test, sur un push sur main ou à la main (jamais sur une PR).
-    needs: [api, web, images, wizard, compose-acceptance]
+    needs: [api, web, companion, images, wizard, compose-acceptance]
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
