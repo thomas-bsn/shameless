@@ -13,6 +13,9 @@ public sealed class DraftChampionsConfiguration : IEntityTypeConfiguration<Draft
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityByDefaultColumn();
         entity.Property(e => e.TourCommenceLe).HasColumnType("timestamp without time zone");
+        entity.Property(e => e.ResetDemandeLe).HasColumnType("timestamp without time zone");
+        entity.Property(e => e.ResetDemandeParEquipe).HasMaxLength(1);
+        entity.Ignore(e => e.ResetExpireLe);
         entity.Property(e => e.Version).IsConcurrencyToken();
         entity.Ignore(e => e.EquipeBlue);
         entity.Ignore(e => e.EstTerminee);

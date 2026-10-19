@@ -120,6 +120,11 @@ une première fois ; la mémoire en est conservée côté API.
 peut l'être qu'après avoir rejoint, et se remet « pas prêt » tant que l'autre ne l'est pas. Quand  
 les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Changer de  
 Capitaine, renouveler son lien ou terminer la game remet « pas prêt ».
+- **Reset de la draft** : un Capitaine demande à remettre la Draft de champions à zéro, l'autre accepte
+ou refuse. Accepté : bans, picks et chrono sont effacés, les deux Capitaines redeviennent « pas prêts »
+et la draft repart quand ils se remettent prêts, dans la même Game. Refusé, ou sans réponse sous 60 s :
+rien ne change. Ni l'organisateur ni l'Administrateur n'ont de Reset direct, et il est impossible une
+fois la draft terminée. Les spectateurs voient « Reset demandé » puis « Draft remise à zéro ».
 - **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
 champions de son Équipe pendant toute la Série, sans se connecter. Le bot l'envoie en DM  
 au Capitaine ; sans bot, ou si le DM échoue, l'organisateur le copie à la main.
