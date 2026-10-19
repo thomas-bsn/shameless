@@ -3,6 +3,7 @@ using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Companion;
 using Shameless.Api.Models.Responses.Companion;
+using Shameless.Api.Models.Responses.Series;
 using Shameless.Application.Services;
 
 namespace Shameless.Api.Controllers;

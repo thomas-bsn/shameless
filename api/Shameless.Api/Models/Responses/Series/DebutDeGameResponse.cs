@@ -1,6 +1,6 @@
 using Shameless.Application.Entities;
 
-namespace Shameless.Api.Models.Responses.Companion;
+namespace Shameless.Api.Models.Responses.Series;
 
 /// <summary>
 /// Le début d'une Game, après le signal « partie lancée » (Companion ou organisateur, ADR 0017) : sa

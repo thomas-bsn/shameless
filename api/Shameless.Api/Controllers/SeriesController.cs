@@ -57,15 +57,15 @@ public sealed class SeriesController : ControllerBase
     /// Game en attente (ADR 0017). Mêmes effets et mêmes refus que le signal du Companion, idempotent.
     /// </summary>
     [HttpPost("{id:int}/debut")]
-    [ProducesResponseType<Shameless.Api.Models.Responses.Companion.DebutDeGameResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<DebutDeGameResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<Shameless.Api.Models.Responses.Companion.DebutDeGameResponse>> SignalerDebut(int id)
+    public async Task<ActionResult<DebutDeGameResponse>> SignalerDebut(int id)
     {
         var result = await _seriesService.SignalerDebutAsync(id);
         if (!result.IsOk) return this.Refusal(result);
 
-        return Shameless.Api.Models.Responses.Companion.DebutDeGameResponse.From(result.Value!);
+        return DebutDeGameResponse.From(result.Value!);
     }
 
     /// <summary>

@@ -31,9 +31,10 @@ public sealed class EvenementsBot
     /// </summary>
     public void LiensEnvoyes(BestOfSeries series)
     {
-        Ajouter(EvenementBot.CaptainLink(series, Equipes.A, Maintenant()));
-        Ajouter(EvenementBot.CaptainLink(series, Equipes.B, Maintenant()));
-        Ajouter(EvenementBot.SpectatorLink(series, Maintenant()));
+        var maintenant = Maintenant();
+        Ajouter(EvenementBot.CaptainLink(series, Equipes.A, maintenant));
+        Ajouter(EvenementBot.CaptainLink(series, Equipes.B, maintenant));
+        Ajouter(EvenementBot.SpectatorLink(series, maintenant));
     }
 
     /// <summary>Une Game est lancée : c'est son début (pronostics clos, fenêtre de présence du bot ouverte).</summary>

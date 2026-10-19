@@ -46,4 +46,6 @@ Alternatives écartées :
   le renvoi d'un rapport déjà reçu répond encore après la clôture, sans rien modifier.
   Accepter ou rejeter un rapport en revue reste une commande de l'organisateur
   connecté. Un code n'est pas un lien d'accès, et inversement.
+- L'ouverture d'un Lien capitaine mémorise désormais « rejoint » (première ouverture, côté API) :
+  une écriture sur une route de lecture, couverte par l'ADR 0017.
 - Un lien capitaine partagé par erreur se règle en le renouvelant.
