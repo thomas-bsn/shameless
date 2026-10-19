@@ -123,7 +123,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
  * L'état d'un Capitaine : a-t-il rejoint (ouvert son lien) et est-il prêt ? Les deux arrivent par la
  * lecture régulière des liens ; quand les deux sont prêts, la draft démarre sans action de l'organisateur.
  */
-function EtatCapitaine({ equipe, rejointLe, pretLe }: { equipe: Equipe; rejointLe: string | null; pretLe: string | null }) {
+export function EtatCapitaine({ equipe, rejointLe, pretLe }: { equipe: Equipe; rejointLe: string | null; pretLe: string | null }) {
   return (
     <div className="flex flex-col gap-1">
       <Etat
