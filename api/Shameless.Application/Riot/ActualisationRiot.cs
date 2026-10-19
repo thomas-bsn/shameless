@@ -8,9 +8,20 @@ namespace Shameless.Application.Riot;
 
 public sealed record EchecActualisation(int PlayerId, string Prenom, string Message);
 
-/// <summary>Ce qu'une actualisation a fait pour un joueur ; les échecs gardent les anciennes valeurs.</summary>
+/// <summary>Pourquoi Riot a échoué pour une lecture : le texte à afficher, le code, et si insister est inutile.</summary>
+public sealed record EchecRiotLisible(string Texte, CauseEchecRiot? Cause, bool Bloque);
+
+/// <summary>
+/// Ce qu'une actualisation a fait pour un joueur ; les échecs gardent les anciennes valeurs.
+/// <paramref name="CauseRangs"/> et <paramref name="CauseRole"/> disent en français pourquoi Riot a échoué (null si
+/// tout va bien), <paramref name="CodeCauseRangs"/> et <paramref name="CodeCauseRole"/> en donnent le code (null pour
+/// une erreur qui ne vient pas de Riot) ; <paramref name="Echecs"/> en fait des messages prêts à afficher.
+/// <paramref name="RiotBloque"/> : clé refusée ou attente trop longue, inutile d'interroger Riot pour d'autres joueurs.
+/// </summary>
 public sealed record ResultatActualisationJoueur(
-    int PlayerId, string Prenom, bool RangsActualises, bool RoleActualise, IReadOnlyList<string> Echecs);
+    int PlayerId, string Prenom, bool RangsActualises, bool RoleActualise, IReadOnlyList<string> Echecs,
+    string? CauseRangs = null, string? CauseRole = null,
+    CauseEchecRiot? CodeCauseRangs = null, CauseEchecRiot? CodeCauseRole = null, bool RiotBloque = false);
 
 /// <summary>La progression de la dernière actualisation, lue par l'Administration.</summary>
 public sealed record EtatActualisationRiot(
@@ -99,13 +110,30 @@ public sealed class ActualisationRiot(
         {
             try
             {
+                string? raisonDeLArret = null;
                 foreach (var (id, prenom) in joueurs)
                 {
+                    if (raisonDeLArret is not null)
+                    {
+                        lock (_verrou)
+                        {
+                            _echecs.Add(new EchecActualisation(id, prenom,
+                                $"Non tentée : actualisation interrompue, Riot est bloqué ({raisonDeLArret}). Corrigez la cause puis relancez."));
+                            _termines++;
+                        }
+                        continue;
+                    }
                     try
                     {
                         using var scope = scopes.CreateScope();
                         var resultat = await scope.ServiceProvider.GetRequiredService<IPlayerService>().RefreshRiotAsync(id);
-                        if (resultat is not null) Noter(resultat);
+                        if (resultat is not null)
+                        {
+                            Noter(resultat);
+                            // Clé refusée ou attente trop longue : les joueurs suivants échoueraient de la même façon.
+                            if (resultat.RiotBloque)
+                                raisonDeLArret = resultat.CauseRangs ?? resultat.CauseRole ?? "cause inconnue";
+                        }
                     }
                     catch (Exception ex)
                     {

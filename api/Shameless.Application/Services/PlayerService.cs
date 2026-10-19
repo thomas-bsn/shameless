@@ -222,14 +222,24 @@ public class PlayerService : IPlayerService
 
         var echecs = new List<string>();
         var rangs = await TryRefreshRanksAsync(player);
-        if (rangs is not null) echecs.Add(rangs);
-        var role = await TryRefreshMainRoleAsync(player);
-        if (role is not null) echecs.Add(role);
-        return new ResultatActualisationJoueur(player.Id, player.Prenom, rangs is null, role is null, echecs);
+
+        // Une clé refusée l'est pour tous les appels : inutile de demander le rôle (jusqu'à 16 requêtes).
+        var role = rangs is { Cause: CauseEchecRiot.CleRefusee } ? rangs : await TryRefreshMainRoleAsync(player);
+        if (rangs is not null && ReferenceEquals(role, rangs))
+            echecs.Add($"Rangs et rôle principal : Riot n'a pas été interrogé pour le rôle, les anciens rangs et rôle sont conservés. Cause : {rangs.Texte}.");
+        else
+        {
+            if (rangs is not null)
+                echecs.Add($"Rangs : Riot n'a pas répondu, les anciens rangs sont conservés. Cause : {rangs.Texte}.");
+            if (role is not null)
+                echecs.Add($"Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé. Cause : {role.Texte}.");
+        }
+        return new ResultatActualisationJoueur(player.Id, player.Prenom, rangs is null, role is null, echecs,
+            rangs?.Texte, role?.Texte, rangs?.Cause, role?.Cause, (rangs?.Bloque ?? false) || (role?.Bloque ?? false));
     }
 
-    /// <summary>Relit les rangs SoloQ et Flex ; renvoie le message d'échec, ou null si tout s'est bien passé.</summary>
-    private async Task<string?> TryRefreshRanksAsync(PlayerDto player)
+    /// <summary>Relit les rangs SoloQ et Flex ; renvoie la cause de l'échec, ou null si tout s'est bien passé.</summary>
+    private async Task<EchecRiotLisible?> TryRefreshRanksAsync(PlayerDto player)
     {
         try
         {
@@ -246,15 +256,20 @@ public class PlayerService : IPlayerService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh rank for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            return "Rangs : Riot n'a pas répondu, les anciens rangs sont conservés.";
+            return CauseLisible(ex);
         }
     }
 
+    private static EchecRiotLisible CauseLisible(Exception ex) =>
+        ex is RiotException riot
+            ? new EchecRiotLisible(riot.Message, riot.Cause, riot.Bloque)
+            : new EchecRiotLisible("erreur inattendue", null, false);
+
     /// <summary>
-    /// Recalcule le rôle principal ; renvoie le message d'échec, ou null. Sur un échec de Riot, l'ancien
+    /// Recalcule le rôle principal ; renvoie la cause de l'échec, ou null. Sur un échec de Riot, l'ancien
     /// rôle est conservé ; une réponse sans match donne « aucun » (null).
     /// </summary>
-    private async Task<string?> TryRefreshMainRoleAsync(PlayerDto player)
+    private async Task<EchecRiotLisible?> TryRefreshMainRoleAsync(PlayerDto player)
     {
         try
         {
@@ -266,7 +281,7 @@ public class PlayerService : IPlayerService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh main role for player {PlayerId} ({PUUID})", player.Id, player.Puuid);
-            return "Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé.";
+            return CauseLisible(ex);
         }
     }
 

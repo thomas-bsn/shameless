@@ -68,8 +68,13 @@ describe("Administration : actualisation Riot", () => {
         rangsActualises: true,
         roleActualise: false,
         echecs: [
-          "Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé.",
+          "Rôle principal : Riot n'a pas répondu, l'ancien rôle est conservé. Cause : clé Riot refusée (403), elle est invalide ou expirée.",
         ],
+        causeRangs: null,
+        causeRole: "clé Riot refusée (403), elle est invalide ou expirée",
+        codeCauseRangs: null,
+        codeCauseRole: "CleRefusee",
+        riotBloque: true,
       }),
     });
     renderApp("/administration");
@@ -84,6 +89,7 @@ describe("Administration : actualisation Riot", () => {
     expect(
       await within(ligne).findByText(/l'ancien rôle est conservé/),
     ).toBeInTheDocument();
+    expect(within(ligne).getByText(/clé Riot refusée \(403\)/)).toBeInTheDocument();
     expect(
       api.mock.calls.some(([req]) =>
         (req as Request).url.endsWith("/admin/riot/joueurs/1"),
@@ -129,7 +135,7 @@ describe("Administration : actualisation Riot", () => {
           playerId: 1,
           prenom: "Alice",
           message:
-            "Rangs : Riot n'a pas répondu, les anciens rangs sont conservés.",
+            "Rangs : Riot n'a pas répondu, les anciens rangs sont conservés. Cause : limite de requêtes Riot atteinte (429).",
         },
       ],
     });
@@ -138,7 +144,11 @@ describe("Administration : actualisation Riot", () => {
         timeout: 4000,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Alice/, { selector: "li" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Alice.*limite de requêtes Riot atteinte \(429\)/, {
+        selector: "li",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("affiche le refus quand une autre actualisation tourne déjà", async () => {

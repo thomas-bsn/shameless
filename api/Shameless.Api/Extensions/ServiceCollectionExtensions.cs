@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CodeCompanionService>();
         services.AddScoped<RapportsCompanionService>();
         services.AddScoped<DraftChampionsService>();
+        services.AddScoped<ChatDraftChampionsService>();
         services.AddScoped<CandidatsVocauxService>();
         services.AddScoped<EvenementsBot>();
         services.AddScoped<VotesService>();

@@ -635,6 +635,72 @@ namespace Shameless.Infrastructure.Migrations
                     b.ToTable("liens_acces", (string)null);
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.MessageDraftChampions", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Auteur")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("auteur");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("Contenu")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("contenu");
+
+                    b.Property<int>("DraftChampionsId")
+                        .HasColumnType("integer")
+                        .HasColumnName("draft_champions_id");
+
+                    b.Property<string>("Emetteur")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("emetteur");
+
+                    b.Property<DateTime>("EnvoyeLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("envoye_le");
+
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
+                    b.Property<int?>("NumeroSpectateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("numero_spectateur");
+
+                    b.HasKey("Id")
+                        .HasName("pk_drafts_champions_messages");
+
+                    b.HasIndex("DraftChampionsId", "Emetteur")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_emetteur")
+                        .HasFilter("numero_spectateur IS NOT NULL");
+
+                    b.HasIndex("DraftChampionsId", "NumeroSpectateur")
+                        .IsUnique()
+                        .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_numero_spectat");
+
+                    b.HasIndex("DraftChampionsId", "Emetteur", "EnvoyeLe")
+                        .HasDatabaseName("ix_drafts_champions_messages_draft_champions_id_emetteur_envoy");
+
+                    b.ToTable("drafts_champions_messages", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>
                 {
                     b.Property<int>("Id")
@@ -1283,6 +1349,16 @@ namespace Shameless.Infrastructure.Migrations
                         .HasConstraintName("fk_liens_acces_best_of_series_series_id");
 
                     b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.MessageDraftChampions", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.DraftChampions", null)
+                        .WithMany()
+                        .HasForeignKey("DraftChampionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_drafts_champions_messages_drafts_champions_draft_champions_");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.PickerSession", b =>

@@ -1738,6 +1738,172 @@
         }
       }
     },
+    "/liens/{lien}/draft-champions/messages": {
+      "get": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesDraftResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesDraftResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesDraftResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EcrireMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EcrireMessageRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EcrireMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDraftResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDraftResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDraftResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/liens/{lien}/draft-champions/reset": {
       "post": {
         "tags": [
@@ -6973,6 +7139,17 @@
           }
         }
       },
+      "CauseEchecRiot": {
+        "enum": [
+          "CleRefusee",
+          "LimiteAtteinte",
+          "Panne",
+          "Introuvable",
+          "Injoignable",
+          "Inattendue",
+          null
+        ]
+      },
       "ChampionJoueResponse": {
         "required": [
           "playerId",
@@ -7835,6 +8012,27 @@
           "signaleLe": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "EcrireMessageRequest": {
+        "required": [
+          "contenu",
+          "spectateurId"
+        ],
+        "type": "object",
+        "properties": {
+          "contenu": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "spectateurId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -9114,6 +9312,59 @@
           }
         }
       },
+      "MessageDraftResponse": {
+        "required": [
+          "id",
+          "auteur",
+          "avatarUrl",
+          "equipe",
+          "contenu",
+          "envoyeLe"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "auteur": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "equipe": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contenu": {
+            "type": "string"
+          },
+          "envoyeLe": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MessagesDraftResponse": {
+        "required": [
+          "messages"
+        ],
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageDraftResponse"
+            }
+          }
+        }
+      },
       "NoteDePerformance": {
         "required": [
           "note",
@@ -10183,7 +10434,12 @@
           "prenom",
           "rangsActualises",
           "roleActualise",
-          "echecs"
+          "echecs",
+          "causeRangs",
+          "causeRole",
+          "codeCauseRangs",
+          "codeCauseRole",
+          "riotBloque"
         ],
         "type": "object",
         "properties": {
@@ -10205,6 +10461,42 @@
             "items": {
               "type": "string"
             }
+          },
+          "causeRangs": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "causeRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codeCauseRangs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CauseEchecRiot"
+              }
+            ]
+          },
+          "codeCauseRole": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CauseEchecRiot"
+              }
+            ]
+          },
+          "riotBloque": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

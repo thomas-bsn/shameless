@@ -1592,6 +1592,137 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/liens/{lien}/draft-champions/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MessagesDraftResponse"];
+                        "application/json": components["schemas"]["MessagesDraftResponse"];
+                        "text/json": components["schemas"]["MessagesDraftResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    lien: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EcrireMessageRequest"];
+                    "text/json": components["schemas"]["EcrireMessageRequest"];
+                    "application/*+json": components["schemas"]["EcrireMessageRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MessageDraftResponse"];
+                        "application/json": components["schemas"]["MessageDraftResponse"];
+                        "text/json": components["schemas"]["MessageDraftResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Too Many Requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/liens/{lien}/draft-champions/reset": {
         parameters: {
             query?: never;
@@ -6140,6 +6271,8 @@ export interface components {
             prenom: string;
             discordId: string;
         };
+        /** @enum {unknown} */
+        CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "Inattendue" | null;
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;
@@ -6352,6 +6485,10 @@ export interface components {
             raison: string;
             /** Format: date-time */
             signaleLe: string;
+        };
+        EcrireMessageRequest: {
+            contenu: null | string;
+            spectateurId: null | string;
         };
         EntityTagHeaderValue: {
             tag: components["schemas"]["StringSegment"];
@@ -6655,6 +6792,19 @@ export interface components {
             id: number;
             masqueDuFond: boolean;
         };
+        MessageDraftResponse: {
+            /** Format: int32 */
+            id: number;
+            auteur: string;
+            avatarUrl: null | string;
+            equipe: null | string;
+            contenu: string;
+            /** Format: date-time */
+            envoyeLe: string;
+        };
+        MessagesDraftResponse: {
+            messages: components["schemas"]["MessageDraftResponse"][];
+        };
         NoteDePerformance: {
             /** Format: int32 */
             note: number;
@@ -6935,6 +7085,12 @@ export interface components {
             rangsActualises: boolean;
             roleActualise: boolean;
             echecs: string[];
+            causeRangs: null | string;
+            causeRole: null | string;
+            codeCauseRangs: null | components["schemas"]["CauseEchecRiot"];
+            codeCauseRole: null | components["schemas"]["CauseEchecRiot"];
+            /** @default false */
+            riotBloque: boolean;
         };
         ResultatDuTitre: {
             gagnants: number[];
