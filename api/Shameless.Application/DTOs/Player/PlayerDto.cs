@@ -19,6 +19,8 @@ public class PlayerDto
     public string? PeakSeason { get; set; }
     public int PeakLp { get; set; } = 0;
     public decimal CurrentCost { get; set; }
+    /// <summary>Photo Discord du compte lié au Joueur ; null s'il n'est lié à aucun Utilisateur ou sans photo.</summary>
+    public string? AvatarUrl { get; set; }
     /// <summary>
     /// Évolution du cost depuis le cost final du dernier mois enregistré avant le mois courant
     /// (positive : le Joueur monte) ; null sans mois précédent. Renseignée par la liste des Joueurs.

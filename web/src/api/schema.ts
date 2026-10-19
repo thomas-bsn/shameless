@@ -6215,6 +6215,7 @@ export interface components {
             defaites: number;
             /** Format: double */
             winrate: null | number;
+            avatarUrl: null | string;
         };
         LigneClassementSoloQ: {
             /** Format: int32 */
@@ -6226,6 +6227,7 @@ export interface components {
             division: null | number;
             /** Format: int32 */
             lp: null | number;
+            avatarUrl: null | string;
         };
         LigneHallDeLaHonte: {
             /** Format: int32 */
@@ -6236,6 +6238,7 @@ export interface components {
             riotId: string;
             /** Format: int32 */
             dofd: number;
+            avatarUrl: null | string;
         };
         LinkPlayerRequest: {
             /** Format: int32 */
@@ -6365,6 +6368,7 @@ export interface components {
             peakLp: number;
             /** Format: double */
             currentCost: number;
+            avatarUrl: null | string;
             /** Format: double */
             costEvolution: null | number;
         };

@@ -137,6 +137,7 @@ public class CustomGameRepository : ICustomGameRepository
             .AsNoTracking()
             .Include(g => g.Participants)
             .ThenInclude(p => p.Player)
+            .ThenInclude(p => p.User)
             .Where(g => g.Status == GameStatuses.Completed)
             .AsSplitQuery()
             .ToListAsync();

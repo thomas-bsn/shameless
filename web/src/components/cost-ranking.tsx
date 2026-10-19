@@ -1,5 +1,6 @@
 import type { Schemas } from "@/api/client";
-import { Initiale, Marche, PlayerLink } from "@/components/podium";
+import { AvatarJoueur } from "@/components/avatar-joueur";
+import { Marche, PlayerLink } from "@/components/podium";
 import { CostTierBadge, RoleIcon } from "@/components/rank";
 import { Card } from "@/components/ui/card";
 import { costText, evolutionDuCost, placeText, rankByCost } from "@/lib/cost";
@@ -25,7 +26,7 @@ function MarcheCost({ player, rang }: { player: Player; rang: number }) {
   return (
     <Marche label={`${placeText(rang)} : ${player.prenom}`} premier={rang === 1} bordure="border-amber-400/70 ring-amber-400/40">
       <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{placeText(rang)}</span>
-      <Initiale prenom={player.prenom} className="size-10 text-lg" />
+      <AvatarJoueur prenom={player.prenom} avatarUrl={player.avatarUrl} className="size-10 text-lg" />
       <PlayerLink playerId={player.id} prenom={player.prenom} className="max-w-full truncate" />
       <CostTierBadge cost={player.currentCost} className="text-sm" />
       <span className={cn("font-mono font-bold tabular-nums", rang === 1 ? "text-3xl" : "text-2xl")}>{costText(player.currentCost)}</span>
@@ -55,7 +56,7 @@ export function CostRanking({ players }: { players: Player[] }) {
             {suivants.map((p, i) => (
               <li key={p.id} aria-label={`${placeText(i + 4)} : ${p.prenom}`} className="flex items-center gap-3 px-4 py-2.5">
                 <span className="w-6 text-right font-mono text-sm text-muted-foreground tabular-nums">{i + 4}</span>
-                <Initiale prenom={p.prenom} className="size-8 text-sm" />
+                <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-8 text-sm" />
                 <PlayerLink playerId={p.id} prenom={p.prenom} className="flex-1 truncate" />
                 <RoleIcon role={p.mainRole} />
                 <Evolution player={p} />

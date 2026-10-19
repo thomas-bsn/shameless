@@ -8462,7 +8462,8 @@
           "gamesJouees",
           "victoires",
           "defaites",
-          "winrate"
+          "winrate",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8494,6 +8495,12 @@
               "number"
             ],
             "format": "double"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8504,7 +8511,8 @@
           "riotId",
           "tier",
           "division",
-          "lp"
+          "lp",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8537,6 +8545,12 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8546,7 +8560,8 @@
           "playerId",
           "prenom",
           "riotId",
-          "dofd"
+          "dofd",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8567,6 +8582,12 @@
           "dofd": {
             "type": "integer",
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8983,6 +9004,7 @@
           "peakSeason",
           "peakLp",
           "currentCost",
+          "avatarUrl",
           "costEvolution"
         ],
         "type": "object",
@@ -9075,6 +9097,12 @@
           "currentCost": {
             "type": "number",
             "format": "double"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "costEvolution": {
             "type": [
