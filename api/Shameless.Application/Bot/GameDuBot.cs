@@ -49,6 +49,7 @@ public sealed record JoueurDuBot(int PlayerId, string Prenom, string? DiscordId)
     /// <summary>Une Équipe (joueurs chargés avec leur compte lié), dans l'ordre de sa composition.</summary>
     public static List<JoueurDuBot> Equipe(IEnumerable<(int Ordre, Player Player)> joueurs) => joueurs
         .OrderBy(j => j.Ordre)
+        .ThenBy(j => j.Player.Id) // à ordre égal, un ordre stable plutôt que celui du moteur
         .Select(j => new JoueurDuBot(j.Player.Id, j.Player.Prenom, GameDuBot.DiscordIdDe(j.Player)))
         .ToList();
 }
