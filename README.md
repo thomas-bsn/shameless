@@ -128,6 +128,7 @@ api/              Backend .NET 10 (Api / Application / Infrastructure)
   Shameless.Tests.Integration/  Tests HTTP de bout en bout sur un vrai Postgres
 web/              Front : SPA Vite + React + TanStack + Tailwind + shadcn/ui
 contracts/        Document OpenAPI de l'API, source du client TypeScript du front
+companion/        Companion : l'app Windows (.NET 10, Avalonia) qui envoie les stats de fin de game ; spike/ est un outil de capture jetable
 wizard/           Assistant d'installation : serveur Node sans dépendance ; son front est dans web/src/wizard
 deploy/caddy/     Reverse proxy, qui construit et sert le front
 compose.yaml      Instance complète (images et volumes nommés uniquement)
@@ -189,6 +190,11 @@ Les appels passent par `src/api/client.ts` : `$api` (hooks TanStack Query) et `f
 - vérifie que le client TypeScript commité correspond au contrat, puis lance lint, typecheck, tests et build du front ;
 - vérifie le compose de déploiement (aucun `build:`, images GHCR) via `tests/deploy/verifier-publication.sh`, puis construit les images du compose ;
 - type-check et teste le serveur du wizard (`wizard/`) ;
+- compile et teste le Companion (`companion/`), et le script qui décide de publier son exécutable (`tests/deploy/companion-a-change.test.sh`) ;
 - joue le test d'acceptation `tests/compose/acceptance.sh` (job `compose-acceptance`) : Compose vierge, wizard, site accessible, connexion Discord possible, redémarrage. Localement : `tests/compose/acceptance.sh` (Docker requis).
 
 Après une CI verte sur `main`, `ci.yml` pose le tag `vX.Y.Z` suivant et publie les images dans GHCR ; une préversion ou une version précise se publie à la main avec le bouton **Run workflow** (voir « Publication automatique et manuelle »).
+
+### Exécutable du Companion
+
+Quand un push sur `main` change l'exécutable depuis la dernière Release (tout sous `companion/` sauf `spike/`, `tests/` et les `.md`, profil de publication compris, voir `.github/scripts/companion-a-change.sh`), `ci.yml` construit `shameless-companion.exe` (Windows 64 bits, un seul fichier, sans .NET à installer) et le publie en **GitHub Release** sur le tag `vX.Y.Z` du commit. Les autres pushs ne publient rien. Les options de construction sont dans `companion/src/Shameless.Companion.App/Properties/PublishProfiles/Windows.pubxml`. Le fichier a un nom fixe : `https://github.com/thomas-bsn/shameless/releases/latest/download/shameless-companion.exe` donne toujours le plus récent. Le dépôt ne crée aucune autre Release : sinon « latest » pourrait viser autre chose. Il n'est pas signé : Windows affiche un avertissement « éditeur inconnu » au premier lancement. Mise à jour automatique et signature restent à faire.

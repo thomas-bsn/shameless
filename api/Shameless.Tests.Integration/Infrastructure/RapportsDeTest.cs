@@ -6,6 +6,10 @@ public static class RapportsDeTest
     public static readonly string[] ChampionsA = ["Garen", "LeeSin", "Ahri", "Jinx", "Thresh"];
     public static readonly string[] ChampionsB = ["Darius", "Zed", "Orianna", "Ezreal", "Nami"];
 
+    /// <summary>L'id numérique que le client LoL donne au champion (sa clé Riot), pour son id Data Dragon.</summary>
+    public static int IdClient(string championDataDragon) =>
+        int.Parse(FakeChampionCatalog.Champions.Single(c => c.Id == championDataDragon).Key);
+
     /// <summary>
     /// Le rapport d'une game où l'Équipe A (prénoms <paramref name="equipeA"/>, A1..A5 par défaut)
     /// joue <paramref name="teamASide"/> contre l'Équipe B (<paramref name="equipeB"/>, B1..B5).
@@ -36,7 +40,7 @@ public static class RapportsDeTest
             {
                 puuid = $"puuid-{j.Prenom}#EUW",
                 side = j.Side,
-                championId = champions[i],
+                championId = IdClient(champions[i]),
                 victoire = j.Victoire,
                 stats = statsDe?.Invoke(i) ?? new { kills = i + emetteur, deaths = 2, assists = 7, totalDamageDealtToChampions = 12000 + i }
             })

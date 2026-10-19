@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Companion;
 using Shameless.Api.Models.Responses.Companion;
+using Shameless.Application.Entities;
+using Shameless.Application.Interfaces;
 using Shameless.Application.Services;
 
 namespace Shameless.Api.Controllers;
@@ -17,8 +20,16 @@ public sealed class CompanionController : ControllerBase
     private readonly CodeCompanionService _codes;
     private readonly RapportsCompanionService _rapports;
 
-    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports)
+    private readonly RolesService _roles;
+    private readonly PresenceCompanionService _presence;
+    private readonly IPlayerRepository _players;
+
+    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports, RolesService roles,
+        PresenceCompanionService presence, IPlayerRepository players)
     {
+        _presence = presence;
+        _players = players;
+        _roles = roles;
         _codes = codes;
         _rapports = rapports;
     }
@@ -46,6 +57,24 @@ public sealed class CompanionController : ControllerBase
         if (!result.IsOk) return this.Refusal(result);
 
         return CodeCompanionResponse.From(result.Value!);
+    }
+
+    /// <summary>
+    /// Sans connexion : les pseudos Discord du Superadministrateur et des Administrateurs, à qui le
+    /// Companion fait donner le Fichier de Rapport quand l'envoi échoue (ADR 0020). Rien d'autre n'est
+    /// exposé : ni identifiant, ni photo.
+    /// </summary>
+    [HttpGet("companion/administrateurs")]
+    [AllowAnonymous]
+    [ProducesResponseType<AdministrateursDuCompanionResponse>(StatusCodes.Status200OK)]
+    public async Task<AdministrateursDuCompanionResponse> Administrateurs()
+    {
+        var pseudos = (await _roles.ListAsync())
+            .Where(u => !string.IsNullOrWhiteSpace(u.DiscordUsername))
+            .ToList();
+        List<string> De(UserRole role) =>
+            pseudos.Where(u => u.Role == role).Select(u => u.DiscordUsername!).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
+        return new AdministrateursDuCompanionResponse(De(UserRole.Superadministrateur), De(UserRole.Administrateur));
     }
 
     /// <summary>
@@ -82,5 +111,36 @@ public sealed class CompanionController : ControllerBase
         if (!result.IsOk) return this.Refusal(result);
 
         return RapportTraiteResponse.From(result.Value!);
+    }
+
+    /// <summary>
+    /// Sans connexion : le signal de présence du Companion, avec le PUUID du compte connecté au client
+    /// LoL. Éphémère (gardé en mémoire) ; un PUUID inconnu de l'Instance ne fait pas échouer le signal.
+    /// Code inconnu, renouvelé ou de Série terminée : 404, sans exception de renvoi.
+    /// </summary>
+    [HttpPost("companion/{code}/presence")]
+    [AccesParCodeCompanion]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public IActionResult Signaler(string code, PresenceRequest request)
+    {
+        _presence.Signaler(request.Puuid, this.SerieDuCodeCompanion().Id);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Administrateurs : les Companions connectés (dernier signal de moins de 90 s), le plus récent
+    /// d'abord, avec leur Joueur (null si le PUUID est inconnu), leur Série et « vu il y a X s ».
+    /// </summary>
+    [HttpGet("companion/connectes")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<List<CompanionConnecteResponse>>(StatusCodes.Status200OK)]
+    public async Task<List<CompanionConnecteResponse>> Connectes()
+    {
+        var connectes = _presence.Connectes();
+        var joueurs = (await _players.GetByPuuidsAsync(connectes.Select(c => c.Puuid).ToList()))
+            .GroupBy(p => p.PUUID).ToDictionary(g => g.Key, g => g.First());
+        return connectes.Select(c => CompanionConnecteResponse.From(c, joueurs.GetValueOrDefault(c.Puuid))).ToList();
     }
 }

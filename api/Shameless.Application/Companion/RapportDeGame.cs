@@ -95,6 +95,31 @@ public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnl
                     .Select(p => p.PlayerId)
                     .ToList());
     }
+
+    /// <summary>
+    /// Ce qui sépare ce rapport d'une game terminée, pour l'Import d'un Rapport (ADR 0020) : participants
+    /// absents ou inattendus, Sides différents (sans tolérer l'inversion des deux Équipes, l'import ne
+    /// change jamais la composition) et vainqueur différent. Vide, le rapport est conforme à la game.
+    /// </summary>
+    public IReadOnlyList<string> EcartsPourImport(CustomGame game)
+    {
+        var ecarts = new List<string>();
+        var detectes = Joueurs.ToDictionary(j => j.Puuid);
+        var attendus = game.Participants.Select(p => p.Player.PUUID).ToHashSet();
+
+        ecarts.AddRange(game.Participants
+            .Where(p => !detectes.ContainsKey(p.Player.PUUID))
+            .Select(p => $"{p.Player.Prenom} est participant de la game mais absent du fichier."));
+        ecarts.AddRange(Joueurs
+            .Where(j => !attendus.Contains(j.Puuid))
+            .Select(j => $"Le joueur {j.RiotId ?? j.Puuid} est dans le fichier mais n'a pas joué cette game."));
+        ecarts.AddRange(game.Participants
+            .Where(p => detectes.TryGetValue(p.Player.PUUID, out var j) && j.Side != p.Side)
+            .Select(p => $"{p.Player.Prenom} a joué le Side {p.Side} dans la game, mais {detectes[p.Player.PUUID].Side} dans le fichier."));
+        if (game.WinningTeam != null && game.EquipeOn(SideGagnant) != game.WinningTeam)
+            ecarts.Add($"Le vainqueur diffère : l'Équipe {game.WinningTeam} a gagné la game, le fichier donne la victoire au Side {SideGagnant}.");
+        return ecarts;
+    }
 }
 
 /// <param name="Stats">Les stats brutes du joueur pour la partie, en JSON ; null si absentes (rapport invalide).</param>

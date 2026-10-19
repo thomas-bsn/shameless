@@ -80,6 +80,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Bot.Reset();
         Clock.Reset();
         Random.Reset();
+        Services.GetRequiredService<PresenceCompanionService>().Vider();
         await using var db = CreateDbContext();
         await db.Database.ExecuteSqlRawAsync(
             "TRUNCATE pronostics, clips, bulletins_de_vote, spectateurs_de_game, evenements_bot, rapports_companion, drafts_champions_actions, drafts_champions, liens_acces, picker_session_players, picker_sessions, custom_game_participants, custom_games, series_players, best_of_series, soirees, player_monthly_costs, players, users RESTART IDENTITY CASCADE");

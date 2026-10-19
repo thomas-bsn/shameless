@@ -40,10 +40,19 @@ public sealed class FakeChampionCatalog : IChampionCatalog
     /// <summary>Le catalogue est indisponible ; remis à disposition avant chaque test.</summary>
     public bool Indisponible { get; set; }
 
-    public void Reset() => Indisponible = false;
+    private readonly List<Champion> _ajoutes = [];
+
+    /// <summary>Un champion sorti depuis : le catalogue est mis à jour ; oublié avant chaque test.</summary>
+    public void Ajouter(Champion champion) => _ajoutes.Add(champion);
+
+    public void Reset()
+    {
+        Indisponible = false;
+        _ajoutes.Clear();
+    }
 
     public Task<IReadOnlyList<Champion>> GetAllAsync(CancellationToken cancellationToken = default) =>
         Indisponible
             ? throw new CatalogueIndisponibleException("Data Dragon ne répond pas.")
-            : Task.FromResult(Champions);
+            : Task.FromResult<IReadOnlyList<Champion>>([.. Champions, .. _ajoutes]);
 }

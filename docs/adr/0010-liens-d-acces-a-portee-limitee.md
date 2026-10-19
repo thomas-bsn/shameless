@@ -39,9 +39,11 @@ Alternatives écartées :
   agit avec le code Companion (ci-dessous). Tout le reste exige toujours un
   utilisateur connecté.
 - Le code Companion (#36) suit le même principe : un secret par Série, que
-  l'organisateur lit et renouvelle (l'ancien est alors refusé). Il ne permet que deux
-  choses, sans session ni cookie : résoudre la Série du code, et envoyer un rapport de
-  fin de game pour cette Série. La Série vient toujours du code, jamais de la requête.
+  l'organisateur lit et renouvelle (l'ancien est alors refusé). Il ne permet que trois
+  choses, sans session ni cookie : résoudre la Série du code, envoyer un rapport de
+  fin de game pour cette Série, et signaler sa présence (le PUUID du compte connecté au client LoL,
+  gardé en mémoire seulement, jamais en base : l'Administration liste les Companions dont le dernier
+  signal date de moins de 90 s ; refusé sans Série en cours, sans exception de renvoi). La Série vient toujours du code, jamais de la requête.
   Il cesse avec la Série : code inconnu, renouvelé ou de Série terminée, refusé ; seul
   le renvoi d'un rapport déjà reçu répond encore après la clôture, sans rien modifier.
   Accepter ou rejeter un rapport en revue reste une commande de l'organisateur

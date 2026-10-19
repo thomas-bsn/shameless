@@ -13,10 +13,12 @@ verifier "un seul workflow (tests et publication)" bash -c "test -f $WF && test 
 verifier "il a un déclencheur manuel avec une version" bash -c "grep -q 'workflow_dispatch:' $WF && grep -Eq '^\s+version:' $WF"
 verifier "il ne se déclenche pas sur un tag" bash -c "! grep -Eq '^ {0,4}tags:' $WF"
 verifier "il n'appelle ni workflow_run ni workflow réutilisable" bash -c "! grep -Eq '^\s*(uses: ./|workflow_call:|workflow_run:)' $WF"
-verifier "la version attend tous les jobs de test" grep -q 'needs: \[api, web, images, wizard, compose-acceptance\]' "$WF"
+verifier "la version attend tous les jobs de test" grep -q 'needs: \[api, web, companion, images, wizard, compose-acceptance\]' "$WF"
 verifier "il se limite aux push sur main et au manuel (jamais une PR)" bash -c "grep -q \"event_name == 'push'\" $WF && grep -q \"github.ref == 'refs/heads/main'\" $WF"
 verifier "il sérialise les publications sans annuler" bash -c "grep -q 'group: publier-images' $WF && grep -q 'cancel-in-progress: false' $WF"
-verifier "contents: write seulement dans le job qui pose le tag" bash -c "[ \$(grep -c 'contents: write' $WF) -eq 1 ]"
+# contents: write n'est donné qu'au job qui pose le tag (version) et à celui qui publie la Release de l'exécutable du Companion.
+jobs_en_ecriture=$(awk '/^  [a-z0-9-]+:$/ {job=$1} /contents: write/ {print job}' "$WF" | tr -d ':' | sort | tr '\n' ' ')
+verifier "contents: write seulement dans version et publier-companion" test "$jobs_en_ecriture" = "publier-companion version "
 verifier "il publie sur ghcr.io avec GITHUB_TOKEN et packages: write" bash -c "grep -q 'ghcr.io' $WF && grep -q 'secrets.GITHUB_TOKEN' $WF && grep -q 'packages: write' $WF"
 for img in api migrate proxy wizard; do
   verifier "la matrice contient l'image $img" grep -Eq "name:\s*$img\s*$" "$WF"

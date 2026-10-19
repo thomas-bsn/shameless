@@ -1,4 +1,5 @@
 import { $api, type Schemas } from "@/api/client";
+import { CompanionConnecteAdmin } from "@/components/administration/companion-connecte-admin";
 import { CopyField } from "@/components/copy-field";
 import { EtatCapitaine } from "@/components/preparation-de-serie";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -14,6 +15,15 @@ const equipes = ["A", "B"] as const;
  * l'état des Capitaines de chaque Série en cours, pour dépanner. Le renouvellement reste à l'organisateur.
  */
 export function SerieEnCoursAdmin() {
+  return (
+    <div className="flex flex-col gap-6">
+      <CompanionConnecteAdmin />
+      <SeriesEnCours />
+    </div>
+  );
+}
+
+function SeriesEnCours() {
   const actives = $api.useQuery("get", "/series/active");
   if (actives.isPending) return <LoadingRows />;
   if (actives.isError) return <ErrorAlert error={actives.error} />;

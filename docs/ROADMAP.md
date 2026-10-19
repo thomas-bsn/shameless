@@ -32,10 +32,16 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Draft de champions en ligne (capitaines et spectateurs, sans connexion)
 
 ### 1b. Companion (récupération des stats)
-- [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion
-- [ ] Détection du client LoL via lockfile + écoute WebSocket locale
+- [ ] Spec : Companion, l'app PC (#157) ; Windows uniquement, packaging en Backlog
+- [ ] Spike : capturer les données de fin de game du client LoL sur un vrai poste (#158)
+- [ ] Contrat API et site : champion en id numérique, route des administrateurs, Import d'un Rapport (#159, ADR 0019 et 0020)
+- [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion (#160)
+- [ ] Détection du client LoL via lockfile + écoute WebSocket locale (#161)
+- [ ] Administration : Companion connecté, signal de présence du Companion (#146)
+- [ ] Publication de l'exécutable Windows en GitHub Release par la CI (#164)
+- [ ] Écran de préparation : adresse, Code et téléchargement du Companion ; tutoriel à jour (#165)
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
-- [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit)
+- [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit), file de renvoi et procédure d'échec avec le Fichier de Rapport (#162)
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
 - [ ] Signal de fin de partie (Rapport), sans retour sur le site ; le début est donné par la fin de la draft (ADR 0017)
 - [ ] Side détecté par le Companion ; joueur inconnu signalé à l'organisateur dans le Rapport en revue
@@ -98,6 +104,8 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion
+- Companion : mise à jour automatique, signature de l'exécutable, installeur
+- Administrateurs repérables dans Discord (pseudo en rouge) pour que le Companion dise « donne le fichier à un admin »
 - Nom du bot lu depuis Forgeyard (aujourd'hui saisi dans le wizard)
 - Wizard : générer ou expliquer `INTERNAL_API_KEY` du bot
 - Forgeyard : suivre l'issue thomas-bsn/forgeyard#3 (compatibilité Compose, `user` et `ports`)

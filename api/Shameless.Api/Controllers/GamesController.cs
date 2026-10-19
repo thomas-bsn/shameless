@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Shameless.Api.Auth;
 using Shameless.Api.Contracts.Matches;
 using Shameless.Api.Extensions;
+using Shameless.Api.Models.Requests.Companion;
+using Shameless.Api.Models.Responses.Companion;
 using Shameless.Api.Models.Responses.Game;
 using Shameless.Application.DTOs.Match;
 using Shameless.Application.Services;
@@ -23,10 +25,13 @@ public sealed class GamesController : ControllerBase
 
     private readonly CorrectionDeStatsService _correctionsDeStats;
 
+    private readonly RapportsCompanionService _rapports;
+
     public GamesController(
         CustomGameService gameService, SeriesService seriesService, CorrectionDeGameService corrections,
-        CorrectionDeStatsService correctionsDeStats)
+        CorrectionDeStatsService correctionsDeStats, RapportsCompanionService rapports)
     {
+        _rapports = rapports;
         _corrections = corrections;
         _correctionsDeStats = correctionsDeStats;
         _gameService = gameService;
@@ -68,6 +73,36 @@ public sealed class GamesController : ControllerBase
     {
         var result = await _corrections.CorrigerAsync(id, request.Winner, request.TeamA, request.TeamB);
         if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Import d'un Rapport (Administrateur) : dépose sur une game terminée le Fichier de Rapport, le corps
+    /// exact d'un rapport du Companion (<c>championId</c> numérique compris). Même validation que le rapport ;
+    /// ses participants, ses Sides et son vainqueur doivent être ceux de la game, sinon le refus est complet
+    /// (409) et liste les écarts. L'import ne change jamais le vainqueur ni la composition : il donne à la
+    /// game ses données Riot, champions et stats, et recalcule les costs. Un id de champion inconnu du
+    /// catalogue laisse la game inchangée (503).
+    /// </summary>
+    [HttpPost("{id:int}/import-rapport")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ImportDeRapportRefuseResponse>(StatusCodes.Status409Conflict, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> ImporterUnRapport(int id, [FromBody] RapportDeGameRequest request)
+    {
+        var result = await _rapports.ImporterAsync(id, request.ToRapport());
+        if (!result.IsOk) return this.Refusal(result);
+        if (!result.Value!.EstAccepte)
+            return new ObjectResult(new ImportDeRapportRefuseResponse(
+                "Import refusé", StatusCodes.Status409Conflict,
+                "Le fichier ne correspond pas à la game : rien n'a été importé.", result.Value.Ecarts.ToList()))
+            {
+                StatusCode = StatusCodes.Status409Conflict,
+                ContentTypes = { "application/problem+json" }
+            };
         return (await _gameService.GetRecapAsync(id))!;
     }
 

@@ -208,7 +208,8 @@ clôture ; résultats ensuite dans le récap et l'historique, titres comptés su
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
 - **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
-les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).
+les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).  
+C'est la vue « DOFD » de l'onglet Classements, à côté du cost et de la SoloQ, et non un onglet à part.
 - **Pronostic** : le pari d'un spectateur, dans Discord, sur la prochaine game d'une  
 série : l'équipe gagnante, le MVP et le DOFD, chacun facultatif. Les joueurs de la  
 série ne pronostiquent pas. Verrouillé au lancement de la game. Chaque choix est jugé  
@@ -254,6 +255,20 @@ détectés sur le Side gagnant) ou le **rejette** (la game attend un autre rappo
 saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien créer). Tant qu'il est en revue, ni game suivante, ni Draft de champions, ni  
 saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
 la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
+- **Companion connecté** : un Companion lancé, dont le client LoL est détecté et la Série  
+reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
+connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
+récent, « aucun Companion détecté ».
+- **Fichier de Rapport** : le corps JSON exact d'un Rapport, gardé par le Companion tant  
+que l'envoi n'a pas abouti (`rapport-<riotMatchId>.json`). Si l'API est injoignable ou  
+refuse définitivement le Rapport, le Companion le garde et dit à son utilisateur de le  
+remettre à un Superadministrateur ou à un Administrateur, dont il affiche les pseudos Discord  
+(lus à la connexion, gardés en cache) ; rien ne part tout seul vers Discord (ADR 0020).
+- **Import d'un Rapport** : un Administrateur dépose un Fichier de Rapport sur une Game  
+terminée, depuis l'Administration, pour y ajouter ses données Riot (stats, champion joué) et  
+recalculer les costs. Il est refusé en entier, avec la liste des écarts, si les participants,  
+leurs Sides ou le vainqueur du fichier diffèrent de la Game ; il ne change jamais le  
+vainqueur ni la composition.
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
@@ -276,6 +291,11 @@ seulement s'il existe une unique **Game plausible** : une Game lancée le jour d
 publication du clip, dans le fuseau de l'Instance, avant sa publication. Sinon le clip  
 reste **sans Game**, jusqu'à ce qu'un Utilisateur connecté le rattache. Les clips  
 rattachés se lisent sur la page de leur Game (ADR 0014). Entité `Clip`.
+- **Fond** : la vidéo qui tourne derrière toutes les pages du site, Administration  
+comprise. Elle enchaîne des Clips tirés au hasard parmi tous ceux de l'Instance, avec  
+ou sans Game, flouée sous un voile sombre. Un Administrateur peut **masquer** un Clip  
+du Fond sans le supprimer ; il reste visible dans l'onglet Clips, où les Clips se  
+regardent nets. Sans Clip, le Fond est un décor fixe.
 
 ## Données Riot
 

@@ -65,6 +65,7 @@ public static class ServiceCollectionExtensions
         // Singletons
         services.AddSingleton<IOAuthStateStore, OAuthStateStore>();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<PresenceCompanionService>();
         services.AddSingleton<IRandomSource, SharedRandomSource>();
         services.AddSingleton<IStockageDesClips, StockageDesClipsSurDisque>();
 
