@@ -14,6 +14,7 @@ const navigation = [
   { to: "/classements", label: "Classements" },
   { to: "/historique", label: "Historique" },
   { to: "/clips", label: "Clips" },
+  { to: "/tutoriel", label: "Tutoriel" },
 ] as const;
 
 const lienClasse = "flex items-center truncate rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground";
