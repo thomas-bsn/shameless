@@ -57,7 +57,7 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     private async Task<JsonElement> LiensEnvoyesAsync(HttpClient client, int seriesId) =>
-        await ReadJsonAsync(await client.PostAsync($"/series/{seriesId}/liens/envoyes", null, Ct));
+        await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
 
     private async Task<HttpResponseMessage> OuvrirAsync(HttpClient client, int seriesId) =>
         await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct);
@@ -116,18 +116,6 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
         await DesignerCapitainesAsync(client, serie);
-
-        await AssertRefusAsync(await OuvrirAsync(client, serie.SeriesId), HttpStatusCode.Conflict);
-    }
-
-    [Fact]
-    public async Task Ouvrir_sans_deux_capitaines_designes_repond_409()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client);
-        await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/A",
-            new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct));
-        await PlayGameAsync(client, serie.SeriesId);
 
         await AssertRefusAsync(await OuvrirAsync(client, serie.SeriesId), HttpStatusCode.Conflict);
     }

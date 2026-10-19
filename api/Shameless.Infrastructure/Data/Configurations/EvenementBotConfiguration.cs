@@ -16,9 +16,14 @@ public sealed class EvenementBotConfiguration : IEntityTypeConfiguration<Eveneme
               .HasColumnType("text")
               .HasConversion(
                   type => type == TypeEvenementBot.TeamsFormed ? "teams_formed"
+                      : type == TypeEvenementBot.CaptainLink ? "captain_link"
+                      : type == TypeEvenementBot.SpectatorLink ? "spectator_link"
                       : type == TypeEvenementBot.GameStarted ? "game_started" : "game_completed",
                   value => value == "teams_formed" ? TypeEvenementBot.TeamsFormed
+                      : value == "captain_link" ? TypeEvenementBot.CaptainLink
+                      : value == "spectator_link" ? TypeEvenementBot.SpectatorLink
                       : value == "game_started" ? TypeEvenementBot.GameStarted : TypeEvenementBot.GameCompleted);
+        entity.Property(e => e.Equipe).HasMaxLength(1);
         entity.Property(e => e.Statut)
               .HasColumnType("text")
               .HasConversion(
@@ -39,8 +44,9 @@ public sealed class EvenementBotConfiguration : IEntityTypeConfiguration<Eveneme
 
         entity.ToTable(t => t.HasCheckConstraint("ck_evenements_bot_sujet", "(series_id IS NULL) <> (game_id IS NULL)"));
 
-        // Un seul événement par type et par sujet : l'event_id en dépend.
-        entity.HasIndex(e => new { e.Type, e.SeriesId }).IsUnique().HasFilter("series_id IS NOT NULL");
+        // Un seul événement par type et par sujet (et par Équipe, pour un Lien capitaine) : l'event_id en dépend.
+        entity.HasIndex(e => new { e.Type, e.SeriesId }).IsUnique().HasFilter("series_id IS NOT NULL AND equipe IS NULL");
+        entity.HasIndex(e => new { e.Type, e.SeriesId, e.Equipe }).IsUnique().HasFilter("series_id IS NOT NULL AND equipe IS NOT NULL");
         entity.HasIndex(e => new { e.Type, e.GameId }).IsUnique().HasFilter("game_id IS NOT NULL");
 
         entity.HasIndex(e => new { e.Statut, e.ProchaineTentative });

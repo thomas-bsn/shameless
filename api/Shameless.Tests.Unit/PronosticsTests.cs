@@ -12,7 +12,8 @@ public class PronosticsTests
     private static CustomGame GameTerminee() => new()
     {
         Id = 7,
-        CreatedAt = Lancement,
+        CreatedAt = Lancement.AddMinutes(-3),
+        StartedAt = Lancement,
         CompletedAt = Lancement.AddMinutes(30),
         Status = GameStatuses.Completed,
         WinningTeam = Equipes.A,
@@ -40,6 +41,48 @@ public class PronosticsTests
 
         var seul = Assert.Single(evalues.Pronostics);
         Assert.Equal("1", seul.PronostiqueurDiscordId);
+    }
+
+    [Fact]
+    public void Tant_que_la_partie_n_a_pas_commence_aucun_pronostic_n_est_ignore()
+    {
+        var game = GameTerminee();
+        game.StartedAt = null;
+        game.CompletedAt = null;
+        game.Status = GameStatuses.Pending;
+        game.WinningTeam = null;
+
+        var evalues = PronosticsDeLaGame.Evaluer(game, [Pronostic(1, Lancement.AddHours(1), equipe: "A")], VotesClos([], []));
+
+        Assert.Single(evalues.Pronostics);
+    }
+
+    [Fact]
+    public void Une_game_terminee_sans_debut_borne_les_pronostics_a_sa_cloture()
+    {
+        var game = GameTerminee();
+        game.StartedAt = null;
+
+        var evalues = PronosticsDeLaGame.Evaluer(
+            game,
+            [Pronostic(1, Lancement.AddMinutes(30), equipe: "A"), Pronostic(2, Lancement.AddMinutes(31), equipe: "A")],
+            VotesClos([], []));
+
+        Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
+    }
+
+    [Fact]
+    public void Une_game_migree_borne_les_pronostics_a_son_lancement()
+    {
+        var game = GameTerminee();
+        game.StartedAt = game.CreatedAt;
+
+        var evalues = PronosticsDeLaGame.Evaluer(
+            game,
+            [Pronostic(1, game.CreatedAt, equipe: "A"), Pronostic(2, game.CreatedAt.AddMinutes(1), equipe: "A")],
+            VotesClos([], []));
+
+        Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
     }
 
     [Fact]

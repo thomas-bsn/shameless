@@ -71,14 +71,14 @@ public class IssueDesSeriesMigrationTests(ApiFactory factory) : IAsyncLifetime
         await _db.GetService<IMigrator>().MigrateAsync(cancellationToken: Ct);
 
         var series = await QueryAsync(
-            "SELECT id, outcome, coalesce(winning_team, '-'), fearless, alternate_sides FROM best_of_series ORDER BY id",
-            r => (r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetBoolean(3), r.GetBoolean(4)));
+            "SELECT id, outcome, coalesce(winning_team, '-'), fearless FROM best_of_series ORDER BY id",
+            r => (r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetBoolean(3)));
         Assert.Equal(
             [
-                (1, "gagnee", "B", false, false),
-                (2, "nulle", "-", false, false),
-                (3, "interrompue", "-", false, false),
-                (4, "gagnee", "A", false, false)
+                (1, "gagnee", "B", false),
+                (2, "nulle", "-", false),
+                (3, "interrompue", "-", false),
+                (4, "gagnee", "A", false)
             ],
             series);
 

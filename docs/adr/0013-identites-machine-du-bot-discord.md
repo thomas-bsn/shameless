@@ -1,6 +1,6 @@
 # 0013 — Identités machine du bot Discord
 
-Statut : acceptée — 2026-10-17
+Statut : acceptée — 2026-10-17 (« Début de la Game » révisé par l'ADR 0017)
 
 ## Contexte
 L'ADR 0005 fait de Discord OAuth la seule connexion des personnes ; l'ADR 0010 y ajoute
@@ -33,14 +33,17 @@ non livré au bout de 24 h : abandonné. Le snapshot est relu à chaque tentativ
 disparaît avec sa Série ou sa Game (Série annulée, game en attente supprimée, ADR 0009).
 - `teams_formed` : à toute création de Série (validation du Picker, création directe,
   Revanche), avant la Draft de champions.
-- `game_started` : au lancement de la Game (`POST /series/{id}/games`).
+- `captain_link` et `spectator_link` : à toute création de Série, un Lien capitaine par Équipe
+  (DM) et le Lien spectateur (salon général) ; contrat et échec de DM dans l'ADR 0017.
+- `game_started` : au Début de la Game, le signal « partie lancée » du Companion ou de l'organisateur (`POST /companion/{code}/debut`, `POST /series/{id}/debut`) ; révisé par l'ADR 0017.
 - `game_completed` : à sa fin, quelle que soit la source du résultat (saisie, Companion,
   revue acceptée), avec le score de la Série à l'issue de cette Game.
 
-**Début de la Game.** C'est son lancement dans la Série, avant sa Draft de champions :
-c'est le seul moment toujours présent. `game_started` part alors, la fenêtre de présence
-du bot s'ouvre, et les pronostics (#62) se closent à ce même instant (`StartedAt` de
-`GET /bot/games/{id}`, soit `CreatedAt` de la game).
+**Début de la Game.** *Révisé par l'ADR 0017.* Ce n'est plus le lancement de la Game dans la
+Série (qui porte la Draft de champions) mais le signal « partie lancée » du Companion, ou de
+l'organisateur à la main. `game_started` part alors, la fenêtre de présence du bot s'ouvre, et
+les pronostics (#62) se closent à ce même instant. `StartedAt` de `GET /bot/games/{id}` est
+vide (`null`) jusqu'à ce signal ; il ne vaut plus `CreatedAt` (le lancement de la Game).
 
 **Bot → API.** Le bot présente `SHAMELESS_BOT_TO_API_KEY` (config `Bot:ApiKey`) en
 `Authorization: Bearer` sur les routes `/bot/…`, et seulement sur elles. Ce n'est pas un
@@ -63,9 +66,11 @@ le décompte des voix ne sont exposés (site comme bot), seulement le nombre de 
 
 **Pronostics (#62).** Aucune présence n'est suivie avant une Game : pronostique tout ID
 Discord qui n'est pas lié à un Joueur de la composition courante de la Série. Le MVP et
-le DOFD pronostiqués sont validés contre cette composition (la Game n'existe pas encore),
+le DOFD pronostiqués sont validés contre cette composition (la partie n'a pas encore commencé),
 le vainqueur est « A » ou « B ». Les pronostics se verrouillent au début de la Game
-(ci-dessus) et ceux déposés après son `CreatedAt` sont ignorés à l'évaluation.
+(ci-dessus, ADR 0017) : ils restent ouverts après « Lancer la draft », et ceux déposés après son
+`StartedAt` sont ignorés à l'évaluation. La game en attente dont la partie n'a pas commencé
+reste la Game pronostiquable (`GET /bot/series/{id}/pronostics`).
 
 ## Conséquences
 - Trois secrets distincts, tous optionnels : sans eux l'Instance démarre, aucun

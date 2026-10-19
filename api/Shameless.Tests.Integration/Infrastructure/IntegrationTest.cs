@@ -49,7 +49,7 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     /// Ouvre une Soirée si besoin, enregistre dix joueurs (A1…A5, B1…B5) et crée une Série entre
     /// l'Équipe A (A1…A5) et l'Équipe B (B1…B5).
     /// </summary>
-    protected async Task<CreatedSerie> CreateSerieAsync(HttpClient client, int format = 3, bool fearless = false, bool alternateSides = false)
+    protected async Task<CreatedSerie> CreateSerieAsync(HttpClient client, int format = 3, bool fearless = false)
     {
         var open = await ReadJsonAsync(await client.GetAsync("/soirees/open", Ct));
         if (open.GetProperty("soiree").ValueKind == JsonValueKind.Null)
@@ -58,15 +58,47 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
         var ids = await CreatePlayersAsync(client, "A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5");
         int[] teamA = ids[..5], teamB = ids[5..];
         var serie = await ReadJsonAsync(await client.PostAsJsonAsync("/series",
-            new { teamA, teamB, format, fearless, alternateSides }, Ct));
+            new { teamA, teamB, format, fearless }, Ct));
         return new CreatedSerie(serie.GetProperty("seriesId").GetInt32(), teamA, teamB);
     }
 
-    /// <summary>Lance la prochaine game de la Série et renvoie son id.</summary>
+    /// <summary>
+    /// Lance la prochaine game de la Série et renvoie son id. Le Side est automatique : pour la
+    /// première game, <paramref name="teamASide"/> impose le résultat du pile ou face (null laisse le
+    /// hasard de la graine) ; les suivantes alternent et ignorent ce paramètre.
+    /// </summary>
     protected async Task<int> PlayGameAsync(HttpClient client, int seriesId, string? teamASide = "blue")
     {
-        var game = await ReadJsonAsync(await client.PostAsJsonAsync($"/series/{seriesId}/games", new { teamASide }, Ct));
-        return game.GetProperty("id").GetInt32();
+        await RejoindreLesCapitainesAsync(client, seriesId);
+        if (teamASide != null)
+            Factory.Random.ImposerLeProchainTirage(teamASide == "blue" ? 0 : 1);
+        var reponse = await client.PostAsync($"/series/{seriesId}/games", null, Ct);
+        Factory.Random.LibererLeTirage();
+        return (await ReadJsonAsync(reponse)).GetProperty("id").GetInt32();
+    }
+
+    /// <summary>Les deux Capitaines ouvrent leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
+    protected async Task RejoindreLesCapitainesAsync(HttpClient client, int seriesId)
+    {
+        await DesignerLesCapitainesAbsentsAsync(client, seriesId);
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+        foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB" })
+            (await Factory.CreateAnonymousClient()
+                .GetAsync($"/liens/{Uri.EscapeDataString(liens.GetProperty(nom).GetString()!)}", Ct)).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>Désigne le premier joueur de chaque Équipe comme Capitaine, quand elle n'en a pas encore.</summary>
+    protected async Task DesignerLesCapitainesAbsentsAsync(HttpClient client, int seriesId)
+    {
+        var serie = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct));
+        foreach (var equipe in new[] { "A", "B" })
+            if (serie.GetProperty($"capitaine{equipe}").ValueKind == JsonValueKind.Null)
+                await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/{equipe}",
+                    new
+                    {
+                        designation = "Manuel",
+                        playerId = serie.GetProperty($"team{equipe}")[0].GetProperty("playerId").GetInt32()
+                    }, Ct));
     }
 
     /// <summary>Lance la prochaine game de la Série et saisit l'Équipe gagnante.</summary>
@@ -87,6 +119,10 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     protected async Task<string> CodeCompanionAsync(HttpClient client, int seriesId) =>
         (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/code-companion", Ct)))
             .GetProperty("code").GetString()!;
+
+    /// <summary>Le Companion, sans connexion, signale « partie lancée » avec ce code (Début de la Game, ADR 0017).</summary>
+    protected async Task<HttpResponseMessage> SignalerDebutAsync(string code) =>
+        await Factory.CreateAnonymousClient().PostAsync($"/companion/{Uri.EscapeDataString(code)}/debut", null, Ct);
 
     /// <summary>Le Companion, sans connexion, envoie un rapport de fin de game avec ce code.</summary>
     protected async Task<HttpResponseMessage> EnvoyerRapportAsync(string code, object rapport) =>

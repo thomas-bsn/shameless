@@ -11,7 +11,7 @@ namespace Shameless.Tests.Integration.Infrastructure;
 /// </summary>
 public sealed class FakeClock : TimeProvider
 {
-    private FakeTimeProvider _inner = new(DateTimeOffset.UtcNow);
+    private FakeTimeProvider _inner = new(Maintenant());
 
     public override DateTimeOffset GetUtcNow() => _inner.GetUtcNow();
 
@@ -36,5 +36,12 @@ public sealed class FakeClock : TimeProvider
     public void Advance(TimeSpan delta) => _inner.Advance(delta);
 
     /// <summary>Remet l'horloge à l'heure réelle, sans minuterie en cours.</summary>
-    public void Reset() => _inner = new FakeTimeProvider(DateTimeOffset.UtcNow);
+    public void Reset() => _inner = new FakeTimeProvider(Maintenant());
+
+    /// <summary>L'heure réelle à la microseconde, la précision de PostgreSQL : ce qu'on écrit se relit à l'identique.</summary>
+    private static DateTimeOffset Maintenant()
+    {
+        var maintenant = DateTimeOffset.UtcNow;
+        return maintenant.AddTicks(-(maintenant.Ticks % 10));
+    }
 }

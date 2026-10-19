@@ -476,6 +476,107 @@
         }
       }
     },
+    "/bot/series/{id}/liens-capitaine/{equipe}/dm-echec": {
+      "post": {
+        "tags": [
+          "Bot"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "equipe",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EchecDmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bot/games/{id}": {
       "get": {
         "tags": [
@@ -1328,6 +1429,75 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companion/{code}/debut": {
+      "post": {
+        "tags": [
+          "Companion"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2829,76 +2999,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Erreur",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/series/{id}/liens/envoyes": {
-      "post": {
-        "tags": [
-          "Liens"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/LiensSerieResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LiensSerieResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LiensSerieResponse"
                 }
               }
             }
@@ -4849,26 +4949,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlayGameRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "201": {
             "description": "Created",
@@ -4896,6 +4976,76 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{id}/debut": {
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebutDeGameResponse"
                 }
               }
             }
@@ -6928,8 +7078,7 @@
           "teamA",
           "teamB",
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -6952,10 +7101,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }
@@ -6982,6 +7127,28 @@
           "VisionParMinute",
           "ObjectifsParMinute"
         ]
+      },
+      "DebutDeGameResponse": {
+        "required": [
+          "seriesId",
+          "gameId",
+          "startedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gameId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "DesignationCapitaine": {
         "enum": [
@@ -7183,6 +7350,33 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "EchecDmRequest": {
+        "required": [
+          "raison"
+        ],
+        "type": "object",
+        "properties": {
+          "raison": {
+            "type": "string"
+          }
+        }
+      },
+      "EchecDmResponse": {
+        "required": [
+          "raison",
+          "signaleLe"
+        ],
+        "type": "object",
+        "properties": {
+          "raison": {
+            "type": "string"
+          },
+          "signaleLe": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -7620,7 +7814,10 @@
             "type": "string"
           },
           "startedAt": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date-time"
           },
           "completedAt": {
@@ -8103,6 +8300,7 @@
       "JoueurInattenduResponse": {
         "required": [
           "puuid",
+          "riotId",
           "side",
           "championId",
           "joueur"
@@ -8111,6 +8309,12 @@
         "properties": {
           "puuid": {
             "type": "string"
+          },
+          "riotId": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "side": {
             "type": "string"
@@ -8193,8 +8397,11 @@
           "seriesId",
           "lienCapitaineA",
           "lienCapitaineB",
-          "liensCapitaineEnvoyes",
-          "lienSpectateur"
+          "lienSpectateur",
+          "echecDmA",
+          "echecDmB",
+          "capitaineARejointLe",
+          "capitaineBRejointLe"
         ],
         "type": "object",
         "properties": {
@@ -8208,14 +8415,42 @@
           "lienCapitaineB": {
             "type": "string"
           },
-          "liensCapitaineEnvoyes": {
-            "type": "boolean"
-          },
           "lienSpectateur": {
+            "type": "string"
+          },
+          "echecDmA": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EchecDmResponse"
+              }
+            ]
+          },
+          "echecDmB": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EchecDmResponse"
+              }
+            ]
+          },
+          "capitaineARejointLe": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "date-time"
+          },
+          "capitaineBRejointLe": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -8904,20 +9139,6 @@
           }
         }
       },
-      "PlayGameRequest": {
-        "required": [
-          "teamASide"
-        ],
-        "type": "object",
-        "properties": {
-          "teamASide": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
       "PorteeLien": {
         "enum": [
           "Capitaine",
@@ -9328,8 +9549,7 @@
       "RematchRequest": {
         "required": [
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -9338,10 +9558,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }
@@ -9595,7 +9811,8 @@
           "teamB",
           "riotMatchId",
           "championsJoues",
-          "rapportEnRevue"
+          "rapportEnRevue",
+          "startedAt"
         ],
         "type": "object",
         "properties": {
@@ -9651,6 +9868,13 @@
                 "$ref": "#/components/schemas/RapportEnRevueResponse"
               }
             ]
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -9715,7 +9939,6 @@
           "soireeId",
           "format",
           "fearless",
-          "alternateSides",
           "outcome",
           "winningTeam",
           "teamAWins",
@@ -9744,9 +9967,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean"
-          },
-          "alternateSides": {
             "type": "boolean"
           },
           "outcome": {
@@ -10487,8 +10707,7 @@
       "ValidatePickerRequest": {
         "required": [
           "format",
-          "fearless",
-          "alternateSides"
+          "fearless"
         ],
         "type": "object",
         "properties": {
@@ -10497,10 +10716,6 @@
             "format": "int32"
           },
           "fearless": {
-            "type": "boolean",
-            "default": false
-          },
-          "alternateSides": {
             "type": "boolean",
             "default": false
           }

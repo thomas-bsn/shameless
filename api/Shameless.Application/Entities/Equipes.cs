@@ -21,6 +21,15 @@ public static class Sides
     public const string Red = "red";
 
     public static string Other(string side) => side == Blue ? Red : Blue;
+
+    /// <summary>
+    /// Le Side de l'Équipe A pour la prochaine game d'une Série : tiré à pile ou face pour la première,
+    /// puis l'inverse de celui de la game précédente (le Side corrigé par un Rapport compris).
+    /// </summary>
+    public static string ProchainDeLEquipeA(string? sideDeLaGamePrecedente, Interfaces.IRandomSource random) =>
+        sideDeLaGamePrecedente == null
+            ? random.Next(2) == 0 ? Blue : Red
+            : Other(sideDeLaGamePrecedente);
 }
 
 /// <summary>Le statut d'une game : en attente de son résultat, puis terminée.</summary>

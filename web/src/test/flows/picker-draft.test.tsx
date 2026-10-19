@@ -177,3 +177,53 @@ describe("Picker : Draft avec ses fenêtres", () => {
     expect(await screen.findByRole("dialog", { name: "Choix du capitaine" })).toBeInTheDocument();
   });
 });
+
+describe("Picker : capitaines distincts", () => {
+  // jsdom n'implémente pas ces API, que le menu déroulant de Radix appelle.
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture ??= () => false;
+    Element.prototype.setPointerCapture ??= () => {};
+    Element.prototype.releasePointerCapture ??= () => {};
+    Element.prototype.scrollIntoView ??= () => {};
+  });
+
+  async function ouvrirLaListe(nom: string) {
+    await userEvent.click(await screen.findByRole("combobox", { name: nom }));
+    return screen.findAllByRole("option");
+  }
+
+  it("grise en B le joueur choisi capitaine en A, et inversement", async () => {
+    mockDraft();
+    renderApp("/soiree/picker");
+    await userEvent.click(await screen.findByRole("combobox", { name: "Capitaines" }));
+    await userEvent.click(await screen.findByRole("option", { name: "À la main" }));
+
+    await ouvrirLaListe("Capitaine A");
+    await userEvent.click(screen.getByRole("option", { name: "Joueur3" }));
+
+    await ouvrirLaListe("Capitaine B");
+    expect(screen.getByRole("option", { name: "Joueur3" })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("option", { name: "Joueur4" })).not.toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(screen.getByRole("option", { name: "Joueur4" }));
+
+    await ouvrirLaListe("Capitaine A");
+    expect(screen.getByRole("option", { name: "Joueur4" })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("option", { name: "Joueur3" })).not.toHaveAttribute("aria-disabled", "true");
+  });
+});
+
+describe("Picker : récap sans couronne de capitaine", () => {
+  it("ne marque aucun capitaine dans les cartes d'Équipe", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /soirees/open": {
+        soiree: { id: 7, status: "Open", openedAt: "2026-10-16T19:00:00Z", closedAt: null, picker: draftTerminee() },
+      },
+      "GET /players": joueurs,
+    });
+    renderApp("/soiree/picker");
+
+    expect(await screen.findByRole("group", { name: "Équipe A" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Capitaine")).not.toBeInTheDocument();
+  });
+});

@@ -13,7 +13,6 @@ public record SeriesResponse(
     int? SoireeId,
     int Format,
     bool Fearless,
-    bool AlternateSides,
     SeriesOutcome Outcome,
     string? WinningTeam, // "A" | "B" quand la Série est gagnée
     int TeamAWins,
@@ -35,7 +34,8 @@ public record SeriesGameResponse(
     List<GameParticipantDto> TeamB,
     string? RiotMatchId, // l'identifiant Riot de la partie, donné par le rapport du Companion ; null sans rapport
     List<ChampionJoueResponse> ChampionsJoues, // vide sans rapport du Companion
-    RapportEnRevueResponse? RapportEnRevue // le rapport du Companion qui attend la décision de l'organisateur
+    RapportEnRevueResponse? RapportEnRevue, // le rapport du Companion qui attend la décision de l'organisateur
+    DateTime? StartedAt // le Début de la Game (signal « partie lancée », ADR 0017), null avant ce signal
 )
 {
     /// <param name="joueursConnus">Les joueurs enregistrés, par PUUID, pour reconnaître les joueurs inattendus d'un rapport en revue.</param>
@@ -55,7 +55,8 @@ public record SeriesGameResponse(
             .ToList(),
         RapportEnRevue: game.RapportEnRevue is { } revue
             ? RapportEnRevueResponse.From(revue, game, joueursConnus)
-            : null);
+            : null,
+        StartedAt: game.StartedAt);
 }
 
 /// <summary>
@@ -86,7 +87,7 @@ public record RapportEnRevueResponse(
             Inattendus: rapport.Joueurs
                 .Where(j => ecart.Inattendus.Contains(j.Puuid))
                 .Select(j => new JoueurInattenduResponse(
-                    j.Puuid, j.Side, j.ChampionId,
+                    j.Puuid, j.RiotId, j.Side, j.ChampionId,
                     joueursConnus.TryGetValue(j.Puuid, out var joueur) ? GameParticipantDto.From(joueur) : null))
                 .ToList(),
             MauvaisSide: ecart.MauvaisSide.Select(id => GameParticipantDto.From(participants[id])).ToList());
@@ -95,9 +96,10 @@ public record RapportEnRevueResponse(
 
 /// <summary>
 /// Un joueur détecté par le rapport qui n'est pas participant de la game : son PUUID, son Side, son
-/// champion joué, et le joueur Shameless de ce PUUID s'il est enregistré (null sinon).
+/// champion joué, son RiotId (Nom#TAG) quand Shameless a pu le retrouver, et le joueur Shameless de ce
+/// PUUID s'il est enregistré (null sinon).
 /// </summary>
-public record JoueurInattenduResponse(string Puuid, string Side, string ChampionId, GameParticipantDto? Joueur);
+public record JoueurInattenduResponse(string Puuid, string? RiotId, string Side, string ChampionId, GameParticipantDto? Joueur);
 
 /// <summary>Le champion réellement joué par un participant de la game (id Data Dragon, ex. "LeeSin").</summary>
 public record ChampionJoueResponse(int PlayerId, string ChampionId);

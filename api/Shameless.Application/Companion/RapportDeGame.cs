@@ -63,26 +63,43 @@ public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnl
     }
 
     /// <summary>
+    /// Vrai quand le rapport corrige le Side de la game : tous les participants détectés sont vus sur
+    /// l'autre Side que prévu, c'est-à-dire que les deux Équipes ont simplement échangé leur camp.
+    /// Le Rapport fait foi sur le Side, ce n'est donc pas un écart.
+    /// </summary>
+    public bool InverseLesSidesDe(CustomGame game)
+    {
+        var detectes = Joueurs.ToDictionary(j => j.Puuid);
+        var presents = game.Participants.Where(p => detectes.ContainsKey(p.Player.PUUID)).ToList();
+        return presents.Count > 0 && presents.All(p => detectes[p.Player.PUUID].Side != p.Side);
+    }
+
+    /// <summary>
     /// Ce qui sépare les joueurs détectés de la composition de la game (ses participants,
     /// Remplacements compris) : participants absents du rapport, joueurs détectés qui n'en font pas
-    /// partie, participants détectés sur l'autre Side.
+    /// partie, participants détectés sur l'autre Side. Deux Équipes qui ont échangé leur Side ne
+    /// sont pas un écart (<see cref="InverseLesSidesDe"/>).
     /// </summary>
     public EcartDeComposition EcartAvec(CustomGame game)
     {
         var detectes = Joueurs.ToDictionary(j => j.Puuid);
         var attendus = game.Participants.Select(p => p.Player.PUUID).ToHashSet();
+        var inverse = InverseLesSidesDe(game);
         return new EcartDeComposition(
             Absents: game.Participants.Where(p => !detectes.ContainsKey(p.Player.PUUID)).Select(p => p.PlayerId).ToList(),
             Inattendus: Joueurs.Where(j => !attendus.Contains(j.Puuid)).Select(j => j.Puuid).ToList(),
-            MauvaisSide: game.Participants
-                .Where(p => detectes.TryGetValue(p.Player.PUUID, out var j) && j.Side != p.Side)
-                .Select(p => p.PlayerId)
-                .ToList());
+            MauvaisSide: inverse
+                ? []
+                : game.Participants
+                    .Where(p => detectes.TryGetValue(p.Player.PUUID, out var j) && j.Side != p.Side)
+                    .Select(p => p.PlayerId)
+                    .ToList());
     }
 }
 
 /// <param name="Stats">Les stats brutes du joueur pour la partie, en JSON ; null si absentes (rapport invalide).</param>
-public sealed record JoueurDuRapport(string Puuid, string Side, string ChampionId, bool Victoire, string? Stats);
+/// <param name="RiotId">Le RiotId (Nom#TAG) d'un joueur inconnu de l'Instance, retrouvé par Shameless à la mise en revue du rapport ; null sinon.</param>
+public sealed record JoueurDuRapport(string Puuid, string Side, string ChampionId, bool Victoire, string? Stats, string? RiotId = null);
 
 /// <summary>
 /// L'écart entre les joueurs détectés par un rapport et la composition d'une game. Vide, le rapport

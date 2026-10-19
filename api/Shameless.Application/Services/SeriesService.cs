@@ -8,8 +8,8 @@ using Shameless.Application.Picker;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Les commandes d'une Série : la créer dans la Soirée ouverte, lancer sa prochaine game avec le
-/// Side de chaque Équipe, saisir le résultat d'une game jusqu'à l'issue de la Série.
+/// Les commandes d'une Série : la créer dans la Soirée ouverte, lancer sa prochaine game (Side
+/// automatique), saisir le résultat d'une game jusqu'à l'issue de la Série.
 /// </summary>
 public sealed class SeriesService
 {
@@ -53,10 +53,9 @@ public sealed class SeriesService
         IReadOnlyCollection<int> teamA,
         IReadOnlyCollection<int> teamB,
         int format,
-        bool fearless,
-        bool alternateSides)
+        bool fearless)
     {
-        var prepared = await PrepareAsync(teamA, teamB, format, fearless, alternateSides);
+        var prepared = await PrepareAsync(teamA, teamB, format, fearless);
         if (!prepared.IsOk) return prepared;
 
         return await _series.TrySaveChangesAsync()
@@ -73,7 +72,6 @@ public sealed class SeriesService
         IReadOnlyCollection<int> teamB,
         int format,
         bool fearless,
-        bool alternateSides,
         IReadOnlyDictionary<int, Role>? roles = null,
         Capitaines? capitaines = null)
     {
@@ -97,7 +95,6 @@ public sealed class SeriesService
             PlayedAt = _clock.GetUtcNow().UtcDateTime,
             Format = format,
             Fearless = fearless,
-            AlternateSides = alternateSides,
             Outcome = SeriesOutcome.EnCours,
             SoireeId = soiree.Id,
             Players = teamA.Select(id => NewPlayer(id, Equipes.A, capitaines?.CapitaineA))
@@ -107,6 +104,7 @@ public sealed class SeriesService
         };
         _series.Add(series);
         _evenements.TeamsFormed(series);
+        _evenements.LiensEnvoyes(series);
         return CommandResult<BestOfSeries>.Ok(series);
 
         SeriesPlayer NewPlayer(int playerId, string equipe, int? capitaine) => new()
@@ -119,11 +117,11 @@ public sealed class SeriesService
     }
 
     /// <summary>
-    /// Lance la prochaine game d'une Série en cours, avec sa composition courante. Le Side de
-    /// l'Équipe A est celui demandé ; à défaut, avec l'alternance automatique, l'inverse de la
-    /// game précédente (blue pour la première).
+    /// Lance la prochaine game d'une Série en cours, avec sa composition courante. Le Side n'est pas
+    /// choisi : celui de l'Équipe A est tiré à pile ou face pour la première game, puis l'inverse de
+    /// celui de la game précédente (corrigé par son Rapport le cas échéant).
     /// </summary>
-    public async Task<CommandResult<CustomGame>> PlayNextGameAsync(int seriesId, string? teamASide)
+    public async Task<CommandResult<CustomGame>> PlayNextGameAsync(int seriesId)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
         if (series == null)
@@ -133,15 +131,12 @@ public sealed class SeriesService
         if (series.Games.Any(g => g.Status == GameStatuses.Pending))
             return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
 
-        if (teamASide != null && teamASide is not (Sides.Blue or Sides.Red))
-            return CommandResult<CustomGame>.Invalid("Le Side d'une Équipe est « blue » ou « red ».");
+        if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
+            return CommandResult<CustomGame>.Conflict("Désigne les deux capitaines avant de lancer la draft.");
+        if (!series.CapitainesOntRejoint)
+            return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
 
-        var previous = series.Games.LastOrDefault();
-        var side = teamASide ?? (series.AlternateSides
-            ? previous == null ? Sides.Blue : Sides.Other(previous.TeamASide)
-            : null);
-        if (side == null)
-            return CommandResult<CustomGame>.Invalid("Choisissez le Side de l'Équipe A, ou activez l'alternance automatique.");
+        var side = Sides.ProchainDeLEquipeA(series.Games.LastOrDefault()?.TeamASide, _random);
 
         var now = _clock.GetUtcNow().UtcDateTime;
         var game = new CustomGame
@@ -160,13 +155,43 @@ public sealed class SeriesService
                 .ToList()
         };
         _games.Add(game);
-        // Le lancement est le début de la Game (ADR 0013) : pronostics clos, présences ouvertes côté bot.
-        _evenements.GameStarted(game);
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
             return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
 
         return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+    }
+
+    /// <summary>
+    /// Le Début de la Game (ADR 0017) : le signal « partie lancée » du Companion, ou de l'organisateur à
+    /// la main. Il renseigne <c>StartedAt</c>, clôt les pronostics et émet <c>game_started</c>. Idempotent :
+    /// un second signal répond le même début sans rien ré-émettre. Refusé sans game en attente.
+    /// </summary>
+    public async Task<CommandResult<CustomGame>> SignalerDebutAsync(int seriesId)
+    {
+        var series = await _series.GetWithGamesAsync(seriesId);
+        if (series == null)
+            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : aucune partie ne peut commencer.");
+
+        var game = series.Games.SingleOrDefault(g => g.Status == GameStatuses.Pending);
+        if (game == null)
+            return CommandResult<CustomGame>.Conflict(
+                "Aucune game de cette Série n'est en attente : lancez la draft avant de signaler le début de la partie.");
+        if (game.StartedAt != null)
+            return CommandResult<CustomGame>.Ok(game);
+
+        // Arrondi à la microseconde, la précision de PostgreSQL : le début répondu au premier signal est
+        // celui que relira le second.
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        game.StartedAt = maintenant.AddTicks(-(maintenant.Ticks % 10));
+        // Le début de la Game : pronostics clos, fenêtre de présence du bot ouverte.
+        _evenements.GameStarted(game);
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<CustomGame>.Ok(game);
     }
 
     /// <summary>
@@ -203,7 +228,15 @@ public sealed class SeriesService
     {
         game.WinningTeam = winningTeam;
         game.Status = GameStatuses.Completed;
-        game.CompletedAt = _clock.GetUtcNow().UtcDateTime;
+        var maintenant = _clock.GetUtcNow().UtcDateTime;
+        game.CompletedAt = maintenant.AddTicks(-(maintenant.Ticks % 10)); // microseconde, comme PostgreSQL
+        if (game.StartedAt == null)
+        {
+            // Résultat sans signal de début : la partie a forcément commencé. Le bot reçoit toujours les deux
+            // événements, game_started d'abord ; un début déjà signalé n'est jamais écrasé ni ré-émis.
+            game.StartedAt = game.CompletedAt;
+            _evenements.GameStarted(game);
+        }
         series?.ApplyResults(series.Games);
         series?.Touch();
         _evenements.GameCompleted(game);
@@ -316,13 +349,12 @@ public sealed class SeriesService
     /// <summary>
     /// Lance la Revanche d'une Série : une nouvelle Série dans la même Soirée, entre les mêmes
     /// Équipes dans leur dernière composition (Remplacements compris), sans repasser par le Picker.
-    /// Le format, l'option Fearless et l'alternance des Sides sont choisis pour la Revanche.
+    /// Le format et l'option Fearless sont choisis pour la Revanche.
     /// </summary>
     public async Task<CommandResult<BestOfSeries>> CreateRevancheAsync(
         int seriesId,
         int format,
-        bool fearless,
-        bool alternateSides)
+        bool fearless)
     {
         var series = await _series.GetWithGamesAsync(seriesId);
         if (series == null)
@@ -338,8 +370,7 @@ public sealed class SeriesService
             series.PlayersOf(Equipes.A).Select(p => p.PlayerId).ToList(),
             series.PlayersOf(Equipes.B).Select(p => p.PlayerId).ToList(),
             format,
-            fearless,
-            alternateSides);
+            fearless);
     }
 
     public async Task<SeriesResponse?> GetAsync(int seriesId)
@@ -383,7 +414,6 @@ public sealed class SeriesService
         SoireeId: series.SoireeId,
         Format: series.Format,
         Fearless: series.Fearless,
-        AlternateSides: series.AlternateSides,
         Outcome: series.Outcome,
         WinningTeam: series.WinningTeam,
         TeamAWins: series.TeamAWins,

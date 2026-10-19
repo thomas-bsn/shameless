@@ -3,6 +3,7 @@ using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Companion;
 using Shameless.Api.Models.Responses.Companion;
+using Shameless.Api.Models.Responses.Series;
 using Shameless.Application.Services;
 
 namespace Shameless.Api.Controllers;
@@ -16,11 +17,32 @@ public sealed class CompanionController : ControllerBase
 {
     private readonly CodeCompanionService _codes;
     private readonly RapportsCompanionService _rapports;
+    private readonly SeriesService _series;
 
-    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports)
+    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports, SeriesService series)
     {
         _codes = codes;
         _rapports = rapports;
+        _series = series;
+    }
+
+    /// <summary>
+    /// Sans connexion : le signal « partie lancée » du Companion, le Début de la Game (ADR 0017). Il
+    /// renseigne le début de la game en attente de la Série du code, clôt ses pronostics et émet
+    /// <c>game_started</c>. Idempotent : un second signal répond le même début sans rien ré-émettre.
+    /// Aucune game en attente : 409.
+    /// </summary>
+    [HttpPost("companion/{code}/debut")]
+    [AccesParCodeCompanion]
+    [ProducesResponseType<DebutDeGameResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<DebutDeGameResponse>> SignalerDebut(string code)
+    {
+        var result = await _series.SignalerDebutAsync(this.SerieDuCodeCompanion().Id);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return DebutDeGameResponse.From(result.Value!);
     }
 
     /// <summary>Le code Companion de la Série, à saisir dans le Companion.</summary>

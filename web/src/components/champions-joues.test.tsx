@@ -30,6 +30,7 @@ const game = (overrides: Partial<Schemas["SeriesGameResponse"]> = {}): Schemas["
     { playerId: 4, championId: "Inconnu" },
   ],
   rapportEnRevue: null,
+  startedAt: null,
   ...overrides,
 });
 

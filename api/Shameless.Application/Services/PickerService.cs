@@ -173,7 +173,7 @@ public sealed class PickerService
     }
 
     /// <summary>Valide la composition courante : crée la Série entre les deux Équipes et clôt la session.</summary>
-    public async Task<CommandResult<BestOfSeries>> ValidateAsync(int format, bool fearless, bool alternateSides)
+    public async Task<CommandResult<BestOfSeries>> ValidateAsync(int format, bool fearless)
     {
         var (session, refus) = await GetSessionOfOpenSoireeAsync();
         if (session == null) return refus!.As<BestOfSeries>();
@@ -181,7 +181,7 @@ public sealed class PickerService
             return CommandResult<BestOfSeries>.Conflict("Les deux Équipes ne sont pas encore formées : tirez-les avant de valider.");
 
         var created = await _series.PrepareAsync(
-            session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless, alternateSides,
+            session.PlayerIdsOf(Equipes.A), session.PlayerIdsOf(Equipes.B), format, fearless,
             session.Players.Where(p => p.Role != null).ToDictionary(p => p.PlayerId, p => p.Role!.Value),
             // Les capitaines de la Draft restent ceux de la Série ; après une Roulette, il n'y en a pas.
             session.Methode == PickerMethode.Draft

@@ -406,8 +406,20 @@ function LancerDraft({ picker, onDone }: { picker: Picker; onDone: (tirageAuSort
         </Field>
         {manuels && (
           <div className="grid grid-cols-2 gap-3">
-            <CapitaineSelect label="Capitaine A" players={picker.players} value={capitaineA} onChange={setCapitaineA} />
-            <CapitaineSelect label="Capitaine B" players={picker.players} value={capitaineB} onChange={setCapitaineB} />
+            <CapitaineSelect
+              label="Capitaine A"
+              players={picker.players}
+              value={capitaineA}
+              exclu={capitaineB}
+              onChange={setCapitaineA}
+            />
+            <CapitaineSelect
+              label="Capitaine B"
+              players={picker.players}
+              value={capitaineB}
+              exclu={capitaineA}
+              onChange={setCapitaineB}
+            />
           </div>
         )}
         <Field label="Premier pick">
@@ -449,11 +461,14 @@ function CapitaineSelect({
   label,
   players,
   value,
+  exclu,
   onChange,
 }: {
   label: string;
   players: Participant[];
   value: string;
+  /** Le joueur déjà capitaine de l'autre Équipe : il n'est pas sélectionnable ici. */
+  exclu: string;
   onChange: (value: string) => void;
 }) {
   return (
@@ -464,7 +479,7 @@ function CapitaineSelect({
         </SelectTrigger>
         <SelectContent>
           {players.map((p) => (
-            <SelectItem key={p.playerId} value={String(p.playerId)}>
+            <SelectItem key={p.playerId} value={String(p.playerId)} disabled={String(p.playerId) === exclu}>
               {p.prenom}
             </SelectItem>
           ))}
@@ -664,7 +679,7 @@ function Valider() {
   const validate = $api.useMutation("post", "/soirees/open/picker/validate", {
     onSuccess: async ({ seriesId }) => {
       await refresh();
-      await navigate({ href: `/series/${seriesId}` });
+      await navigate({ to: "/series/$seriesId/preparation", params: { seriesId: String(seriesId) } });
     },
   });
 
@@ -695,14 +710,12 @@ function Teams({ picker, highlight }: { picker: Picker; highlight?: Equipe }) {
           equipe="A"
           players={picker.teamA}
           cost={picker.teamACost}
-          capitaine={picker.capitaineA}
           highlighted={highlight === "A"}
         />
         <TeamCard
           equipe="B"
           players={picker.teamB}
           cost={picker.teamBCost}
-          capitaine={picker.capitaineB}
           highlighted={highlight === "B"}
         />
       </div>

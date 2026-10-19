@@ -12,6 +12,7 @@ const game = (id: number, status: string, winner: string | null): Schemas["Serie
   riotMatchId: null,
   championsJoues: [],
   rapportEnRevue: null,
+  startedAt: null,
 });
 
 const participant = (playerId: number): Schemas["GameParticipantDto"] => ({

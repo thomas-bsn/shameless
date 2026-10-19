@@ -21,9 +21,6 @@ public class BestOfSeries
     /// <summary>Simple étiquette : la Série se joue en Fearless.</summary>
     public bool Fearless { get; set; }
 
-    /// <summary>Les Sides s'inversent automatiquement à chaque game.</summary>
-    public bool AlternateSides { get; set; }
-
     public SeriesOutcome Outcome { get; set; } = SeriesOutcome.EnCours;
 
     /// <summary>L'Équipe gagnante ("A" | "B") quand la Série est gagnée, sinon null.</summary>
@@ -45,11 +42,6 @@ public class BestOfSeries
     public ICollection<LienAcces> Liens { get; set; } = new List<LienAcces>();
 
     /// <summary>
-    /// L'organisateur a indiqué avoir envoyé les Liens capitaine : le Lien spectateur est disponible.
-    /// </summary>
-    public bool LiensCapitaineEnvoyes { get; set; }
-
-    /// <summary>
     /// Le code Companion : un secret long, distinct des liens d'accès, qui ne permet que de téléverser
     /// des rapports pour cette Série, et seulement tant qu'elle est en cours.
     /// </summary>
@@ -61,16 +53,21 @@ public class BestOfSeries
     public LienAcces LienCapitaine(string equipe) =>
         Liens.Single(l => l.Portee == PorteeLien.Capitaine && l.Equipe == equipe);
 
+    /// <summary>
+    /// L'échec de DM du Lien capitaine de l'Équipe, tant qu'il concerne son Capitaine actuel : changer de
+    /// Capitaine, comme renouveler le lien, l'oublie. Demande les liens chargés.
+    /// </summary>
+    public LienAcces? LienEnEchecDm(string equipe) =>
+        LienCapitaine(equipe) is { EchecDmRaison: not null } lien && lien.EchecDmPlayerId == CapitaineOf(equipe) ? lien : null;
+
+    /// <summary>Les deux Capitaines ont ouvert leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
+    public bool CapitainesOntRejoint =>
+        Liens.Where(l => l.Portee == PorteeLien.Capitaine).All(l => l.RejointLe != null);
+
     public LienAcces LienSpectateur => Liens.Single(l => l.Portee == PorteeLien.Spectateur);
 
-    /// <summary>
-    /// L'accès que donne ce lien de la Série, ou null s'il n'en donne aucun : le Lien spectateur ne vaut
-    /// qu'une fois les Liens capitaine envoyés.
-    /// </summary>
-    public AccesParLien? AccesPar(LienAcces lien) =>
-        lien.Portee == PorteeLien.Spectateur && !LiensCapitaineEnvoyes
-            ? null
-            : new AccesParLien(Id, lien.Portee, lien.Equipe);
+    /// <summary>L'accès que donne ce lien de la Série (ADR 0017 : le Lien spectateur vaut dès la création).</summary>
+    public AccesParLien AccesPar(LienAcces lien) => new(Id, lien.Portee, lien.Equipe);
 
     public bool IsEnCours => Outcome == SeriesOutcome.EnCours;
 
@@ -141,6 +138,8 @@ public class BestOfSeries
     /// <summary>Fait du joueur le Capitaine de son Équipe, à la place du précédent.</summary>
     public void DesignerCapitaine(SeriesPlayer capitaine)
     {
+        if (!capitaine.Capitaine)
+            LienCapitaine(capitaine.Equipe).RejointLe = null;
         foreach (var player in PlayersOf(capitaine.Equipe))
             player.Capitaine = player == capitaine;
     }

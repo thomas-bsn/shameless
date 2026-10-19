@@ -35,6 +35,10 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         return JsonDocument.Parse(webhook.Body).RootElement;
     }
 
+    /// <summary>Les requêtes reçues d'un type d'événement, tentatives comprises.</summary>
+    private List<FakeBot.Requete> Recus(string type) =>
+        Factory.Bot.Webhooks.Where(w => JsonDocument.Parse(w.Body).RootElement.GetProperty("type").GetString() == type).ToList();
+
     private List<JsonElement> Envoyes(string type) =>
         Factory.Bot.Webhooks.Select(w => JsonDocument.Parse(w.Body).RootElement)
             .Where(e => e.GetProperty("type").GetString() == type)
@@ -49,7 +53,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
 
         await PublierAsync();
 
-        var enveloppe = Enveloppe(Assert.Single(Factory.Bot.Webhooks));
+        var enveloppe = Enveloppe(Factory.Bot.Webhooks.Single(w => w.Texte.Contains("\"teams_formed\"")));
         Assert.Equal(1, enveloppe.GetProperty("version").GetInt32());
         Assert.Equal("teams_formed", enveloppe.GetProperty("type").GetString());
         Assert.Equal($"teams_formed:series:{serie.SeriesId}", enveloppe.GetProperty("event_id").GetString());
@@ -65,6 +69,87 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(5, data.GetProperty("team_b").GetProperty("players").GetArrayLength());
     }
 
+    private async Task<JsonElement> LiensAsync(HttpClient client, int seriesId) =>
+        await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+
+    private async Task DesignerAsync(HttpClient client, int seriesId, string equipe, int playerId) =>
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{seriesId}/capitaines/{equipe}",
+            new { designation = "Manuel", playerId }, Ct));
+
+    [Fact]
+    public async Task La_creation_d_une_serie_envoie_un_lien_par_capitaine_et_le_lien_spectateur()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await DesignerAsync(client, serie.SeriesId, "A", serie.TeamA[2]);
+        await DesignerAsync(client, serie.SeriesId, "B", serie.TeamB[4]);
+        await LierADiscordAsync(serie.TeamA[2], "111111111111111111");
+        var liens = await LiensAsync(client, serie.SeriesId);
+
+        await PublierAsync();
+
+        var capitaines = Envoyes("captain_link");
+        Assert.Equal(2, capitaines.Count);
+        var a = capitaines.Single(e => e.GetProperty("data").GetProperty("team").GetString() == "A");
+        Assert.Equal($"captain_link:series:{serie.SeriesId}:team:A", a.GetProperty("event_id").GetString());
+        var dataA = a.GetProperty("data");
+        Assert.Equal(serie.SeriesId.ToString(), dataA.GetProperty("series_id").GetString());
+        Assert.Equal("Équipe A", dataA.GetProperty("team_name").GetString());
+        Assert.Equal("A3", dataA.GetProperty("captain").GetProperty("name").GetString());
+        Assert.Equal("111111111111111111", dataA.GetProperty("captain").GetProperty("discord_id").GetString());
+        Assert.Equal($"{TestSession.AllowedOrigin}/draft/capitaine/{liens.GetProperty("lienCapitaineA").GetString()}",
+            dataA.GetProperty("url").GetString());
+
+        var b = capitaines.Single(e => e.GetProperty("data").GetProperty("team").GetString() == "B");
+        Assert.Equal($"captain_link:series:{serie.SeriesId}:team:B", b.GetProperty("event_id").GetString());
+        Assert.Equal(JsonValueKind.Null, b.GetProperty("data").GetProperty("captain").GetProperty("discord_id").ValueKind);
+        Assert.Equal($"{TestSession.AllowedOrigin}/draft/capitaine/{liens.GetProperty("lienCapitaineB").GetString()}",
+            b.GetProperty("data").GetProperty("url").GetString());
+
+        var spectateur = Assert.Single(Envoyes("spectator_link"));
+        Assert.Equal($"spectator_link:series:{serie.SeriesId}", spectateur.GetProperty("event_id").GetString());
+        Assert.Equal(serie.SeriesId.ToString(), spectateur.GetProperty("data").GetProperty("series_id").GetString());
+        Assert.Equal($"{TestSession.AllowedOrigin}/draft/spectateur/{liens.GetProperty("lienSpectateur").GetString()}",
+            spectateur.GetProperty("data").GetProperty("url").GetString());
+    }
+
+    [Fact]
+    public async Task Le_lien_d_une_equipe_sans_capitaine_attend_sa_designation_pour_partir()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PublierAsync();
+        Assert.Empty(Envoyes("captain_link"));
+        Assert.Single(Envoyes("spectator_link"));
+
+        await DesignerAsync(client, serie.SeriesId, "A", serie.TeamA[0]);
+        Factory.Clock.Advance(TimeSpan.FromMinutes(10));
+        await PublierAsync();
+
+        var envoye = Assert.Single(Envoyes("captain_link"));
+        Assert.Equal("A", envoye.GetProperty("data").GetProperty("team").GetString());
+        Assert.Equal("A1", envoye.GetProperty("data").GetProperty("captain").GetProperty("name").GetString());
+    }
+
+    [Fact]
+    public async Task Sans_bot_lie_aucun_evenement_n_est_emis_et_les_liens_restent_copiables()
+    {
+        await using var sansBot = Factory.WithWebHostBuilder(b => b.UseSetting("Bot:Url", ""));
+        var client = sansBot.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false
+        });
+        await TestSession.CompleteLoginAsync(client, Factory.Discord.AddUser("1001", "joueur", TestSession.GuildId));
+        var serie = await CreateSerieAsync(client, format: 3);
+        await DesignerAsync(client, serie.SeriesId, "A", serie.TeamA[0]);
+
+        await sansBot.Services.GetServices<IHostedService>().OfType<PublicationWebhooksBotJob>().Single().PublierAsync(Ct);
+
+        Assert.Empty(Factory.Bot.Webhooks);
+        Assert.False(string.IsNullOrEmpty((await LiensAsync(client, serie.SeriesId)).GetProperty("lienSpectateur").GetString()));
+    }
+
     [Fact]
     public async Task La_validation_du_picker_envoie_teams_formed()
     {
@@ -74,7 +159,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PutAsJsonAsync("/soirees/open/picker/selection", new { playerIds = dix }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/roulette", new { variante = "Aleatoire" }, Ct));
         var serie = await ReadJsonAsync(await client.PostAsJsonAsync("/soirees/open/picker/validate",
-            new { format = 3, fearless = false, alternateSides = true }, Ct));
+            new { format = 3, fearless = false }, Ct));
 
         await PublierAsync();
 
@@ -83,7 +168,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Le_lancement_d_une_game_envoie_game_started_avec_ses_participants()
+    public async Task Le_signal_de_partie_lancee_envoie_game_started_avec_ses_participants()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
@@ -91,6 +176,9 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await LierADiscordAsync(serie.TeamB[1], "222222222222222222");
         await PublierAsync();
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
+        await PublierAsync();
+        Assert.Empty(Envoyes("game_started"));
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
 
         await PublierAsync();
 
@@ -180,7 +268,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await PublierAsync();
         await PublierAsync();
 
-        Assert.Single(Factory.Bot.Webhooks);
+        Assert.Single(Recus("teams_formed"));
     }
 
     [Theory]
@@ -197,13 +285,13 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
 
         await PublierAsync();
         await PublierAsync(); // pas encore l'heure de retenter
-        Assert.Single(Factory.Bot.Webhooks);
+        Assert.Single(Recus("teams_formed"));
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
         await PublierAsync();
 
-        var (premier, second) = (Factory.Bot.Webhooks[0], Factory.Bot.Webhooks[1]);
-        Assert.Equal(2, Factory.Bot.Webhooks.Count);
+        var (premier, second) = (Recus("teams_formed")[0], Recus("teams_formed")[1]);
+        Assert.Equal(2, Recus("teams_formed").Count);
         Assert.NotEqual(premier.Timestamp, second.Timestamp);
         var reessai = Enveloppe(second);
         Assert.Equal(JsonDocument.Parse(premier.Body).RootElement.GetProperty("event_id").GetString(),
@@ -212,7 +300,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await PublierAsync();
         Factory.Clock.Advance(TimeSpan.FromHours(1));
         await PublierAsync();
-        Assert.Equal(2, Factory.Bot.Webhooks.Count);
+        Assert.Equal(2, Recus("teams_formed").Count);
     }
 
     [Fact]
@@ -226,7 +314,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
         await PublierAsync();
 
-        Assert.Equal(2, Factory.Bot.Webhooks.Count);
+        Assert.Equal(2, Recus("teams_formed").Count);
     }
 
     [Fact]
@@ -240,7 +328,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         Factory.Clock.Advance(TimeSpan.FromHours(1));
         await PublierAsync();
 
-        Assert.Single(Factory.Bot.Webhooks);
+        Assert.Single(Recus("teams_formed"));
     }
 
     [Fact]
@@ -248,11 +336,13 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
 
         await PublierAsync();
 
-        Assert.Equal(["teams_formed", "game_started", "game_completed"],
+        Assert.Equal(["teams_formed", "captain_link", "captain_link", "spectator_link", "game_started", "game_completed"],
             Factory.Bot.Webhooks.Select(w => JsonDocument.Parse(w.Body).RootElement.GetProperty("type").GetString()));
     }
 
@@ -262,6 +352,20 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
+
+        await PublierAsync();
+
+        Assert.Empty(Factory.Bot.Webhooks);
+    }
+
+    [Fact]
+    public async Task Une_serie_annulee_emporte_son_game_started_non_livre()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
         await PublierAsync();

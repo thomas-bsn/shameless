@@ -9,7 +9,8 @@ namespace Shameless.Application.Services;
 
 /// <summary>
 /// Les pronostics des Spectateurs (déposés par le bot, ADR 0013) : sur la prochaine Game d'une Série
-/// en cours, tant qu'elle n'est pas lancée — son lancement est son début et verrouille les pronostics.
+/// en cours, tant que sa partie n'a pas commencé — le Début de la Game (signal du Companion, ADR 0017)
+/// verrouille les pronostics, et non son lancement dans la Série.
 /// Un Spectateur choisit, chacun facultatif, l'Équipe gagnante, le MVP et le DOFD parmi la composition
 /// courante. Les Joueurs de la Série ne pronostiquent pas. Ni points ni classement.
 /// </summary>
@@ -55,7 +56,7 @@ public sealed class PronosticsService
             return CommandResult<PronosticDuSpectateur>.Conflict("Cette Série est terminée : plus de pronostic possible.");
 
         var prochaine = ProchaineGameOuverte(series);
-        if (gameNumber <= series.Games.Count || prochaine is null)
+        if (prochaine is null || gameNumber < prochaine)
             return CommandResult<PronosticDuSpectateur>.Conflict("Cette game est lancée : ses pronostics sont verrouillés.");
         if (gameNumber != prochaine)
             return CommandResult<PronosticDuSpectateur>.Invalid($"On ne pronostique que la prochaine game de la Série (game {prochaine}).");
@@ -106,11 +107,17 @@ public sealed class PronosticsService
         return PronosticsDeLaGame.Evaluer(game, pronostics, votes);
     }
 
-    /// <summary>Le numéro de la prochaine Game si la Série est en cours sans game lancée en attente, sinon null.</summary>
-    private static int? ProchaineGameOuverte(BestOfSeries series) =>
-        series.IsEnCours && series.Games.All(g => g.Status == GameStatuses.Completed)
-            ? series.Games.Count + 1
-            : null;
+    /// <summary>
+    /// Le numéro de la Game ouverte aux pronostics si la Série est en cours : la prochaine, ou la game en
+    /// attente tant que sa partie n'a pas commencé (draft lancée, pas de signal). Sinon null.
+    /// </summary>
+    private static int? ProchaineGameOuverte(BestOfSeries series)
+    {
+        if (!series.IsEnCours) return null;
+        var enAttente = series.Games.SingleOrDefault(g => g.Status == GameStatuses.Pending);
+        if (enAttente == null) return series.Games.Count + 1;
+        return enAttente.StartedAt == null ? series.Games.Count : null;
+    }
 }
 
 /// <summary>Les pronostics ouverts d'une Série, pour le bot.</summary>

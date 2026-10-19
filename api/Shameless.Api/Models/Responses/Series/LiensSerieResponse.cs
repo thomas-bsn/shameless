@@ -4,21 +4,35 @@ namespace Shameless.Api.Models.Responses.Series;
 
 /// <summary>
 /// Les liens d'accès d'une Série, pour l'organisateur : un Lien capitaine par Équipe et le Lien
-/// spectateur, null tant que l'organisateur n'a pas indiqué avoir envoyé les Liens capitaine.
+/// spectateur, disponible dès la création de la Série. <c>EchecDmA</c> et <c>EchecDmB</c> signalent un DM
+/// que le bot n'a pas pu envoyer au Capitaine de l'Équipe : le lien est alors à copier à la main.
 /// </summary>
 public sealed record LiensSerieResponse(
     int SeriesId,
     string LienCapitaineA,
     string LienCapitaineB,
-    bool LiensCapitaineEnvoyes,
-    string? LienSpectateur)
+    string LienSpectateur,
+    EchecDmResponse? EchecDmA,
+    EchecDmResponse? EchecDmB,
+    DateTime? CapitaineARejointLe,
+    DateTime? CapitaineBRejointLe)
 {
     public static LiensSerieResponse From(BestOfSeries series) => new(
         SeriesId: series.Id,
         LienCapitaineA: series.LienCapitaine(Equipes.A).Secret,
         LienCapitaineB: series.LienCapitaine(Equipes.B).Secret,
-        LiensCapitaineEnvoyes: series.LiensCapitaineEnvoyes,
-        LienSpectateur: series.LiensCapitaineEnvoyes ? series.LienSpectateur.Secret : null);
+        LienSpectateur: series.LienSpectateur.Secret,
+        EchecDmA: EchecDmResponse.From(series.LienEnEchecDm(Equipes.A)),
+        EchecDmB: EchecDmResponse.From(series.LienEnEchecDm(Equipes.B)),
+        CapitaineARejointLe: series.LienCapitaine(Equipes.A).RejointLe,
+        CapitaineBRejointLe: series.LienCapitaine(Equipes.B).RejointLe);
+}
+
+/// <summary>Un DM de Lien capitaine non parti : <c>Raison</c> vaut <c>compte_non_lie</c>, <c>dm_ferme</c> ou <c>autre</c>.</summary>
+public sealed record EchecDmResponse(string Raison, DateTime SignaleLe)
+{
+    public static EchecDmResponse? From(LienAcces? lien) =>
+        lien is { EchecDmRaison: { } raison, EchecDmLe: { } le } ? new EchecDmResponse(raison, le) : null;
 }
 
 /// <summary>Ce que donne un lien : sa Série, sa portée et, pour un Lien capitaine, son Équipe ("A" | "B").</summary>

@@ -16,7 +16,7 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
 
     private sealed record Preparee(CreatedSerie Serie, string Code, string LienA, string LienB, string LienSpectateur);
 
-    /// <summary>Une Série avec ses deux capitaines, ses liens envoyés et son code Companion.</summary>
+    /// <summary>Une Série avec ses deux capitaines, ses liens et son code Companion.</summary>
     private async Task<Preparee> PreparerAsync(HttpClient client, bool fearless)
     {
         var serie = await CreateSerieAsync(client, format: 5, fearless: fearless);
@@ -24,7 +24,7 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
             new { designation = "Manuel", playerId = serie.TeamA[0] }, Ct));
         await ReadJsonAsync(await client.PutAsJsonAsync($"/series/{serie.SeriesId}/capitaines/B",
             new { designation = "Manuel", playerId = serie.TeamB[0] }, Ct));
-        var liens = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
         var code = await CodeCompanionAsync(client, serie.SeriesId);
         return new Preparee(serie, code,
             liens.GetProperty("lienCapitaineA").GetString()!,
@@ -77,11 +77,11 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
         await PlayGameAsync(client, preparee.Serie.SeriesId, "blue");
         await OuvrirAsync(client, preparee.Serie.SeriesId);
 
-        // Équipe A en blue : tour 1 ban blue, tour 2 ban red, ..., tour 7 pick blue.
+        // Les Sides alternent : l'Équipe A est en red, B en blue. Tour 1 ban blue (B), tour 2 ban red (A), ..., tour 7 pick blue (B).
         string[] tours = ["Garen", "Darius", "LeeSin", "Zed", "Ahri", "Orianna", "Jinx"];
         for (var tour = 1; tour <= tours.Length; tour++)
         {
-            var lien = tour % 2 == 1 ? preparee.LienA : preparee.LienB;
+            var lien = tour % 2 == 1 ? preparee.LienB : preparee.LienA;
             var reponse = await Factory.CreateAnonymousClient().PostAsJsonAsync(
                 $"/liens/{Uri.EscapeDataString(lien)}/draft-champions/actions", new { tour, championId = tours[tour - 1] }, Ct);
             Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);

@@ -37,6 +37,8 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
 - [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit)
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
+- [ ] Signal de début de partie (lancement détecté dans LoL) et de fin, sans retour sur le site (ADR 0017)
+- [ ] Side détecté par le Companion ; joueur inconnu signalé à l'organisateur dans le Rapport en revue
 
 ### 1c. Stats et historique
 - [x] RiotMatchData / RiotParticipantData remplis
@@ -89,6 +91,9 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
   - [x] Administration : à traiter, cost et peak (#100)
   - [x] Administration : l'onglet Clips du Fond (#101)
   - [x] Capitaines, liens et draft de champions, avec le filtre de voie via Meraki (#105)
+  - [ ] Parcours de série : Écran de préparation, Page de la Série allégée, Espace organisateur
+  - [ ] Capitaines : jamais le même joueur des deux côtés ; liens envoyés en DM par le bot, « rejoint » mémorisé
+  - [x] Game créée au lancement de la draft, `game_started` au signal du Companion, Side sans choix manuel
 
 ## Backlog
 - Teaser vidéo avec vraies captures

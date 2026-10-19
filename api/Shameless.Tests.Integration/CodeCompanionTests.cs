@@ -49,7 +49,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
 
         var code1 = await CodeCompanionAsync(client, premiere.SeriesId);
         var code2 = await CodeCompanionAsync(client, revanche);
-        var liens = await ReadJsonAsync(await client.PostAsync($"/series/{revanche}/liens/envoyes", null, Ct));
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{revanche}/liens", Ct));
 
         Assert.NotEqual(code1, code2);
         Assert.DoesNotContain(code2, liens.GetRawText());
@@ -122,7 +122,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
         var code = await CodeCompanionAsync(client, serie.SeriesId);
-        var liens = await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/liens/envoyes", null, Ct));
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
         var anonyme = Factory.CreateAnonymousClient();
 
         var commeLien = await anonyme.GetAsync($"/liens/{Uri.EscapeDataString(code)}", Ct);
@@ -150,7 +150,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await companion.GetAsync($"/series/{serie.SeriesId}/code-companion?code={code}", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
-            (await companion.PostAsJsonAsync($"/series/{serie.SeriesId}/games", new { teamASide = "blue" }, Ct)).StatusCode);
+            (await companion.PostAsync($"/series/{serie.SeriesId}/games", null, Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await companion.PostAsync($"/series/{serie.SeriesId}/code-companion/renouveler", null, Ct)).StatusCode);
     }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Api.Auth;
+using Shameless.Api.Extensions;
+using Shameless.Api.Models.Requests.Series;
 using Shameless.Application.Bot;
 using Shameless.Application.Services;
 
@@ -16,10 +18,28 @@ namespace Shameless.Api.Controllers;
 public sealed class BotController : ControllerBase
 {
     private readonly CustomGameService _games;
+    private readonly LiensAccesService _liens;
 
-    public BotController(CustomGameService games)
+    public BotController(CustomGameService games, LiensAccesService liens)
     {
         _games = games;
+        _liens = liens;
+    }
+
+    /// <summary>
+    /// Le DM du Lien capitaine de l'Équipe ("A" | "B") n'est pas parti (<c>captain_link</c>) : compte Discord
+    /// non lié, DM fermé… L'organisateur le voit sur l'Écran de préparation et copie le lien à la main.
+    /// </summary>
+    [HttpPost("series/{id:int}/liens-capitaine/{equipe}/dm-echec")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<IActionResult> EchecDm(int id, string equipe, EchecDmRequest request)
+    {
+        var result = await _liens.SignalerEchecDmAsync(id, equipe, request.Raison);
+        return result.IsOk ? NoContent() : this.Refusal(result);
     }
 
     /// <summary>

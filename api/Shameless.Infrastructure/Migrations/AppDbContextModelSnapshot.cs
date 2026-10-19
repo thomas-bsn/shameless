@@ -67,10 +67,6 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseSerialColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AlternateSides")
-                        .HasColumnType("boolean")
-                        .HasColumnName("alternate_sides");
-
                     b.Property<string>("CodeCompanion")
                         .IsRequired()
                         .HasColumnType("text")
@@ -83,10 +79,6 @@ namespace Shameless.Infrastructure.Migrations
                     b.Property<int>("Format")
                         .HasColumnType("integer")
                         .HasColumnName("format");
-
-                    b.Property<bool>("LiensCapitaineEnvoyes")
-                        .HasColumnType("boolean")
-                        .HasColumnName("liens_capitaine_envoyes");
 
                     b.Property<string>("Outcome")
                         .IsRequired()
@@ -332,6 +324,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("series_id");
 
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("started_at");
+
                     b.Property<string>("Status")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -463,6 +459,11 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("derniere_erreur");
 
+                    b.Property<string>("Equipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("equipe");
+
                     b.Property<int?>("GameId")
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
@@ -517,7 +518,12 @@ namespace Shameless.Infrastructure.Migrations
                     b.HasIndex("Type", "SeriesId")
                         .IsUnique()
                         .HasDatabaseName("ix_evenements_bot_type_series_id")
-                        .HasFilter("series_id IS NOT NULL");
+                        .HasFilter("series_id IS NOT NULL AND equipe IS NULL");
+
+                    b.HasIndex("Type", "SeriesId", "Equipe")
+                        .IsUnique()
+                        .HasDatabaseName("ix_evenements_bot_type_series_id_equipe")
+                        .HasFilter("series_id IS NOT NULL AND equipe IS NOT NULL");
 
                     b.ToTable("evenements_bot", null, t =>
                         {
@@ -534,6 +540,19 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("EchecDmLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("echec_dm_le");
+
+                    b.Property<int?>("EchecDmPlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("echec_dm_player_id");
+
+                    b.Property<string>("EchecDmRaison")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("echec_dm_raison");
+
                     b.Property<string>("Equipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
@@ -543,6 +562,10 @@ namespace Shameless.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("portee");
+
+                    b.Property<DateTime?>("RejointLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("rejoint_le");
 
                     b.Property<string>("Secret")
                         .IsRequired()

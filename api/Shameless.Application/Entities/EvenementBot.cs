@@ -17,13 +17,16 @@ public class EvenementBot
     public long Id { get; set; }
     public TypeEvenementBot Type { get; set; }
 
-    /// <summary>La Série de <see cref="TypeEvenementBot.TeamsFormed"/>, null sinon.</summary>
+    /// <summary>La Série de <see cref="TypeEvenementBot.TeamsFormed"/> et des événements de lien, null sinon.</summary>
     public int? SeriesId { get; set; }
     public BestOfSeries? Series { get; set; }
 
     /// <summary>La Game de <see cref="TypeEvenementBot.GameStarted"/> et <see cref="TypeEvenementBot.GameCompleted"/>, null sinon.</summary>
     public int? GameId { get; set; }
     public CustomGame? Game { get; set; }
+
+    /// <summary>L'Équipe ("A" | "B") d'un <see cref="TypeEvenementBot.CaptainLink"/>, null sinon.</summary>
+    public string? Equipe { get; set; }
 
     public DateTime OccurredAt { get; set; }
     public StatutEvenementBot Statut { get; set; } = StatutEvenementBot.ALivrer;
@@ -36,21 +39,34 @@ public class EvenementBot
     /// <summary>La raison du dernier échec, pour le diagnostic.</summary>
     public string? DerniereErreur { get; set; }
 
-    /// <summary>Le type du contrat du bot : <c>teams_formed</c>, <c>game_started</c> ou <c>game_completed</c>.</summary>
+    /// <summary>Le type du contrat du bot : <c>teams_formed</c>, <c>captain_link</c>, <c>spectator_link</c>, <c>game_started</c> ou <c>game_completed</c>.</summary>
     public string TypeDuContrat => Type switch
     {
         TypeEvenementBot.TeamsFormed => "teams_formed",
+        TypeEvenementBot.CaptainLink => "captain_link",
+        TypeEvenementBot.SpectatorLink => "spectator_link",
         TypeEvenementBot.GameStarted => "game_started",
         _ => "game_completed"
     };
 
-    /// <summary>Stable pour toutes les tentatives : <c>{type}:series:{id}</c> ou <c>{type}:game:{id}</c>.</summary>
+    /// <summary>
+    /// Stable pour toutes les tentatives : <c>{type}:series:{id}</c>, <c>captain_link:series:{id}:team:{A|B}</c>
+    /// ou <c>{type}:game:{id}</c>.
+    /// </summary>
     public string EventId => SeriesId is { } seriesId
-        ? $"{TypeDuContrat}:series:{seriesId}"
+        ? Equipe is { } equipe ? $"{TypeDuContrat}:series:{seriesId}:team:{equipe}" : $"{TypeDuContrat}:series:{seriesId}"
         : $"{TypeDuContrat}:game:{GameId}";
 
     public static EvenementBot TeamsFormed(BestOfSeries series, DateTime maintenant) =>
         new() { Type = TypeEvenementBot.TeamsFormed, Series = series, OccurredAt = maintenant, ProchaineTentative = maintenant };
+
+    /// <summary>Le Lien capitaine de l'Équipe, à envoyer en DM à son Capitaine.</summary>
+    public static EvenementBot CaptainLink(BestOfSeries series, string equipe, DateTime maintenant) =>
+        new() { Type = TypeEvenementBot.CaptainLink, Series = series, Equipe = equipe, OccurredAt = maintenant, ProchaineTentative = maintenant };
+
+    /// <summary>Le Lien spectateur, à poster dans le salon général.</summary>
+    public static EvenementBot SpectatorLink(BestOfSeries series, DateTime maintenant) =>
+        new() { Type = TypeEvenementBot.SpectatorLink, Series = series, OccurredAt = maintenant, ProchaineTentative = maintenant };
 
     public static EvenementBot GameStarted(CustomGame game, DateTime maintenant) =>
         new() { Type = TypeEvenementBot.GameStarted, Game = game, OccurredAt = maintenant, ProchaineTentative = maintenant };
@@ -94,6 +110,8 @@ public class EvenementBot
 public enum TypeEvenementBot
 {
     TeamsFormed,
+    CaptainLink,
+    SpectatorLink,
     GameStarted,
     GameCompleted
 }

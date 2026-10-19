@@ -21,7 +21,6 @@ const series = (overrides: Partial<Schemas["SeriesResponse"]> = {}): Schemas["Se
   soireeId: 1,
   format: 3,
   fearless: false,
-  alternateSides: true,
   outcome: "EnCours",
   winningTeam: null,
   teamAWins: 1,

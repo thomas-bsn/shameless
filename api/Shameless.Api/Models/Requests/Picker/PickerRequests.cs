@@ -23,4 +23,4 @@ public sealed record PickRequest(string Equipe, int PlayerId);
 public sealed record AutoroleRequest(AutoroleVariante Variante);
 
 /// <summary>Valide le tirage : la Série au format 1, 2, 3 ou 5, avec ses options.</summary>
-public sealed record ValidatePickerRequest(int Format, bool Fearless = false, bool AlternateSides = false);
+public sealed record ValidatePickerRequest(int Format, bool Fearless = false);

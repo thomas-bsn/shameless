@@ -25,6 +25,18 @@ public sealed class EvenementsBot
     /// <summary>Une Série est créée (validation du Picker, création directe, Revanche) : ses Équipes sont formées.</summary>
     public void TeamsFormed(BestOfSeries series) => Ajouter(EvenementBot.TeamsFormed(series, Maintenant()));
 
+    /// <summary>
+    /// Les liens d'une Série créée : un Lien capitaine par Équipe (DM au Capitaine) et le Lien spectateur
+    /// (salon général). Le bot rend compte d'un DM raté à l'API (<c>/bot/series/…/dm-echec</c>).
+    /// </summary>
+    public void LiensEnvoyes(BestOfSeries series)
+    {
+        var maintenant = Maintenant();
+        Ajouter(EvenementBot.CaptainLink(series, Equipes.A, maintenant));
+        Ajouter(EvenementBot.CaptainLink(series, Equipes.B, maintenant));
+        Ajouter(EvenementBot.SpectatorLink(series, maintenant));
+    }
+
     /// <summary>Une Game est lancée : c'est son début (pronostics clos, fenêtre de présence du bot ouverte).</summary>
     public void GameStarted(CustomGame game) => Ajouter(EvenementBot.GameStarted(game, Maintenant()));
 
