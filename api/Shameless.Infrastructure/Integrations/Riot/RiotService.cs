@@ -1,10 +1,13 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Shameless.Application.DTOs.Riot;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Riot;
 using Shameless.Infrastructure.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly.CircuitBreaker;
 
 namespace Shameless.Infrastructure.Integrations.Riot;
 
@@ -15,7 +18,7 @@ public sealed class RiotService : IRiotService
     private readonly ILogger<RiotService> _logger;
 
     public RiotService(
-        HttpClient http, 
+        HttpClient http,
         IOptions<RiotApiOptions> options,
         ILogger<RiotService> logger)
     {
@@ -27,125 +30,108 @@ public sealed class RiotService : IRiotService
     public async Task<string?> GetPuuidFromRiotIdAsync(string riotId)
     {
         var (gameName, tagLine) = SplitRiotId(riotId);
-        return await GetPuuidAsync(gameName, tagLine);
-    }
-
-    private async Task<string?> GetPuuidAsync(string gameName, string tagLine)
-    {
         try
         {
-            var url = $"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}";
-            var res = await _http.GetFromJsonAsync<AccountResponse>(url);
-            await Task.Delay(_options.RateLimitDelayMs);
+            var res = await GetAsync<AccountResponse>($"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}");
             return res?.puuid;
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        catch (RiotException ex) when (ex.Cause == CauseEchecRiot.Introuvable)
         {
             _logger.LogWarning("Riot account not found: {GameName}#{TagLine}", gameName, tagLine);
             return null;
         }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Failed to fetch PUUID for {GameName}#{TagLine}", gameName, tagLine);
-            throw;
-        }
     }
-    
+
     public async Task<string?> GetRiotIdFromPuuidAsync(string puuid)
     {
         try
         {
-            var url = $"riot/account/v1/accounts/by-puuid/{puuid}";
-            var res = await _http.GetFromJsonAsync<AccountResponse>(url);
-            await Task.Delay(_options.RateLimitDelayMs);
-            if (res == null) return null;
-            return $"{res.gameName}#{res.tagLine}";
+            var res = await GetAsync<AccountResponse>($"riot/account/v1/accounts/by-puuid/{Uri.EscapeDataString(puuid)}");
+            return res == null ? null : $"{res.gameName}#{res.tagLine}";
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        catch (RiotException ex) when (ex.Cause == CauseEchecRiot.Introuvable)
         {
             _logger.LogWarning("Riot account not found for PUUID: {PUUID}", puuid);
             return null;
         }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Failed to fetch RiotId for PUUID: {PUUID}", puuid);
-            throw;
-        }
     }
-    
+
+    /// <summary>
+    /// Le rôle principal sur les 15 dernières parties de SoloQ. Null seulement si Riot répond qu'il n'y a pas
+    /// de partie. Toute erreur de Riot (liste ou partie) lève <see cref="RiotException"/> : pas de rôle calculé
+    /// sur des données partielles. Seule une partie disparue (404) est ignorée.
+    /// </summary>
     public async Task<string?> GetMainRoleFromPuuidAsync(string puuid)
     {
-        try
+        var matchIds = await GetAsync<List<string>>($"lol/match/v5/matches/by-puuid/{Uri.EscapeDataString(puuid)}/ids?queue=420&count=15");
+        if (matchIds == null || matchIds.Count == 0) return null;
+
+        var roleCounts = new Dictionary<string, int>();
+        foreach (var matchId in matchIds)
         {
-            var url = $"lol/match/v5/matches/by-puuid/{puuid}/ids?queue=420&count=15";
-            var matchIds = await _http.GetFromJsonAsync<List<string>>(url);
-            if (matchIds == null || matchIds.Count == 0) return null;
-
-            var roleCounts = new Dictionary<string, int>();
-            var echecs = 0;
-
-            foreach (var matchId in matchIds)
+            MatchResponse? match;
+            try { match = await GetAsync<MatchResponse>($"lol/match/v5/matches/{matchId}"); }
+            catch (RiotException ex) when (ex.Cause == CauseEchecRiot.Introuvable)
             {
-                try
-                {
-                    var matchUrl = $"lol/match/v5/matches/{matchId}";
-                    var match = await _http.GetFromJsonAsync<MatchResponse>(matchUrl);
-                    await Task.Delay(_options.RateLimitDelayMs);
-                    
-                    var participant = match?.Info?.Participants?.FirstOrDefault(p => p.Puuid == puuid);
-                    if (participant == null) continue;
-
-                    var role = participant.TeamPosition;
-                    if (string.IsNullOrWhiteSpace(role)) continue;
-
-                    roleCounts[role] = roleCounts.GetValueOrDefault(role) + 1;
-                }
-                catch (HttpRequestException ex)
-                {
-                    echecs++;
-                    _logger.LogWarning(ex, "Failed to fetch match {MatchId} for main role detection", matchId);
-                }
+                _logger.LogWarning("Match {MatchId} not found, ignored for main role detection", matchId);
+                continue;
             }
 
-            // Aucune partie lisible parce que Riot a échoué : ce n'est pas « pas d'historique ».
-            if (roleCounts.Count == 0 && echecs > 0)
-                throw new HttpRequestException($"Aucune des {echecs} parties n'a pu être lue");
+            var role = match?.Info?.Participants?.FirstOrDefault(p => p.Puuid == puuid)?.TeamPosition;
+            if (string.IsNullOrWhiteSpace(role)) continue;
+            roleCounts[role] = roleCounts.GetValueOrDefault(role) + 1;
+        }
 
-            return roleCounts.Count == 0 ? null : roleCounts.MaxBy(x => x.Value).Key;
-        }
-        catch (HttpRequestException ex)
-        {
-            // L'appelant distingue « Riot a échoué » (exception) de « pas de parties » (null).
-            _logger.LogError(ex, "Failed to fetch main role for PUUID: {PUUID}", puuid);
-            throw;
-        }
+        return roleCounts.Count == 0 ? null : roleCounts.MaxBy(x => x.Value).Key;
     }
 
     public async Task<RiotRanksDto> GetRanksFromPuuidAsync(string puuid)
     {
+        var leagues = await GetAsync<List<LeagueResponse>>($"{_options.RegionalBaseUrl}/lol/league/v4/entries/by-puuid/{Uri.EscapeDataString(puuid)}");
+        return new RiotRanksDto(Solo: Rank(leagues, "RANKED_SOLO_5x5"), Flex: Rank(leagues, "RANKED_FLEX_SR"));
+    }
+
+    /// <summary>
+    /// Un GET sur Riot ; toute réponse non réussie ou tout échec de transport devient une
+    /// <see cref="RiotException"/> avec sa cause.
+    /// </summary>
+    private async Task<T?> GetAsync<T>(string url)
+    {
         try
         {
-            var url = $"{_options.RegionalBaseUrl}/lol/league/v4/entries/by-puuid/{puuid}";
-            var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.Add("X-Riot-Token", _http.DefaultRequestHeaders.GetValues("X-Riot-Token").First());
-            
-            var res = await _http.SendAsync(req);
-            res.EnsureSuccessStatusCode();
-            
-            var leagues = await res.Content.ReadFromJsonAsync<List<LeagueResponse>>();
-            await Task.Delay(_options.RateLimitDelayMs);
+            using var res = await _http.GetAsync(url);
+            if (!res.IsSuccessStatusCode)
+            {
+                var statut = (int)res.StatusCode;
+                var cause = res.StatusCode switch
+                {
+                    HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => CauseEchecRiot.CleRefusee,
+                    HttpStatusCode.TooManyRequests => CauseEchecRiot.LimiteAtteinte,
+                    HttpStatusCode.NotFound => CauseEchecRiot.Introuvable,
+                    HttpStatusCode.RequestTimeout => CauseEchecRiot.Injoignable,
+                    >= HttpStatusCode.InternalServerError => CauseEchecRiot.Panne,
+                    _ => CauseEchecRiot.Inattendue
+                };
+                var retryAfter = res.Headers.RetryAfter;
+                var attente = retryAfter?.Delta ?? (retryAfter?.Date is { } date ? date - DateTimeOffset.UtcNow : null);
+                var echec = new RiotException(cause, statut, cause == CauseEchecRiot.LimiteAtteinte ? attente : null);
+                _logger.LogWarning("Riot answered {Status} for {Url}: {Cause}", statut, url, echec.Message);
+                throw echec;
+            }
 
-            return new RiotRanksDto(Solo: Rank(leagues, "RANKED_SOLO_5x5"), Flex: Rank(leagues, "RANKED_FLEX_SR"));
+            await Task.Delay(_options.RateLimitDelayMs);
+            return await res.Content.ReadFromJsonAsync<T>();
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        catch (RiotException) { throw; }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or BrokenCircuitException)
         {
-            _logger.LogWarning("No ranked data found for PUUID: {PUUID}", puuid);
-            return new RiotRanksDto(null, null);
+            _logger.LogError(ex, "Riot unreachable for {Url}", url);
+            throw new RiotException(CauseEchecRiot.Injoignable, inner: ex);
         }
-        catch (HttpRequestException ex)
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to fetch rank for PUUID: {PUUID}", puuid);
-            throw;
+            _logger.LogError(ex, "Unreadable Riot response for {Url}", url);
+            throw new RiotException(CauseEchecRiot.Inattendue, inner: ex);
         }
     }
 

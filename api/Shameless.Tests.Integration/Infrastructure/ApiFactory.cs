@@ -116,7 +116,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IRiotService>();
-            services.AddSingleton<IRiotService>(Riot);
+            services.AddSingleton(Riot.Service);
             services.RemoveAll<IDiscordOAuthClient>();
             services.AddSingleton<IDiscordOAuthClient>(Discord);
             services.RemoveAll<TimeProvider>();

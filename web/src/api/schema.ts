@@ -6935,6 +6935,8 @@ export interface components {
             rangsActualises: boolean;
             roleActualise: boolean;
             echecs: string[];
+            causeRangs: null | string;
+            causeRole: null | string;
         };
         ResultatDuTitre: {
             gagnants: number[];

@@ -8,9 +8,14 @@ namespace Shameless.Application.Riot;
 
 public sealed record EchecActualisation(int PlayerId, string Prenom, string Message);
 
-/// <summary>Ce qu'une actualisation a fait pour un joueur ; les échecs gardent les anciennes valeurs.</summary>
+/// <summary>
+/// Ce qu'une actualisation a fait pour un joueur ; les échecs gardent les anciennes valeurs.
+/// <paramref name="CauseRangs"/> et <paramref name="CauseRole"/> disent pourquoi Riot a échoué (null si tout va bien) ;
+/// <paramref name="Echecs"/> en fait des messages prêts à afficher.
+/// </summary>
 public sealed record ResultatActualisationJoueur(
-    int PlayerId, string Prenom, bool RangsActualises, bool RoleActualise, IReadOnlyList<string> Echecs);
+    int PlayerId, string Prenom, bool RangsActualises, bool RoleActualise, IReadOnlyList<string> Echecs,
+    string? CauseRangs = null, string? CauseRole = null);
 
 /// <summary>La progression de la dernière actualisation, lue par l'Administration.</summary>
 public sealed record EtatActualisationRiot(

@@ -10183,7 +10183,9 @@
           "prenom",
           "rangsActualises",
           "roleActualise",
-          "echecs"
+          "echecs",
+          "causeRangs",
+          "causeRole"
         ],
         "type": "object",
         "properties": {
@@ -10205,6 +10207,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "causeRangs": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "causeRole": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
