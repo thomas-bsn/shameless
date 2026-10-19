@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Shameless.Companion.Core/Shameless.Companion.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Shameless.Companion.Core.Tests/Shameless.Companion.Core.Tests.csproj" />
+  </Folder>
+</Solution>
