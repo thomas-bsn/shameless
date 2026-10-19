@@ -69,7 +69,10 @@ public sealed class LiensAccesService
     public async Task<EtatDuPret> EtatDuPretAsync(string secret)
     {
         var lien = await _series.GetLienAsync(secret);
-        return lien is { Portee: PorteeLien.Capitaine, Equipe: { } equipe } ? EtatDuPret.De(lien.Series, equipe) : EtatDuPret.Aucun;
+        if (lien is not { Portee: PorteeLien.Capitaine, Equipe: { } equipe }) return EtatDuPret.Aucun;
+
+        var series = await _series.GetWithGamesAsync(lien.SeriesId);
+        return series == null ? EtatDuPret.Aucun : EtatDuPret.De(series, equipe);
     }
 
     /// <summary>

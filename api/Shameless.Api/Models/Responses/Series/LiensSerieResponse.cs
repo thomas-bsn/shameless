@@ -42,10 +42,11 @@ public sealed record EchecDmResponse(string Raison, DateTime SignaleLe)
 /// <summary>
 /// Ce que donne un lien : sa Série, sa portée et, pour un Lien capitaine, son Équipe ("A" | "B"), avec
 /// l'état du « prêt » : celui du Capitaine (<c>Pret</c>) et celui de son adversaire (<c>AdversairePret</c>),
-/// faux pour un Lien spectateur.
+/// faux pour un Lien spectateur. <c>PretPossible</c> : la Série est en cours et aucune Draft de champions
+/// n'est ouverte sur une game en attente, donc le Capitaine peut se déclarer prêt pour la prochaine game.
 /// </summary>
-public sealed record AccesParLienResponse(int SeriesId, PorteeLien Portee, string? Equipe, bool Pret, bool AdversairePret)
+public sealed record AccesParLienResponse(int SeriesId, PorteeLien Portee, string? Equipe, bool Pret, bool AdversairePret, bool PretPossible)
 {
     public static AccesParLienResponse From(AccesParLien acces, EtatDuPret pret) =>
-        new(acces.SeriesId, acces.Portee, acces.Equipe, pret.Pret, pret.AdversairePret);
+        new(acces.SeriesId, acces.Portee, acces.Equipe, pret.Pret, pret.AdversairePret, pret.PretPossible);
 }

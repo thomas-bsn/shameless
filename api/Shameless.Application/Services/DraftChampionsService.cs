@@ -32,38 +32,6 @@ public sealed class DraftChampionsService
         _evenements = evenements;
     }
 
-    /// <summary>
-    /// Ouvre la Draft de champions de la game en attente d'une Série en cours (son Side est connu),
-    /// une fois les deux capitaines désignés. Une seule Draft de champions par game.
-    /// </summary>
-    public async Task<CommandResult<DraftChampions>> OuvrirAsync(int seriesId)
-    {
-        var series = await _series.GetWithGamesAsync(seriesId);
-        if (series == null)
-            return CommandResult<DraftChampions>.NotFound("Cette Série n'existe pas.");
-        if (!series.IsEnCours)
-            return CommandResult<DraftChampions>.Conflict("Cette Série est terminée : elle n'a plus de Draft de champions.");
-
-        var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending);
-        if (game == null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Aucune game de cette Série n'est en attente : lancez la prochaine game avec son Side avant sa Draft de champions.");
-        if (game.RapportEnRevue != null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Le rapport de la game en attente est en revue : la Draft de champions attend la décision de l'organisateur.");
-        if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Désignez le capitaine de chaque Équipe avant d'ouvrir la Draft de champions.");
-        if (await _drafts.GetByGameAsync(game.Id) != null)
-            return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est déjà ouverte.");
-
-        _drafts.Add(new DraftChampions { GameId = game.Id, TourCommenceLe = Maintenant() });
-        if (!await _drafts.TrySaveChangesAsync())
-            return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est déjà ouverte.");
-
-        return CommandResult<DraftChampions>.Ok((await _drafts.GetByGameAsync(game.Id))!);
-    }
-
     /// <summary>La Draft de champions d'une game, en cours ou terminée.</summary>
     public async Task<CommandResult<DraftChampions>> GetByGameAsync(int gameId)
     {

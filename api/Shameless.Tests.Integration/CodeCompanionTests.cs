@@ -150,7 +150,7 @@ public class CodeCompanionTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await companion.GetAsync($"/series/{serie.SeriesId}/code-companion?code={code}", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
-            (await companion.PostAsync($"/series/{serie.SeriesId}/games", null, Ct)).StatusCode);
+            (await companion.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await companion.PostAsync($"/series/{serie.SeriesId}/code-companion/renouveler", null, Ct)).StatusCode);
     }

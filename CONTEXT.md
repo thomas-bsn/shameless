@@ -118,8 +118,10 @@ la Série ni sur le récap du Picker.
 une première fois ; la mémoire en est conservée côté API.
 - **Prêt** : l'état d'un Capitaine qui a rejoint et se déclare là, sur sa page de draft. Il ne  
 peut l'être qu'après avoir rejoint, et se remet « pas prêt » tant que l'autre ne l'est pas. Quand  
-les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Changer de  
-Capitaine, renouveler son lien ou terminer la game remet « pas prêt ».
+les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Cela vaut  
+pour chaque game de la Série, la première comme les suivantes (l'API dit au lien si « prêt » est encore  
+possible : Série en cours et aucune draft ouverte). Changer de Capitaine, renouveler son lien ou  
+terminer la game remet « pas prêt » : les Capitaines se redéclarent prêts pour la game suivante.
 - **Reset de la draft** : un Capitaine demande à remettre la Draft de champions à zéro, l'autre accepte
 ou refuse. Accepté : bans, picks et chrono sont effacés, les deux Capitaines redeviennent « pas prêts »
 et la draft repart quand ils se remettent prêts, dans la même Game. Refusé, ou sans réponse sous 60 s :
@@ -248,8 +250,8 @@ par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats v
 webhooks `teams_formed`, `captain_link`, `spectator_link`, `game_started`, `game_completed`), et il appelle les routes  
 `/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
 - **Lancement de la Game** : sa création dans la Série, quand les deux Capitaines sont prêts  
-(`PUT /liens/{lien}/pret`). Elle porte alors la Draft de champions, ouverte dans la foulée. Les  
-games suivantes d'une Série se lancent encore depuis l'Espace organisateur (`POST /series/{id}/games`).
+(`PUT /liens/{lien}/pret`), pour la première game comme pour les suivantes. Elle porte alors la Draft  
+de champions, ouverte dans la foulée. L'organisateur n'a aucun moyen de la lancer : ni bouton, ni route.
 - **Début de la Game** : la fin de la Draft de champions (tous les bans et picks faits). C'est  
 là que part `game_started` et que les pronostics se closent ; ils restent ouverts pendant la  
 draft (ADR 0017, qui révise l'ADR 0013). Ni le Companion ni l'organisateur ne le signalent.

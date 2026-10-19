@@ -279,7 +279,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Un_visiteur_non_connecte_ne_cree_pas_de_serie_ni_de_game_ni_de_resultat()
+    public async Task Un_visiteur_non_connecte_ne_cree_pas_de_serie_ni_de_resultat()
     {
         var organisateur = Factory.CreateSignedInClient("7006");
         var serie = await CreateSerieAsync(organisateur, format: 3);
@@ -289,11 +289,11 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         var create = await anonymous.PostAsJsonAsync("/series",
             new { teamA = serie.TeamA, teamB = serie.TeamB, format = 3 }, Ct);
         var result = await anonymous.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct);
-        var next = await anonymous.PostAsync($"/series/{serie.SeriesId}/games", null, Ct);
+        var pret = await anonymous.PutAsJsonAsync("/liens/inconnu/pret", new { pret = true }, Ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, create.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, next.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, pret.StatusCode);
         var lue = await ReadJsonAsync(await organisateur.GetAsync($"/series/{serie.SeriesId}", Ct));
         Assert.Equal("pending", Assert.Single(lue.GetProperty("games").EnumerateArray()).GetProperty("status").GetString());
     }

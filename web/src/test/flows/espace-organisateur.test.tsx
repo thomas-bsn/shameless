@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
-import { json, mockApi, problem } from "@/test/api";
+import { json, mockApi } from "@/test/api";
 import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
@@ -88,32 +88,14 @@ describe("Espace organisateur", () => {
     await vi.waitFor(() => expect(router.state.location.pathname).toBe("/connexion"));
   });
 
-  it("lance la game suivante sans demander de Side, une fois la précédente terminée", async () => {
-    const fetch = mockApi({ ...routes(), "POST /series/5/games": json({}, 201) });
+  it("n'a aucun bouton de lancement : la game suivante s'ouvre quand les deux Capitaines sont prêts", async () => {
+    mockApi(routes());
     renderApp("/series/5/organisateur");
 
-    const lancer = await screen.findByRole("button", { name: "Lancer la game 2" });
+    const region = await screen.findByRole("region", { name: "Game 2" });
+    expect(within(region).getByText(/s'ouvre toute seule quand les deux Capitaines sont prêts/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lancer la game/ })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Side de l'Équipe A")).not.toBeInTheDocument();
-    await userEvent.click(lancer);
-
-    await waitFor(() => expect(appels(fetch, "POST", "/api/series/5/games")).toHaveLength(1));
-    expect(await appels(fetch, "POST", "/api/series/5/games")[0]![0].clone().text()).toBe("");
-  });
-
-  it("explique un refus 409 du lancement (capitaines pas prêts) et renvoie vers « Liens et code »", async () => {
-    mockApi({
-      ...routes(),
-      "POST /series/5/games": problem(409, "Les deux Capitaines doivent avoir rejoint avant de lancer la draft."),
-    });
-    renderApp("/series/5/organisateur");
-
-    await userEvent.click(await screen.findByRole("button", { name: "Lancer la game 2" }));
-
-    const alerte = await screen.findByRole("alert");
-    expect(alerte).toHaveTextContent("Les capitaines ne sont pas prêts");
-    expect(alerte).not.toHaveTextContent("doivent avoir rejoint avant de lancer la draft");
-    const liens = within(alerte).getByRole("link", { name: "Liens et code" });
-    expect(liens).toHaveAttribute("href", "/series/5/preparation");
   });
 
   it("renvoie vers l'Écran de préparation tant qu'aucune game n'existe, sans bouton de lancement", async () => {

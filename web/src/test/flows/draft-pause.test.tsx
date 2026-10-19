@@ -59,6 +59,7 @@ const acces = (portee: "Capitaine" | "Spectateur", equipe: string | null) => ({
   equipe,
   pret: true,
   adversairePret: true,
+  pretPossible: false,
 });
 
 describe("Pause de la draft de champions", () => {

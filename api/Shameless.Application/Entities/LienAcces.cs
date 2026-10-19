@@ -103,14 +103,17 @@ public enum PorteeLien
 public sealed record AccesParLien(int SeriesId, PorteeLien Portee, string? Equipe);
 
 /// <summary>
-/// Où en est le « prêt » d'un Capitaine : le sien et celui de l'Équipe adverse. Faux pour les deux
-/// quand le lien est un Lien spectateur.
+/// Où en est le « prêt » d'un Capitaine : le sien et celui de l'Équipe adverse, et s'il peut encore se
+/// déclarer prêt (<c>PretPossible</c> : la Série est en cours et aucune Draft de champions n'est ouverte sur
+/// une game en attente, game 1 comme suivantes). Faux partout pour un Lien spectateur.
 /// </summary>
-public sealed record EtatDuPret(bool Pret, bool AdversairePret)
+public sealed record EtatDuPret(bool Pret, bool AdversairePret, bool PretPossible)
 {
-    public static readonly EtatDuPret Aucun = new(false, false);
+    public static readonly EtatDuPret Aucun = new(false, false, false);
 
+    /// <summary>Demande les liens et les games de la Série chargés.</summary>
     public static EtatDuPret De(BestOfSeries series, string equipe) => new(
         series.LienCapitaine(equipe).EstPret,
-        series.LienCapitaine(equipe == Equipes.A ? Equipes.B : Equipes.A).EstPret);
+        series.LienCapitaine(equipe == Equipes.A ? Equipes.B : Equipes.A).EstPret,
+        series.IsEnCours && !series.Games.Any(g => g.Status == GameStatuses.Pending && g.DraftChampions != null));
 }

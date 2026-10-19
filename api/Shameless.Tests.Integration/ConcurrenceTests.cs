@@ -31,16 +31,20 @@ public class ConcurrenceTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Des_lancements_simultanes_ne_lancent_qu_une_game()
+    public async Task Des_prets_simultanes_ne_creent_qu_une_game()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client);
         await RejoindreLesCapitainesAsync(client, serie.SeriesId);
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
+        var lienA = Uri.EscapeDataString(liens.GetProperty("lienCapitaineA").GetString()!);
+        var lienB = Uri.EscapeDataString(liens.GetProperty("lienCapitaineB").GetString()!);
+        (await Factory.CreateAnonymousClient().PutAsJsonAsync($"/liens/{lienA}/pret", new { pret = true }, Ct)).EnsureSuccessStatusCode();
 
         var responses = await Task.WhenAll(Enumerable.Range(0, Simultanees).Select(_ =>
-            client.PostAsync($"/series/{serie.SeriesId}/games", null, Ct)));
+            Factory.CreateAnonymousClient().PutAsJsonAsync($"/liens/{lienB}/pret", new { pret = true }, Ct)));
 
-        UneSeuleReussit(responses, HttpStatusCode.Created);
+        Assert.Contains(responses, r => r.StatusCode == HttpStatusCode.OK);
         var series = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
         Assert.Single(series.GetProperty("games").EnumerateArray());
     }
