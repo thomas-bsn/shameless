@@ -24,11 +24,12 @@ public sealed class App : Application
 
             var stockage = CreerStockage();
             var journal = new JournalFichier();
-            var connexion = new ConnexionCompanion(stockage, new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
+            var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            var connexion = new ConnexionCompanion(stockage, http);
             IClientLol client = new ClientLolLcu(journal: journal);
             var surveillance = new SurveillanceFinDeGame(client, journal);
             // Présence (#146) : un émetteur isolé, relié seulement à la détection du client et au Code stocké.
-            var presence = new EmetteurPresence(client, stockage, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, journal);
+            var presence = new EmetteurPresence(client, stockage, http, journal);
             surveillance.ClientDetecteChange += presence.ClientDetecte;
             var modele = new FenetreViewModel(connexion, stockage, surveillance);
 
@@ -39,10 +40,17 @@ public sealed class App : Application
                 _fenetre.Hide();
             };
 
-            TrayIcon.SetIcons(this, [CreerIcone(bureau)]);
+            var envoi = BrancheEnvoi.Brancher(surveillance, stockage, http, journal, _arret.Token);
+            _fenetre.EncartEnvoi.DataContext = envoi;
+
+            var icone = CreerIcone(bureau);
+            envoi.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(EnvoiViewModel.Infobulle)) icone.ToolTipText = envoi.Infobulle;
+            };
+            TrayIcon.SetIcons(this, [icone]);
             _fenetre.Show();
             _ = modele.DemarrerAsync();
-            // Le Rapport construit attend #162 (envoi à l'API) : en attendant, seul le journal en garde la trace.
             _ = surveillance.ExecuterAsync(_arret.Token);
             _ = presence.ExecuterAsync(_arret.Token);
             bureau.Exit += (_, _) => _arret.Cancel();
