@@ -30,6 +30,9 @@ public class DraftChampions
     /// <summary>Durée maximale d'une pause : passé ce délai, la draft reprend toute seule.</summary>
     public static readonly TimeSpan DureeMaxPause = TimeSpan.FromMinutes(5);
 
+    /// <summary>Délai de réponse à une demande de pause : passé ce délai, elle tombe sans consommer la pause.</summary>
+    public static readonly TimeSpan DelaiDemandePause = TimeSpan.FromSeconds(60);
+
     /// <summary>Délai de réponse à une demande de reprise anticipée : passé ce délai, elle tombe.</summary>
     public static readonly TimeSpan DelaiDemandeReprise = TimeSpan.FromSeconds(60);
 
@@ -46,6 +49,11 @@ public class DraftChampions
     public bool PauseUtiliseeA { get; set; }
     public bool PauseUtiliseeB { get; set; }
 
+    /// <summary>L'Équipe dont le Capitaine demande la pause, en attente de l'autre Capitaine ; null sans demande.</summary>
+    public string? PauseDemandeeParEquipe { get; set; }
+
+    public DateTime? PauseDemandeeLe { get; set; }
+
     /// <summary>L'Équipe dont le Capitaine demande la reprise anticipée ; null sans demande en cours.</summary>
     public string? RepriseDemandeeParEquipe { get; set; }
 
@@ -58,6 +66,18 @@ public class DraftChampions
     /// <summary>Quand la pause en cours finit toute seule ; null hors pause.</summary>
     public DateTime? PauseFinLe => PauseCommenceLe + DureeMaxPause;
 
+    /// <summary>Quand la demande de pause en cours tombe ; null sans demande.</summary>
+    public DateTime? PauseDemandeExpireLe => PauseDemandeeLe + DelaiDemandePause;
+
+    /// <summary>
+    /// Une demande de pause, de reprise ou de Reset attend la réponse de l'autre Capitaine à
+    /// <paramref name="maintenant"/> : une seule demande à la fois par draft.
+    /// </summary>
+    public bool DemandeEnAttente(DateTime maintenant) =>
+        ResetEnAttente(maintenant)
+        || (PauseDemandeeLe != null && maintenant < PauseDemandeExpireLe)
+        || (RepriseDemandeeLe != null && maintenant < RepriseExpireLe);
+
     /// <summary>Quand la demande de reprise en cours tombe ; null sans demande.</summary>
     public DateTime? RepriseExpireLe => RepriseDemandeeLe + DelaiDemandeReprise;
 
@@ -68,6 +88,11 @@ public class DraftChampions
     public bool Actualiser(DateTime maintenant)
     {
         var change = false;
+        if (PauseDemandeeLe != null && maintenant >= PauseDemandeExpireLe)
+        {
+            EffacerDemandePause();
+            change = true;
+        }
         if (RepriseDemandeeLe != null && maintenant >= RepriseExpireLe)
         {
             EffacerDemandeReprise();
@@ -82,9 +107,28 @@ public class DraftChampions
         return change;
     }
 
-    /// <summary>Met la draft en pause : le temps restant du tour est gelé. Une pause par Capitaine.</summary>
-    public void MettreEnPause(string equipe, DateTime maintenant)
+    public void DemanderPause(string equipe, DateTime maintenant)
     {
+        PauseDemandeeParEquipe = equipe;
+        PauseDemandeeLe = maintenant;
+        Version++;
+    }
+
+    /// <summary>Une demande refusée ou tombée ne consomme pas la pause du demandeur.</summary>
+    public void RefuserPause()
+    {
+        EffacerDemandePause();
+        Version++;
+    }
+
+    /// <summary>
+    /// Met la draft en pause à l'acceptation de la demande : le temps restant du tour est gelé à ce moment.
+    /// La pause du demandeur est consommée maintenant, pas avant.
+    /// </summary>
+    public void AccepterPause(DateTime maintenant)
+    {
+        var equipe = PauseDemandeeParEquipe!;
+        EffacerDemandePause();
         PauseCommenceLe = maintenant;
         PauseParEquipe = equipe;
         TempsRestantAvantPause = Echeance > maintenant ? Echeance - maintenant : TimeSpan.Zero;
@@ -119,6 +163,12 @@ public class DraftChampions
         PauseParEquipe = null;
         TempsRestantAvantPause = null;
         EffacerDemandeReprise();
+    }
+
+    private void EffacerDemandePause()
+    {
+        PauseDemandeeParEquipe = null;
+        PauseDemandeeLe = null;
     }
 
     private void EffacerDemandeReprise()

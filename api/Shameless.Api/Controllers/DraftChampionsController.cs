@@ -10,7 +10,7 @@ using Shameless.Application.Services;
 namespace Shameless.Api.Controllers;
 
 /// <summary>
-/// La Draft de champions d'une game. L'organisateur connecté l'ouvre et la lit ; les capitaines la
+/// La Draft de champions d'une game. Elle s'ouvre quand les deux Capitaines sont prêts ; l'organisateur connecté la lit ; les capitaines la
 /// jouent et la lisent par leur Lien capitaine, le spectateur la lit par le Lien spectateur (ADR 0010).
 /// Passé l'échéance d'un tour (60 secondes), l'organisateur peut le jouer à la place de l'Équipe attendue.
 /// </summary>
@@ -109,23 +109,6 @@ public sealed class DraftChampionsController : ControllerBase
         return result.IsOk ? NoContent() : this.Refusal(result);
     }
 
-    /// <summary>
-    /// Ouvre la Draft de champions de la game en attente de la Série : Side connu et deux capitaines
-    /// désignés. Une seule Draft de champions par game.
-    /// </summary>
-    [HttpPost("series/{id:int}/draft-champions")]
-    [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public async Task<ActionResult<DraftChampionsResponse>> Ouvrir(int id)
-    {
-        var result = await _drafts.OuvrirAsync(id);
-        if (!result.IsOk) return this.Refusal(result);
-
-        var draft = Reponse(result.Value!);
-        return Created($"/games/{draft.GameId}/draft-champions", draft);
-    }
-
     /// <summary>La Draft de champions d'une game, en cours ou terminée.</summary>
     [HttpGet("games/{gameId:int}/draft-champions")]
     [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status200OK)]
@@ -186,7 +169,7 @@ public sealed class DraftChampionsController : ControllerBase
             acces.SeriesId, new JoueurDraft.Capitaine(acces.Equipe!), request.Tour, request.ChampionId));
     }
 
-    /// <summary>Sans connexion, par un Lien capitaine : met la draft en pause tout de suite, sans accord. Une pause par Capitaine et par draft, 5 minutes au plus ; déjà utilisée, déjà en pause ou terminée : 409 ; Lien spectateur : 403.</summary>
+    /// <summary>Sans connexion, par un Lien capitaine : demande la pause ; l'autre Capitaine l'accepte ou la refuse sous 60 secondes. Une pause par Capitaine et par draft (consommée au démarrage de la pause), 5 minutes au plus ; déjà utilisée, déjà en pause, terminée ou autre demande en attente : 409 ; Lien spectateur : 403.</summary>
     [HttpPost("liens/{lien}/draft-champions/pause")]
     [AccesParLien(CapitaineRequis = true)]
     [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status200OK)]
@@ -196,7 +179,33 @@ public sealed class DraftChampionsController : ControllerBase
     public async Task<ActionResult<DraftChampionsResponse>> MettreEnPause(string lien)
     {
         var acces = this.AccesParLien();
-        return await JoueAsync(_drafts.MettreEnPauseAsync(acces.SeriesId, acces.Equipe!));
+        return await JoueAsync(_drafts.DemanderPauseAsync(acces.SeriesId, acces.Equipe!));
+    }
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : accepte la pause, qui démarre et gèle le temps restant du tour.</summary>
+    [HttpPost("liens/{lien}/draft-champions/pause/acceptation")]
+    [AccesParLien(CapitaineRequis = true)]
+    [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<DraftChampionsResponse>> AccepterPause(string lien)
+    {
+        var acces = this.AccesParLien();
+        return await JoueAsync(_drafts.AccepterPauseAsync(acces.SeriesId, acces.Equipe!));
+    }
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : refuse la pause ; elle ne consomme pas la pause du demandeur.</summary>
+    [HttpPost("liens/{lien}/draft-champions/pause/refus")]
+    [AccesParLien(CapitaineRequis = true)]
+    [ProducesResponseType<DraftChampionsResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<DraftChampionsResponse>> RefuserPause(string lien)
+    {
+        var acces = this.AccesParLien();
+        return await JoueAsync(_drafts.RefuserPauseAsync(acces.SeriesId, acces.Equipe!));
     }
 
     /// <summary>Par un Lien capitaine : demande la reprise anticipée (60 secondes pour répondre à l'autre Capitaine).</summary>

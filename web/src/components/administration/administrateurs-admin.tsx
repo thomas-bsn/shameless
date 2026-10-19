@@ -36,7 +36,7 @@ function Actions({ utilisateur, estMoi }: { utilisateur: Utilisateur; estMoi: bo
   const options = { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get", "/utilisateurs"] }) };
   const promouvoir = $api.useMutation("put", "/utilisateurs/{discordId}/administrateur", options);
   const retirer = $api.useMutation("delete", "/utilisateurs/{discordId}/administrateur", options);
-  const params = { path: { discordId: Number(utilisateur.discordUserId) } };
+  const params = { path: { discordId: utilisateur.discordUserId } };
   const pseudo = pseudoDe(utilisateur);
 
   if (utilisateur.role === "Superadministrateur") {

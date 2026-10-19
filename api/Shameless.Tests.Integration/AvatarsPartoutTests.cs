@@ -52,7 +52,6 @@ public class AvatarsPartoutTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var (client, serie) = await SerieAvecUnJoueurLieAsync();
         await PlayGameAsync(client, serie.SeriesId);
-        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/draft-champions", null, Ct));
         var liens = await client.GetFromJsonAsync<JsonElement>($"/series/{serie.SeriesId}/liens", Ct);
         var spectateur = Uri.EscapeDataString(liens.GetProperty("lienSpectateur").GetString()!);
 

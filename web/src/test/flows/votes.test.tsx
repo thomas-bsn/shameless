@@ -59,6 +59,7 @@ const fiche = (titres: Schemas["TitresDuJoueur"]): Schemas["FicheJoueur"] => ({
   prenom: "Kélio",
   riotId: "Kelio#EUW",
   discord: null,
+  comptesDiscord: [],
   cost: 3,
   soloQ: null,
   flex: null,

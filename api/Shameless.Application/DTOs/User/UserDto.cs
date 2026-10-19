@@ -12,6 +12,7 @@ public class UserDto
     public string? BannerUrl { get; set; }
     public string? BannerColor { get; set; }
     public UserRole Role { get; set; }
+    public int? PlayerId { get; set; }
     public string? PromotedBy { get; set; }
     public DateTime? PromotedAt { get; set; }
 }

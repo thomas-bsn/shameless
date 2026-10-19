@@ -39,6 +39,7 @@ const draftAu = (numero: number, terminee = false): Draft => ({
   resetDemande: null,
   pause: null,
   repriseDemandee: null,
+  pauseDemandee: null,
   pauseDisponibleA: true,
   pauseDisponibleB: true,
 });
@@ -60,6 +61,7 @@ function api(initial: Draft | null, equipe: "A" | "B" | null = "A") {
       equipe,
       pret: false,
       adversairePret: false,
+      pretPossible: false,
     },
     "GET /liens/lien/draft-champions": () => (etat.draft ? json(etat.draft) : json({ status: 404 }, 404)),
   });

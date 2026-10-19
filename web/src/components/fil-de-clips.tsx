@@ -1,9 +1,9 @@
-import { ChevronLeftIcon, ChevronRightIcon, CircleCheckIcon, PlayIcon, VideoIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, CircleCheckIcon, VideoIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
-import { ClipVideo } from "@/components/clip-video";
+import { ClipMiniature, ClipVideo } from "@/components/clip-video";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RattacherClip, RetirerClip, useRelireLesClips } from "@/components/rattachement-de-clip";
 import { Badge } from "@/components/ui/badge";
@@ -246,9 +246,7 @@ function Vignette({ clip, onLire }: { clip: Clip; onLire: () => void }) {
       onClick={onLire}
       className="flex flex-col gap-1 rounded-md border bg-card p-2 text-left hover:bg-accent"
     >
-      <span className="flex aspect-video w-full items-center justify-center rounded bg-muted text-muted-foreground">
-        <PlayIcon className="size-6" />
-      </span>
+      <ClipMiniature clipId={clip.id} />
       <span className="text-sm font-medium">{clip.auteurNom}</span>
       <span className="flex items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground">{tailleLabel(clip.taille)}</span>

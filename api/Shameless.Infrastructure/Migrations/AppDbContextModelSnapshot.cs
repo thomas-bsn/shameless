@@ -430,6 +430,15 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("pause_commence_le");
 
+                    b.Property<DateTime?>("PauseDemandeeLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("pause_demandee_le");
+
+                    b.Property<string>("PauseDemandeeParEquipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("pause_demandee_par_equipe");
+
                     b.Property<string>("PauseParEquipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
@@ -890,7 +899,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasName("players_pkey");
 
                     b.HasIndex("UserId")
-                        .IsUnique()
                         .HasDatabaseName("ix_players_user_id");
 
                     b.ToTable("players", (string)null);
@@ -1183,6 +1191,14 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying")
                         .HasColumnName("discord_username");
 
+                    b.Property<int?>("PlayerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
+                    b.Property<DateTime?>("PlayerLinkedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("player_linked_at");
+
                     b.Property<DateTime?>("PromotedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("promoted_at");
@@ -1205,6 +1221,9 @@ namespace Shameless.Infrastructure.Migrations
                     b.HasIndex("DiscordId")
                         .IsUnique()
                         .HasDatabaseName("ix_users_discord_id");
+
+                    b.HasIndex("PlayerId")
+                        .HasDatabaseName("ix_users_player_id");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1395,8 +1414,9 @@ namespace Shameless.Infrastructure.Migrations
             modelBuilder.Entity("Shameless.Application.Entities.Player", b =>
                 {
                     b.HasOne("Shameless.Application.Entities.User", "User")
-                        .WithOne("Player")
-                        .HasForeignKey("Shameless.Application.Entities.Player", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("players_user_id_fkey");
 
                     b.Navigation("User");
@@ -1487,6 +1507,17 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Game");
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.User", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.Player", "Player")
+                        .WithMany("Users")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("users_player_id_fkey");
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.BestOfSeries", b =>
                 {
                     b.Navigation("Games");
@@ -1525,6 +1556,8 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("CustomGameParticipations");
 
                     b.Navigation("MonthlyCosts");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.Soiree", b =>
@@ -1532,11 +1565,6 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Picker");
 
                     b.Navigation("Series");
-                });
-
-            modelBuilder.Entity("Shameless.Application.Entities.User", b =>
-                {
-                    b.Navigation("Player");
                 });
 #pragma warning restore 612, 618
         }

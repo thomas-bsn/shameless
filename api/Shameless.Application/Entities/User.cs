@@ -12,7 +12,13 @@ public class User
 
     /// <summary>Couleur d'accent Discord (« #RRGGBB »), repli quand il n'y a pas de bannière.</summary>
     public string? BannerColor { get; set; }
+
+    /// <summary>Le Joueur auquel cet Utilisateur est lié (au plus un) ; plusieurs Utilisateurs peuvent viser le même (ADR 0018).</summary>
+    public int? PlayerId { get; set; }
     public Player? Player { get; set; }
+
+    /// <summary>Quand le lien a été fait : le plus ancien des Utilisateurs d'un Joueur en est le Discord principal.</summary>
+    public DateTime? PlayerLinkedAt { get; set; }
 
     public UserRole Role { get; set; } = UserRole.Utilisateur;
 

@@ -1,4 +1,4 @@
-import { PlayIcon } from "lucide-react";
+import { ClipMiniature } from "@/components/clip-video";
 import { useState } from "react";
 import { $api } from "@/api/client";
 import { InterrupteurDuFond } from "@/components/fil-de-clips";
@@ -63,9 +63,7 @@ export function ClipsAdmin() {
               key={clip.id}
               className="flex flex-col gap-2 rounded-md border bg-card p-2"
             >
-              <span className="flex aspect-video w-full items-center justify-center rounded bg-muted text-muted-foreground">
-                <PlayIcon className="size-6" />
-              </span>
+              <ClipMiniature clipId={clip.id} />
               <span className="truncate text-sm font-medium">
                 {clip.nomFichier}
               </span>

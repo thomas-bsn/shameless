@@ -41,8 +41,13 @@ public class FearlessTests(ApiFactory factory) : IntegrationTest(factory)
         return gameId;
     }
 
-    private async Task<JsonElement> OuvrirAsync(HttpClient client, int seriesId) =>
-        await ReadJsonAsync(await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct));
+    /// <summary>La Draft de champions de la dernière game, ouverte par le « prêt » des deux Capitaines.</summary>
+    private async Task<JsonElement> OuvrirAsync(HttpClient client, int seriesId)
+    {
+        var games = (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct))).GetProperty("games");
+        var gameId = games[games.GetArrayLength() - 1].GetProperty("id").GetInt32();
+        return await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/draft-champions", Ct));
+    }
 
     private async Task<JsonElement> LireParLienAsync(string lien) =>
         await ReadJsonAsync(await Factory.CreateAnonymousClient().GetAsync($"/liens/{Uri.EscapeDataString(lien)}/draft-champions", Ct));

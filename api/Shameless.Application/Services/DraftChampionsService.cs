@@ -32,38 +32,6 @@ public sealed class DraftChampionsService
         _evenements = evenements;
     }
 
-    /// <summary>
-    /// Ouvre la Draft de champions de la game en attente d'une Série en cours (son Side est connu),
-    /// une fois les deux capitaines désignés. Une seule Draft de champions par game.
-    /// </summary>
-    public async Task<CommandResult<DraftChampions>> OuvrirAsync(int seriesId)
-    {
-        var series = await _series.GetWithGamesAsync(seriesId);
-        if (series == null)
-            return CommandResult<DraftChampions>.NotFound("Cette Série n'existe pas.");
-        if (!series.IsEnCours)
-            return CommandResult<DraftChampions>.Conflict("Cette Série est terminée : elle n'a plus de Draft de champions.");
-
-        var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending);
-        if (game == null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Aucune game de cette Série n'est en attente : lancez la prochaine game avec son Side avant sa Draft de champions.");
-        if (game.RapportEnRevue != null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Le rapport de la game en attente est en revue : la Draft de champions attend la décision de l'organisateur.");
-        if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
-            return CommandResult<DraftChampions>.Conflict(
-                "Désignez le capitaine de chaque Équipe avant d'ouvrir la Draft de champions.");
-        if (await _drafts.GetByGameAsync(game.Id) != null)
-            return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est déjà ouverte.");
-
-        _drafts.Add(new DraftChampions { GameId = game.Id, TourCommenceLe = Maintenant() });
-        if (!await _drafts.TrySaveChangesAsync())
-            return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est déjà ouverte.");
-
-        return CommandResult<DraftChampions>.Ok((await _drafts.GetByGameAsync(game.Id))!);
-    }
-
     /// <summary>La Draft de champions d'une game, en cours ou terminée.</summary>
     public async Task<CommandResult<DraftChampions>> GetByGameAsync(int gameId)
     {
@@ -182,6 +150,8 @@ public sealed class DraftChampionsService
             return refus!;
         if (draft.ResetEnAttente(Maintenant()))
             return CommandResult<bool>.Conflict("Une demande de Reset est déjà en attente de réponse.");
+        if (draft.DemandeEnAttente(Maintenant()))
+            return CommandResult<bool>.Conflict("Une autre demande (pause ou reprise) attend déjà la réponse de l'autre Capitaine.");
 
         draft.DemanderReset(equipe, Maintenant());
         return await EnregistrerAsync(draft);
@@ -232,10 +202,11 @@ public sealed class DraftChampionsService
             : CommandResult<bool>.Conflict("La draft vient d'être modifiée par une autre commande : réessayez.");
 
     /// <summary>
-    /// Par un Lien capitaine : met la draft en pause tout de suite, sans accord. Une pause par Capitaine
-    /// et par draft, 5 minutes au plus ; le temps restant du tour est gelé.
+    /// Par un Lien capitaine : demande la pause ; l'autre Capitaine l'accepte ou la refuse sous 60 secondes.
+    /// Une pause par Capitaine et par draft (consommée quand la pause démarre, pas par une demande refusée
+    /// ou tombée), 5 minutes au plus.
     /// </summary>
-    public Task<CommandResult<DraftChampions>> MettreEnPauseAsync(int seriesId, string equipe) =>
+    public Task<CommandResult<DraftChampions>> DemanderPauseAsync(int seriesId, string equipe) =>
         AppliquerAsync(seriesId, draft =>
         {
             if (draft.EnPause)
@@ -244,9 +215,42 @@ public sealed class DraftChampionsService
                 return "La Draft de champions de cette game est terminée.";
             if (!draft.PauseDisponible(equipe))
                 return "Vous avez déjà utilisé votre pause de cette draft.";
-            draft.MettreEnPause(equipe, Maintenant());
+            if (draft.DemandeEnAttente(Maintenant()))
+                return "Une autre demande (Reset ou pause) attend déjà la réponse de l'autre Capitaine.";
+            draft.DemanderPause(equipe, Maintenant());
             return null;
         });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : accepte la demande, la pause démarre et gèle le temps restant du tour.</summary>
+    public Task<CommandResult<DraftChampions>> AccepterPauseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = PauseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            if (draft.EstTerminee)
+                return "La Draft de champions de cette game est terminée.";
+            draft.AccepterPause(Maintenant());
+            return null;
+        });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : refuse la demande ; la pause du demandeur n'est pas consommée.</summary>
+    public Task<CommandResult<DraftChampions>> RefuserPauseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = PauseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            draft.RefuserPause();
+            return null;
+        });
+
+    private static string? PauseARepondre(DraftChampions draft, string equipe)
+    {
+        if (draft.PauseDemandeeParEquipe == null)
+            return "Aucune demande de pause n'est en cours.";
+        if (draft.PauseDemandeeParEquipe == equipe)
+            return "La demande de pause attend la réponse de l'autre Capitaine.";
+        return null;
+    }
 
     /// <summary>Par un Lien capitaine : demande la reprise anticipée, que l'autre Capitaine accepte ou refuse sous 60 secondes.</summary>
     public Task<CommandResult<DraftChampions>> DemanderRepriseAsync(int seriesId, string equipe) =>
@@ -256,6 +260,8 @@ public sealed class DraftChampionsService
                 return "La Draft de champions n'est pas en pause.";
             if (draft.RepriseDemandeeParEquipe != null)
                 return "Une demande de reprise est déjà en cours.";
+            if (draft.DemandeEnAttente(Maintenant()))
+                return "Une autre demande (Reset ou pause) attend déjà la réponse de l'autre Capitaine.";
             draft.DemanderReprise(equipe, Maintenant());
             return null;
         });

@@ -27,6 +27,28 @@ public class RolesTests(ApiFactory factory) : IntegrationTest(factory)
         await client.DeleteAsync($"/utilisateurs/{discordId}/administrateur", Ct);
 
     [Fact]
+    public async Task Un_snowflake_de_19_chiffres_est_promu_et_retire_sans_perte_de_precision()
+    {
+        const string snowflake = "1234567890123456789";
+        Factory.CreateSignedInClient(snowflake, "Gros identifiant");
+        var admin = Factory.CreateAdminClient();
+
+        Assert.Equal(HttpStatusCode.OK, (await PromouvoirAsync(admin, snowflake)).StatusCode);
+        Assert.Equal(UserRole.Administrateur, (await UserAsync(snowflake)).Role);
+        Assert.Equal(HttpStatusCode.OK, (await RetirerAsync(admin, snowflake)).StatusCode);
+        Assert.Equal(UserRole.Utilisateur, (await UserAsync(snowflake)).Role);
+    }
+
+    [Fact]
+    public async Task Un_identifiant_qui_n_est_pas_un_snowflake_est_refuse_en_400()
+    {
+        var admin = Factory.CreateAdminClient();
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await PromouvoirAsync(admin, "abc")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await RetirerAsync(admin, "-5")).StatusCode);
+    }
+
+    [Fact]
     public async Task La_premiere_connexion_cree_la_ligne_utilisateur_et_les_suivantes_relisent_pseudo_et_photo()
     {
         Factory.CreateSignedInClient("6001", "Ancien");

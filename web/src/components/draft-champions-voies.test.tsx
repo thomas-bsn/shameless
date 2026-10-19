@@ -53,6 +53,7 @@ const draft: Schemas["DraftChampionsResponse"] = {
   resetDemande: null,
   pause: null,
   repriseDemandee: null,
+  pauseDemandee: null,
   pauseDisponibleA: true,
   pauseDisponibleB: true,
 };

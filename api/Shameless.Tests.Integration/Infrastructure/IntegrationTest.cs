@@ -63,7 +63,7 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     }
 
     /// <summary>
-    /// Lance la prochaine game de la Série et renvoie son id. Le Side est automatique : pour la
+    /// Lance la prochaine game de la Série (les deux Capitaines prêts) et renvoie son id ; sa Draft de champions est ouverte. Le Side est automatique : pour la
     /// première game, <paramref name="teamASide"/> impose le résultat du pile ou face (null laisse le
     /// hasard de la graine) ; les suivantes alternent et ignorent ce paramètre.
     /// </summary>
@@ -72,9 +72,23 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
         await RejoindreLesCapitainesAsync(client, seriesId);
         if (teamASide != null)
             Factory.Random.ImposerLeProchainTirage(teamASide == "blue" ? 0 : 1);
-        var reponse = await client.PostAsync($"/series/{seriesId}/games", null, Ct);
+        await SeMettreTousPretsAsync(client, seriesId);
         Factory.Random.LibererLeTirage();
-        return (await ReadJsonAsync(reponse)).GetProperty("id").GetInt32();
+        var games = (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct))).GetProperty("games");
+        return games[games.GetArrayLength() - 1].GetProperty("id").GetInt32();
+    }
+
+    /// <summary>
+    /// Les deux Capitaines se mettent « prêts » : la Game est créée et sa Draft de champions s'ouvre
+    /// (c'est le seul moyen de lancer une game, la première comme les suivantes).
+    /// </summary>
+    protected async Task SeMettreTousPretsAsync(HttpClient client, int seriesId)
+    {
+        var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
+        foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB" })
+            (await Factory.CreateAnonymousClient().PutAsJsonAsync(
+                $"/liens/{Uri.EscapeDataString(liens.GetProperty(nom).GetString()!)}/pret", new { pret = true }, Ct))
+                .EnsureSuccessStatusCode();
     }
 
     /// <summary>Les deux Capitaines ouvrent leur Lien capitaine : la draft peut être lancée (ADR 0017).</summary>
@@ -133,8 +147,6 @@ public abstract class IntegrationTest(ApiFactory factory) : IAsyncLifetime
     /// </summary>
     protected async Task JouerLaDraftAsync(HttpClient client, int seriesId, int gameId, int jusquau = 20)
     {
-        if ((await client.GetAsync($"/games/{gameId}/draft-champions", Ct)).StatusCode == HttpStatusCode.NotFound)
-            (await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct)).EnsureSuccessStatusCode();
         var liens = await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
         while (true)
         {

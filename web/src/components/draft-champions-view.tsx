@@ -3,6 +3,7 @@ import { Ban, History, Pause, Timer, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ChatDeLaDraft } from "@/components/draft-champions-chat";
+import { VotesDeLaDraft, voteEnCours } from "@/components/draft-champions-votes";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { TeamCard } from "@/components/team-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -103,6 +104,8 @@ export function DraftParLien({
       }),
   };
   const pause = $api.useMutation("post", "/liens/{lien}/draft-champions/pause", surEtat);
+  const acceptationPause = $api.useMutation("post", "/liens/{lien}/draft-champions/pause/acceptation", surEtat);
+  const refusPause = $api.useMutation("post", "/liens/{lien}/draft-champions/pause/refus", surEtat);
   const reprise = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise", surEtat);
   const acceptation = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/acceptation", surEtat);
   const refus = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/refus", surEtat);
@@ -155,6 +158,19 @@ export function DraftParLien({
       ? acces.data.equipe
       : null;
 
+  // « Prêt » vaut pour chaque game de la Série : tant qu'elle est en cours et qu'aucune draft n'est ouverte
+  // (la première, après un Reset, ou la suivante une fois la game terminée), le Capitaine peut se déclarer prêt.
+  const pretCapitaine =
+    equipe && acces.data.pretPossible ? (
+      <PretDuCapitaine
+        pret={acces.data.pret}
+        adversairePret={acces.data.adversairePret}
+        enCours={pret.isPending}
+        erreur={pret.isError ? pret.error : null}
+        onChange={(valeur) => pret.mutate({ ...path, body: { pret: valeur } })}
+      />
+    ) : null;
+
   return (
     <Page
       titre={titre}
@@ -184,50 +200,50 @@ export function DraftParLien({
               La Draft de champions n'est pas encore ouverte : elle démarre
               toute seule quand les deux Capitaines sont prêts.
             </p>
-            {equipe && (
-              <PretDuCapitaine
-                pret={acces.data.pret}
-                adversairePret={acces.data.adversairePret}
-                enCours={pret.isPending}
-                erreur={pret.isError ? pret.error : null}
-                onChange={(valeur) =>
-                  pret.mutate({ ...path, body: { pret: valeur } })
-                }
-              />
-            )}
+            {pretCapitaine}
           </div>
         ) : (
           <ErrorAlert error={draft.error} />
         )
       ) : (
         <div className="flex flex-col gap-6">
-          <ResetDeLaDraft
+          {pretCapitaine}
+          <VotesDeLaDraft
             draft={draft.data!}
             equipe={equipe}
-            enCours={demanderReset.isPending || repondreReset.isPending}
-            erreur={demanderReset.error ?? repondreReset.error}
-            onDemander={() => demanderReset.mutate(path)}
-            onRepondre={(accepte) =>
-              repondreReset.mutate({ ...path, body: { accepte } })
+            enCours={
+              repondreReset.isPending ||
+              acceptationPause.isPending ||
+              refusPause.isPending ||
+              acceptation.isPending ||
+              refus.isPending
             }
+            erreur={
+              repondreReset.error ??
+              acceptationPause.error ??
+              refusPause.error ??
+              acceptation.error ??
+              refus.error
+            }
+            onRepondre={(genre, accepte) => {
+              if (genre === "reset")
+                repondreReset.mutate({ ...path, body: { accepte } });
+              else if (genre === "pause")
+                (accepte ? acceptationPause : refusPause).mutate(path);
+              else (accepte ? acceptation : refus).mutate(path);
+            }}
           />
           {equipe && !draft.data!.terminee && (
-            <PauseDuCapitaine
+            <DemandesDuCapitaine
               draft={draft.data!}
               equipe={equipe}
               enCours={
-                pause.isPending ||
-                reprise.isPending ||
-                acceptation.isPending ||
-                refus.isPending
+                demanderReset.isPending || pause.isPending || reprise.isPending
               }
-              erreur={
-                pause.error ?? reprise.error ?? acceptation.error ?? refus.error
-              }
+              erreur={demanderReset.error ?? pause.error ?? reprise.error}
+              onReset={() => demanderReset.mutate(path)}
               onPause={() => pause.mutate(path)}
               onDemanderReprise={() => reprise.mutate(path)}
-              onAccepter={() => acceptation.mutate(path)}
-              onRefuser={() => refus.mutate(path)}
             />
           )}
           <DraftChampionsView
@@ -251,76 +267,6 @@ export function DraftParLien({
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
     </Page>
-  );
-}
-
-/**
- * Reset de la draft : le Capitaine demande, l'autre accepte ou refuse sous 60 s ; le spectateur voit
- * seulement « Reset demandé ». Rien une fois la draft terminée.
- */
-function ResetDeLaDraft({
-  draft,
-  equipe,
-  enCours,
-  erreur,
-  onDemander,
-  onRepondre,
-}: {
-  draft: Draft;
-  equipe: string | null;
-  enCours: boolean;
-  erreur: unknown;
-  onDemander: () => void;
-  onRepondre: (accepte: boolean) => void;
-}) {
-  const maintenant = useMaintenant(1000);
-  if (draft.terminee) return null;
-
-  const demande = draft.resetDemande;
-  const secondes = demande
-    ? Math.max(0, Math.ceil((Date.parse(demande.expireLe) - maintenant) / 1000))
-    : 0;
-
-  if (!demande || secondes === 0) {
-    return equipe ? (
-      <div className="flex flex-col items-start gap-2">
-        <Button variant="outline" disabled={enCours} onClick={onDemander}>
-          Demander un Reset de la draft
-        </Button>
-        {erreur != null && <ErrorAlert error={erreur} />}
-      </div>
-    ) : null;
-  }
-
-  const peutRepondre = equipe !== null && equipe !== demande.equipe;
-  const texte =
-    equipe === demande.equipe
-      ? "En attente de la réponse de l'autre Capitaine."
-      : `L'Équipe ${demande.equipe} demande à remettre la draft à zéro.`;
-  return (
-    <Alert role="status">
-      <AlertTitle>Reset demandé</AlertTitle>
-      <AlertDescription className="flex flex-col items-start gap-2">
-        <span>
-          {texte} Sans réponse dans {secondes} s, rien ne change.
-        </span>
-        {peutRepondre && (
-          <span className="flex gap-2">
-            <Button disabled={enCours} onClick={() => onRepondre(true)}>
-              Accepter le Reset
-            </Button>
-            <Button
-              variant="outline"
-              disabled={enCours}
-              onClick={() => onRepondre(false)}
-            >
-              Refuser le Reset
-            </Button>
-          </span>
-        )}
-        {erreur != null && <ErrorAlert error={erreur} />}
-      </AlertDescription>
-    </Alert>
   );
 }
 
@@ -360,57 +306,52 @@ function PretDuCapitaine({
   );
 }
 
-/** Pause : le Capitaine la met tout de suite, une fois ; la reprise anticipée demande l'accord de l'autre. */
-function PauseDuCapitaine({
+/**
+ * Les demandes d'un Capitaine : Reset, pause (une fois par Capitaine) ou reprise anticipée. Chacune attend
+ * l'accord de l'autre Capitaine (fenêtre modale de son côté) ; une seule demande à la fois, donc aucun
+ * bouton tant qu'une demande attend sa réponse.
+ */
+function DemandesDuCapitaine({
   draft,
   equipe,
   enCours,
   erreur,
+  onReset,
   onPause,
   onDemanderReprise,
-  onAccepter,
-  onRefuser,
 }: {
   draft: Draft;
   equipe: string;
   enCours: boolean;
   erreur: unknown;
+  onReset: () => void;
   onPause: () => void;
   onDemanderReprise: () => void;
-  onAccepter: () => void;
-  onRefuser: () => void;
 }) {
-  const demande = draft.repriseDemandee;
+  const maintenant = useMaintenant(1000);
+  const vote = voteEnCours(draft);
+  const enAttente = vote !== null && Date.parse(vote.expireLe) > maintenant;
   const disponible = equipe === "A" ? draft.pauseDisponibleA : draft.pauseDisponibleB;
-  if (!draft.pause && !disponible) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {!draft.pause ? (
-        <Button variant="outline" disabled={enCours} onClick={onPause}>
-          <Pause />
-          Mettre en pause
-        </Button>
-      ) : !demande ? (
-        <Button disabled={enCours} onClick={onDemanderReprise}>
-          Demander la reprise
-        </Button>
-      ) : demande.parEquipe === equipe ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          En attente de l'autre Capitaine pour reprendre…
-        </p>
-      ) : (
-        <>
-          <p role="status" className="text-sm font-medium">
-            L'autre Capitaine demande la reprise.
-          </p>
-          <Button disabled={enCours} onClick={onAccepter}>
-            Accepter
+    <div className="flex flex-col items-start gap-2">
+      {!enAttente && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" disabled={enCours} onClick={onReset}>
+            Demander un Reset de la draft
           </Button>
-          <Button variant="outline" disabled={enCours} onClick={onRefuser}>
-            Refuser
-          </Button>
-        </>
+          {!draft.pause && disponible && (
+            <Button variant="outline" disabled={enCours} onClick={onPause}>
+              <Pause />
+              Mettre en pause
+            </Button>
+          )}
+          {draft.pause && (
+            <Button disabled={enCours} onClick={onDemanderReprise}>
+              Demander la reprise
+            </Button>
+          )}
+        </div>
       )}
       {erreur != null && <ErrorAlert error={erreur} />}
     </div>

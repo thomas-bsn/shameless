@@ -16,8 +16,13 @@ la première connexion.
 - **Compte Discord** : ce qu'un Utilisateur présente de lui : pseudo, photo, bannière.  
 Ils sont relus depuis Discord à chaque connexion, et à la demande depuis le Profil.
 - **Compte Riot** : le compte LoL d'un Joueur, identifié par son RiotId et son PUUID.
-- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot.  
-**Délier** retire l'association ; le Joueur et ses stats restent.
+- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot. Un  
+Utilisateur n'a qu'un Joueur, mais plusieurs Utilisateurs peuvent se lier au même Joueur,  
+sans aucune vérification (ADR 0018). **Délier** retire l'association de cet Utilisateur ;  
+le Joueur, ses stats et les autres liens restent.
+- **Discord principal** : parmi les Comptes Discord liés à un Joueur, celui lié depuis le  
+plus longtemps. Sa photo et son identité s'affichent partout pour le Joueur. S'il se  
+délie, le suivant devient principal (ADR 0018).
 - **Profil** : la page où un Utilisateur voit et gère son Compte Discord et son Joueur  
 lié.
 - **Administrateur** : un Utilisateur qui a reçu ce rôle d'un autre Administrateur ou d'un  
@@ -28,7 +33,8 @@ d'ordinaire l'Opérateur. Aucun Administrateur ne peut lui retirer ses droits ; 
 existe toujours au moins un.
 - **Joueur** : une personne qui joue les customs, identifiée par son compte Riot  
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
-joueur ; un joueur peut exister sans utilisateur lié.
+joueur ; un joueur peut avoir plusieurs Comptes Discord liés (le Discord principal fait foi  
+pour l'identité affichée) ou aucun.
 - **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
 des pronostics ; identifié par le bot comme présent en vocal pendant la game, il vote  
 aussi pour son MVP et son DOFD.
@@ -118,19 +124,25 @@ la Série ni sur le récap du Picker.
 une première fois ; la mémoire en est conservée côté API.
 - **Prêt** : l'état d'un Capitaine qui a rejoint et se déclare là, sur sa page de draft. Il ne  
 peut l'être qu'après avoir rejoint, et se remet « pas prêt » tant que l'autre ne l'est pas. Quand  
-les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Changer de  
-Capitaine, renouveler son lien ou terminer la game remet « pas prêt ».
+les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Cela vaut  
+pour chaque game de la Série, la première comme les suivantes (l'API dit au lien si « prêt » est encore  
+possible : Série en cours et aucune draft ouverte). Changer de Capitaine, renouveler son lien ou  
+terminer la game remet « pas prêt » : les Capitaines se redéclarent prêts pour la game suivante.
 - **Reset de la draft** : un Capitaine demande à remettre la Draft de champions à zéro, l'autre accepte
 ou refuse. Accepté : bans, picks et chrono sont effacés, les deux Capitaines redeviennent « pas prêts »
 et la draft repart quand ils se remettent prêts, dans la même Game. Refusé, ou sans réponse sous 60 s :
 rien ne change. Ni l'organisateur ni l'Administrateur n'ont de Reset direct, et il est impossible une
 fois la draft terminée. Les spectateurs voient « Reset demandé » puis « Draft remise à zéro ».
-- **Pause** : arrêt de la Draft de champions demandé par un Capitaine, immédiat et sans accord de  
-l'autre. Le temps restant du tour est gelé et personne ne joue ; la draft reprend avec ce temps. Chaque  
-Capitaine a droit à une pause par draft, de 5 minutes au plus : passé ce délai la draft reprend toute  
-seule. Pour reprendre avant, un Capitaine envoie une demande de reprise que l'autre accepte (reprise  
-immédiate) ou refuse ; sans réponse sous 60 s elle tombe et la pause continue. Les spectateurs voient  
-« Draft en pause » avec le décompte.
+- **Pause** : arrêt de la Draft de champions demandé par un Capitaine et soumis au vote de l'autre : celui-ci
+accepte (la pause démarre alors, et le temps restant du tour est gelé à ce moment) ou refuse ; sans réponse
+sous 60 s la demande tombe. Une demande refusée ou tombée ne consomme pas la pause du demandeur : seule une
+pause qui démarre compte, une par Capitaine et par draft. Personne ne joue pendant la pause, qui dure 5
+minutes au plus : passé ce délai la draft reprend toute seule avec le temps gelé. Pour reprendre avant, un
+Capitaine envoie une demande de reprise que l'autre accepte (reprise immédiate) ou refuse ; sans réponse
+sous 60 s elle tombe et la pause continue. Une seule demande (pause, reprise ou Reset) peut attendre une
+réponse à la fois par draft : les autres sont refusées (409). Le Capitaine qui doit répondre voit la demande
+dans une fenêtre modale au centre de l'écran ; le demandeur et les spectateurs voient un avis centré
+(« Pause demandée », puis « Draft en pause » avec le décompte).
 - **Chat de la draft** : les Capitaines et les spectateurs écrivent pendant la Draft de champions, et tous
 voient les messages en direct. Un Capitaine écrit sous le prénom de son Joueur, un spectateur connecté sous
 son nom Discord, un spectateur sans connexion sous « Spectateur N ». Un message fait 300 caractères au plus,
@@ -248,8 +260,8 @@ par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats v
 webhooks `teams_formed`, `captain_link`, `spectator_link`, `game_started`, `game_completed`), et il appelle les routes  
 `/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
 - **Lancement de la Game** : sa création dans la Série, quand les deux Capitaines sont prêts  
-(`PUT /liens/{lien}/pret`). Elle porte alors la Draft de champions, ouverte dans la foulée. Les  
-games suivantes d'une Série se lancent encore depuis l'Espace organisateur (`POST /series/{id}/games`).
+(`PUT /liens/{lien}/pret`), pour la première game comme pour les suivantes. Elle porte alors la Draft  
+de champions, ouverte dans la foulée. L'organisateur n'a aucun moyen de la lancer : ni bouton, ni route.
 - **Début de la Game** : la fin de la Draft de champions (tous les bans et picks faits). C'est  
 là que part `game_started` et que les pronostics se closent ; ils restent ouverts pendant la  
 draft (ADR 0017, qui révise l'ADR 0013). Ni le Companion ni l'organisateur ne le signalent.

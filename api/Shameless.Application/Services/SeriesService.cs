@@ -117,34 +117,6 @@ public sealed class SeriesService
     }
 
     /// <summary>
-    /// Lance la prochaine game d'une Série en cours, avec sa composition courante. Le Side n'est pas
-    /// choisi : celui de l'Équipe A est tiré à pile ou face pour la première game, puis l'inverse de
-    /// celui de la game précédente (corrigé par son Rapport le cas échéant).
-    /// </summary>
-    public async Task<CommandResult<CustomGame>> PlayNextGameAsync(int seriesId)
-    {
-        var series = await _series.GetWithGamesAsync(seriesId);
-        if (series == null)
-            return CommandResult<CustomGame>.NotFound("Cette Série n'existe pas.");
-        if (!series.IsEnCours)
-            return CommandResult<CustomGame>.Conflict("Cette Série est terminée : elle n'accepte plus de game.");
-        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
-            return CommandResult<CustomGame>.Conflict("Une game de cette Série attend déjà son résultat.");
-
-        if (series.CapitaineOf(Equipes.A) == null || series.CapitaineOf(Equipes.B) == null)
-            return CommandResult<CustomGame>.Conflict("Désigne les deux capitaines avant de lancer la draft.");
-        if (!series.CapitainesOntRejoint)
-            return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
-
-        var game = NouvelleGame(series);
-        series.Touch();
-        if (!await _series.TrySaveChangesAsync())
-            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
-
-        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
-    }
-
-    /// <summary>
     /// La prochaine game de la Série, avec sa composition courante et son Side automatique : celui de
     /// l'Équipe A est tiré à pile ou face pour la première game, puis l'inverse de celui de la précédente.
     /// Ajoutée au contexte, non enregistrée.
@@ -211,7 +183,11 @@ public sealed class SeriesService
         {
             // Les deux Capitaines sont là : la Game et sa Draft de champions démarrent ensemble.
             // Après un Reset accepté, la Game est restée : on lui rouvre sa draft au lieu d'en créer une autre.
-            var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending) ?? NouvelleGame(series);
+            var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending);
+            if (game?.RapportEnRevue != null)
+                return CommandResult<EtatDuPret>.Conflict(
+                    "Le rapport de la game en attente est en revue : la Draft de champions attend la décision de l'organisateur.");
+            game ??= NouvelleGame(series);
             game.DraftChampions = new DraftChampions
             {
                 TourCommenceLe = maintenant

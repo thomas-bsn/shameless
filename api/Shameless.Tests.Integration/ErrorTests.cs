@@ -16,13 +16,14 @@ public class ErrorTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Linking_a_player_already_linked_returns_a_409_problem()
+    public async Task Linking_to_another_player_while_already_linked_returns_a_409_problem()
     {
         var owner = Factory.CreateSignedInClient("8001");
         var playerId = await CreatePlayerAsync(owner, "Pris");
+        var autre = await CreatePlayerAsync(owner, "Autre");
         await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
 
-        var response = await Factory.CreateSignedInClient("8002").PostAsJsonAsync("/players/link", new { playerId }, Ct);
+        var response = await owner.PostAsJsonAsync("/players/link", new { playerId = autre }, Ct);
 
         await AssertProblemAsync(response, HttpStatusCode.Conflict);
     }

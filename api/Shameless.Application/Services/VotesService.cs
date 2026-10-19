@@ -14,12 +14,14 @@ public sealed class VotesService
 {
     private readonly ICustomGameRepository _games;
     private readonly IVotesRepository _votes;
+    private readonly IPlayerRepository _players;
     private readonly TimeProvider _clock;
 
-    public VotesService(ICustomGameRepository games, IVotesRepository votes, TimeProvider clock)
+    public VotesService(ICustomGameRepository games, IVotesRepository votes, IPlayerRepository players, TimeProvider clock)
     {
         _games = games;
         _votes = votes;
+        _players = players;
         _clock = clock;
     }
 
@@ -82,7 +84,9 @@ public sealed class VotesService
         if (DiscordId.Lire(votantDiscordId)?.Valeur is not { } votant)
             return CommandResult<BulletinDuVotant>.Invalid($"« {votantDiscordId} » n'est pas un ID Discord.");
 
-        var estJoueur = game.Participants.Any(p => p.Player.User?.DiscordId == votant);
+        // Tous les Comptes Discord liés d'un Joueur comptent comme lui (ADR 0018).
+        var joueurDuVotant = await _players.GetPlayerIdByDiscordIdAsync(votant);
+        var estJoueur = joueurDuVotant is { } id && game.Participants.Any(p => p.PlayerId == id);
         if (!estJoueur && !await _votes.EstSpectateurAsync(gameId, votant))
             return CommandResult<BulletinDuVotant>.Invalid(
                 "Seuls les dix Joueurs de la game et les Spectateurs présents en vocal peuvent voter.");
@@ -90,7 +94,7 @@ public sealed class VotesService
         var choix = new ChoixDesTitres(mvpPlayerId, dofdPlayerId);
         if (choix.TitreHorsDe(game.Participants.Select(p => p.PlayerId)) is { } horsDeLaGame)
             return CommandResult<BulletinDuVotant>.Invalid($"Le {horsDeLaGame} doit être l'un des dix Joueurs de la game.");
-        if (choix.TitreParmi(game.Participants.Where(p => p.Player.User?.DiscordId == votant).Select(p => p.PlayerId)) is { } pourSoi)
+        if (choix.TitreParmi(game.Participants.Where(p => p.PlayerId == joueurDuVotant).Select(p => p.PlayerId)) is { } pourSoi)
             return CommandResult<BulletinDuVotant>.Invalid($"Tu ne peux pas voter pour toi-même ({pourSoi}).");
 
         Depot.RemplacerOuRetirer(

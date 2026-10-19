@@ -222,8 +222,19 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
         return valeur.ValueKind == JsonValueKind.Null ? null : valeur.GetDateTime();
     }
 
-    private async Task<HttpResponseMessage> LancerAsync(HttpClient client, int seriesId) =>
-        await client.PostAsync($"/series/{seriesId}/games", null, Ct);
+    /// <summary>Les deux Capitaines se mettent prêts ; la réponse du premier refus, sinon celle du second.</summary>
+    private async Task<HttpResponseMessage> LancerAsync(HttpClient client, int seriesId)
+    {
+        var liens = await LiensAsync(client, seriesId);
+        HttpResponseMessage reponse = null!;
+        foreach (var nom in new[] { "lienCapitaineA", "lienCapitaineB" })
+        {
+            reponse = await Factory.CreateAnonymousClient().PutAsJsonAsync(
+                $"/liens/{Uri.EscapeDataString(Lien(liens, nom))}/pret", new { pret = true }, Ct);
+            if (!reponse.IsSuccessStatusCode) return reponse;
+        }
+        return reponse;
+    }
 
     [Fact]
     public async Task Aucun_capitaine_n_a_rejoint_a_la_creation_de_la_serie()
@@ -282,7 +293,7 @@ public class LiensAccesTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(HttpStatusCode.Conflict, (await LancerAsync(client, serie.SeriesId)).StatusCode);
 
         await ResoudreAsync(Lien(liens, "lienCapitaineB"));
-        Assert.Equal(HttpStatusCode.Created, (await LancerAsync(client, serie.SeriesId)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await LancerAsync(client, serie.SeriesId)).StatusCode);
     }
 
     [Fact]
