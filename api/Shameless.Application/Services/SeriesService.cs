@@ -136,6 +136,21 @@ public sealed class SeriesService
         if (!series.CapitainesOntRejoint)
             return CommandResult<CustomGame>.Conflict("Les deux Capitaines doivent avoir rejoint avant de lancer la draft.");
 
+        var game = NouvelleGame(series);
+        series.Touch();
+        if (!await _series.TrySaveChangesAsync())
+            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+
+        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+    }
+
+    /// <summary>
+    /// La prochaine game de la Série, avec sa composition courante et son Side automatique : celui de
+    /// l'Équipe A est tiré à pile ou face pour la première game, puis l'inverse de celui de la précédente.
+    /// Ajoutée au contexte, non enregistrée.
+    /// </summary>
+    private CustomGame NouvelleGame(BestOfSeries series)
+    {
         var side = Sides.ProchainDeLEquipeA(series.Games.LastOrDefault()?.TeamASide, _random);
 
         var now = _clock.GetUtcNow().UtcDateTime;
@@ -158,11 +173,54 @@ public sealed class SeriesService
                 .ToList()
         };
         _games.Add(game);
+        return game;
+    }
+
+    /// <summary>
+    /// Un Capitaine se met « prêt » pour la game à venir, ou se remet « pas prêt » (le Lien capitaine fait
+    /// foi de son Équipe). Il doit avoir rejoint et être le Capitaine de son Équipe. Quand les deux
+    /// Capitaines sont prêts, la Game est créée et sa Draft de champions ouverte dans la même
+    /// transaction : aucun autre clic. Refusé une fois la game créée.
+    /// </summary>
+    public async Task<CommandResult<EtatDuPret>> DefinirPretAsync(string secret, bool pret)
+    {
+        var lien = await _series.GetLienAsync(secret);
+        if (lien is not { Portee: PorteeLien.Capitaine, Equipe: { } equipe })
+            return CommandResult<EtatDuPret>.NotFound("Ce lien n'est pas un Lien capitaine.");
+
+        var series = await _series.GetWithGamesAsync(lien.SeriesId);
+        if (series == null)
+            return CommandResult<EtatDuPret>.NotFound("Cette Série n'existe pas.");
+        if (!series.IsEnCours)
+            return CommandResult<EtatDuPret>.Conflict("Cette Série est terminée : plus personne n'a à être prêt.");
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
+            return CommandResult<EtatDuPret>.Conflict("La draft a déjà démarré : on ne change plus d'avis.");
+
+        lien = series.LienCapitaine(equipe);
+        if (pret)
+        {
+            if (lien.RejointLe == null)
+                return CommandResult<EtatDuPret>.Conflict("Ouvre ton Lien capitaine pour rejoindre la Série avant d'être prêt.");
+            if (series.CapitaineOf(equipe) == null)
+                return CommandResult<EtatDuPret>.Conflict("Ton Équipe n'a pas de Capitaine : l'organisateur le désigne dans le Picker.");
+        }
+
+        lien.DefinirPret(pret, _clock.GetUtcNow().UtcDateTime);
+        if (series.CapitainesSontPrets)
+        {
+            var maintenant = _clock.GetUtcNow().UtcDateTime;
+            // Les deux Capitaines sont là : la Game et sa Draft de champions démarrent ensemble.
+            NouvelleGame(series).DraftChampions = new DraftChampions
+            {
+                TourCommenceLe = maintenant.AddTicks(-(maintenant.Ticks % 10)) // microseconde, comme PostgreSQL
+            };
+        }
+
         series.Touch();
         if (!await _series.TrySaveChangesAsync())
-            return CommandResult<CustomGame>.Conflict(ModifieeEntreTemps);
+            return CommandResult<EtatDuPret>.Conflict(ModifieeEntreTemps);
 
-        return CommandResult<CustomGame>.Ok((await _games.GetByIdWithParticipantsAsync(game.Id))!);
+        return CommandResult<EtatDuPret>.Ok(EtatDuPret.De(series, equipe));
     }
 
     /// <summary>
@@ -241,6 +299,7 @@ public sealed class SeriesService
             _evenements.GameStarted(game);
         }
         series?.ApplyResults(series.Games);
+        series?.RemettrePasPrets();
         series?.Touch();
         _evenements.GameCompleted(game);
         if (!await _games.TrySaveChangesAsync())

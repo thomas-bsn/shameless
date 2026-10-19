@@ -82,10 +82,10 @@ format et options, score, les deux Équipes, la liste des Games avec leur vainqu
 ne montre ni Capitaine, ni lien, ni code, ni commande.
 - **Écran de préparation** : l'écran réservé à l'organisateur, affiché juste après la  
 création de la Série. Il montre les Équipes, affiche les Capitaines en lecture seule (ils se  
-désignent dans le Picker), donne les deux Liens capitaine, le Lien spectateur et le Code Companion,  
-et porte le seul bouton « Lancer la draft », grisé tant que les deux Capitaines n'ont pas  
-rejoint. Il se rouvre depuis l'Espace organisateur, sans ce bouton une fois la Draft de  
-champions lancée.
+désignent dans le Picker), donne les deux Liens capitaine, le Lien spectateur et le Code Companion, et montre pour chaque  
+Capitaine s'il a rejoint et s'il est prêt, relu régulièrement sans recharger. Il n'a aucun bouton  
+pour lancer la draft : elle démarre toute seule quand les deux Capitaines sont prêts. Il se rouvre  
+depuis l'Espace organisateur.
 - **Espace organisateur** : l'écran de pilotage d'une Série en cours, réservé à  
 l'organisateur connecté : game en cours, Rapport en revue, Remplacement, Interruption, accès  
 à l'Écran de préparation.
@@ -116,6 +116,10 @@ ne peut pas être Capitaine des deux Équipes. Le Capitaine n'est affiché ni su
 la Série ni sur le récap du Picker.
 - **Capitaine rejoint** : un Capitaine a rejoint dès que son Lien capitaine a été ouvert  
 une première fois ; la mémoire en est conservée côté API.
+- **Prêt** : l'état d'un Capitaine qui a rejoint et se déclare là, sur sa page de draft. Il ne  
+peut l'être qu'après avoir rejoint, et se remet « pas prêt » tant que l'autre ne l'est pas. Quand  
+les deux sont prêts, la Game est créée et la Draft de champions démarre sans autre clic. Changer de  
+Capitaine, renouveler son lien ou terminer la game remet « pas prêt ».
 - **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
 champions de son Équipe pendant toute la Série, sans se connecter. Le bot l'envoie en DM  
 au Capitaine ; sans bot, ou si le DM échoue, l'organisateur le copie à la main.
@@ -227,8 +231,9 @@ séries, poste les récaps, gère les votes et rattache les clips. Il échange a
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
 webhooks `teams_formed`, `captain_link`, `spectator_link`, `game_started`, `game_completed`), et il appelle les routes  
 `/bot/…` de l'API avec sa propre clé. Ce n'est jamais un utilisateur connecté.
-- **Lancement de la Game** : sa création dans la Série (`POST /series/{id}/games`), quand  
-l'organisateur clique sur « Lancer la draft ». Elle porte alors la Draft de champions.
+- **Lancement de la Game** : sa création dans la Série, quand les deux Capitaines sont prêts  
+(`PUT /liens/{lien}/pret`). Elle porte alors la Draft de champions, ouverte dans la foulée. Les  
+games suivantes d'une Série se lancent encore depuis l'Espace organisateur (`POST /series/{id}/games`).
 - **Début de la Game** : le moment où le Companion détecte le lancement de la partie  
 dans le client LoL et le signale à l'API. C'est là que part `game_started` et que les  
 pronostics se closent (ADR 0017, qui révise l'ADR 0013). Sans Companion, l'organisateur  

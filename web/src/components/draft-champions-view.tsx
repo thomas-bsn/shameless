@@ -54,6 +54,10 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}/draft-champions"] }),
   });
 
+  const pret = $api.useMutation("put", "/liens/{lien}/pret", {
+    onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}", path], data),
+  });
+
   const titre = portee === "Capitaine" ? "Draft de champions — capitaine" : "Draft de champions — spectateur";
   const meta = draft.data
     ? `Série ${draft.data.seriesId} · Game ${draft.data.gameId}${draft.data.fearless ? " · Fearless" : ""}`
@@ -87,9 +91,21 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
         <LoadingRows />
       ) : draft.isError && !draft.data ? (
         problemStatus(draft.error) === 404 ? (
-          <p className="text-muted-foreground">
-            La Draft de champions n'est pas encore ouverte : la page s'affichera dès que l'organisateur l'ouvrira.
-          </p>
+          <div className="flex flex-col gap-4">
+            <p className="text-muted-foreground">
+              La Draft de champions n'est pas encore ouverte : elle démarre toute seule quand les deux Capitaines
+              sont prêts.
+            </p>
+            {equipe && (
+              <PretDuCapitaine
+                pret={acces.data.pret}
+                adversairePret={acces.data.adversairePret}
+                enCours={pret.isPending}
+                erreur={pret.isError ? pret.error : null}
+                onChange={(valeur) => pret.mutate({ ...path, body: { pret: valeur } })}
+              />
+            )}
+          </div>
         ) : (
           <ErrorAlert error={draft.error} />
         )
@@ -112,6 +128,35 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
     </Page>
+  );
+}
+
+/** « Je suis prêt » : le Capitaine se met prêt, et peut se raviser tant que l'autre ne l'est pas. */
+function PretDuCapitaine({
+  pret,
+  adversairePret,
+  enCours,
+  erreur,
+  onChange,
+}: {
+  pret: boolean;
+  adversairePret: boolean;
+  enCours: boolean;
+  erreur: unknown;
+  onChange: (pret: boolean) => void;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-start gap-3">
+        <Button size="lg" variant={pret ? "outline" : "default"} disabled={enCours} onClick={() => onChange(!pret)}>
+          {pret ? "Je ne suis plus prêt" : "Je suis prêt"}
+        </Button>
+        <p role="status" className="text-sm text-muted-foreground">
+          {adversairePret ? "L'autre Capitaine est prêt." : "L'autre Capitaine n'est pas encore prêt."}
+        </p>
+        {erreur != null && <ErrorAlert error={erreur} />}
+      </CardContent>
+    </Card>
   );
 }
 

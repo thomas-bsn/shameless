@@ -13,9 +13,9 @@ doit être connu avant elle, alors que le Companion ne le lit qu'après.
 
 ## Décision
 - **Lancement de la Game** et **Début de la Game** sont deux moments distincts. La Game
-  est créée quand l'organisateur clique sur « Lancer la draft » (écran de préparation, le
-  bouton n'étant actif que quand les deux Capitaines ont rejoint) et porte la Draft de
-  champions.
+  est créée quand les deux Capitaines sont prêts (spec #136, ticket #141 : plus de bouton
+  « Lancer la draft » sur l'écran de préparation) et porte la Draft de champions, ouverte
+  dans la foulée.
 - Le **Début de la Game** est le signal « partie lancée » du Companion (Code Companion).
   C'est lui qui émet `game_started` et clôt les pronostics, ses fenêtres de présence
   s'ouvrant à ce moment. Sans Companion, l'organisateur le signale à la main.
