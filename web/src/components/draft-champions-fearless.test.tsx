@@ -44,6 +44,10 @@ const draft = (championsDejaJoues: string[] | null): Schemas["DraftChampionsResp
   capitaineA: null,
   capitaineB: null,
   championsDejaJoues,
+  pause: null,
+  repriseDemandee: null,
+  pauseDisponibleA: true,
+  pauseDisponibleB: true,
 });
 
 const series = { seriesId: 5, capitaineA: 1, capitaineB: 6 } as Schemas["SeriesResponse"];

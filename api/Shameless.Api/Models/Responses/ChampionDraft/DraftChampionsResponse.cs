@@ -26,7 +26,11 @@ public sealed record DraftChampionsResponse(
     List<GameParticipantDto> TeamB,
     int? CapitaineA,
     int? CapitaineB,
-    List<string>? ChampionsDejaJoues) // null sans Fearless
+    List<string>? ChampionsDejaJoues, // null sans Fearless
+    PauseResponse? Pause, // null hors pause
+    RepriseDemandeeResponse? RepriseDemandee, // null sans demande de reprise en cours
+    bool PauseDisponibleA, // le Capitaine A n'a pas encore utilisé sa pause
+    bool PauseDisponibleB)
 {
     public static DraftChampionsResponse From(DraftChampions draft)
     {
@@ -55,7 +59,16 @@ public sealed record DraftChampionsResponse(
             TeamB: Joueurs(Equipes.B),
             CapitaineA: series.CapitaineOf(Equipes.A),
             CapitaineB: series.CapitaineOf(Equipes.B),
-            ChampionsDejaJoues: draft.ChampionsDejaJoues?.ToList());
+            ChampionsDejaJoues: draft.ChampionsDejaJoues?.ToList(),
+            Pause: draft.EnPause
+                ? new PauseResponse(draft.PauseParEquipe!, draft.PauseCommenceLe!.Value, draft.PauseFinLe!.Value,
+                    (int)draft.TempsRestantAvantPause!.Value.TotalMilliseconds)
+                : null,
+            RepriseDemandee: draft.RepriseDemandeeParEquipe == null
+                ? null
+                : new RepriseDemandeeResponse(draft.RepriseDemandeeParEquipe, draft.RepriseExpireLe!.Value),
+            PauseDisponibleA: draft.PauseDisponible(Equipes.A),
+            PauseDisponibleB: draft.PauseDisponible(Equipes.B));
 
         List<GameParticipantDto> Joueurs(string equipe) =>
             game.ParticipantsOf(equipe)
@@ -74,3 +87,10 @@ public sealed record TourDraftResponse(int Numero, string Action, string Side, s
 
 /// <summary>Un tour joué : le champion banni ou pick pour l'Équipe, sans joueur associé.</summary>
 public sealed record ActionDraftResponse(int Numero, string Action, string Side, string Equipe, string ChampionId);
+
+/// <summary>La draft est en pause : l'Équipe du Capitaine qui l'a demandée, le début, la reprise automatique (5 minutes
+/// après) et le temps restant du tour, gelé jusqu'à la reprise.</summary>
+public sealed record PauseResponse(string ParEquipe, DateTime CommenceLe, DateTime FinLe, int TempsRestantTourMs);
+
+/// <summary>Une demande de reprise anticipée en attente de l'autre Capitaine : son Équipe et quand elle tombe (60 secondes).</summary>
+public sealed record RepriseDemandeeResponse(string ParEquipe, DateTime ExpireLe);

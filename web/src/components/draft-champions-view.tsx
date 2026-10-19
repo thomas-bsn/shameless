@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, History, Timer } from "lucide-react";
+import { Ban, History, Pause, Timer } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import {
   championsPris,
   filtrerChampions,
+  formaterDecompte,
   libelleTour,
   peutJouer,
   secondesRestantes,
@@ -33,7 +34,6 @@ type Portee = Schemas["PorteeLien"];
 /** Revalidation du lien : un lien renouvelé est refusé dès le prochain appel. */
 const POLLING_LIEN_MS = 5000;
 
-
 /**
  * La Draft de champions ouverte par un lien d'accès (ADR 0010), sans connexion. Un Lien capitaine
  * permet de bannir et de choisir les champions de son Équipe quand c'est son tour ; en lecture seule
@@ -41,7 +41,10 @@ const POLLING_LIEN_MS = 5000;
  */
 export function DraftParLien({ lien, portee }: { lien: string; portee: Portee }) {
   const path = { params: { path: { lien } } };
-  const acces = $api.useQuery("get", "/liens/{lien}", path, { refetchInterval: POLLING_LIEN_MS, retry: false });
+  const acces = $api.useQuery("get", "/liens/{lien}", path, {
+    refetchInterval: POLLING_LIEN_MS,
+    retry: false,
+  });
   const draft = $api.useQuery("get", "/liens/{lien}/draft-champions", path, {
     refetchInterval: POLLING_DRAFT_MS,
     retry: false,
@@ -51,8 +54,23 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   const queryClient = useQueryClient();
   const jouer = $api.useMutation("post", "/liens/{lien}/draft-champions/actions", {
     onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}/draft-champions"] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/liens/{lien}/draft-champions"],
+      }),
   });
+
+  const surEtat = {
+    onSuccess: (data: Draft) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/liens/{lien}/draft-champions"],
+      }),
+  };
+  const pause = $api.useMutation("post", "/liens/{lien}/draft-champions/pause", surEtat);
+  const reprise = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise", surEtat);
+  const acceptation = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/acceptation", surEtat);
+  const refus = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/refus", surEtat);
 
   const pret = $api.useMutation("put", "/liens/{lien}/pret", {
     onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}", path], data),
@@ -93,8 +111,8 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
         problemStatus(draft.error) === 404 ? (
           <div className="flex flex-col gap-4">
             <p className="text-muted-foreground">
-              La Draft de champions n'est pas encore ouverte : elle démarre toute seule quand les deux Capitaines
-              sont prêts.
+              La Draft de champions n'est pas encore ouverte : elle démarre toute seule quand les deux Capitaines sont
+              prêts.
             </p>
             {equipe && (
               <PretDuCapitaine
@@ -110,21 +128,35 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
           <ErrorAlert error={draft.error} />
         )
       ) : (
-        <DraftChampionsView
-          draft={draft.data!}
-          champions={champions.data ?? []}
-          equipe={equipe}
-          spectateur={equipe === null}
-          jeu={
-            equipe && peutJouer(draft.data!, equipe)
-              ? {
-                  pending: jouer.isPending,
-                  error: jouer.isError ? jouer.error : null,
-                  onJouer: (tour, championId) => jouer.mutate({ ...path, body: { tour, championId } }),
-                }
-              : null
-          }
-        />
+        <>
+          {equipe && !draft.data!.terminee && (
+            <PauseDuCapitaine
+              draft={draft.data!}
+              equipe={equipe}
+              enCours={pause.isPending || reprise.isPending || acceptation.isPending || refus.isPending}
+              erreur={pause.error ?? reprise.error ?? acceptation.error ?? refus.error}
+              onPause={() => pause.mutate(path)}
+              onDemanderReprise={() => reprise.mutate(path)}
+              onAccepter={() => acceptation.mutate(path)}
+              onRefuser={() => refus.mutate(path)}
+            />
+          )}
+          <DraftChampionsView
+            draft={draft.data!}
+            champions={champions.data ?? []}
+            equipe={equipe}
+            spectateur={equipe === null}
+            jeu={
+              equipe && peutJouer(draft.data!, equipe)
+                ? {
+                    pending: jouer.isPending,
+                    error: jouer.isError ? jouer.error : null,
+                    onJouer: (tour, championId) => jouer.mutate({ ...path, body: { tour, championId } }),
+                  }
+                : null
+            }
+          />
+        </>
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
     </Page>
@@ -160,17 +192,64 @@ function PretDuCapitaine({
   );
 }
 
-function Page({
-  titre,
-  meta,
-  badge,
-  children,
+/** Pause : le Capitaine la met tout de suite, une fois ; la reprise anticipée demande l'accord de l'autre. */
+function PauseDuCapitaine({
+  draft,
+  equipe,
+  enCours,
+  erreur,
+  onPause,
+  onDemanderReprise,
+  onAccepter,
+  onRefuser,
 }: {
-  titre: string;
-  meta?: string;
-  badge?: string;
-  children: ReactNode;
+  draft: Draft;
+  equipe: string;
+  enCours: boolean;
+  erreur: unknown;
+  onPause: () => void;
+  onDemanderReprise: () => void;
+  onAccepter: () => void;
+  onRefuser: () => void;
 }) {
+  const demande = draft.repriseDemandee;
+  const disponible = equipe === "A" ? draft.pauseDisponibleA : draft.pauseDisponibleB;
+  if (!draft.pause && !disponible) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {!draft.pause ? (
+        <Button variant="outline" disabled={enCours} onClick={onPause}>
+          <Pause />
+          Mettre en pause
+        </Button>
+      ) : !demande ? (
+        <Button disabled={enCours} onClick={onDemanderReprise}>
+          Demander la reprise
+        </Button>
+      ) : demande.parEquipe === equipe ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          En attente de l'autre Capitaine pour reprendre…
+        </p>
+      ) : (
+        <>
+          <p role="status" className="text-sm font-medium">
+            L'autre Capitaine demande la reprise.
+          </p>
+          <Button disabled={enCours} onClick={onAccepter}>
+            Accepter
+          </Button>
+          <Button variant="outline" disabled={enCours} onClick={onRefuser}>
+            Refuser
+          </Button>
+        </>
+      )}
+      {erreur != null && <ErrorAlert error={erreur} />}
+    </div>
+  );
+}
+
+function Page({ titre, meta, badge, children }: { titre: string; meta?: string; badge?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -190,8 +269,8 @@ function LienInvalide() {
     <Alert variant="destructive">
       <AlertTitle>Ce lien n'est pas valide</AlertTitle>
       <AlertDescription>
-        Il est inconnu, a été renouvelé par l'organisateur, ou le Lien spectateur n'est pas encore disponible.
-        Demande le lien à jour à l'organisateur.
+        Il est inconnu, a été renouvelé par l'organisateur, ou le Lien spectateur n'est pas encore disponible. Demande
+        le lien à jour à l'organisateur.
       </AlertDescription>
     </Alert>
   );
@@ -307,6 +386,7 @@ function EtatDuTour({
       </Alert>
     );
   }
+  if (draft.pause) return <EnPause pause={draft.pause} />;
 
   const aToi = equipe !== null && tour.equipe === equipe;
   const verbe = tour.action === "ban" ? "bannir" : "choisir";
@@ -316,8 +396,8 @@ function EtatDuTour({
         <div className="flex flex-col gap-1">
           {aToi && (
             <span className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
-              <span aria-hidden className="size-2 rounded-full bg-primary-foreground motion-safe:animate-pulse" />
-              À toi de {verbe}
+              <span aria-hidden className="size-2 rounded-full bg-primary-foreground motion-safe:animate-pulse" />À toi
+              de {verbe}
             </span>
           )}
           {spectateur && (
@@ -326,13 +406,45 @@ function EtatDuTour({
             </h2>
           )}
           <p aria-label="Tour courant" className="text-lg font-semibold">
-            Tour {tour.numero}/20 · <span className={sideTextClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
+            Tour {tour.numero}/20 ·{" "}
+            <span className={sideTextClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
             {consigne ?? (aToi ? `Équipe ${tour.equipe}, c'est ton tour` : `Au tour de l'Équipe ${tour.equipe}`)}
           </p>
         </div>
         <TempsRestant tour={tour} />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** La draft est en pause : le temps restant du tour est gelé, la reprise automatique approche. */
+function EnPause({ pause }: { pause: NonNullable<Draft["pause"]> }) {
+  const reprise = Math.max(0, Math.ceil((Date.parse(pause.finLe) - useMaintenant()) / 1000));
+
+  return (
+    <Card className="border-amber-500/60">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="flex items-center gap-2 text-2xl font-bold">
+            <Pause className="size-6" />
+            Draft en pause
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pause demandée par le Capitaine de l'Équipe {pause.parEquipe}.
+          </p>
+          <p className="text-sm">
+            Reprise automatique dans{" "}
+            <span aria-label="Reprise automatique dans" className="font-semibold tabular-nums">
+              {formaterDecompte(reprise)}
+            </span>
+          </p>
+        </div>
+        <span aria-label="Temps restant du tour" className="flex items-center gap-2 text-2xl font-bold tabular-nums">
+          <Timer className="size-5" />
+          {Math.ceil(pause.tempsRestantTourMs / 1000)} s
+        </span>
       </CardContent>
     </Card>
   );
@@ -450,7 +562,10 @@ function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<s
             {championIds.map((id) => {
               const champion = parId.get(id);
               return (
-                <li key={id} className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm">
+                <li
+                  key={id}
+                  className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm"
+                >
                   {champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}
                   <span>{champion?.name ?? id}</span>
                 </li>

@@ -50,6 +50,10 @@ const draft: Schemas["DraftChampionsResponse"] = {
   capitaineA: null,
   capitaineB: null,
   championsDejaJoues: ["Jinx"],
+  pause: null,
+  repriseDemandee: null,
+  pauseDisponibleA: true,
+  pauseDisponibleB: true,
 };
 
 async function rendreCapitaine() {

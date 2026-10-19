@@ -13,7 +13,7 @@ export function libelleTour(tours: Tour[], numero: number): string {
   return `${tour.action === "ban" ? "Ban" : "Pick"} ${tour.side} ${rang}`;
 }
 
-type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions">;
+type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions" | "pause">;
 
 /** Un tour de la Draft de champions d'une game : l'Équipe qui le joue, son libellé, son champion une fois joué. */
 export interface TourDeLaDraft extends Tour {
@@ -35,7 +35,7 @@ export function toursDeLaDraft(draft: Draft): TourDeLaDraft[] {
 
 /** Le capitaine de cette Équipe peut jouer : la Draft est en cours et le tour courant revient à son Équipe. */
 export function peutJouer(draft: Draft, equipe: string | null): boolean {
-  return !draft.terminee && equipe !== null && draft.tourCourant?.equipe === equipe;
+  return !draft.terminee && !draft.pause && equipe !== null && draft.tourCourant?.equipe === equipe;
 }
 
 /** Les champions déjà bannis ou pick dans la game : plus disponibles pour la Draft de champions. */
@@ -89,8 +89,19 @@ export function secondesRestantes(
  * et l'échéance du tour est atteinte (avant, l'API refuse en 409).
  */
 export function mainALOrganisateur(
-  draft: Pick<Draft, "terminee" | "tourCourant">,
+  draft: Pick<Draft, "terminee" | "tourCourant" | "pause">,
   maintenant: number = Date.now(),
 ): boolean {
-  return !draft.terminee && draft.tourCourant !== null && Date.parse(draft.tourCourant.echeance) <= maintenant;
+  return (
+    !draft.terminee &&
+    !draft.pause &&
+    draft.tourCourant !== null &&
+    Date.parse(draft.tourCourant.echeance) <= maintenant
+  );
+}
+
+/** Un décompte en minutes et secondes, ex. « 4:05 ». */
+export function formaterDecompte(secondes: number): string {
+  const s = Math.max(0, secondes);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }

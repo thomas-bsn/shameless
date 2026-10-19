@@ -426,6 +426,36 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
 
+                    b.Property<DateTime?>("PauseCommenceLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("pause_commence_le");
+
+                    b.Property<string>("PauseParEquipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("pause_par_equipe");
+
+                    b.Property<bool>("PauseUtiliseeA")
+                        .HasColumnType("boolean")
+                        .HasColumnName("pause_utilisee_a");
+
+                    b.Property<bool>("PauseUtiliseeB")
+                        .HasColumnType("boolean")
+                        .HasColumnName("pause_utilisee_b");
+
+                    b.Property<DateTime?>("RepriseDemandeeLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("reprise_demandee_le");
+
+                    b.Property<string>("RepriseDemandeeParEquipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("reprise_demandee_par_equipe");
+
+                    b.Property<TimeSpan?>("TempsRestantAvantPause")
+                        .HasColumnType("interval")
+                        .HasColumnName("temps_restant_avant_pause");
+
                     b.Property<DateTime>("TourCommenceLe")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("tour_commence_le");
