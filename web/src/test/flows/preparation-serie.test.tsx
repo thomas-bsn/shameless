@@ -94,27 +94,17 @@ describe("Écran de préparation", () => {
     const a = await screen.findByRole("group", { name: "Équipe A" });
     expect(within(a).getByText("Aldric")).toBeInTheDocument();
     expect(within(screen.getByRole("group", { name: "Équipe B" })).getByText("Elio")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Capitaine de l'Équipe A" })).toHaveTextContent("Kuro");
-    expect(screen.getByRole("combobox", { name: "Capitaine de l'Équipe B" })).toHaveTextContent("Mina");
+    expect(screen.getByLabelText("Capitaine de l'Équipe A")).toHaveTextContent("Kuro");
+    expect(screen.getByLabelText("Capitaine de l'Équipe B")).toHaveTextContent("Mina");
   });
 
-  it("désigne ou change le Capitaine d'une Équipe parmi ses joueurs", async () => {
-    let corps: unknown = null;
-    const fetchMock = mockApi({
-      ...routes(),
-      "PUT /series/5/capitaines/A": async (req) => {
-        corps = await req.json();
-        return json(serie({ capitaineA: 2 }));
-      },
-    });
+  it("n'a plus de changement de Capitaine : les Capitaines sont en lecture seule", async () => {
+    mockApi(routes(serie({ capitaineA: 2, capitaineB: 3 })));
     renderApp("/series/5/preparation");
 
-    await userEvent.click(await screen.findByRole("combobox", { name: "Capitaine de l'Équipe A" }));
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(["Aldric", "Kuro"]);
-    await userEvent.click(screen.getByRole("option", { name: "Kuro" }));
+    await screen.findByLabelText("Capitaine de l'Équipe A");
 
-    await vi.waitFor(() => expect(corps).toEqual({ designation: "Manuel", playerId: 2 }));
-    expect(fetchMock.mock.calls.some(([r]) => r.method === "PUT" && r.url.endsWith("/capitaines/B"))).toBe(false);
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("montre les deux Liens capitaine, les copie et les renouvelle", async () => {

@@ -22,5 +22,10 @@ public sealed record PickRequest(string Equipe, int PlayerId);
 /// <summary>Un Autorole : "HorsRole" ou "Aleatoire". Lancer à nouveau relance.</summary>
 public sealed record AutoroleRequest(AutoroleVariante Variante);
 
-/// <summary>Valide le tirage : la Série au format 1, 2, 3 ou 5, avec ses options.</summary>
-public sealed record ValidatePickerRequest(int Format, bool Fearless = false);
+/// <summary>
+/// Valide le tirage : la Série au format 1, 2, 3 ou 5, avec ses options. Après une Roulette, les deux
+/// Capitaines se désignent ici (<c>CapitaineA</c> dans l'Équipe A, <c>CapitaineB</c> dans l'Équipe B),
+/// tous les deux ou aucun ; après une Draft, ce sont ceux de la Draft.
+/// </summary>
+public sealed record ValidatePickerRequest(
+    int Format, bool Fearless = false, int? CapitaineA = null, int? CapitaineB = null);

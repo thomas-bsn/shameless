@@ -10707,7 +10707,9 @@
       "ValidatePickerRequest": {
         "required": [
           "format",
-          "fearless"
+          "fearless",
+          "capitaineA",
+          "capitaineB"
         ],
         "type": "object",
         "properties": {
@@ -10718,6 +10720,20 @@
           "fearless": {
             "type": "boolean",
             "default": false
+          },
+          "capitaineA": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "capitaineB": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },

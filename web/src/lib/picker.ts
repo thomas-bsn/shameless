@@ -6,17 +6,26 @@ type Picker = Schemas["PickerResponse"];
  * L'étape de la session de Picker, déduite de l'état de l'API : sélection des dix, choix de la
  * méthode, Draft en cours, puis Équipes formées (Autorole et validation).
  */
-export type PickerStep = "selection" | "methode" | "draft" | "equipes" | "autorole" | "serie";
+export type PickerStep = "selection" | "methode" | "draft" | "equipes" | "capitaines" | "autorole" | "serie";
 
-/** Les six étapes du parcours, dans l'ordre : l'étape courante est visible dans l'écran. */
-export const PICKER_STEPS: [PickerStep, string][] = [
+/** Les étapes du parcours, dans l'ordre : l'étape courante est visible dans l'écran. */
+const ETAPES_DU_PARCOURS: [PickerStep, string][] = [
   ["selection", "Joueurs"],
   ["methode", "Méthode"],
   ["draft", "Draft"],
   ["equipes", "Équipes"],
+  ["capitaines", "Capitaines"],
   ["autorole", "Autorole"],
   ["serie", "Série"],
 ];
+
+/**
+ * Les étapes à montrer : « Capitaines » n'existe qu'après une Roulette (la Draft les désigne déjà).
+ * Les Capitaines ne se désignent que dans le Picker, jamais sur l'Écran de préparation.
+ */
+export function pickerSteps(picker: Picker | null): [PickerStep, string][] {
+  return ETAPES_DU_PARCOURS.filter(([step]) => step !== "capitaines" || picker?.methode === "Roulette");
+}
 
 /** L'étape que l'API permet de déduire ; Autorole et Série ne sont distinguées que par l'écran. */
 export function pickerStep(picker: Picker | null): "selection" | "methode" | "draft" | "equipes" {

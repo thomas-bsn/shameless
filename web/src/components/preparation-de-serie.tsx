@@ -9,8 +9,6 @@ import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { lienCapitaineUrl, lienSpectateurUrl } from "@/lib/liens";
 
 /** Fréquence de lecture de l'écran : « capitaine rejoint » et échecs de DM, comme la Draft de champions. */
@@ -67,7 +65,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
           <CardContent className="grid gap-6 sm:grid-cols-2">
             {equipes.map((equipe) => (
               <div key={equipe} className="flex flex-col gap-4">
-                <CapitaineSelect series={series} equipe={equipe} />
+                <CapitaineDeLEquipe series={series} equipe={equipe} />
                 {liens.isSuccess && (
                   <EtatCapitaine
                     equipe={equipe}
@@ -160,47 +158,18 @@ function EtatCapitaine({ equipe, rejointLe }: { equipe: Equipe; rejointLe: strin
   );
 }
 
-/**
- * Désigne ou change le Capitaine d'une Équipe parmi ses joueurs. Les deux Équipes n'ont aucun joueur en
- * commun : le même joueur ne peut donc pas mener les deux (l'API le refuse aussi).
- */
-function CapitaineSelect({ series, equipe }: { series: Series; equipe: Equipe }) {
-  const queryClient = useQueryClient();
+/** Le Capitaine d'une Équipe, en lecture seule : il se désigne dans le Picker. */
+function CapitaineDeLEquipe({ series, equipe }: { series: Series; equipe: Equipe }) {
   const players = equipe === "A" ? series.teamA : series.teamB;
   const capitaineId = equipe === "A" ? series.capitaineA : series.capitaineB;
-  const designer = $api.useMutation("put", "/series/{id}/capitaines/{equipe}", {
-    onSuccess: (data: Series) => {
-      queryClient.setQueryData(["get", "/series/{id}", { params: { path: { id: series.seriesId } } }], data);
-      // Changer de Capitaine remet son état à « pas rejoint ».
-      void queryClient.invalidateQueries({ queryKey: ["get", "/series/{id}/liens"] });
-    },
-  });
+  const capitaine = players.find((p) => p.playerId === capitaineId);
 
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={`capitaine-${equipe}`}>Capitaine de l'Équipe {equipe}</Label>
-      <Select
-        value={capitaineId == null ? "" : String(capitaineId)}
-        disabled={designer.isPending}
-        onValueChange={(value) =>
-          designer.mutate({
-            params: { path: { id: series.seriesId, equipe } },
-            body: { designation: "Manuel", playerId: Number(value) },
-          })
-        }
-      >
-        <SelectTrigger id={`capitaine-${equipe}`} className="w-full">
-          <SelectValue placeholder="Choisir…" />
-        </SelectTrigger>
-        <SelectContent>
-          {players.map((p) => (
-            <SelectItem key={p.playerId} value={String(p.playerId)}>
-              {p.prenom}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {designer.isError && <ErrorAlert error={designer.error} />}
+    <div className="flex flex-col gap-1">
+      <span className="text-sm font-medium">Capitaine de l'Équipe {equipe}</span>
+      <p aria-label={`Capitaine de l'Équipe ${equipe}`} className={capitaine ? "" : "text-muted-foreground"}>
+        {capitaine?.prenom ?? "Pas encore désigné"}
+      </p>
     </div>
   );
 }

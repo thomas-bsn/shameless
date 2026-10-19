@@ -98,7 +98,8 @@ public sealed class PickerController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     public async Task<ActionResult<CreateSeriesResponse>> Validate([FromBody] ValidatePickerRequest request)
     {
-        var result = await _pickerService.ValidateAsync(request.Format, request.Fearless);
+        var result = await _pickerService.ValidateAsync(
+            request.Format, request.Fearless, request.CapitaineA, request.CapitaineB);
         if (!result.IsOk) return this.Refusal(result);
 
         var id = result.Value!.Id;
