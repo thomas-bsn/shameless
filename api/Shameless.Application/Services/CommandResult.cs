@@ -10,7 +10,10 @@ public enum CommandStatus
     NotFound,
     Invalid,
     Conflict,
-    TooManyRequests
+    TooManyRequests,
+
+    /// <summary>Provisoire : une donnée externe manque, à réessayer plus tard (503).</summary>
+    Indisponible
 }
 
 public sealed record CommandResult<T>(CommandStatus Status, T? Value, string? Detail)
@@ -22,6 +25,8 @@ public sealed record CommandResult<T>(CommandStatus Status, T? Value, string? De
     public static CommandResult<T> Invalid(string detail) => new(CommandStatus.Invalid, default, detail);
     public static CommandResult<T> Conflict(string detail) => new(CommandStatus.Conflict, default, detail);
     public static CommandResult<T> TooManyRequests(string detail) => new(CommandStatus.TooManyRequests, default, detail);
+
+    public static CommandResult<T> Indisponible(string detail) => new(CommandStatus.Indisponible, default, detail);
 
     /// <summary>Propage un refus vers une commande d'un autre type.</summary>
     public CommandResult<TOther> As<TOther>() => new(Status, default, Detail);

@@ -22,6 +22,7 @@ public sealed class RapportsCompanionService
     private readonly SeriesService _seriesService;
     private readonly IPlayerRepository _players;
     private readonly IRiotService _riot;
+    private readonly IChampionCatalog _champions;
     private readonly TimeProvider _clock;
 
     public RapportsCompanionService(
@@ -30,6 +31,7 @@ public sealed class RapportsCompanionService
         SeriesService seriesService,
         IPlayerRepository players,
         IRiotService riot,
+        IChampionCatalog champions,
         TimeProvider clock)
     {
         _series = series;
@@ -37,6 +39,7 @@ public sealed class RapportsCompanionService
         _seriesService = seriesService;
         _players = players;
         _riot = riot;
+        _champions = champions;
         _clock = clock;
     }
 
@@ -73,6 +76,10 @@ public sealed class RapportsCompanionService
         if (game.RapportEnRevue != null)
             return CommandResult<RapportTraite>.Conflict(
                 "Un rapport de la game en attente est déjà en revue : l'organisateur doit l'accepter ou le rejeter.");
+
+        var convertis = await ConvertirLesChampionsAsync(rapport);
+        if (!convertis.IsOk) return convertis.As<RapportTraite>();
+        rapport = convertis.Value!;
 
         var ecart = rapport.EcartAvec(game);
         if (!ecart.EstVide)
@@ -152,6 +159,26 @@ public sealed class RapportsCompanionService
                 .Select(j => riotIds.TryGetValue(j.Puuid, out var riotId) ? j with { RiotId = riotId } : j)
                 .ToList()
         };
+    }
+
+    /// <summary>
+    /// Le rapport où le champion de chaque joueur, reçu comme l'id numérique du client (ADR 0019), est
+    /// l'id Data Dragon du catalogue. Un id que le catalogue ne connaît pas (nouveau champion, catalogue
+    /// pas encore à jour) n'est pas deviné : le rapport reste en attente, rien n'est appliqué, et le
+    /// Companion le renvoie plus tard.
+    /// </summary>
+    private async Task<CommandResult<RapportDeGame>> ConvertirLesChampionsAsync(RapportDeGame rapport)
+    {
+        var parCle = (await _champions.GetAllAsync()).ToDictionary(c => c.Key, c => c.Id);
+        var inconnus = rapport.Joueurs.Select(j => j.ChampionId).Where(id => !parCle.ContainsKey(id)).Distinct().ToList();
+        if (inconnus.Count > 0)
+            return CommandResult<RapportDeGame>.Indisponible(
+                $"Champion inconnu du catalogue (id {string.Join(", ", inconnus)}) : le rapport reste en attente, renvoyez-le quand le catalogue sera à jour.");
+
+        return CommandResult<RapportDeGame>.Ok(rapport with
+        {
+            Joueurs = rapport.Joueurs.Select(j => j with { ChampionId = parCle[j.ChampionId] }).ToList()
+        });
     }
 
     private const string DejaDecide = "Ce rapport n'est plus en revue : l'organisateur a déjà décidé.";

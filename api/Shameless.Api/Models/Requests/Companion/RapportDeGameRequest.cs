@@ -13,14 +13,17 @@ public sealed record RapportDeGameRequest(string RiotMatchId, JsonElement Donnee
         RiotMatchId ?? "",
         ObjetJson(Donnees),
         (Joueurs ?? []).Select(j => new JoueurDuRapport(
-            j.Puuid ?? "", j.Side ?? "", j.ChampionId ?? "", j.Victoire, ObjetJson(j.Stats))).ToList());
+            j.Puuid ?? "", j.Side ?? "", j.ChampionId > 0 ? j.ChampionId.ToString(System.Globalization.CultureInfo.InvariantCulture) : "",
+            j.Victoire, ObjetJson(j.Stats))).ToList());
 
     private static string? ObjetJson(JsonElement element) =>
         element.ValueKind == JsonValueKind.Object ? element.GetRawText() : null;
 }
 
 /// <summary>
-/// Un joueur détecté : son PUUID, son Side ("blue" | "red"), le champion joué (id Data Dragon, ex.
-/// "LeeSin"), sa victoire et ses stats brutes (objet JSON).
+/// Un joueur détecté : son PUUID, son Side ("blue" | "red"), le champion joué (l'id numérique du
+/// client LoL, ex. 64 pour Lee Sin, que l'API convertit avec son catalogue Data Dragon), sa victoire et
+/// ses stats brutes (objet JSON). Un id absent ou nul est refusé (400) ; un id que le catalogue ne
+/// connaît pas laisse le rapport en attente (503), à renvoyer plus tard.
 /// </summary>
-public sealed record JoueurDuRapportRequest(string Puuid, string Side, string ChampionId, bool Victoire, JsonElement Stats);
+public sealed record JoueurDuRapportRequest(string Puuid, string Side, int ChampionId, bool Victoire, JsonElement Stats);

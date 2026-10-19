@@ -13,6 +13,7 @@ public static class CommandResultExtensions
                 CommandStatus.NotFound => StatusCodes.Status404NotFound,
                 CommandStatus.Invalid => StatusCodes.Status400BadRequest,
                 CommandStatus.TooManyRequests => StatusCodes.Status429TooManyRequests,
+                CommandStatus.Indisponible => StatusCodes.Status503ServiceUnavailable,
                 _ => StatusCodes.Status409Conflict
             },
             detail: result.Detail);

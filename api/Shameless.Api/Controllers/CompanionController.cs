@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shameless.Api.Auth;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Requests.Companion;
 using Shameless.Api.Models.Responses.Companion;
+using Shameless.Application.Entities;
 using Shameless.Application.Services;
 
 namespace Shameless.Api.Controllers;
@@ -17,8 +19,11 @@ public sealed class CompanionController : ControllerBase
     private readonly CodeCompanionService _codes;
     private readonly RapportsCompanionService _rapports;
 
-    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports)
+    private readonly RolesService _roles;
+
+    public CompanionController(CodeCompanionService codes, RapportsCompanionService rapports, RolesService roles)
     {
+        _roles = roles;
         _codes = codes;
         _rapports = rapports;
     }
@@ -46,6 +51,24 @@ public sealed class CompanionController : ControllerBase
         if (!result.IsOk) return this.Refusal(result);
 
         return CodeCompanionResponse.From(result.Value!);
+    }
+
+    /// <summary>
+    /// Sans connexion : les pseudos Discord du Superadministrateur et des Administrateurs, à qui le
+    /// Companion fait donner le Fichier de Rapport quand l'envoi échoue (ADR 0020). Rien d'autre n'est
+    /// exposé : ni identifiant, ni photo.
+    /// </summary>
+    [HttpGet("companion/administrateurs")]
+    [AllowAnonymous]
+    [ProducesResponseType<AdministrateursDuCompanionResponse>(StatusCodes.Status200OK)]
+    public async Task<AdministrateursDuCompanionResponse> Administrateurs()
+    {
+        var pseudos = (await _roles.ListAsync())
+            .Where(u => !string.IsNullOrWhiteSpace(u.DiscordUsername))
+            .ToList();
+        List<string> De(UserRole role) =>
+            pseudos.Where(u => u.Role == role).Select(u => u.DiscordUsername!).OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
+        return new AdministrateursDuCompanionResponse(De(UserRole.Superadministrateur), De(UserRole.Administrateur));
     }
 
     /// <summary>

@@ -1580,6 +1580,45 @@
         }
       }
     },
+    "/companion/administrateurs": {
+      "get": {
+        "tags": [
+          "Companion"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministrateursDuCompanionResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministrateursDuCompanionResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministrateursDuCompanionResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/companion/{code}": {
       "get": {
         "tags": [
@@ -7034,6 +7073,27 @@
           }
         }
       },
+      "AdministrateursDuCompanionResponse": {
+        "required": [
+          "superadministrateurs",
+          "administrateurs"
+        ],
+        "type": "object",
+        "properties": {
+          "superadministrateurs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "administrateurs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "ArretSerie": {
         "enum": [
           "Annulee",
@@ -9030,7 +9090,8 @@
             "type": "string"
           },
           "championId": {
-            "type": "string"
+            "type": "integer",
+            "format": "int32"
           },
           "victoire": {
             "type": "boolean"
