@@ -12,7 +12,8 @@ public class PronosticsTests
     private static CustomGame GameTerminee() => new()
     {
         Id = 7,
-        CreatedAt = Lancement,
+        CreatedAt = Lancement.AddMinutes(-3),
+        StartedAt = Lancement,
         CompletedAt = Lancement.AddMinutes(30),
         Status = GameStatuses.Completed,
         WinningTeam = Equipes.A,
@@ -40,6 +41,17 @@ public class PronosticsTests
 
         var seul = Assert.Single(evalues.Pronostics);
         Assert.Equal("1", seul.PronostiqueurDiscordId);
+    }
+
+    [Fact]
+    public void Tant_que_la_partie_n_a_pas_commence_aucun_pronostic_n_est_ignore()
+    {
+        var game = GameTerminee();
+        game.StartedAt = null;
+
+        var evalues = PronosticsDeLaGame.Evaluer(game, [Pronostic(1, Lancement.AddHours(1), equipe: "A")], VotesClos([], []));
+
+        Assert.Single(evalues.Pronostics);
     }
 
     [Fact]

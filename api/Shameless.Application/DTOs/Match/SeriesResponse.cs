@@ -33,7 +33,8 @@ public record SeriesGameResponse(
     List<GameParticipantDto> TeamB,
     string? RiotMatchId, // l'identifiant Riot de la partie, donné par le rapport du Companion ; null sans rapport
     List<ChampionJoueResponse> ChampionsJoues, // vide sans rapport du Companion
-    RapportEnRevueResponse? RapportEnRevue // le rapport du Companion qui attend la décision de l'organisateur
+    RapportEnRevueResponse? RapportEnRevue, // le rapport du Companion qui attend la décision de l'organisateur
+    DateTime? StartedAt // le Début de la Game (signal « partie lancée », ADR 0017), null avant ce signal
 )
 {
     /// <param name="joueursConnus">Les joueurs enregistrés, par PUUID, pour reconnaître les joueurs inattendus d'un rapport en revue.</param>
@@ -53,7 +54,8 @@ public record SeriesGameResponse(
             .ToList(),
         RapportEnRevue: game.RapportEnRevue is { } revue
             ? RapportEnRevueResponse.From(revue, game, joueursConnus)
-            : null);
+            : null,
+        StartedAt: game.StartedAt);
 }
 
 /// <summary>

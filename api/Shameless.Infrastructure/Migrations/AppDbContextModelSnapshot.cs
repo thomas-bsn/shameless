@@ -285,6 +285,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("series_id");
 
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("started_at");
+
                     b.Property<string>("Status")
                         .IsConcurrencyToken()
                         .IsRequired()

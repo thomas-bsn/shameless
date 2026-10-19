@@ -168,7 +168,7 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Le_lancement_d_une_game_envoie_game_started_avec_ses_participants()
+    public async Task Le_signal_de_partie_lancee_envoie_game_started_avec_ses_participants()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
@@ -176,6 +176,9 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         await LierADiscordAsync(serie.TeamB[1], "222222222222222222");
         await PublierAsync();
         var gameId = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
+        await PublierAsync();
+        Assert.Empty(Envoyes("game_started"));
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
 
         await PublierAsync();
 
@@ -333,7 +336,9 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        await PlayAndWinAsync(client, serie.SeriesId, "A");
+        var gameId = await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
 
         await PublierAsync();
 
@@ -348,6 +353,20 @@ public class WebhooksDuBotTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
         await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
+
+        await PublierAsync();
+
+        Assert.Empty(Factory.Bot.Webhooks);
+    }
+
+    [Fact]
+    public async Task Une_serie_annulee_emporte_son_game_started_non_livre()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId);
+        await ReadJsonAsync(await SignalerDebutAsync(await CodeCompanionAsync(client, serie.SeriesId)));
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
         await PublierAsync();

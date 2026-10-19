@@ -8,7 +8,7 @@ namespace Shameless.Application.Bot;
 /// avec leur compte Discord lié, de quoi proposer les votes et pronostics de la Phase 2.
 /// </summary>
 /// <param name="Status">« pending » tant que le résultat n'est pas saisi, puis « completed ».</param>
-/// <param name="StartedAt">Le début de la Game (son lancement, ADR 0013).</param>
+/// <param name="StartedAt">Le début de la Game : le signal « partie lancée » (ADR 0017). Null avant ce signal.</param>
 /// <param name="Winner">L'Équipe gagnante, « A » ou « B », null tant que la game n'est pas terminée.</param>
 public sealed record GameDuBot(
     int GameId,
@@ -16,7 +16,7 @@ public sealed record GameDuBot(
     int GameNumber,
     int BestOf,
     string Status,
-    DateTime StartedAt,
+    DateTime? StartedAt,
     DateTime? CompletedAt,
     string? Winner,
     List<JoueurDuBot> TeamA,
@@ -32,7 +32,7 @@ public sealed record GameDuBot(
             GameNumber: game.NumeroDansLaSerie,
             BestOf: game.Series?.Format ?? 1,
             Status: game.Status,
-            StartedAt: game.CreatedAt,
+            StartedAt: game.StartedAt,
             CompletedAt: game.CompletedAt,
             Winner: game.WinningTeam,
             TeamA: Equipe(Equipes.A),
