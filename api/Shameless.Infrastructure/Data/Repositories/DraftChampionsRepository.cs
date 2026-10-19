@@ -38,6 +38,30 @@ public class DraftChampionsRepository : IDraftChampionsRepository
 
     public Task<bool> TryAddMessageAsync(MessageDraftChampions message) => _db.TryAddAsync(message);
 
+    public async Task<bool> TryAddMessageSpectateurAsync(MessageDraftChampions message)
+    {
+        // Les nouveaux spectateurs d'une même draft passent un par un (verrou consultatif tenu jusqu'à la fin
+        // de la transaction) : chacun lit le dernier numéro après l'enregistrement du précédent.
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await _db.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock({VerrouNumerotationSpectateurs}, {message.DraftChampionsId})");
+
+        var connu = await GetAuteurAsync(message.DraftChampionsId, message.Emetteur);
+        if (connu != null)
+            message.Auteur = connu;
+        else
+        {
+            message.NumeroSpectateur = await DernierNumeroSpectateurAsync(message.DraftChampionsId) + 1;
+            message.Auteur = $"Spectateur {message.NumeroSpectateur}";
+        }
+
+        if (!await _db.TryAddAsync(message)) return false;
+        await transaction.CommitAsync();
+        return true;
+    }
+
+    private const int VerrouNumerotationSpectateurs = 7152;
+
     private IQueryable<DraftChampions> Complete() =>
         _db.DraftsChampions
             .Include(d => d.Actions.OrderBy(a => a.Numero))
