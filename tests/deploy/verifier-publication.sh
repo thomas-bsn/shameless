@@ -8,16 +8,14 @@ ok()  { echo "ok   $1"; }
 ko()  { echo "FAIL $1"; echec=1; }
 verifier() { local msg=$1; shift; if "$@" >/dev/null 2>&1; then ok "$msg"; else ko "$msg"; fi; }
 
-WF=.github/workflows/publier.yml
-verifier "le workflow de publication existe (seul, avec ci.yml)" bash -c "test -f $WF && test \$(ls .github/workflows | wc -l) -eq 2"
-verifier "il se déclenche après le workflow CI" bash -c "grep -q 'workflow_run:' $WF && grep -q 'workflows: \[CI\]' $WF"
+WF=.github/workflows/ci.yml
+verifier "un seul workflow (tests et publication)" bash -c "test -f $WF && test \$(ls .github/workflows | wc -l) -eq 1"
 verifier "il a un déclencheur manuel avec une version" bash -c "grep -q 'workflow_dispatch:' $WF && grep -Eq '^\s+version:' $WF"
-verifier "il ne se déclenche ni sur un tag ni sur une branche" bash -c "! grep -Eq '^ {0,4}(tags|branches|push):' $WF"
-verifier "il n'appelle pas de workflow réutilisable" bash -c "! grep -Eq '^\s*(uses: ./|workflow_call:)' $WF"
-verifier "il exige une CI verte" grep -q "conclusion == 'success'" "$WF"
-verifier "il se limite aux push sur main" bash -c "grep -q \"event == 'push'\" $WF && grep -q \"head_branch == 'main'\" $WF"
-verifier "il construit le commit testé (head_sha)" grep -q 'workflow_run.head_sha' "$WF"
-verifier "il sérialise les publications sans annuler" bash -c "grep -q 'cancel-in-progress: false' $WF"
+verifier "il ne se déclenche pas sur un tag" bash -c "! grep -Eq '^ {0,4}tags:' $WF"
+verifier "il n'appelle ni workflow_run ni workflow réutilisable" bash -c "! grep -Eq '^\s*(uses: ./|workflow_call:|workflow_run:)' $WF"
+verifier "la version attend tous les jobs de test" grep -q 'needs: \[api, web, images, wizard, compose-acceptance\]' "$WF"
+verifier "il se limite aux push sur main et au manuel (jamais une PR)" bash -c "grep -q \"event_name == 'push'\" $WF && grep -q \"github.ref == 'refs/heads/main'\" $WF"
+verifier "il sérialise les publications sans annuler" bash -c "grep -q 'group: publier-images' $WF && grep -q 'cancel-in-progress: false' $WF"
 verifier "contents: write seulement dans le job qui pose le tag" bash -c "[ \$(grep -c 'contents: write' $WF) -eq 1 ]"
 verifier "il publie sur ghcr.io avec GITHUB_TOKEN et packages: write" bash -c "grep -q 'ghcr.io' $WF && grep -q 'secrets.GITHUB_TOKEN' $WF && grep -q 'packages: write' $WF"
 for img in api migrate proxy wizard; do
