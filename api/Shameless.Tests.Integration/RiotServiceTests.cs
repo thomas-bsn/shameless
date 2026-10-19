@@ -51,6 +51,43 @@ public class RiotServiceTests
     private static string Match(string role) =>
         $$$"""{"info":{"participants":[{"puuid":"{{{Puuid}}}","teamPosition":"{{{role}}}"}]}}""";
 
+    private static HttpResponseMessage PuuidIllisible() =>
+        new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("""{"message":"Bad Request - Exception decrypting abc"}""", Encoding.UTF8, "application/json")
+        };
+
+    [Fact]
+    public async Task Un_400_exception_decrypting_est_un_puuid_perime_sur_les_rangs_le_role_et_le_compte()
+    {
+        var service = Service(new FauxRiot(_ => PuuidIllisible()));
+
+        var rangs = await Assert.ThrowsAsync<RiotException>(() => service.GetRanksFromPuuidAsync(Puuid));
+        var role = await Assert.ThrowsAsync<RiotException>(() => service.GetMainRoleFromPuuidAsync(Puuid));
+        var compte = await Assert.ThrowsAsync<RiotException>(() => service.GetRiotIdFromPuuidAsync(Puuid));
+
+        foreach (var erreur in new[] { rangs, role, compte })
+        {
+            Assert.Equal(CauseEchecRiot.PuuidPerime, erreur.Cause);
+            Assert.Equal(400, erreur.Statut);
+            Assert.Contains("PUUID périmé", erreur.Message);
+            Assert.False(erreur.Bloque);
+        }
+    }
+
+    [Fact]
+    public async Task Un_autre_400_reste_une_reponse_inattendue()
+    {
+        var service = Service(new FauxRiot(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("""{"message":"Bad Request"}""", Encoding.UTF8, "application/json")
+        }));
+
+        var erreur = await Assert.ThrowsAsync<RiotException>(() => service.GetRanksFromPuuidAsync(Puuid));
+
+        Assert.Equal(CauseEchecRiot.Inattendue, erreur.Cause);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.Forbidden, CauseEchecRiot.CleRefusee)]
     [InlineData(HttpStatusCode.Unauthorized, CauseEchecRiot.CleRefusee)]
