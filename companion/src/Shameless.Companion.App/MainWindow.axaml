@@ -4,6 +4,7 @@
         x:Class="Shameless.Companion.App.MainWindow"
         x:DataType="app:FenetreViewModel"
         Title="Shameless Companion"
+        Icon="/Assets/companion.png"
         Width="460" Height="420" CanResize="False"
         WindowStartupLocation="CenterScreen">
   <StackPanel Margin="20" Spacing="10">
