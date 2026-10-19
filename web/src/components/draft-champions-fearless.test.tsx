@@ -47,6 +47,7 @@ const draft = (championsDejaJoues: string[] | null): Schemas["DraftChampionsResp
   resetDemande: null,
   pause: null,
   repriseDemandee: null,
+  pauseDemandee: null,
   pauseDisponibleA: true,
   pauseDisponibleB: true,
 });
