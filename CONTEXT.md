@@ -255,6 +255,10 @@ détectés sur le Side gagnant) ou le **rejette** (la game attend un autre rappo
 saisie manuelle ; le même rapport renvoyé répond « rejeté », sans rien créer). Tant qu'il est en revue, ni game suivante, ni Draft de champions, ni  
 saisie manuelle, ni autre rapport (le même renvoyé répond « en revue »). Il disparaît avec  
 la game en attente si la Série est interrompue ou annulée (`RapportCompanion`).
+- **Companion connecté** : un Companion lancé, dont le client LoL est détecté et la Série  
+reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
+connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
+récent, « aucun Companion détecté ».
 - **Fichier de Rapport** : le corps JSON exact d'un Rapport, gardé par le Companion tant  
 que l'envoi n'a pas abouti (`rapport-<riotMatchId>.json`). Si l'API est injoignable ou  
 refuse définitivement le Rapport, le Companion le garde et dit à son utilisateur de le  
