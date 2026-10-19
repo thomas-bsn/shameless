@@ -88,4 +88,19 @@ public class AnonymizerTests
         Assert.False(File.Exists(Path.Combine(dst, "events-1.jsonl")));
         Assert.Contains("Sam le Vrai", File.ReadAllText(Path.Combine(src, "game-1", "eog-stats-block.json")));
     }
+
+    [Fact]
+    public void Remplace_les_jetons_JWT_et_le_mot_de_passe_du_chat_de_fin_de_game()
+    {
+        const string jeton = "eyJraWQiOiIxIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJ1bi1wdWF1aWQiLCJleHAiOjE3OTI0NTB9.c2lnbmF0dXJl";
+        var json = $$"""
+            { "gameId": 1, "mucJwtDto": { "jwt": "{{jeton}}", "domain": "lol-post-game" }, "multiUserChatPassword": "{{jeton}}" }
+            """;
+
+        var result = Anonymizer.Anonymize([json])[0];
+
+        Assert.DoesNotContain("eyJ", result);
+        Assert.Contains("lol-post-game", result);
+        Assert.Contains("\"gameId\": 1", result);
+    }
 }

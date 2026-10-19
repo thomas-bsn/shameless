@@ -8,9 +8,12 @@ namespace Spike;
 /// (même vraie valeur, même fausse valeur, d'un fichier à l'autre). Les stats, champions et
 /// <c>gameId</c> restent intacts.
 /// </summary>
-public static class Anonymizer
+public static partial class Anonymizer
 {
     private enum Kind { Name, Tag, Puuid, Id }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$")]
+    private static partial System.Text.RegularExpressions.Regex JwtLike();
 
     private static readonly Dictionary<string, Kind> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -124,6 +127,8 @@ public static class Anonymizer
                 return list;
             case JsonValue val when val.GetValueKind() == JsonValueKind.String:
                 var s = val.GetValue<string>();
+                // Un jeton JWT (chat de fin de game, etc.) porte des identifiants et reste valide un temps : jamais gardé.
+                if (JwtLike().IsMatch(s)) return JsonValue.Create("anon-jeton");
                 foreach (var (r, f) in textual) s = s.Replace(r, f, StringComparison.Ordinal);
                 return JsonValue.Create(s);
             default:
