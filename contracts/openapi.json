@@ -2545,6 +2545,164 @@
         }
       }
     },
+    "/liens/{lien}/draft-champions/pause/acceptation": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/pause/refus": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftChampionsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/liens/{lien}/draft-champions/reprise": {
       "post": {
         "tags": [
@@ -7831,6 +7989,7 @@
           "capitaineB",
           "championsDejaJoues",
           "resetDemande",
+          "pauseDemandee",
           "pause",
           "repriseDemandee",
           "pauseDisponibleA",
@@ -7922,6 +8081,16 @@
               },
               {
                 "$ref": "#/components/schemas/ResetDemandeResponse"
+              }
+            ]
+          },
+          "pauseDemandee": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PauseDemandeeResponse"
               }
             ]
           },
@@ -9415,6 +9584,27 @@
                 "$ref": "#/components/schemas/SoireeResponse"
               }
             ]
+          }
+        }
+      },
+      "PauseDemandeeResponse": {
+        "required": [
+          "parEquipe",
+          "demandeLe",
+          "expireLe"
+        ],
+        "type": "object",
+        "properties": {
+          "parEquipe": {
+            "type": "string"
+          },
+          "demandeLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expireLe": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

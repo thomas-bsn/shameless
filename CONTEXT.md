@@ -125,12 +125,16 @@ ou refuse. Accepté : bans, picks et chrono sont effacés, les deux Capitaines r
 et la draft repart quand ils se remettent prêts, dans la même Game. Refusé, ou sans réponse sous 60 s :
 rien ne change. Ni l'organisateur ni l'Administrateur n'ont de Reset direct, et il est impossible une
 fois la draft terminée. Les spectateurs voient « Reset demandé » puis « Draft remise à zéro ».
-- **Pause** : arrêt de la Draft de champions demandé par un Capitaine, immédiat et sans accord de  
-l'autre. Le temps restant du tour est gelé et personne ne joue ; la draft reprend avec ce temps. Chaque  
-Capitaine a droit à une pause par draft, de 5 minutes au plus : passé ce délai la draft reprend toute  
-seule. Pour reprendre avant, un Capitaine envoie une demande de reprise que l'autre accepte (reprise  
-immédiate) ou refuse ; sans réponse sous 60 s elle tombe et la pause continue. Les spectateurs voient  
-« Draft en pause » avec le décompte.
+- **Pause** : arrêt de la Draft de champions demandé par un Capitaine et soumis au vote de l'autre : celui-ci
+accepte (la pause démarre alors, et le temps restant du tour est gelé à ce moment) ou refuse ; sans réponse
+sous 60 s la demande tombe. Une demande refusée ou tombée ne consomme pas la pause du demandeur : seule une
+pause qui démarre compte, une par Capitaine et par draft. Personne ne joue pendant la pause, qui dure 5
+minutes au plus : passé ce délai la draft reprend toute seule avec le temps gelé. Pour reprendre avant, un
+Capitaine envoie une demande de reprise que l'autre accepte (reprise immédiate) ou refuse ; sans réponse
+sous 60 s elle tombe et la pause continue. Une seule demande (pause, reprise ou Reset) peut attendre une
+réponse à la fois par draft : les autres sont refusées (409). Le Capitaine qui doit répondre voit la demande
+dans une fenêtre modale au centre de l'écran ; le demandeur et les spectateurs voient un avis centré
+(« Pause demandée », puis « Draft en pause » avec le décompte).
 - **Chat de la draft** : les Capitaines et les spectateurs écrivent pendant la Draft de champions, et tous
 voient les messages en direct. Un Capitaine écrit sous le prénom de son Joueur, un spectateur connecté sous
 son nom Discord, un spectateur sans connexion sous « Spectateur N ». Un message fait 300 caractères au plus,
