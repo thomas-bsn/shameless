@@ -1,10 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { $api, type Schemas } from "@/api/client";
 import { CopyField } from "@/components/copy-field";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const LIEN_TELECHARGEMENT = "https://github.com/thomas-bsn/shameless/releases/latest/download/shameless-companion.exe";
 
 /**
  * Le code Companion de la Série : l'organisateur le copie pour le saisir dans le Companion, ou le
@@ -27,8 +29,18 @@ export function CodeCompanionPanel({ seriesId }: { seriesId: number }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            Saisis ce code dans le Companion : il envoie les résultats des games de cette Série, et rien d'autre.
+            Saisis l'adresse de l'Instance et ce code dans le Companion : il envoie les résultats des games de cette Série, et rien d'autre.
           </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button asChild>
+              <a href={LIEN_TELECHARGEMENT}>
+                <Download />
+                Télécharger le Companion
+              </a>
+            </Button>
+            <span className="text-sm text-muted-foreground">Windows seulement</span>
+          </div>
+          <CopyField id="instance-adresse" label="Adresse de l'Instance" value={window.location.origin} />
           {code.isPending ? (
             <LoadingRows />
           ) : code.isError ? (

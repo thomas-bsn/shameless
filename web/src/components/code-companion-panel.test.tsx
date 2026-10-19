@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { json, mockApi } from "@/test/api";
 import { renderComponent } from "@/test/render";
@@ -14,7 +14,8 @@ describe("CodeCompanionPanel", () => {
     renderComponent(<CodeCompanionPanel seriesId={5} />);
 
     expect(await screen.findByLabelText("Code Companion")).toHaveValue("code-secret-1");
-    await user.click(screen.getByRole("button", { name: "Copier" }));
+    const ligne = screen.getByLabelText("Code Companion").parentElement!;
+    await user.click(within(ligne).getByRole("button", { name: "Copier" }));
     expect(writeText).toHaveBeenCalledWith("code-secret-1");
     expect(await screen.findByRole("button", { name: "Copié" })).toBeInTheDocument();
   });
