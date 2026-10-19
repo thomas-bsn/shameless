@@ -1,5 +1,5 @@
 # Le front du wizard est construit depuis le contexte nommé « web » (voir compose.override.yaml
-# et .github/workflows/publier.yml), comme l'image proxy.
+# et .github/workflows/ci.yml), comme l'image proxy.
 FROM node:24-alpine AS front
 WORKDIR /web
 COPY --from=web package.json package-lock.json ./

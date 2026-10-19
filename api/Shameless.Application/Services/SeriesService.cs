@@ -146,7 +146,10 @@ public sealed class SeriesService
             SeriesId = series.Id,
             TeamASide = side,
             Status = GameStatuses.Pending,
+            // Triés : l'ordre des participants (leur Id) est l'ordre de composition de l'Équipe, et la base
+            // ne garantit aucun ordre sans tri.
             Participants = series.Players
+                .OrderBy(p => p.Id)
                 .Select(p => new CustomGameParticipant
                 {
                     PlayerId = p.PlayerId,
