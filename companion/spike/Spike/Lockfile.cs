@@ -5,6 +5,53 @@ public sealed record Lockfile(string Name, int Pid, int Port, string Password, s
 {
     public const string DefaultPath = @"C:\Riot Games\League of Legends\lockfile";
 
+    /// <summary>
+    /// Choisit le lockfile : le chemin explicite (--lockfile) s'il est donné, sinon celui du dossier d'un
+    /// client LoL en cours d'exécution, sinon le chemin par défaut. Rien n'est cherché dans les disques.
+    /// </summary>
+    public static string Locate(string? explicitPath, IEnumerable<string> clientDirectories, string defaultPath = DefaultPath)
+    {
+        if (!string.IsNullOrEmpty(explicitPath)) return explicitPath;
+
+        foreach (var dir in clientDirectories)
+        {
+            var candidate = Path.Combine(dir, "lockfile");
+            if (File.Exists(candidate)) return candidate;
+        }
+
+        return defaultPath;
+    }
+
+    /// <summary>
+    /// Dossiers des clients LoL en cours d'exécution (le lockfile est à côté de leur exécutable).
+    /// Un processus dont le chemin est illisible (droits) est ignoré : le chemin par défaut reste le repli.
+    /// </summary>
+    public static IReadOnlyList<string> RunningClientDirectories()
+    {
+        var dirs = new List<string>();
+        foreach (var name in new[] { "LeagueClientUx", "LeagueClient" })
+        {
+            foreach (var process in System.Diagnostics.Process.GetProcessesByName(name))
+            {
+                try
+                {
+                    var exe = process.MainModule?.FileName;
+                    var dir = exe is null ? null : Path.GetDirectoryName(exe);
+                    if (dir is not null && !dirs.Contains(dir)) dirs.Add(dir);
+                }
+                catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
+                {
+                    // Accès refusé (client lancé en administrateur) ou processus déjà terminé.
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
+        }
+        return dirs;
+    }
+
     public static Lockfile Read(string path)
     {
         if (!File.Exists(path))

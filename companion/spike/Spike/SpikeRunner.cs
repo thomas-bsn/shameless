@@ -8,7 +8,8 @@ namespace Spike;
 
 public sealed class SpikeOptions
 {
-    public string LockfilePath { get; set; } = Lockfile.DefaultPath;
+    /// <summary>Chemin donné avec --lockfile ; vide : le dossier du client LoL détecté, puis le chemin par défaut.</summary>
+    public string? LockfilePath { get; set; }
     public string OutputRoot { get; set; } = "captures";
     public int RetryCount { get; set; } = 10;
     public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(3);
@@ -36,7 +37,9 @@ public static class SpikeRunner
     public static async Task<IReadOnlyList<string>> RunAsync(SpikeOptions options, CancellationToken ct)
     {
         var log = options.Log;
-        var lockfile = Lockfile.Read(options.LockfilePath);
+        var chemin = Lockfile.Locate(options.LockfilePath, Lockfile.RunningClientDirectories());
+        log($"Lockfile : {chemin}");
+        var lockfile = Lockfile.Read(chemin);
         log($"Lockfile lu : port {lockfile.Port}, protocole {lockfile.Protocol}");
 
         using var http = CreateHttpClient(lockfile);

@@ -16,7 +16,7 @@ Copie `publish/shameless-spike.exe` sur le PC Windows.
 
 ## Capturer
 
-Lance le client LoL, puis, dans un terminal :
+Lance le client LoL, puis, dans un terminal. L'outil trouve le lockfile tout seul : il le cherche à côté du client LoL en cours d'exécution (aucun scan du disque), puis dans `C:\Riot Games\League of Legends`. `--lockfile` ne sert que s'il ne le trouve pas :
 
 ```
 shameless-spike.exe

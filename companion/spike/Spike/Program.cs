@@ -5,7 +5,7 @@ const string Usage = """
 
     Capturer (client LoL lancé) :
       shameless-spike [--lockfile <chemin>] [--out <dossier>] [--retries <n>] [--retry-delay <secondes>] [--raw-all]
-        --lockfile     défaut : C:\Riot Games\League of Legends\lockfile
+        --lockfile     défaut : le dossier du client LoL en cours d'exécution, sinon C:\Riot Games\League of Legends\lockfile
         --out          défaut : captures
         --retries      essais pour l'historique (défaut 10)
         --retry-delay  secondes entre deux essais (défaut 3)
