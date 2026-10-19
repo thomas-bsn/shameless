@@ -13,6 +13,11 @@ name: CI
 #
 # Tags d'image : X.Y.Z, puis X.Y et latest pour les versions stables (jamais pour une préversion).
 # Aucun déclencheur sur « push: tags » : le tag posé ici ne relance rien.
+#
+# Companion : après la version, un push sur main qui change l'exécutable (voir
+# .github/scripts/companion-a-change.sh) publie shameless-companion.exe (Windows, un seul fichier) en
+# GitHub Release sur le tag vX.Y.Z. Le nom du fichier est fixe : releases/latest/download/shameless-companion.exe
+# donne toujours le plus récent. Le dépôt ne crée aucune autre Release.
 on:
   pull_request:
   push:
@@ -114,6 +119,10 @@ jobs:
 
       - name: Test
         run: dotnet test --solution Shameless.Companion.slnx --no-build -c Release
+
+      - name: Test du script qui décide de publier l'exécutable
+        working-directory: .
+        run: tests/deploy/companion-a-change.test.sh
 
   images:
     name: Images du compose
@@ -338,3 +347,78 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  publier-companion:
+    name: Publication de l'exécutable du Companion
+    needs: version
+    # Seulement sur un push sur main (pas en lancement manuel, qui publie les images d'une version choisie).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Une publication à la fois : la plus récente passe en dernier, donc « latest » reste la plus récente.
+    concurrency:
+      group: publier-companion
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      # On compare au commit de la dernière Release, pas au push précédent : un changement du Companion
+      # resté sans publication (CI rouge, push intermédiaire) est repris au push suivant.
+      # Aucune Release : on publie.
+      - name: L'exécutable a-t-il changé depuis la dernière Release ?
+        id: changement
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APRES: ${{ needs.version.outputs.sha }}
+        run: |
+          set -euo pipefail
+          derniere=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // ""')
+          if [[ -z $derniere ]]; then
+            echo "Aucune Release : publication."
+            echo "publier=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          avant=$(git rev-list -n 1 "$derniere")
+          resultat=$(.github/scripts/companion-a-change.sh "$avant" "$APRES")
+          echo "Depuis $derniere : changement de l'exécutable = $resultat"
+          if [[ $resultat == oui ]]; then echo "publier=true" >> "$GITHUB_OUTPUT"; else echo "publier=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-dotnet@v5
+        if: steps.changement.outputs.publier == 'true'
+        with:
+          global-json-file: companion/global.json
+
+      # Les options (Windows 64 bits, un seul fichier, bibliothèques natives comprises) sont dans le profil
+      # companion/src/Shameless.Companion.App/Properties/PublishProfiles/Windows.pubxml : les changer compte
+      # comme un changement de l'exécutable.
+      - name: Construire l'exécutable Windows
+        if: steps.changement.outputs.publier == 'true'
+        working-directory: companion
+        run: dotnet publish src/Shameless.Companion.App/Shameless.Companion.App.csproj -p:PublishProfile=Windows -o publish
+
+      # Le nom du fichier est fixe (l'URL « latest » du site en dépend). Un renvoi du même tag remplace le fichier.
+      - name: Publier la Release
+        if: steps.changement.outputs.publier == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          exe=companion/publish/Shameless.Companion.App.exe
+          [[ -f $exe ]] || { echo "::error::$exe absent : dotnet publish n'a pas produit l'exécutable attendu."; exit 1; }
+          cp "$exe" shameless-companion.exe
+          if sortie=$(gh release view "v$VERSION" 2>&1); then
+            gh release upload "v$VERSION" shameless-companion.exe --clobber
+          elif grep -qi 'not found' <<<"$sortie"; then
+            gh release create "v$VERSION" shameless-companion.exe \
+              --title "Companion $VERSION" --latest \
+              --notes "Exécutable Windows du Companion (Windows 10/11 seulement). Il n'est pas signé : Windows affiche un avertissement « éditeur inconnu » au premier lancement."
+          else
+            echo "::error::Lecture de la Release v$VERSION impossible : $sortie"
+            exit 1
+          fi
