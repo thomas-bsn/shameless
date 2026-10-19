@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Ban, History, Pause, Timer, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { ChatDeLaDraft } from "@/components/draft-champions-chat";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { TeamCard } from "@/components/team-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -245,6 +246,7 @@ export function DraftParLien({
                 : null
             }
           />
+          {!draft.data!.terminee && <ChatDeLaDraft lien={lien} />}
         </div>
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}

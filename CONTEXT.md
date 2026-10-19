@@ -131,6 +131,11 @@ Capitaine a droit à une pause par draft, de 5 minutes au plus : passé ce déla
 seule. Pour reprendre avant, un Capitaine envoie une demande de reprise que l'autre accepte (reprise  
 immédiate) ou refuse ; sans réponse sous 60 s elle tombe et la pause continue. Les spectateurs voient  
 « Draft en pause » avec le décompte.
+- **Chat de la draft** : les Capitaines et les spectateurs écrivent pendant la Draft de champions, et tous
+voient les messages en direct. Un Capitaine écrit sous le prénom de son Joueur, un spectateur connecté sous
+son nom Discord, un spectateur sans connexion sous « Spectateur N ». Un message fait 300 caractères au plus,
+et chaque personne écrit 5 messages par 10 secondes au plus. Les messages se relisent après un rechargement,
+disparaissent quand la draft est terminée (et avec un Reset). Pas de modération.
 - **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
 champions de son Équipe pendant toute la Série, sans se connecter. Le bot l'envoie en DM  
 au Capitaine ; sans bot, ou si le DM échoue, l'organisateur le copie à la main.
