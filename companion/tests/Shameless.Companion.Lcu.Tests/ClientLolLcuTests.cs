@@ -89,6 +89,34 @@ public class ClientLolLcuTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Lit_le_puuid_du_compte_connecte_au_client()
+    {
+        await Serveur();
+        IClientLol client = Client();
+        var flux = Suivre(client);
+        await flux.ProchainAsync();
+
+        Assert.Equal("puuid-du-compte-connecte", await client.LirePuuidAsync(_cts.Token));
+    }
+
+    [Fact]
+    public async Task Sans_client_detecte_la_lecture_du_puuid_leve_une_erreur_reseau()
+    {
+        await Assert.ThrowsAsync<HttpRequestException>(() => ((IClientLol)Client()).LirePuuidAsync(_cts.Token));
+    }
+
+    [Fact]
+    public async Task Un_client_non_connecte_a_un_compte_n_a_pas_de_puuid()
+    {
+        var lcu = await Serveur();
+        lcu.CurrentSummonerJson = """{"errorCode":"RPC_ERROR","httpStatus":404,"message":"not logged in"}""";
+        IClientLol client = Client();
+        await Suivre(client).ProchainAsync();
+
+        Assert.Null(await client.LirePuuidAsync(_cts.Token));
+    }
+
+    [Fact]
     public async Task Un_client_lance_apres_l_app_est_detecte()
     {
         var flux = Suivre(Client());

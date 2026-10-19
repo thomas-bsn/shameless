@@ -25,7 +25,11 @@ public sealed class App : Application
             var stockage = CreerStockage();
             var journal = new JournalFichier();
             var connexion = new ConnexionCompanion(stockage, new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
-            var surveillance = new SurveillanceFinDeGame(new ClientLolLcu(journal: journal), journal);
+            IClientLol client = new ClientLolLcu(journal: journal);
+            var surveillance = new SurveillanceFinDeGame(client, journal);
+            // Présence (#146) : un émetteur isolé, relié seulement à la détection du client et au Code stocké.
+            var presence = new EmetteurPresence(client, stockage, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, journal);
+            surveillance.ClientDetecteChange += presence.ClientDetecte;
             var modele = new FenetreViewModel(connexion, stockage, surveillance);
 
             _fenetre = new MainWindow { DataContext = modele };
@@ -40,6 +44,7 @@ public sealed class App : Application
             _ = modele.DemarrerAsync();
             // Le Rapport construit attend #162 (envoi à l'API) : en attendant, seul le journal en garde la trace.
             _ = surveillance.ExecuterAsync(_arret.Token);
+            _ = presence.ExecuterAsync(_arret.Token);
             bureau.Exit += (_, _) => _arret.Cancel();
         }
         base.OnFrameworkInitializationCompleted();
