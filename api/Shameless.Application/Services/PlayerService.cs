@@ -251,15 +251,16 @@ public class PlayerService : IPlayerService
     }
 
     /// <summary>
-    /// Recalcule le rôle principal ; renvoie le message d'échec, ou null. Sur un échec de Riot ou sans
-    /// partie lisible, l'ancien rôle est conservé (jamais écrasé par null).
+    /// Recalcule le rôle principal ; renvoie le message d'échec, ou null. Sur un échec de Riot, l'ancien
+    /// rôle est conservé ; une réponse sans match donne « aucun » (null).
     /// </summary>
     private async Task<string?> TryRefreshMainRoleAsync(PlayerDto player)
     {
         try
         {
             var mainRole = await _riot.GetMainRoleFromPuuidAsync(player.Puuid!);
-            if (mainRole is not null) await _players.UpdateMainRoleAsync(player.Id, mainRole);
+            // Riot a répondu sans match : plus de rôle. Une erreur passe par le catch et garde l'ancien.
+            await _players.UpdateMainRoleAsync(player.Id, mainRole);
             return null;
         }
         catch (Exception ex)
