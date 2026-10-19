@@ -30,6 +30,7 @@ bot est facultatif) ; un Rapport « en revue » pour une game déjà terminée (
 accepter ou rejeter vaut pour la game en attente, pas pour corriger une game passée).
 
 ## Conséquences
+- Le Companion se télécharge depuis une GitHub Release du dépôt, via un bouton de l'Écran de préparation. Non signé : Windows avertit au premier lancement, ce que le tutoriel explique.
 - Une route publique, sans authentification, expose les pseudos Discord du
   Superadministrateur et des Administrateurs. Une Instance qui voudrait les cacher devra
   la protéger : à rouvrir si les Instances deviennent moins fermées.
