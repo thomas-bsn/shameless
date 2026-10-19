@@ -75,6 +75,17 @@ export const sujets: Sujet[] = [
     ),
   },
   {
+    id: "lancer-une-game",
+    titre: "Lancer une game",
+    corps: (
+      <TroisBlocs
+        aQuoiCaSert="Passer des équipes formées à une game en cours : les Capitaines draftent les champions, puis la game démarre toute seule."
+        pourquoi="Les Capitaines mènent leur Équipe sans passer par l'organisateur, et personne n'a de bouton à presser pour lancer la partie."
+        comment="L'organisateur forme les équipes et désigne un Capitaine par Équipe dans le Picker (étape « Capitaines »). Chaque Capitaine reçoit son lien, l'ouvre, puis se déclare « prêt » : quand les deux le sont, la Draft de champions démarre. Pendant la draft, un Capitaine peut demander un Reset (l'autre doit accepter sous 60 s) ou poser une pause (une seule par Capitaine, 5 minutes au plus ; reprendre avant demande l'accord de l'autre). Au dernier pick, la game démarre automatiquement. « Prêt » ne sert que pour la première game : les suivantes se lancent depuis l'Espace organisateur."
+      />
+    ),
+  },
+  {
     id: "companion",
     titre: "Companion",
     bientot: true,

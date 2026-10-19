@@ -35,4 +35,18 @@ describe("Tutoriel", () => {
       expect(within(sujet).getByRole("heading", { name: bloc })).toBeInTheDocument();
     }
   });
+
+  it("explique comment lancer une game, sans étiquette Bientôt, avec le vrai parcours", async () => {
+    mockApi({ "GET /auth/me": problem(401) });
+    renderApp("/tutoriel");
+
+    const sujet = await screen.findByRole("region", { name: "Lancer une game" });
+    expect(within(sujet).queryByText("Bientôt")).not.toBeInTheDocument();
+    for (const bloc of ["À quoi ça sert", "Pourquoi", "Comment ça marche"]) {
+      expect(within(sujet).getByRole("heading", { name: bloc })).toBeInTheDocument();
+    }
+    for (const mot of [/Picker/, /Capitaines/, /prêt/, /Reset/, /pause/, /automatiquement/, /Espace organisateur/]) {
+      expect(sujet).toHaveTextContent(mot);
+    }
+  });
 });
