@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shameless.Tests.Integration.Infrastructure;
+using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
 
 namespace Shameless.Tests.Integration;
 
@@ -13,9 +14,9 @@ public class PretDesCapitainesTests(ApiFactory factory) : IntegrationTest(factor
 {
     private sealed record Serie(int Id, string LienA, string LienB, string LienSpectateur);
 
-    private async Task<Serie> PreparerAsync(HttpClient client)
+    private async Task<Serie> PreparerAsync(HttpClient client, int format = 3)
     {
-        var serie = await CreateSerieAsync(client);
+        var serie = await CreateSerieAsync(client, format);
         await DesignerLesCapitainesAbsentsAsync(client, serie.SeriesId);
         var liens = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}/liens", Ct));
         return new Serie(serie.SeriesId,
@@ -163,5 +164,94 @@ public class PretDesCapitainesTests(ApiFactory factory) : IntegrationTest(factor
         Assert.Equal(JsonValueKind.Null, liens.GetProperty("capitaineAPretLe").ValueKind);
         Assert.Equal(JsonValueKind.Null, liens.GetProperty("capitaineBPretLe").ValueKind);
         Assert.NotEqual(JsonValueKind.Null, liens.GetProperty("capitaineARejointLe").ValueKind);
+    }
+
+    [Fact]
+    public async Task Une_game_dont_le_rapport_est_en_revue_n_ouvre_pas_de_draft_quand_les_deux_sont_prets()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await PreparerAsync(client);
+        await CreatePlayerAsync(client, "X1");
+        await RejoindreAsync(serie.LienA);
+        await RejoindreAsync(serie.LienB);
+        await SeMettrePretAsync(serie.LienA);
+        await SeMettrePretAsync(serie.LienB);
+        // Un Reset accepté laisse la game en attente, sans draft ; le Companion en rapporte alors une composition inconnue.
+        var anonyme = Factory.CreateAnonymousClient();
+        (await anonyme.PostAsync($"/liens/{Uri.EscapeDataString(serie.LienA)}/draft-champions/reset", null, Ct)).EnsureSuccessStatusCode();
+        (await anonyme.PostAsJsonAsync($"/liens/{Uri.EscapeDataString(serie.LienB)}/draft-champions/reset/reponse",
+            new { accepte = true }, Ct)).EnsureSuccessStatusCode();
+        var code = await CodeCompanionAsync(client, serie.Id);
+        await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_9100000001", teamASide: "blue", gagnante: "A",
+            equipeA: ["A1", "A2", "A3", "A4", "X1"])));
+
+        await SeMettrePretAsync(serie.LienA);
+        await AssertRefusAsync(await SeMettrePretAsync(serie.LienB), HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Apres_une_game_terminee_les_capitaines_se_remettent_prets_et_la_game_suivante_s_ouvre_avec_le_side_inverse()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await PreparerAsync(client);
+        await RejoindreAsync(serie.LienA);
+        await RejoindreAsync(serie.LienB);
+        await SeMettrePretAsync(serie.LienA);
+        Factory.Random.ImposerLeProchainTirage(0);
+        await SeMettrePretAsync(serie.LienB);
+        Factory.Random.LibererLeTirage();
+        var premiere = (await SerieAsync(client, serie.Id)).GetProperty("games")[0].GetProperty("id").GetInt32();
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{premiere}/result", new { winner = "A" }, Ct));
+
+        await SeMettrePretAsync(serie.LienA);
+        var reponse = await ReadJsonAsync(await SeMettrePretAsync(serie.LienB));
+
+        Assert.True(reponse.GetProperty("pret").GetBoolean());
+        var games = (await SerieAsync(client, serie.Id)).GetProperty("games");
+        Assert.Equal(2, games.GetArrayLength());
+        Assert.Equal("red", games[1].GetProperty("teamASide").GetString());
+        var draft = await ReadJsonAsync(await Factory.CreateAnonymousClient().GetAsync($"/liens/{Uri.EscapeDataString(serie.LienA)}/draft-champions", Ct));
+        Assert.Equal(games[1].GetProperty("id").GetInt32(), draft.GetProperty("gameId").GetInt32());
+        Assert.False(draft.GetProperty("terminee").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Le_lien_dit_si_le_pret_est_possible_tant_que_la_serie_est_en_cours_et_qu_aucune_draft_n_est_ouverte()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await PreparerAsync(client, format: 1);
+        await RejoindreAsync(serie.LienA);
+        await RejoindreAsync(serie.LienB);
+        Task<bool> PretPossibleAsync() => Factory.CreateAnonymousClient()
+            .GetAsync($"/liens/{Uri.EscapeDataString(serie.LienA)}", Ct)
+            .ContinueWith(async r => (await ReadJsonAsync(await r)).GetProperty("pretPossible").GetBoolean()).Unwrap();
+
+        Assert.True(await PretPossibleAsync());
+
+        await SeMettrePretAsync(serie.LienA);
+        await SeMettrePretAsync(serie.LienB);
+        Assert.False(await PretPossibleAsync());
+
+        var gameId = (await SerieAsync(client, serie.Id)).GetProperty("games")[0].GetProperty("id").GetInt32();
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+        Assert.False(await PretPossibleAsync()); // BO1 gagné : la Série est terminée
+    }
+
+    [Fact]
+    public async Task Apres_une_game_d_une_serie_encore_en_cours_le_pret_redevient_possible()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await PreparerAsync(client);
+        await RejoindreAsync(serie.LienA);
+        await RejoindreAsync(serie.LienB);
+        await SeMettrePretAsync(serie.LienA);
+        await SeMettrePretAsync(serie.LienB);
+        var gameId = (await SerieAsync(client, serie.Id)).GetProperty("games")[0].GetProperty("id").GetInt32();
+        await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
+
+        var acces = await ReadJsonAsync(await RejoindreAsync(serie.LienB));
+
+        Assert.True(acces.GetProperty("pretPossible").GetBoolean());
+        Assert.False(acces.GetProperty("pret").GetBoolean());
     }
 }

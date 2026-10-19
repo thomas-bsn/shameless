@@ -158,6 +158,19 @@ export function DraftParLien({
       ? acces.data.equipe
       : null;
 
+  // « Prêt » vaut pour chaque game de la Série : tant qu'elle est en cours et qu'aucune draft n'est ouverte
+  // (la première, après un Reset, ou la suivante une fois la game terminée), le Capitaine peut se déclarer prêt.
+  const pretCapitaine =
+    equipe && acces.data.pretPossible ? (
+      <PretDuCapitaine
+        pret={acces.data.pret}
+        adversairePret={acces.data.adversairePret}
+        enCours={pret.isPending}
+        erreur={pret.isError ? pret.error : null}
+        onChange={(valeur) => pret.mutate({ ...path, body: { pret: valeur } })}
+      />
+    ) : null;
+
   return (
     <Page
       titre={titre}
@@ -187,23 +200,14 @@ export function DraftParLien({
               La Draft de champions n'est pas encore ouverte : elle démarre
               toute seule quand les deux Capitaines sont prêts.
             </p>
-            {equipe && (
-              <PretDuCapitaine
-                pret={acces.data.pret}
-                adversairePret={acces.data.adversairePret}
-                enCours={pret.isPending}
-                erreur={pret.isError ? pret.error : null}
-                onChange={(valeur) =>
-                  pret.mutate({ ...path, body: { pret: valeur } })
-                }
-              />
-            )}
+            {pretCapitaine}
           </div>
         ) : (
           <ErrorAlert error={draft.error} />
         )
       ) : (
         <div className="flex flex-col gap-6">
+          {pretCapitaine}
           <VotesDeLaDraft
             draft={draft.data!}
             equipe={equipe}

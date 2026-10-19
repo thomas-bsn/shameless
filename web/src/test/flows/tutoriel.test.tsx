@@ -45,7 +45,7 @@ describe("Tutoriel", () => {
     for (const bloc of ["À quoi ça sert", "Pourquoi", "Comment ça marche"]) {
       expect(within(sujet).getByRole("heading", { name: bloc })).toBeInTheDocument();
     }
-    for (const mot of [/Picker/, /Capitaines/, /prêt/, /Reset/, /pause/, /automatiquement/, /Espace organisateur/]) {
+    for (const mot of [/Picker/, /Capitaines/, /prêt/, /Reset/, /pause/, /automatiquement/, /chaque game/, /rien à lancer/]) {
       expect(sujet).toHaveTextContent(mot);
     }
   });

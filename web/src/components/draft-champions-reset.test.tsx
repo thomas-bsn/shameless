@@ -72,6 +72,7 @@ const base = (d: Schemas["DraftChampionsResponse"]) => ({
     equipe: "A",
     pret: true,
     adversairePret: true,
+    pretPossible: false,
   },
   "GET /liens/lien-a/draft-champions": d,
   "GET /liens/lien-b": {
@@ -80,6 +81,7 @@ const base = (d: Schemas["DraftChampionsResponse"]) => ({
     equipe: "B",
     pret: true,
     adversairePret: true,
+    pretPossible: false,
   },
   "GET /liens/lien-b/draft-champions": d,
   "GET /liens/lien-spec": {
@@ -88,6 +90,7 @@ const base = (d: Schemas["DraftChampionsResponse"]) => ({
     equipe: null,
     pret: false,
     adversairePret: false,
+    pretPossible: false,
   },
   "GET /liens/lien-spec/draft-champions": d,
 });

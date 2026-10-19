@@ -59,8 +59,13 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     private async Task<JsonElement> LiensEnvoyesAsync(HttpClient client, int seriesId) =>
         await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}/liens", Ct));
 
-    private async Task<HttpResponseMessage> OuvrirAsync(HttpClient client, int seriesId) =>
-        await client.PostAsync($"/series/{seriesId}/draft-champions", null, Ct);
+    /// <summary>La Draft de champions de la dernière game de la Série : ouverte par le « prêt » des deux Capitaines.</summary>
+    private async Task<HttpResponseMessage> OuvrirAsync(HttpClient client, int seriesId)
+    {
+        var games = (await ReadJsonAsync(await client.GetAsync($"/series/{seriesId}", Ct))).GetProperty("games");
+        var gameId = games[games.GetArrayLength() - 1].GetProperty("id").GetInt32();
+        return await client.GetAsync($"/games/{gameId}/draft-champions", Ct);
+    }
 
     private async Task<HttpResponseMessage> JouerAsync(string lien, int tour, string championId) =>
         await Factory.CreateAnonymousClient().PostAsJsonAsync(
@@ -88,14 +93,13 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task L_organisateur_ouvre_la_draft_de_champions_de_la_game_en_attente()
+    public async Task La_draft_de_la_game_s_ouvre_quand_les_deux_capitaines_sont_prets()
     {
         var client = Factory.CreateSignedInClient();
         var preparee = await PreparerAsync(client, teamASide: "red");
 
         var response = await OuvrirAsync(client, preparee.Serie.SeriesId);
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var draft = await ReadJsonAsync(response);
         Assert.Equal(preparee.GameId, draft.GetProperty("gameId").GetInt32());
         Assert.Equal(preparee.Serie.SeriesId, draft.GetProperty("seriesId").GetInt32());
@@ -108,34 +112,6 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("ban", tour.GetProperty("action").GetString());
         Assert.Equal("blue", tour.GetProperty("side").GetString());
         Assert.Equal("B", tour.GetProperty("equipe").GetString());
-    }
-
-    [Fact]
-    public async Task Ouvrir_sans_game_en_attente_repond_409()
-    {
-        var client = Factory.CreateSignedInClient();
-        var serie = await CreateSerieAsync(client);
-        await DesignerCapitainesAsync(client, serie);
-
-        await AssertRefusAsync(await OuvrirAsync(client, serie.SeriesId), HttpStatusCode.Conflict);
-    }
-
-    [Fact]
-    public async Task Une_seule_draft_de_champions_par_game()
-    {
-        var client = Factory.CreateSignedInClient();
-        var preparee = await PreparerAsync(client);
-        await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
-
-        await AssertRefusAsync(await OuvrirAsync(client, preparee.Serie.SeriesId), HttpStatusCode.Conflict);
-    }
-
-    [Fact]
-    public async Task Ouvrir_la_draft_d_une_serie_inconnue_repond_404()
-    {
-        var client = Factory.CreateSignedInClient();
-
-        await AssertRefusAsync(await OuvrirAsync(client, 999), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -464,20 +440,22 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task Une_game_sans_draft_de_champions_repond_404()
     {
         var client = Factory.CreateSignedInClient();
-        var preparee = await PreparerAsync(client);
+        var serie = await CreateSerieAsync(client);
+        await DesignerCapitainesAsync(client, serie);
+        var liens = await LiensEnvoyesAsync(client, serie.SeriesId);
 
-        await AssertRefusAsync(await client.GetAsync($"/games/{preparee.GameId}/draft-champions", Ct), HttpStatusCode.NotFound);
-        await AssertRefusAsync(await LireParLienAsync(preparee.LienA), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await client.GetAsync("/games/999/draft-champions", Ct), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await LireParLienAsync(liens.GetProperty("lienCapitaineA").GetString()!), HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task L_etat_garde_l_heure_de_debut_du_tour_courant_selon_l_horloge()
     {
         var client = Factory.CreateSignedInClient();
-        var preparee = await PreparerAsync(client);
         var maintenant = Factory.Clock.GetUtcNow();
         var debut = new DateTimeOffset(maintenant.Ticks - maintenant.Ticks % TimeSpan.TicksPerSecond, TimeSpan.Zero).AddMinutes(1);
         Factory.Clock.SetUtcNow(debut);
+        var preparee = await PreparerAsync(client);
 
         var ouverte = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
         Factory.Clock.Advance(TimeSpan.FromSeconds(42));
@@ -509,7 +487,7 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
         var document = await ReadJsonAsync(await client.GetAsync("/openapi/v1.json", Ct));
 
         var paths = document.GetProperty("paths");
-        Assert.True(paths.TryGetProperty("/series/{id}/draft-champions", out _));
+        Assert.False(paths.TryGetProperty("/series/{id}/draft-champions", out _));
         Assert.True(paths.TryGetProperty("/games/{gameId}/draft-champions", out _));
         Assert.True(paths.TryGetProperty("/liens/{lien}/draft-champions", out _));
         Assert.True(paths.TryGetProperty("/liens/{lien}/draft-champions/actions", out _));
@@ -529,8 +507,8 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task L_etat_restitue_l_echeance_du_tour_courant_soixante_secondes_apres_son_debut()
     {
         var client = Factory.CreateSignedInClient();
-        var preparee = await PreparerAsync(client);
         var debut = CalerHorloge();
+        var preparee = await PreparerAsync(client);
 
         var ouverte = await ReadJsonAsync(await OuvrirAsync(client, preparee.Serie.SeriesId));
         Factory.Clock.Advance(TimeSpan.FromSeconds(42));
@@ -671,8 +649,7 @@ public class DraftChampionsTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task Jouer_a_la_place_sur_une_game_sans_draft_repond_404()
     {
         var client = Factory.CreateSignedInClient();
-        var preparee = await PreparerAsync(client);
 
-        await AssertRefusAsync(await JouerALaPlaceAsync(client, preparee.GameId, 1, "Ahri"), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await JouerALaPlaceAsync(client, 999, 1, "Ahri"), HttpStatusCode.NotFound);
     }
 }
