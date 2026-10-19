@@ -19,7 +19,7 @@ describe("Sidebar", () => {
 
     const nav = await screen.findByRole("navigation", { name: "Navigation principale" });
     const liens = within(nav).getAllByRole("link");
-    expect(liens.map((l) => l.textContent)).toEqual(["Soirée", "Joueurs", "Classements", "Historique", "Clips"]);
+    expect(liens.map((l) => l.textContent)).toEqual(["Soirée", "Joueurs", "Classements", "Historique", "Clips", "Tutoriel"]);
     expect(liens.filter((l) => l.getAttribute("aria-current") === "page").map((l) => l.textContent)).toEqual(["Joueurs"]);
   });
 
