@@ -191,6 +191,21 @@ describe("Écran de préparation", () => {
     expect(await screen.findByDisplayValue("code-companion-2")).toBeInTheDocument();
   });
 
+  it("donne l'adresse de l'Instance, copiable, et le téléchargement du Companion (Windows seulement)", async () => {
+    mockApi(routes());
+    renderApp("/series/5/preparation");
+
+    expect(await screen.findByLabelText("Adresse de l'Instance")).toHaveValue(window.location.origin);
+    await screen.findByLabelText("Code Companion");
+    const panneau = screen.getByRole("region", { name: "Companion" });
+    expect(within(panneau).getAllByRole("button", { name: "Copier" })).toHaveLength(2);
+    expect(within(panneau).getByRole("link", { name: /Télécharger le Companion/ })).toHaveAttribute(
+      "href",
+      "https://github.com/thomas-bsn/shameless/releases/latest/download/shameless-companion.exe",
+    );
+    expect(panneau).toHaveTextContent("Windows seulement");
+  });
+
   it("montre l'état de chaque Capitaine : pas encore rejoint, ou l'heure de sa première ouverture", async () => {
     const quand = "2026-10-19T21:04:00Z";
     mockApi({ ...routes(), "GET /series/5/liens": rejoint({ a: quand }) });
