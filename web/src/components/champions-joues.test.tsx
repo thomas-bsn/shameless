@@ -7,6 +7,7 @@ import { ChampionsJoues } from "./champions-joues";
 const participant = (playerId: number, prenom: string): Schemas["GameParticipantDto"] => ({
   prenom,
   riotId: `${prenom}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost: null,

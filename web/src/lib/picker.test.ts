@@ -8,6 +8,7 @@ const participant = (playerId: number, overrides: Partial<Participant> = {}): Pa
   playerId,
   prenom: `Joueur ${playerId}`,
   riotId: `J${playerId}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost: 3,

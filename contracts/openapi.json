@@ -7872,7 +7872,8 @@
           "championId",
           "stats",
           "performance",
-          "champsCorriges"
+          "champsCorriges",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -7937,6 +7938,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8044,7 +8051,8 @@
           "rankDivision",
           "cost",
           "playerId",
-          "role"
+          "role",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8086,6 +8094,12 @@
               {
                 "$ref": "#/components/schemas/Role"
               }
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -8338,7 +8352,8 @@
         "required": [
           "playerId",
           "prenom",
-          "correct"
+          "correct",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8353,6 +8368,12 @@
             "type": [
               "null",
               "boolean"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -10769,7 +10790,8 @@
         "required": [
           "playerId",
           "prenom",
-          "voix"
+          "voix",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -10783,6 +10805,12 @@
           "voix": {
             "type": "integer",
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

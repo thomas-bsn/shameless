@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { points } from "@/lib/cost";
 import { joueursLibres } from "@/lib/picker";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 type Picker = Schemas["PickerResponse"];
 type Equipe = "A" | "B";
@@ -89,7 +90,10 @@ export function ChoixCapitaineDialog({ picker, onClose }: { picker: Picker; onCl
                 p.playerId === choisi && "border-primary bg-accent",
               )}
             >
-              <span className="truncate">{p.prenom}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-6 text-[10px]" />
+                <span className="truncate">{p.prenom}</span>
+              </span>
               <span className="font-mono text-xs text-muted-foreground">{points(p.cost ?? 0)}</span>
             </button>
           ))}
