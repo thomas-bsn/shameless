@@ -38,6 +38,25 @@ public sealed class FakeRiotService : HttpMessageHandler
         string? flexTier = null, string? flexDivision = null, int flexLp = 0) =>
         _accounts[riotId] = new Compte(riotId, $"puuid-{riotId}", tier, division, lp, flexTier, flexDivision, flexLp, mainRole);
 
+    private readonly HashSet<string> _puuidsPerimes = new();
+
+    /// <summary>
+    /// Le PUUID enregistré pour ce compte était chiffré avec une autre clé : Riot le refuse en 400 « Exception
+    /// decrypting » ; le compte reçoit un nouveau PUUID que seule une résolution par RiotId donne.
+    /// </summary>
+    public string RendrePuuidPerime(string riotId)
+    {
+        var compte = _accounts[riotId];
+        _puuidsPerimes.Add(compte.Puuid);
+        _accounts[riotId] = compte with { Puuid = $"puuid-neuf-{riotId}" };
+        return _accounts[riotId].Puuid;
+    }
+
+    public void SupprimerCompte(string riotId) => _accounts.Remove(riotId);
+
+    /// <summary>Force le PUUID que Riot renvoie pour ce RiotId (simule un PUUID déjà pris par un autre joueur).</summary>
+    public void DonnerPuuid(string riotId, string puuid) => _accounts[riotId] = _accounts[riotId] with { Puuid = puuid };
+
     /// <summary>Vrai : l'API Riot répond <see cref="StatutRangs"/> aux rangs.</summary>
     public bool RangsIndisponibles { get; set; }
 
@@ -63,6 +82,7 @@ public sealed class FakeRiotService : HttpMessageHandler
         Requetes.Clear();
         RetryAfterRangs = null;
         _accounts.Clear();
+        _puuidsPerimes.Clear();
         RolesIndisponibles.Clear();
         RangsIndisponibles = false;
         StatutRangs = HttpStatusCode.InternalServerError;
@@ -75,6 +95,15 @@ public sealed class FakeRiotService : HttpMessageHandler
     {
         var chemin = request.RequestUri!.AbsolutePath;
         Requetes.Enqueue(chemin);
+
+        var puuidDemande = chemin.Contains("/by-puuid/")
+            ? Uri.UnescapeDataString(chemin.Split('/')[chemin.Contains("/matches/") ? ^2 : ^1])
+            : null;
+        if (puuidDemande is not null && _puuidsPerimes.Contains(puuidDemande))
+            return new(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent($$"""{"message":"Bad Request - Exception decrypting {{puuidDemande}}"}""", Encoding.UTF8, "application/json")
+            };
 
         if (chemin.StartsWith("/riot/account/v1/accounts/by-riot-id/"))
         {

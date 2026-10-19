@@ -430,6 +430,15 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("pause_commence_le");
 
+                    b.Property<DateTime?>("PauseDemandeeLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("pause_demandee_le");
+
+                    b.Property<string>("PauseDemandeeParEquipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("pause_demandee_par_equipe");
+
                     b.Property<string>("PauseParEquipe")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")

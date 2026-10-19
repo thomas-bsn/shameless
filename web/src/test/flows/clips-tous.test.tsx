@@ -45,6 +45,19 @@ describe("Clips : onglet Tous", () => {
     expect(screen.getByRole("button", { name: "Lire le clip baron.mp4" })).toBeInTheDocument();
   });
 
+  it("affiche une miniature vidéo (première image) pour chaque clip, l'icône n'étant qu'un repli", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /clips": liste });
+    renderApp("/clips?vue=tous");
+
+    const bouton = await screen.findByRole("button", { name: "Lire le clip pentakill.mp4" });
+    const video = bouton.querySelector("video");
+    expect(video).not.toBeNull();
+    expect(video).toHaveAttribute("preload", "metadata");
+    expect(video?.getAttribute("src")).toBe("/api/clips/1/fichier#t=0.001");
+    expect(video?.muted).toBe(true);
+    expect(video).toHaveAttribute("playsinline");
+  });
+
   it("câble les filtres auteur et soirée sur GET /clips", async () => {
     const api = mockApi({ "GET /auth/me": user(), "GET /clips": liste });
     renderApp("/clips?vue=tous");

@@ -39,6 +39,7 @@ const draftAu = (numero: number, terminee = false): Draft => ({
   resetDemande: null,
   pause: null,
   repriseDemandee: null,
+  pauseDemandee: null,
   pauseDisponibleA: true,
   pauseDisponibleB: true,
 });

@@ -28,6 +28,7 @@ public sealed record DraftChampionsResponse(
     int? CapitaineB,
     List<string>? ChampionsDejaJoues, // null sans Fearless
     ResetDemandeResponse? ResetDemande, // null sans demande de Reset en attente
+    PauseDemandeeResponse? PauseDemandee, // null sans demande de pause en cours
     PauseResponse? Pause, // null hors pause
     RepriseDemandeeResponse? RepriseDemandee, // null sans demande de reprise en cours
     bool PauseDisponibleA, // le Capitaine A n'a pas encore utilisé sa pause
@@ -64,6 +65,9 @@ public sealed record DraftChampionsResponse(
             ResetDemande: draft.ResetEnAttente(maintenant)
                 ? new ResetDemandeResponse(draft.ResetDemandeParEquipe!, draft.ResetDemandeLe!.Value, draft.ResetExpireLe!.Value)
                 : null,
+            PauseDemandee: draft.PauseDemandeeParEquipe == null
+                ? null
+                : new PauseDemandeeResponse(draft.PauseDemandeeParEquipe, draft.PauseDemandeeLe!.Value, draft.PauseDemandeExpireLe!.Value),
             Pause: draft.EnPause
                 ? new PauseResponse(draft.PauseParEquipe!, draft.PauseCommenceLe!.Value, draft.PauseFinLe!.Value,
                     (int)draft.TempsRestantAvantPause!.Value.TotalMilliseconds)
@@ -101,3 +105,6 @@ public sealed record PauseResponse(string ParEquipe, DateTime CommenceLe, DateTi
 
 /// <summary>Une demande de reprise anticipée en attente de l'autre Capitaine : son Équipe et quand elle tombe (60 secondes).</summary>
 public sealed record RepriseDemandeeResponse(string ParEquipe, DateTime ExpireLe);
+
+/// <summary>Une demande de pause en attente de l'autre Capitaine : son Équipe, quand elle a été faite et quand elle tombe (60 secondes).</summary>
+public sealed record PauseDemandeeResponse(string ParEquipe, DateTime DemandeLe, DateTime ExpireLe);

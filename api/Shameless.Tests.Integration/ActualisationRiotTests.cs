@@ -29,6 +29,101 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
         throw new TimeoutException("L'actualisation ne se termine pas");
     }
 
+    private async Task<string?> PuuidAsync(int playerId)
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        return (await scope.ServiceProvider.GetRequiredService<Shameless.Application.Interfaces.IPlayerRepository>()
+            .GetDtoByIdAsync(playerId))?.Puuid;
+    }
+
+    private int AppelsParRiotId() => Factory.Riot.Requetes.Count(c => c.Contains("/by-riot-id/"));
+
+    private int AppelsRangs() => Factory.Riot.Requetes.Count(c => c.Contains("/lol/league/v4/"));
+
+    [Fact]
+    public async Task Un_puuid_perime_est_resolu_a_nouveau_depuis_le_riot_id_puis_les_rangs_et_le_role_sont_lus()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var id = await CreatePlayerAsync(admin, "Perime", "GOLD", "II");
+        Factory.Riot.AddAccount("Perime#EUW", "MASTER", null, lp: 150, mainRole: "JUNGLE");
+        var ancien = await PuuidAsync(id);
+        var neuf = Factory.Riot.RendrePuuidPerime("Perime#EUW");
+        Factory.Riot.Requetes.Clear();
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct));
+
+        Assert.True(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.True(reponse.GetProperty("roleActualise").GetBoolean());
+        Assert.Empty(reponse.GetProperty("echecs").EnumerateArray());
+        Assert.NotEqual(ancien, neuf);
+        Assert.Equal(neuf, await PuuidAsync(id));
+        Assert.Equal(1, AppelsParRiotId());
+        var joueur = await JoueurAsync(admin, id);
+        Assert.Equal("MASTER", joueur.GetProperty("rankTier").GetString());
+        Assert.Equal("JUNGLE", joueur.GetProperty("mainRole").GetString());
+    }
+
+    [Fact]
+    public async Task Un_riot_id_introuvable_apres_un_puuid_perime_est_signale_et_garde_les_anciennes_donnees()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var id = await CreatePlayerAsync(admin, "Parti", "GOLD", "II");
+        var ancien = await PuuidAsync(id);
+        Factory.Riot.RendrePuuidPerime("Parti#EUW");
+        Factory.Riot.SupprimerCompte("Parti#EUW");
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{id}", null, Ct));
+
+        Assert.False(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.False(reponse.GetProperty("roleActualise").GetBoolean());
+        Assert.Contains("PUUID périmé", reponse.GetProperty("causeRangs").GetString());
+        Assert.Contains("introuvable", reponse.GetProperty("causeRangs").GetString());
+        Assert.Equal(ancien, await PuuidAsync(id));
+        Assert.Equal("GOLD", (await JoueurAsync(admin, id)).GetProperty("rankTier").GetString());
+    }
+
+    [Fact]
+    public async Task Un_puuid_resolu_qui_appartient_a_un_autre_joueur_n_est_pas_enregistre()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        var idA = await CreatePlayerAsync(admin, "Alpha", "GOLD", "II");
+        var idB = await CreatePlayerAsync(admin, "Bravo", "GOLD", "II");
+        var puuidB = await PuuidAsync(idB);
+        var ancienA = await PuuidAsync(idA);
+        Factory.Riot.RendrePuuidPerime("Alpha#EUW");
+        Factory.Riot.DonnerPuuid("Alpha#EUW", puuidB!);
+
+        var reponse = await ReadJsonAsync(await admin.PostAsync($"/admin/riot/joueurs/{idA}", null, Ct));
+
+        Assert.False(reponse.GetProperty("rangsActualises").GetBoolean());
+        Assert.Equal(ancienA, await PuuidAsync(idA));
+        Assert.Equal(puuidB, await PuuidAsync(idB));
+    }
+
+    [Fact]
+    public async Task Tout_actualiser_resout_une_seule_fois_chaque_puuid_perime_sans_rafale()
+    {
+        Factory.CleRiotConfiguree = true;
+        var admin = Factory.CreateAdminClient();
+        foreach (var nom in new[] { "Un", "Deux", "Trois" })
+        {
+            await CreatePlayerAsync(admin, nom);
+            Factory.Riot.RendrePuuidPerime($"{nom}#EUW");
+        }
+        Factory.Riot.Requetes.Clear();
+
+        await admin.PostAsync("/admin/riot/tous", null, Ct);
+        var fin = await AttendreLaFinAsync(admin);
+
+        Assert.Empty(fin.GetProperty("echecs").EnumerateArray());
+        Assert.Equal(3, AppelsParRiotId());
+        // Par joueur : 1 lecture refusée + 1 reprise des rangs, rien de plus.
+        Assert.Equal(6, AppelsRangs());
+    }
+
     [Fact]
     public async Task Un_admin_actualise_les_rangs_et_le_role_principal_d_un_joueur()
     {
@@ -155,8 +250,6 @@ public class ActualisationRiotTests(ApiFactory factory) : IntegrationTest(factor
     }
 
     private int AppelsRole() => Factory.Riot.Requetes.Count(c => c.Contains("/lol/match/v5/"));
-
-    private int AppelsRangs() => Factory.Riot.Requetes.Count(c => c.Contains("/lol/league/v4/"));
 
     [Fact]
     public async Task Une_cle_refusee_sur_les_rangs_n_appelle_pas_le_role_et_expose_le_code()

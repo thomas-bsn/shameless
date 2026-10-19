@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { DraftParLien } from "@/components/draft-champions-view";
@@ -48,6 +48,7 @@ const draft: Schemas["DraftChampionsResponse"] = {
   resetDemande: null,
   pause: null,
   repriseDemandee: null,
+  pauseDemandee: null,
   pauseDisponibleA: true,
   pauseDisponibleB: true,
 };
@@ -119,9 +120,12 @@ describe("Reset de la draft", () => {
     mockApi(base(avecDemande));
     renderComponent(<DraftParLien lien="lien-a" portee="Capitaine" />);
 
-    expect(await screen.findByText(/Reset demandé/)).toBeInTheDocument();
+    expect(await screen.findByTestId("avis-de-vote")).toHaveTextContent(
+      "Reset demandé",
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Accepter le Reset" }),
+      screen.queryByRole("button", { name: "Accepter" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Demander un Reset de la draft" }),
@@ -141,11 +145,17 @@ describe("Reset de la draft", () => {
     });
     renderComponent(<DraftParLien lien="lien-b" portee="Capitaine" />);
 
-    expect(
-      await screen.findByText(/L'Équipe A demande à remettre la draft à zéro/),
-    ).toBeInTheDocument();
+    const modale = await screen.findByRole("dialog", {
+      name: "Reset demandé",
+    });
+    expect(modale).toHaveTextContent(
+      "L'Équipe A demande à remettre la draft à zéro",
+    );
+    expect(within(modale).getByLabelText("Temps pour répondre")).toHaveTextContent(
+      /^(59|60) s$/,
+    );
     await userEvent.click(
-      screen.getByRole("button", { name: "Accepter le Reset" }),
+      within(modale).getByRole("button", { name: "Accepter" }),
     );
 
     expect(envoye).toEqual({ accepte: true });
@@ -164,8 +174,11 @@ describe("Reset de la draft", () => {
     });
     renderComponent(<DraftParLien lien="lien-b" portee="Capitaine" />);
 
+    const modale = await screen.findByRole("dialog", {
+      name: "Reset demandé",
+    });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Refuser le Reset" }),
+      within(modale).getByRole("button", { name: "Refuser" }),
     );
 
     expect(envoye).toEqual({ accepte: false });
@@ -180,9 +193,12 @@ describe("Reset de la draft", () => {
     });
     renderComponent(<DraftParLien lien="lien-spec" portee="Spectateur" />);
 
-    expect(await screen.findByText(/Reset demandé/)).toBeInTheDocument();
+    expect(await screen.findByTestId("avis-de-vote")).toHaveTextContent(
+      "Reset demandé",
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Reset/ }),
+      screen.queryByRole("button", { name: /Reset|Accepter|Refuser/ }),
     ).not.toBeInTheDocument();
 
     remise = true;
