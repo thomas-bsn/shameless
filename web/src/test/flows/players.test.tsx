@@ -18,7 +18,7 @@ const rowNames = () =>
   screen
     .getAllByRole("row")
     .slice(1)
-    .map((row) => within(row).getAllByRole("cell")[0]!.textContent!.slice(0, 3));
+    .map((row) => within(row).getAllByRole("link")[0]!.textContent!.slice(0, 3));
 
 describe("Joueurs", () => {
   it("lists the players in a table sorted by cost, with cost, tier letter, role, ranks and winrate", async () => {

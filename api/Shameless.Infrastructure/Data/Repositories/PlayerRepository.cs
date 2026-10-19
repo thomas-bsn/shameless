@@ -18,13 +18,13 @@ public class PlayerRepository : IPlayerRepository
 
     public async Task<List<PlayerDto>> GetAllAsync()
     {
-        var players = await _db.Players.ToListAsync();
+        var players = await _db.Players.Include(p => p.User).ToListAsync();
         return players.Select(ToDto).ToList();
     }
 
     public async Task<PlayerDto?> GetDtoByIdAsync(int id)
     {
-        var player = await _db.Players.FindAsync(id);
+        var player = await _db.Players.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == id);
         return player == null ? null : ToDto(player);
     }
 
@@ -112,7 +112,7 @@ public class PlayerRepository : IPlayerRepository
 
     public async Task<PlayerDto?> GetByUserIdAsync(int userId)
     {
-        var player = await _db.Players.FirstOrDefaultAsync(p => p.UserId == userId);
+        var player = await _db.Players.Include(p => p.User).FirstOrDefaultAsync(p => p.UserId == userId);
         return player == null ? null : ToDto(player);
     }
     
@@ -167,7 +167,7 @@ public class PlayerRepository : IPlayerRepository
         await _db.Players.Where(p => puuids.Contains(p.PUUID)).ToListAsync();
 
     public async Task<List<Player>> GetAllEntitiesAsync() =>
-        await _db.Players.ToListAsync();
+        await _db.Players.Include(p => p.User).ToListAsync();
 
     public async Task UpdateAsync(Player player)
     {
@@ -199,5 +199,6 @@ public class PlayerRepository : IPlayerRepository
         PeakSeason = p.PeakSeason,
         PeakLp = p.PeakLp,
         CurrentCost = p.CurrentCost,
+        AvatarUrl = p.User?.AvatarUrl,
     };
 }
