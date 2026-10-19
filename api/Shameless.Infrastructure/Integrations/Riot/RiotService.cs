@@ -112,6 +112,14 @@ public sealed class RiotService : IRiotService
                     >= HttpStatusCode.InternalServerError => CauseEchecRiot.Panne,
                     _ => CauseEchecRiot.Inattendue
                 };
+                // Un PUUID chiffré par une autre clé : Riot répond 400 « Exception decrypting <puuid> ».
+                if (res.StatusCode == HttpStatusCode.BadRequest
+                    && (await res.Content.ReadAsStringAsync()).Contains("Exception decrypting", StringComparison.OrdinalIgnoreCase))
+                {
+                    cause = CauseEchecRiot.PuuidPerime;
+                    // Cette requête a compté dans la limite de la clé : même cadence qu'une réponse réussie.
+                    await Task.Delay(_options.RateLimitDelayMs);
+                }
                 var echec = new RiotException(cause, statut, RiotHttpPolicies.DelaiDeRiot(res));
                 _logger.LogWarning("Riot answered {Status} for {Url}: {Cause}", statut, url, echec.Message);
                 throw echec;

@@ -6422,7 +6422,7 @@ export interface components {
             discordId: string;
         };
         /** @enum {unknown} */
-        CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "Inattendue" | null;
+        CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "PuuidPerime" | "Inattendue" | null;
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;

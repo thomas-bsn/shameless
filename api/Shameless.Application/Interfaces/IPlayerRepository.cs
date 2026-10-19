@@ -34,4 +34,6 @@ public interface IPlayerRepository
     Task UpdateRangeAsync(List<Player> players);
     Task SaveChangesAsync();
     Task UpdateRiotIdAsync(int id, string riotId);
+    /// <summary>Remplace le PUUID d'un joueur (résolu à nouveau depuis son RiotId).</summary>
+    Task UpdatePuuidAsync(int id, string puuid);
 }
