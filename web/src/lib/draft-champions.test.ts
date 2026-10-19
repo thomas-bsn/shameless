@@ -68,18 +68,24 @@ describe("libelleTour", () => {
   });
 });
 
-type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions">;
+type Draft = Pick<Schemas["DraftChampionsResponse"], "terminee" | "tourCourant" | "tours" | "actions" | "pause">;
 
 const enCours = (tour: number, equipe: string, actions: Schemas["ActionDraftResponse"][] = []): Draft => ({
   tours,
   terminee: false,
   tourCourant: { numero: tour, action: "ban", side: "blue", equipe, commenceLe: "2026-10-16T20:00:00Z", echeance: "2026-10-16T20:01:00Z" },
   actions,
+  pause: null,
 });
 
 describe("peutJouer", () => {
   it("laisse jouer le capitaine de l'Équipe attendue au tour courant", () => {
     expect(peutJouer(enCours(1, "B"), "B")).toBe(true);
+  });
+
+  it("refuse pendant la pause", () => {
+    const pause = { parEquipe: "A", commenceLe: "2026-10-16T20:00:10Z", finLe: "2026-10-16T20:05:10Z", tempsRestantTourMs: 40000 };
+    expect(peutJouer({ ...enCours(1, "B"), pause }, "B")).toBe(false);
   });
 
   it("refuse l'autre Équipe, le spectateur et une Draft terminée", () => {

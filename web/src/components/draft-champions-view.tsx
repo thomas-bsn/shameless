@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, History, Timer } from "lucide-react";
+import { Ban, History, Pause, Timer } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import {
   championsPris,
   filtrerChampions,
+  formaterDecompte,
   libelleTour,
   peutJouer,
   secondesRestantes,
@@ -91,6 +92,18 @@ export function DraftParLien({
       onSettled: rafraichir,
     },
   );
+
+  const surEtat = {
+    onSuccess: (data: Draft) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/liens/{lien}/draft-champions"],
+      }),
+  };
+  const pause = $api.useMutation("post", "/liens/{lien}/draft-champions/pause", surEtat);
+  const reprise = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise", surEtat);
+  const acceptation = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/acceptation", surEtat);
+  const refus = $api.useMutation("post", "/liens/{lien}/draft-champions/reprise/refus", surEtat);
 
   const pret = $api.useMutation("put", "/liens/{lien}/pret", {
     onSuccess: (data) =>
@@ -185,6 +198,25 @@ export function DraftParLien({
               repondreReset.mutate({ ...path, body: { accepte } })
             }
           />
+          {equipe && !draft.data!.terminee && (
+            <PauseDuCapitaine
+              draft={draft.data!}
+              equipe={equipe}
+              enCours={
+                pause.isPending ||
+                reprise.isPending ||
+                acceptation.isPending ||
+                refus.isPending
+              }
+              erreur={
+                pause.error ?? reprise.error ?? acceptation.error ?? refus.error
+              }
+              onPause={() => pause.mutate(path)}
+              onDemanderReprise={() => reprise.mutate(path)}
+              onAccepter={() => acceptation.mutate(path)}
+              onRefuser={() => refus.mutate(path)}
+            />
+          )}
           <DraftChampionsView
             draft={draft.data!}
             champions={champions.data ?? []}
@@ -314,17 +346,64 @@ function PretDuCapitaine({
   );
 }
 
-function Page({
-  titre,
-  meta,
-  badge,
-  children,
+/** Pause : le Capitaine la met tout de suite, une fois ; la reprise anticipée demande l'accord de l'autre. */
+function PauseDuCapitaine({
+  draft,
+  equipe,
+  enCours,
+  erreur,
+  onPause,
+  onDemanderReprise,
+  onAccepter,
+  onRefuser,
 }: {
-  titre: string;
-  meta?: string;
-  badge?: string;
-  children: ReactNode;
+  draft: Draft;
+  equipe: string;
+  enCours: boolean;
+  erreur: unknown;
+  onPause: () => void;
+  onDemanderReprise: () => void;
+  onAccepter: () => void;
+  onRefuser: () => void;
 }) {
+  const demande = draft.repriseDemandee;
+  const disponible = equipe === "A" ? draft.pauseDisponibleA : draft.pauseDisponibleB;
+  if (!draft.pause && !disponible) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {!draft.pause ? (
+        <Button variant="outline" disabled={enCours} onClick={onPause}>
+          <Pause />
+          Mettre en pause
+        </Button>
+      ) : !demande ? (
+        <Button disabled={enCours} onClick={onDemanderReprise}>
+          Demander la reprise
+        </Button>
+      ) : demande.parEquipe === equipe ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          En attente de l'autre Capitaine pour reprendre…
+        </p>
+      ) : (
+        <>
+          <p role="status" className="text-sm font-medium">
+            L'autre Capitaine demande la reprise.
+          </p>
+          <Button disabled={enCours} onClick={onAccepter}>
+            Accepter
+          </Button>
+          <Button variant="outline" disabled={enCours} onClick={onRefuser}>
+            Refuser
+          </Button>
+        </>
+      )}
+      {erreur != null && <ErrorAlert error={erreur} />}
+    </div>
+  );
+}
+
+function Page({ titre, meta, badge, children }: { titre: string; meta?: string; badge?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -493,6 +572,7 @@ function EtatDuTour({
       </Alert>
     );
   }
+  if (draft.pause) return <EnPause pause={draft.pause} />;
 
   const aToi = equipe !== null && tour.equipe === equipe;
   const verbe = tour.action === "ban" ? "bannir" : "choisir";
@@ -529,6 +609,37 @@ function EtatDuTour({
           </p>
         </div>
         <TempsRestant tour={tour} />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** La draft est en pause : le temps restant du tour est gelé, la reprise automatique approche. */
+function EnPause({ pause }: { pause: NonNullable<Draft["pause"]> }) {
+  const reprise = Math.max(0, Math.ceil((Date.parse(pause.finLe) - useMaintenant()) / 1000));
+
+  return (
+    <Card className="border-amber-500/60">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="flex items-center gap-2 text-2xl font-bold">
+            <Pause className="size-6" />
+            Draft en pause
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pause demandée par le Capitaine de l'Équipe {pause.parEquipe}.
+          </p>
+          <p className="text-sm">
+            Reprise automatique dans{" "}
+            <span aria-label="Reprise automatique dans" className="font-semibold tabular-nums">
+              {formaterDecompte(reprise)}
+            </span>
+          </p>
+        </div>
+        <span aria-label="Temps restant du tour" className="flex items-center gap-2 text-2xl font-bold tabular-nums">
+          <Timer className="size-5" />
+          {Math.ceil(pause.tempsRestantTourMs / 1000)} s
+        </span>
       </CardContent>
     </Card>
   );

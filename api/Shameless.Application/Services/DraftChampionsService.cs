@@ -64,18 +64,22 @@ public sealed class DraftChampionsService
     public async Task<CommandResult<DraftChampions>> GetByGameAsync(int gameId)
     {
         var draft = await _drafts.GetByGameAsync(gameId);
-        return draft == null
-            ? CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.")
-            : CommandResult<DraftChampions>.Ok(draft);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Cette game n'a pas de Draft de champions.");
+
+        await ActualiserAsync(draft);
+        return CommandResult<DraftChampions>.Ok(draft);
     }
 
     /// <summary>Par un lien de la Série : sa dernière Draft de champions, en cours ou terminée.</summary>
     public async Task<CommandResult<DraftChampions>> GetParLienAsync(AccesParLien acces)
     {
         var draft = await _drafts.GetDerniereOfSeriesAsync(acces.SeriesId);
-        return draft == null
-            ? CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.")
-            : CommandResult<DraftChampions>.Ok(draft);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.");
+
+        await ActualiserAsync(draft);
+        return CommandResult<DraftChampions>.Ok(draft);
     }
 
     /// <summary>
@@ -114,9 +118,12 @@ public sealed class DraftChampionsService
     private async Task<CommandResult<DraftChampions>> JouerAsync(
         DraftChampions draft, int tour, string? championId, JoueurDraft joueur)
     {
+        await ActualiserAsync(draft);
         var courant = draft.TourCourant;
         if (courant == null)
             return CommandResult<DraftChampions>.Conflict("La Draft de champions de cette game est terminée.");
+        if (draft.EnPause)
+            return CommandResult<DraftChampions>.Conflict("La Draft de champions est en pause : personne ne joue avant la reprise.");
         if (tour < courant.Numero)
             return CommandResult<DraftChampions>.Conflict($"Le tour {tour} est déjà joué : c'est au tour {courant.Numero}.");
         if (tour > courant.Numero)
@@ -201,6 +208,89 @@ public sealed class DraftChampionsService
         await _drafts.TrySaveChangesAsync()
             ? CommandResult<bool>.Ok(true)
             : CommandResult<bool>.Conflict("La draft vient d'être modifiée par une autre commande : réessayez.");
+    /// Par un Lien capitaine : met la draft en pause tout de suite, sans accord. Une pause par Capitaine
+    /// et par draft, 5 minutes au plus ; le temps restant du tour est gelé.
+    /// </summary>
+    public Task<CommandResult<DraftChampions>> MettreEnPauseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            if (draft.EnPause)
+                return "La Draft de champions est déjà en pause.";
+            if (draft.EstTerminee)
+                return "La Draft de champions de cette game est terminée.";
+            if (!draft.PauseDisponible(equipe))
+                return "Vous avez déjà utilisé votre pause de cette draft.";
+            draft.MettreEnPause(equipe, Maintenant());
+            return null;
+        });
+
+    /// <summary>Par un Lien capitaine : demande la reprise anticipée, que l'autre Capitaine accepte ou refuse sous 60 secondes.</summary>
+    public Task<CommandResult<DraftChampions>> DemanderRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            if (!draft.EnPause)
+                return "La Draft de champions n'est pas en pause.";
+            if (draft.RepriseDemandeeParEquipe != null)
+                return "Une demande de reprise est déjà en cours.";
+            draft.DemanderReprise(equipe, Maintenant());
+            return null;
+        });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : accepte la demande, la draft reprend avec le temps restant.</summary>
+    public Task<CommandResult<DraftChampions>> AccepterRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = RepriseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            draft.ReprendreAnticipe(Maintenant());
+            return null;
+        });
+
+    /// <summary>Par le Lien capitaine de l'autre Équipe : refuse la demande, la pause continue.</summary>
+    public Task<CommandResult<DraftChampions>> RefuserRepriseAsync(int seriesId, string equipe) =>
+        AppliquerAsync(seriesId, draft =>
+        {
+            var refus = RepriseARepondre(draft, equipe);
+            if (refus != null) return refus;
+            draft.RefuserReprise();
+            return null;
+        });
+
+    private static string? RepriseARepondre(DraftChampions draft, string equipe)
+    {
+        if (draft.RepriseDemandeeParEquipe == null)
+            return "Aucune demande de reprise n'est en cours.";
+        if (draft.RepriseDemandeeParEquipe == equipe)
+            return "La demande de reprise attend la réponse de l'autre Capitaine.";
+        return null;
+    }
+
+    /// <summary>Charge la dernière draft de la Série à jour, applique <paramref name="action"/> (un refus, ou null) et l'enregistre.</summary>
+    private async Task<CommandResult<DraftChampions>> AppliquerAsync(int seriesId, Func<DraftChampions, string?> action)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return CommandResult<DraftChampions>.NotFound("Aucune Draft de champions n'est ouverte dans cette Série.");
+
+        draft.Actualiser(Maintenant());
+        var refus = action(draft);
+        if (refus != null)
+        {
+            await _drafts.TrySaveChangesAsync();
+            return CommandResult<DraftChampions>.Conflict(refus);
+        }
+        if (!await _drafts.TrySaveChangesAsync())
+            return CommandResult<DraftChampions>.Conflict("La Draft de champions vient de changer : rechargez-la.");
+
+        return CommandResult<DraftChampions>.Ok(draft);
+    }
+
+    /// <summary>Applique la reprise automatique et la chute des demandes sans réponse, et les enregistre.</summary>
+    private async Task ActualiserAsync(DraftChampions draft)
+    {
+        if (draft.Actualiser(Maintenant()))
+            await _drafts.TrySaveChangesAsync();
+    }
 
     // Tronqué à la microseconde, la précision de Postgres : l'échéance renvoyée juste après
     // une action est ainsi la même que celle relue en base ensuite.

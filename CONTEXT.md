@@ -125,6 +125,12 @@ ou refuse. Accepté : bans, picks et chrono sont effacés, les deux Capitaines r
 et la draft repart quand ils se remettent prêts, dans la même Game. Refusé, ou sans réponse sous 60 s :
 rien ne change. Ni l'organisateur ni l'Administrateur n'ont de Reset direct, et il est impossible une
 fois la draft terminée. Les spectateurs voient « Reset demandé » puis « Draft remise à zéro ».
+- **Pause** : arrêt de la Draft de champions demandé par un Capitaine, immédiat et sans accord de  
+l'autre. Le temps restant du tour est gelé et personne ne joue ; la draft reprend avec ce temps. Chaque  
+Capitaine a droit à une pause par draft, de 5 minutes au plus : passé ce délai la draft reprend toute  
+seule. Pour reprendre avant, un Capitaine envoie une demande de reprise que l'autre accepte (reprise  
+immédiate) ou refuse ; sans réponse sous 60 s elle tombe et la pause continue. Les spectateurs voient  
+« Draft en pause » avec le décompte.
 - **Lien capitaine** : lien privé qui permet à un capitaine de jouer la Draft de  
 champions de son Équipe pendant toute la Série, sans se connecter. Le bot l'envoie en DM  
 au Capitaine ; sans bot, ou si le DM échoue, l'organisateur le copie à la main.

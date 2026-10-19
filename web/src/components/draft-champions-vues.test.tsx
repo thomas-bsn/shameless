@@ -45,6 +45,10 @@ const draft: Schemas["DraftChampionsResponse"] = {
   capitaineB: null,
   championsDejaJoues: ["Jinx"],
   resetDemande: null,
+  pause: null,
+  repriseDemandee: null,
+  pauseDisponibleA: true,
+  pauseDisponibleB: true,
 };
 
 function mock() {

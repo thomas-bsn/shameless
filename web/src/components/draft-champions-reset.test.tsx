@@ -46,6 +46,10 @@ const draft: Schemas["DraftChampionsResponse"] = {
   capitaineB: null,
   championsDejaJoues: null,
   resetDemande: null,
+  pause: null,
+  repriseDemandee: null,
+  pauseDisponibleA: true,
+  pauseDisponibleB: true,
 };
 
 const avecDemande: Schemas["DraftChampionsResponse"] = {
