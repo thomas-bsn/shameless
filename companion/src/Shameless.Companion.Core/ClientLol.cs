@@ -32,6 +32,28 @@ public interface IClientLol
 
     /// <summary>GET sur l'API locale du client actuellement détecté ; lève <see cref="HttpRequestException"/> s'il n'y en a pas.</summary>
     Task<ReponseLcu> LireAsync(string chemin, CancellationToken ct);
+
+    /// <summary>
+    /// Le PUUID du compte connecté au client (<c>/lol-summoner/v1/current-summoner</c>), ou null si le client
+    /// n'est connecté à aucun compte. Lève <see cref="HttpRequestException"/> s'il n'y a pas de client.
+    /// </summary>
+    async Task<string?> LirePuuidAsync(CancellationToken ct)
+    {
+        var reponse = await LireAsync("/lol-summoner/v1/current-summoner", ct);
+        if (reponse.Statut != 200) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(reponse.Corps);
+            return doc.RootElement.TryGetProperty("puuid", out var puuid) && puuid.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(puuid.GetString())
+                ? puuid.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 }
 
 public interface IJournal

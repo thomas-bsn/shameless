@@ -30,6 +30,7 @@ public sealed class FakeLcuServer : IAsyncDisposable
 
     public int Port { get; private set; }
     public string EogStatsBlockJson { get; set; } = """{"gameId":7123456789,"teams":[]}""";
+    public string CurrentSummonerJson { get; set; } = """{"puuid":"puuid-du-compte-connecte","gameName":"Sam","tagLine":"EUW"}""";
     public string MatchHistoryJson { get; set; } = """{"gameId":7123456789,"platformId":"EUW1","participants":[]}""";
 
     /// <summary>Nombre de réponses 404 de l'historique avant la première 200.</summary>
@@ -107,6 +108,9 @@ public sealed class FakeLcuServer : IAsyncDisposable
 
         app.MapGet("/lol-end-of-game/v1/eog-stats-block",
             () => Results.Content(EogStatsBlockJson, "application/json"));
+
+        app.MapGet("/lol-summoner/v1/current-summoner",
+            () => Results.Content(CurrentSummonerJson, "application/json"));
 
         app.MapGet("/lol-match-history/v1/games/{gameId}", (long gameId) =>
         {

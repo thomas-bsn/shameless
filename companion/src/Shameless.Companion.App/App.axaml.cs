@@ -26,7 +26,11 @@ public sealed class App : Application
             var journal = new JournalFichier();
             var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             var connexion = new ConnexionCompanion(stockage, http);
-            var surveillance = new SurveillanceFinDeGame(new ClientLolLcu(journal: journal), journal);
+            IClientLol client = new ClientLolLcu(journal: journal);
+            var surveillance = new SurveillanceFinDeGame(client, journal);
+            // Présence (#146) : un émetteur isolé, relié seulement à la détection du client et au Code stocké.
+            var presence = new EmetteurPresence(client, stockage, http, journal);
+            surveillance.ClientDetecteChange += presence.ClientDetecte;
             var modele = new FenetreViewModel(connexion, stockage, surveillance);
 
             _fenetre = new MainWindow { DataContext = modele };
@@ -48,6 +52,7 @@ public sealed class App : Application
             _fenetre.Show();
             _ = modele.DemarrerAsync();
             _ = surveillance.ExecuterAsync(_arret.Token);
+            _ = presence.ExecuterAsync(_arret.Token);
             bureau.Exit += (_, _) => _arret.Cancel();
         }
         base.OnFrameworkInitializationCompleted();
