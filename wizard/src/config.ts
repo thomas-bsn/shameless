@@ -13,7 +13,11 @@ export interface Config {
   clientId: string;
   clientSecret: string;
   guildId: string;
-  adminIds: string;
+  /**
+   * Posé par le serveur du wizard à partir de la connexion Discord de l'Opérateur, jamais par la saisie :
+   * premier Superadministrateur, importé par l'API au premier démarrage (ADR 0017).
+   */
+  superadminId?: string;
   /** Facultative : vide = fonctions Riot désactivées. */
   riotKey: string;
   timezone: string;
@@ -93,17 +97,14 @@ const discord: Section = {
     if (!estIdDiscord(guildId)) errors.guildId = `L'identifiant du serveur est ${FORMAT_ID_DISCORD} (clic droit sur le serveur, « Copier l'identifiant »).`;
     else value.guildId = guildId;
 
-    const admins = [...new Set(text(input.adminIds).split(/[\s,;]+/).filter(Boolean))];
-    if (admins.length === 0) errors.adminIds = `Indiquez au moins un administrateur : son identifiant Discord (${FORMAT_ID_DISCORD}).`;
-    else if (!admins.every(estIdDiscord)) errors.adminIds = `Chaque identifiant d'administrateur est ${FORMAT_ID_DISCORD}, séparés par une virgule ou un espace.`;
-    else value.adminIds = admins.join(",");
   },
   toEnv(value) {
+    if (!value.superadminId) throw new Error("Le premier Superadministrateur doit se connecter avec Discord avant l'écriture de la configuration.");
     return {
       Auth__Discord__ClientId: value.clientId,
       Auth__Discord__ClientSecret: value.clientSecret,
       Auth__Discord__AllowedGuildId: value.guildId,
-      Auth__AdminDiscordIds: value.adminIds,
+      Auth__AdminDiscordIds: value.superadminId,
     };
   },
 };

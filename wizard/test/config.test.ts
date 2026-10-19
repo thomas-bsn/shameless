@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildInstanceEnv, serializeEnv, validateConfig } from "../src/config.ts";
 
+const SUPERADMIN = "111111111111111111";
 const valide = {
   publicUrl: "https://shameless.example.org",
   clientId: "123456789012345678",
   clientSecret: "abcdefghijklmnopqrstuvwxyz012345",
   guildId: "987654321098765432",
-  adminIds: "111111111111111111",
 };
 
 describe("validation de la configuration", () => {
@@ -19,7 +19,7 @@ describe("validation de la configuration", () => {
 
   it("exige tous les champs et les nomme", () => {
     const r = validateConfig({});
-    assert.deepEqual(Object.keys(r.errors).sort(), ["adminIds", "clientId", "clientSecret", "guildId", "publicUrl"]);
+    assert.deepEqual(Object.keys(r.errors).sort(), ["clientId", "clientSecret", "guildId", "publicUrl"]);
     assert.equal(r.value, undefined);
   });
 
@@ -46,14 +46,15 @@ describe("validation de la configuration", () => {
   });
 
   it("vérifie le format des identifiants Discord", () => {
-    const r = validateConfig({ ...valide, clientId: "abc", guildId: "12", adminIds: "111111111111111111, x" });
-    assert.ok(r.errors.clientId && r.errors.guildId && r.errors.adminIds);
-    for (const m of [r.errors.clientId, r.errors.guildId, r.errors.adminIds]) assert.match(m, /un nombre de 17 à 20 chiffres/);
+    const r = validateConfig({ ...valide, clientId: "abc", guildId: "12" });
+    assert.ok(r.errors.clientId && r.errors.guildId);
+    for (const m of [r.errors.clientId, r.errors.guildId]) assert.match(m, /un nombre de 17 à 20 chiffres/);
   });
 
-  it("accepte plusieurs administrateurs séparés par virgule ou espace, sans doublon", () => {
-    const r = validateConfig({ ...valide, adminIds: "111111111111111111 222222222222222222,111111111111111111" });
-    assert.equal(r.value?.adminIds, "111111111111111111,222222222222222222");
+  it("ne demande plus d'identifiant d'administrateur : il vient de la connexion Discord", () => {
+    const r = validateConfig({ ...valide, adminIds: "x" });
+    assert.deepEqual(r.errors, {});
+    assert.equal("adminIds" in (r.value ?? {}), false);
   });
 
   it("refuse un secret contenant un espace ou un saut de ligne", () => {
@@ -64,18 +65,18 @@ describe("validation de la configuration", () => {
 
 describe("variables d'Instance calculées", () => {
   const value = validateConfig(valide).value!;
-  const env = buildInstanceEnv(value, { postgresPassword: "pg-secret" });
+  const env = buildInstanceEnv({ ...value, superadminId: SUPERADMIN }, { postgresPassword: "pg-secret" });
 
   it("calcule le callback Discord et les origines depuis l'adresse publique", () => {
     assert.equal(env.Auth__Discord__RedirectUri, "https://shameless.example.org/api/auth/discord/callback");
     assert.equal(env.Auth__AllowedReturnOrigins, "https://shameless.example.org");
   });
 
-  it("transmet les valeurs Discord et le premier administrateur", () => {
+  it("transmet les valeurs Discord et le premier Superadministrateur (importé par l'API au premier démarrage, ADR 0017)", () => {
     assert.equal(env.Auth__Discord__ClientId, valide.clientId);
     assert.equal(env.Auth__Discord__ClientSecret, valide.clientSecret);
     assert.equal(env.Auth__Discord__AllowedGuildId, valide.guildId);
-    assert.equal(env.Auth__AdminDiscordIds, valide.adminIds);
+    assert.equal(env.Auth__AdminDiscordIds, SUPERADMIN);
   });
 
   it("injecte le mot de passe généré dans la connexion à la base", () => {
@@ -86,11 +87,15 @@ describe("variables d'Instance calculées", () => {
   it("sert un domaine en HTTPS automatique et le local en HTTP sur le port 80", () => {
     assert.equal(env.SHAMELESS_SITE_ADDRESS, "shameless.example.org");
     const local = validateConfig({ ...valide, publicUrl: "http://localhost:8080" }).value!;
-    assert.equal(buildInstanceEnv(local, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
+    assert.equal(buildInstanceEnv({ ...local, superadminId: SUPERADMIN }, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
   });
 
   it("sert un domaine en HTTP sur le port 80 quand un proxy en amont termine le HTTPS", () => {
-    assert.equal(buildInstanceEnv({ ...(validateConfig(valide).value!), tlsEnAmont: true }, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
+    assert.equal(buildInstanceEnv({ ...(validateConfig(valide).value!), superadminId: SUPERADMIN, tlsEnAmont: true }, { postgresPassword: "x" }).SHAMELESS_SITE_ADDRESS, ":80");
+  });
+
+  it("refuse d'écrire la configuration sans Superadministrateur connecté", () => {
+    assert.throws(() => buildInstanceEnv(value, { postgresPassword: "x" }), /Superadministrateur/);
   });
 
   it("sérialise en fichier sourçable par sh, même avec une apostrophe", () => {

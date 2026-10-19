@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { MenuIcon, MoonIcon, SunIcon } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Fond } from "@/components/fond";
 import { SessionMenu } from "@/components/session-menu";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { sessionQuery } from "@/lib/session";
-import { type Theme, useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -17,7 +16,7 @@ const navigation = [
   { to: "/clips", label: "Clips" },
 ] as const;
 
-const lienClasse = "flex items-center rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground";
+const lienClasse = "flex items-center truncate rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground";
 const lienActif = "bg-accent text-accent-foreground";
 
 function Marque({ className }: { className?: string }) {
@@ -32,28 +31,11 @@ function Marque({ className }: { className?: string }) {
   );
 }
 
-function ThemeToggle() {
-  const [theme, setTheme] = useTheme();
-  const next: Theme = theme === "dark" ? "light" : "dark";
-  const label = theme === "dark" ? "Sombre" : "Clair";
-  return (
-    <button
-      type="button"
-      aria-label={`Thème : ${label}`}
-      onClick={() => setTheme(next)}
-      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-    >
-      {theme === "dark" ? <MoonIcon className="size-4" /> : <SunIcon className="size-4" />}
-      {label}
-    </button>
-  );
-}
-
 /** Le contenu de la sidebar, identique en colonne fixe et dans le tiroir mobile. */
 function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const session = useQuery(sessionQuery);
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="flex h-full min-w-0 flex-col gap-6">
       <Marque />
       <nav aria-label="Navigation principale" className="flex flex-col gap-1">
         {navigation.map((item) => (
@@ -61,15 +43,14 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
             {item.label}
           </Link>
         ))}
-      </nav>
-      <div className="mt-auto flex flex-col gap-2 border-t pt-4">
         {session.data?.isAdmin && (
           <Link to="/administration" onClick={onNavigate} className={lienClasse} activeProps={{ className: lienActif }}>
             Administration
           </Link>
         )}
+      </nav>
+      <div className="mt-auto">
         <SessionMenu />
-        <ThemeToggle />
       </div>
     </div>
   );
@@ -81,11 +62,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative isolate min-h-screen md:flex">
       <Fond />
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r bg-card p-4 md:block">
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 overflow-hidden bg-card/74 p-4 md:block dark:bg-card/42">
         <NavContent />
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="flex items-center gap-2 border-b p-2 md:hidden">
+        <header className="flex items-center gap-2 bg-card/74 p-2 md:hidden dark:bg-card/42">
           <Sheet open={ouvert} onOpenChange={setOuvert}>
             <SheetTrigger asChild>
               <button
@@ -96,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <MenuIcon className="size-5" />
               </button>
             </SheetTrigger>
-            <SheetContent aria-describedby={undefined}>
+            <SheetContent aria-describedby={undefined} className="overflow-hidden border-r-0 bg-card/74 dark:bg-card/42">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               <SheetDescription className="sr-only">Navigation entre les pages</SheetDescription>
               <NavContent onNavigate={() => setOuvert(false)} />
@@ -104,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Sheet>
           <Marque />
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="sur-fond mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
     </div>
   );

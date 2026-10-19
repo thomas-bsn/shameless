@@ -61,7 +61,7 @@ public static class AuthenticationExtensions
                 };
             });
 
-        services.AddSingleton<IAuthorizationHandler, AdminHandler>();
+        services.AddScoped<IAuthorizationHandler, AdminHandler>();
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
             .AddPolicy(Policies.Admin, policy => policy.RequireAuthenticatedUser().AddRequirements(new AdminRequirement()));

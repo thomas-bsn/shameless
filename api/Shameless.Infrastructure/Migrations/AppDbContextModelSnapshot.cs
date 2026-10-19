@@ -249,6 +249,41 @@ namespace Shameless.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shameless.Application.Entities.CorrectionDeStat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Champ")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("champ");
+
+                    b.Property<int>("CustomGameParticipantId")
+                        .HasColumnType("integer")
+                        .HasColumnName("custom_game_participant_id");
+
+                    b.Property<string>("Valeur")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("valeur");
+
+                    b.HasKey("Id")
+                        .HasName("pk_corrections_de_stats");
+
+                    b.HasIndex("CustomGameParticipantId", "Champ")
+                        .IsUnique()
+                        .HasDatabaseName("ix_corrections_de_stats_custom_game_participant_id_champ");
+
+                    b.ToTable("corrections_de_stats", (string)null);
+                });
+
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
                 {
                     b.Property<int>("Id")
@@ -267,6 +302,10 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
+
+                    b.Property<DateTime?>("ModifieeParAdminLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("modifiee_par_admin_le");
 
                     b.Property<DateTime>("PlayedAt")
                         .HasColumnType("timestamp without time zone")
@@ -302,6 +341,12 @@ namespace Shameless.Infrastructure.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
                         .HasColumnName("team_a_side");
+
+                    b.Property<bool>("VainqueurOuCompositionCorriges")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("vainqueur_ou_composition_corriges");
 
                     b.Property<string>("WinningTeam")
                         .HasMaxLength(1)
@@ -1012,6 +1057,15 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying")
                         .HasColumnName("avatar_url");
 
+                    b.Property<string>("BannerColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("banner_color");
+
+                    b.Property<string>("BannerUrl")
+                        .HasColumnType("character varying")
+                        .HasColumnName("banner_url");
+
                     b.Property<long>("DiscordId")
                         .HasColumnType("bigint")
                         .HasColumnName("discord_id");
@@ -1020,8 +1074,28 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying")
                         .HasColumnName("discord_username");
 
+                    b.Property<DateTime?>("PromotedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("promoted_at");
+
+                    b.Property<string>("PromotedBy")
+                        .HasColumnType("character varying")
+                        .HasColumnName("promoted_by");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Utilisateur")
+                        .HasColumnName("role");
+
                     b.HasKey("Id")
                         .HasName("users_pk");
+
+                    b.HasIndex("DiscordId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_discord_id");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1080,6 +1154,18 @@ namespace Shameless.Infrastructure.Migrations
                         .HasConstraintName("fk_clips_custom_games_game_id");
 
                     b.Navigation("Game");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.CorrectionDeStat", b =>
+                {
+                    b.HasOne("Shameless.Application.Entities.CustomGameParticipant", "CustomGameParticipant")
+                        .WithMany("Corrections")
+                        .HasForeignKey("CustomGameParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_corrections_de_stats_custom_game_participants_custom_game_p");
+
+                    b.Navigation("CustomGameParticipant");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.CustomGame", b =>
@@ -1298,6 +1384,11 @@ namespace Shameless.Infrastructure.Migrations
                     b.Navigation("Participants");
 
                     b.Navigation("Rapports");
+                });
+
+            modelBuilder.Entity("Shameless.Application.Entities.CustomGameParticipant", b =>
+                {
+                    b.Navigation("Corrections");
                 });
 
             modelBuilder.Entity("Shameless.Application.Entities.DraftChampions", b =>

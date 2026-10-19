@@ -20,7 +20,236 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/riot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtatActualisationRiot"];
+                        "application/json": components["schemas"]["EtatActualisationRiot"];
+                        "text/json": components["schemas"]["EtatActualisationRiot"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/riot/joueurs/{playerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultatActualisationJoueur"];
+                        "application/json": components["schemas"]["ResultatActualisationJoueur"];
+                        "text/json": components["schemas"]["ResultatActualisationJoueur"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/riot/tous": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtatActualisationRiot"];
+                        "application/json": components["schemas"]["EtatActualisationRiot"];
+                        "text/json": components["schemas"]["EtatActualisationRiot"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/discord/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    returnUrl?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Found */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/discord/refresh": {
         parameters: {
             query?: never;
             header?: never;
@@ -1879,6 +2108,246 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/{id}/correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectGameRequest"];
+                    "text/json": components["schemas"]["CorrectGameRequest"];
+                    "application/*+json": components["schemas"]["CorrectGameRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{id}/players/{playerId}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    playerId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectPlayerStatsRequest"];
+                    "text/json": components["schemas"]["CorrectPlayerStatsRequest"];
+                    "application/*+json": components["schemas"]["CorrectPlayerStatsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{id}/players/{playerId}/corrections/{champ}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    playerId: number;
+                    champ: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GameRecapResponse"];
+                        "application/json": components["schemas"]["GameRecapResponse"];
+                        "text/json": components["schemas"]["GameRecapResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}": {
         parameters: {
             query?: never;
@@ -1930,7 +2399,53 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -3078,7 +3593,46 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlayerLinkResponse"];
+                        "application/json": components["schemas"]["PlayerLinkResponse"];
+                        "text/json": components["schemas"]["PlayerLinkResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -3258,12 +3812,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -3310,6 +3866,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/peak/saisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeakSaisonsResponse"];
+                        "application/json": components["schemas"]["PeakSaisonsResponse"];
+                        "text/json": components["schemas"]["PeakSaisonsResponse"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/peak": {
         parameters: {
             query?: never;
@@ -3334,12 +3936,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Bad Request */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
                 };
                 /** @description Erreur */
                 default: {
@@ -4629,6 +5233,168 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/utilisateurs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"][];
+                        "application/json": components["schemas"]["UtilisateurResponse"][];
+                        "text/json": components["schemas"]["UtilisateurResponse"][];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/utilisateurs/{discordId}/administrateur": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    discordId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"];
+                        "application/json": components["schemas"]["UtilisateurResponse"];
+                        "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    discordId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UtilisateurResponse"];
+                        "application/json": components["schemas"]["UtilisateurResponse"];
+                        "text/json": components["schemas"]["UtilisateurResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{id}/votes": {
         parameters: {
             query?: never;
@@ -4945,6 +5711,9 @@ export interface components {
             username: null | string;
             avatarUrl: null | string;
             isAdmin: boolean;
+            role: components["schemas"]["UserRole"];
+            bannerUrl: null | string;
+            bannerColor: null | string;
         };
         AutoroleRequest: {
             variante: components["schemas"]["AutoroleVariante"];
@@ -5065,6 +5834,31 @@ export interface components {
             username: null | string;
             avatarUrl: null | string;
         };
+        CorrectGameRequest: {
+            winner: null | string;
+            teamA: null | number[];
+            teamB: null | number[];
+        };
+        CorrectPlayerStatsRequest: {
+            champion: null | string;
+            position: null | string;
+            /** Format: int32 */
+            kills: null | number;
+            /** Format: int32 */
+            deaths: null | number;
+            /** Format: int32 */
+            assists: null | number;
+            /** Format: int32 */
+            cs: null | number;
+            /** Format: int32 */
+            goldEarned: null | number;
+            /** Format: int32 */
+            damageToChampions: null | number;
+            /** Format: int32 */
+            visionScore: null | number;
+            /** Format: int32 */
+            note: null | number;
+        };
         CostMensuelHistorique: {
             /** Format: date */
             mois: string;
@@ -5146,6 +5940,12 @@ export interface components {
             playerId: number;
             equipe: string;
         };
+        EchecActualisation: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            message: string;
+        };
         EchecDmRequest: {
             raison: string;
         };
@@ -5161,6 +5961,20 @@ export interface components {
         EquipePronostiquee: {
             equipe: string;
             correct: null | boolean;
+        };
+        EtatActualisationRiot: {
+            disponible: boolean;
+            enCours: boolean;
+            nature: null | string;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            termines: number;
+            echecs: components["schemas"]["EchecActualisation"][];
+            /** Format: date-time */
+            demarreeLe: null | string;
+            /** Format: date-time */
+            termineeLe: null | string;
         };
         FicheJoueur: {
             /** Format: int32 */
@@ -5213,6 +6027,10 @@ export interface components {
             role: null | components["schemas"]["Role"];
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+            /** @default false */
+            mvp: boolean;
+            /** @default false */
+            dofd: boolean;
         };
         GameDeLaListeDeClips: {
             /** Format: int32 */
@@ -5264,6 +6082,7 @@ export interface components {
             championId: null | string;
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
+            champsCorriges: string[];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -5272,6 +6091,8 @@ export interface components {
             seriesId: null | number;
             /** Format: date-time */
             playedAt: string;
+            /** Format: date-time */
+            modifieeParAdminLe: null | string;
             teamASide: string;
             teamBSide: string;
             winner: null | string;
@@ -5308,6 +6129,8 @@ export interface components {
             playedAt: string;
             /** Format: date-time */
             completedAt: null | string;
+            /** Format: date-time */
+            modifieeParAdminLe: null | string;
             teamASide: string;
             teamBSide: string;
             winner: null | string;
@@ -5432,6 +6255,10 @@ export interface components {
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
+        };
+        PeakSaisonsResponse: {
+            saisons: string[];
+            courante: string;
         };
         PendingGameParticipant: {
             /** Format: int32 */
@@ -5666,6 +6493,14 @@ export interface components {
             replacedPlayerId: number;
             /** Format: int32 */
             replacementPlayerId: number;
+        };
+        ResultatActualisationJoueur: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            rangsActualises: boolean;
+            roleActualise: boolean;
+            echecs: string[];
         };
         ResultatDuTitre: {
             gagnants: number[];
@@ -5931,6 +6766,17 @@ export interface components {
             peakSeason: null | string;
             /** Format: int32 */
             peakLp: number;
+        };
+        /** @enum {unknown} */
+        UserRole: "Utilisateur" | "Administrateur" | "Superadministrateur";
+        UtilisateurResponse: {
+            discordUserId: string;
+            username: null | string;
+            avatarUrl: null | string;
+            role: components["schemas"]["UserRole"];
+            promotedBy: null | string;
+            /** Format: date-time */
+            promotedAt: null | string;
         };
         ValidatePickerRequest: {
             /** Format: int32 */

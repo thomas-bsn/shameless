@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AdministrateursAdmin } from "@/components/administration/administrateurs-admin";
 import { ATraiter } from "@/components/administration/a-traiter";
 import { ClipsAdmin } from "@/components/administration/clips-admin";
+import { GamesAdmin } from "@/components/administration/games-admin";
 import { JoueursAdmin } from "@/components/administration/joueurs-admin";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const ONGLETS = [
   { id: "joueurs", label: "Joueurs", contenu: <JoueursAdmin /> },
   { id: "clips", label: "Clips du Fond", contenu: <ClipsAdmin /> },
+  { id: "games", label: "Games", contenu: <GamesAdmin /> },
+  { id: "administrateurs", label: "Administrateurs", contenu: null },
 ];
 
 const onglets: string[] = ONGLETS.map((o) => o.id);
@@ -40,6 +44,7 @@ function Administration() {
 }
 
 function PageAdministration() {
+  const { user } = Route.useRouteContext();
   const { onglet = ONGLET_PAR_DEFAUT } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   return (
@@ -60,7 +65,7 @@ function PageAdministration() {
         </TabsList>
         {ONGLETS.map((o) => (
           <TabsContent key={o.id} value={o.id}>
-            {o.contenu}
+            {o.id === "administrateurs" ? <AdministrateursAdmin moiDiscordId={user.discordUserId} /> : o.contenu}
           </TabsContent>
         ))}
       </Tabs>

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shameless.Application.Interfaces;
+using Shameless.Application.Joueurs;
 using Shameless.Tests.Integration.Infrastructure;
 
 namespace Shameless.Tests.Integration;
@@ -52,12 +53,12 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
 
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/peak",
-            new { peakTier = "DIAMOND", peakDivision = 2, peakSeason = "S2024", peakLp = 40 }, Ct));
+            new { peakTier = "DIAMOND", peakDivision = 2, peakSeason = "S24", peakLp = 40 }, Ct));
 
         var me = await ReadJsonAsync(await client.GetAsync("/players/me", Ct));
         Assert.Equal("DIAMOND", me.GetProperty("peakTier").GetString());
         Assert.Equal(2, me.GetProperty("peakDivision").GetInt32());
-        Assert.Equal("S2024", me.GetProperty("peakSeason").GetString());
+        Assert.Equal("S24", me.GetProperty("peakSeason").GetString());
         Assert.Equal(40, me.GetProperty("peakLp").GetInt32());
 
         await ReadJsonAsync(await client.DeleteAsync("/players/peak", Ct));
@@ -68,13 +69,148 @@ public class PlayersTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
+    public async Task Delier_retire_seulement_l_association_et_on_peut_se_relier_ensuite()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2020");
+        var playerId = await CreatePlayerAsync(client, "Fanny");
+        await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+
+        var unlink = await client.DeleteAsync("/players/link", Ct);
+
+        Assert.Equal(HttpStatusCode.OK, unlink.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/players/me", Ct)).StatusCode);
+        // Le Joueur et ses données restent ; l'Utilisateur reste connecté et peut se relier.
+        var player = Assert.Single((await client.GetFromJsonAsync<JsonElement>("/players", Ct)).EnumerateArray());
+        Assert.Equal("Fanny", player.GetProperty("prenom").GetString());
+        Assert.True((await client.GetFromJsonAsync<JsonElement>("/auth/me", Ct)).GetProperty("valid").GetBoolean());
+
+        var relink = await client.PostAsJsonAsync("/players/link", new { playerId }, Ct);
+        Assert.Equal(HttpStatusCode.OK, relink.StatusCode);
+        var me = await ReadJsonAsync(await client.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
+    [Fact]
+    public async Task Delier_sans_joueur_lie_renvoie_404()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2021");
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.DeleteAsync("/players/link", Ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delier_ne_touche_pas_au_joueur_lie_a_quelqu_un_d_autre()
+    {
+        var owner = Factory.CreateSignedInClient(discordId: "2022");
+        var playerId = await CreatePlayerAsync(owner, "Gilles");
+        await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+        var other = Factory.CreateSignedInClient(discordId: "2023");
+
+        var response = await other.DeleteAsync("/players/link", Ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var me = await ReadJsonAsync(await owner.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
+    [Fact]
+    public async Task Delier_n_est_pas_une_action_d_administrateur_sur_les_autres()
+    {
+        var owner = Factory.CreateSignedInClient(discordId: "2024");
+        var playerId = await CreatePlayerAsync(owner, "Hugo");
+        await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+        var admin = Factory.CreateAdminClient();
+
+        // Sans joueur lié lui-même, l'administrateur n'a rien à délier ; le lien de Hugo reste.
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync("/players/link", Ct)).StatusCode);
+        var me = await ReadJsonAsync(await owner.GetAsync("/players/me", Ct));
+        Assert.Equal(playerId, me.GetProperty("id").GetInt32());
+    }
+
+    private string SaisonCourante => SaisonsDePeak.Courante(Factory.Clock.GetUtcNow().Year);
+
+    [Fact]
+    public async Task Un_joueur_refuse_une_saison_de_peak_hors_de_S24_a_la_saison_courante()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2010");
+        var playerId = await CreatePlayerAsync(client, "Dora");
+        await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+        var anneeSuivante = $"S{(Factory.Clock.GetUtcNow().Year + 1) % 100}";
+
+        foreach (var saison in new[] { "S23", anneeSuivante, "S2025", "saison", null })
+        {
+            var reponse = await client.PostAsJsonAsync("/players/peak",
+                new { peakTier = "GOLD", peakDivision = 1, peakSeason = saison, peakLp = 0 }, Ct);
+            Assert.Equal(HttpStatusCode.BadRequest, reponse.StatusCode);
+        }
+
+        var me = await ReadJsonAsync(await client.GetAsync("/players/me", Ct));
+        Assert.Equal(JsonValueKind.Null, me.GetProperty("peakTier").ValueKind);
+    }
+
+    [Fact]
+    public async Task Un_joueur_accepte_les_saisons_de_S24_a_la_saison_courante()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2011");
+        var playerId = await CreatePlayerAsync(client, "Eli");
+        await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+
+        foreach (var saison in new[] { "S24", SaisonCourante })
+        {
+            var reponse = await client.PostAsJsonAsync("/players/peak",
+                new { peakTier = "PLATINUM", peakDivision = 3, peakSeason = saison, peakLp = 0 }, Ct);
+            Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
+            var me = await ReadJsonAsync(await client.GetAsync("/players/me", Ct));
+            Assert.Equal(saison, me.GetProperty("peakSeason").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task Le_rang_du_peak_n_est_pas_verifie()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2012");
+        var playerId = await CreatePlayerAsync(client, "Flo"); // GOLD II
+        await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
+
+        var reponse = await client.PostAsJsonAsync("/players/peak",
+            new { peakTier = "CHALLENGER", peakDivision = (int?)null, peakSeason = "S24", peakLp = 2000 }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Les_saisons_proposees_sont_exposees_a_tout_utilisateur_connecte()
+    {
+        var client = Factory.CreateSignedInClient(discordId: "2013");
+
+        var saisons = await ReadJsonAsync(await client.GetAsync("/players/peak/saisons", Ct));
+
+        Assert.Equal(SaisonCourante, saisons.GetProperty("courante").GetString());
+        var liste = saisons.GetProperty("saisons").EnumerateArray().Select(s => s.GetString()).ToList();
+        Assert.Equal("S24", liste.First());
+        Assert.Equal(SaisonCourante, liste.Last());
+    }
+
+    [Fact]
+    public async Task Un_admin_refuse_aussi_une_saison_invalide_pour_un_autre_joueur()
+    {
+        var admin = Factory.CreateAdminClient();
+        var playerId = await CreatePlayerAsync(admin, "Gus");
+
+        var reponse = await admin.PostAsJsonAsync($"/players/{playerId}/peak",
+            new { peakTier = "GOLD", peakDivision = 1, peakSeason = "S10", peakLp = 0 }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, reponse.StatusCode);
+    }
+
+    [Fact]
     public async Task The_cost_starts_from_the_current_soloq_rank_not_the_peak()
     {
         var client = Factory.CreateSignedInClient(discordId: "2003");
         var playerId = await CreatePlayerAsync(client, "Chloe"); // GOLD II
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/peak",
-            new { peakTier = "DIAMOND", peakDivision = 2, peakSeason = "S2024", peakLp = 0 }, Ct));
+            new { peakTier = "DIAMOND", peakDivision = 2, peakSeason = "S24", peakLp = 0 }, Ct));
 
         var cost = await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/cost", Ct));
 

@@ -132,7 +132,7 @@ describe("Joueurs", () => {
         peakTier: "DIAMOND",
         peakDivision: 2,
         peakLp: 10,
-        peakSeason: "S2024",
+        peakSeason: "S24",
         currentCost: 4,
         mainRole: "JUNGLE",
       }),
@@ -144,7 +144,7 @@ describe("Joueurs", () => {
     expect(screen.getByText("Kelio#EUW")).toBeInTheDocument();
     expect(screen.getByText("Emerald I · 75 LP")).toBeInTheDocument();
     expect(screen.getByText("Diamond II · 10 LP")).toBeInTheDocument();
-    expect(screen.getByText("S2024")).toBeInTheDocument();
+    expect(screen.getByText("S24")).toBeInTheDocument();
     expect(screen.getByText("A")).toBeInTheDocument();
     expect(screen.getByText("4 pts")).toBeInTheDocument();
     expect(screen.getByText("Jungle")).toBeInTheDocument();

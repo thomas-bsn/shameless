@@ -46,7 +46,7 @@ public class GamesTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 1);
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/link", new { playerId = serie.TeamA[0] }, Ct));
         await ReadJsonAsync(await client.PostAsJsonAsync("/players/peak",
-            new { peakTier = "DIAMOND", peakDivision = 4, peakSeason = "S2024", peakLp = 0 }, Ct));
+            new { peakTier = "DIAMOND", peakDivision = 4, peakSeason = "S24", peakLp = 0 }, Ct));
         var gameId = await PlayGameAsync(client, serie.SeriesId);
 
         var now = Factory.Clock.GetUtcNow();

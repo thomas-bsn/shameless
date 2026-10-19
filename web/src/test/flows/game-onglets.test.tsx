@@ -39,6 +39,7 @@ const participant = (playerId: number, prenom: string, s: Stats | null): Schemas
   championId: null,
   stats: s,
   performance: null,
+  champsCorriges: [],
 });
 
 /** Équipe A (rouge) : Alice 20 k + Chloé 10 k de dégâts ; équipe B (bleue) : Bob 15 k + Dan 5 k. Game de 30 min. */
@@ -50,6 +51,7 @@ const recap = (durationSeconds: number | null = 1800): Schemas["GameRecapRespons
   status: "completed",
   playedAt: "2026-10-16T20:30:00Z",
   completedAt: "2026-10-16T21:05:00Z",
+  modifieeParAdminLe: null,
   teamASide: "red",
   teamBSide: "blue",
   winner: "B",

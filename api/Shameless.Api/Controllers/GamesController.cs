@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Shameless.Api.Auth;
 using Shameless.Api.Contracts.Matches;
 using Shameless.Api.Extensions;
 using Shameless.Api.Models.Responses.Game;
@@ -17,8 +19,16 @@ public sealed class GamesController : ControllerBase
     private readonly CustomGameService _gameService;
     private readonly SeriesService _seriesService;
 
-    public GamesController(CustomGameService gameService, SeriesService seriesService)
+    private readonly CorrectionDeGameService _corrections;
+
+    private readonly CorrectionDeStatsService _correctionsDeStats;
+
+    public GamesController(
+        CustomGameService gameService, SeriesService seriesService, CorrectionDeGameService corrections,
+        CorrectionDeStatsService correctionsDeStats)
     {
+        _corrections = corrections;
+        _correctionsDeStats = correctionsDeStats;
         _gameService = gameService;
         _seriesService = seriesService;
     }
@@ -42,6 +52,75 @@ public sealed class GamesController : ControllerBase
             TeamBSide: game.TeamBSide,
             Status: game.Status
         );
+    }
+
+    /// <summary>
+    /// Corrige le vainqueur et/ou la composition d'une game terminée (Administrateur). La Série et le
+    /// cost du mois sont recalculés ; la game est marquée « modifiée par un admin ».
+    /// </summary>
+    [HttpPut("{id:int}/correction")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> CorrigerGame(int id, [FromBody] CorrectGameRequest request)
+    {
+        var result = await _corrections.CorrigerAsync(id, request.Winner, request.TeamA, request.TeamB);
+        if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Corrige les stats d'un joueur dans une game terminée (Administrateur) : champion, voie, K/D/A, CS,
+    /// or, dégâts, vision, note. Les corrections sont stockées à part, les données du Companion restent
+    /// intactes ; la game est marquée « modifiée par un admin » et le cost du joueur est recalculé.
+    /// </summary>
+    [HttpPut("{id:int}/players/{playerId:int}/corrections")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> CorrigerStats(int id, int playerId, [FromBody] CorrectPlayerStatsRequest request)
+    {
+        var result = await _correctionsDeStats.CorrigerAsync(id, playerId, request.ToDemande());
+        if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Annule la correction d'un champ (« champion », « position », « kills », « deaths », « assists »,
+    /// « cs », « goldEarned », « damageToChampions », « visionScore », « note ») : la valeur d'origine
+    /// du Companion est rétablie (Administrateur).
+    /// </summary>
+    [HttpDelete("{id:int}/players/{playerId:int}/corrections/{champ}")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType<GameRecapResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<ActionResult<GameRecapResponse>> AnnulerCorrectionDeStat(int id, int playerId, string champ)
+    {
+        var result = await _correctionsDeStats.AnnulerAsync(id, playerId, champ);
+        if (!result.IsOk) return this.Refusal(result);
+        return (await _gameService.GetRecapAsync(id))!;
+    }
+
+    /// <summary>
+    /// Supprime une game terminée (Administrateur). La Série et le cost du mois sont recalculés ; une
+    /// Série sans autre game terminée est effacée.
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Policy = Policies.Admin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public async Task<IActionResult> SupprimerGame(int id)
+    {
+        var result = await _corrections.SupprimerAsync(id);
+        if (!result.IsOk) return this.Refusal(result);
+        return NoContent();
     }
 
     /// <summary>

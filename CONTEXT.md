@@ -11,7 +11,21 @@ mots, avec ce sens-là. Un terme nouveau ou qui change de sens est ajouté ici.
 ## Acteurs
 
 - **Utilisateur** : une personne connectée avec son compte Discord. Seul moyen de  
-connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl).
+connexion. Entité `User` (DiscordId, DiscordUsername, AvatarUrl, bannière, rôle), créée à  
+la première connexion.
+- **Compte Discord** : ce qu'un Utilisateur présente de lui : pseudo, photo, bannière.  
+Ils sont relus depuis Discord à chaque connexion, et à la demande depuis le Profil.
+- **Compte Riot** : le compte LoL d'un Joueur, identifié par son RiotId et son PUUID.
+- **Lier** : associer son Compte Discord à un Joueur, c'est-à-dire à son Compte Riot.  
+**Délier** retire l'association ; le Joueur et ses stats restent.
+- **Profil** : la page où un Utilisateur voit et gère son Compte Discord et son Joueur  
+lié.
+- **Administrateur** : un Utilisateur qui a reçu ce rôle d'un autre Administrateur ou d'un  
+Superadministrateur (ADR 0017). Il corrige les games, fixe les costs et les peaks, gère les  
+clips du Fond, relance l'actualisation des rangs et nomme d'autres Administrateurs.
+- **Superadministrateur** : l'Administrateur défini en ligne de commande ou par le Wizard,  
+d'ordinaire l'Opérateur. Aucun Administrateur ne peut lui retirer ses droits ; il en  
+existe toujours au moins un.
 - **Joueur** : une personne qui joue les customs, identifiée par son compte Riot  
 (RiotId, PUUID). Entité `Player`. Un utilisateur peut lier son compte Discord à un  
 joueur ; un joueur peut exister sans utilisateur lié.
@@ -24,7 +38,8 @@ Discord, sa base de données et sa propre clé Riot.
 Elle n'est pas forcément Utilisateur ni administrateur de l'Instance.
 - **Wizard** : l'interface web temporaire, distincte du site, qui guide l'Opérateur  
 pour configurer une Instance neuve au premier démarrage de Docker Compose. Protégé par  
-un code d'accès à usage unique lu dans ses logs ; il s'arrête après l'installation et  
+un code d'accès à usage unique lu dans ses logs ; l'Opérateur s'y connecte avec Discord pour
+devenir le premier Superadministrateur ; il s'arrête après l'installation et  
 ne se rouvre jamais (ADR 0015).
 - **Uchuu** : le bot Discord de l'Instance (dépôt `harceleur_bot`), intégration facultative.  
 Le wizard génère les secrets partagés et affiche les valeurs à reporter dans le bot,  
@@ -111,11 +126,15 @@ salon général.
 ## Niveau des joueurs
 
 - **Rang SoloQ** : le rang classé d'un joueur en solo, lu via l'API Riot.
+- **Rôle principal** : la voie qu'un joueur a le plus jouée sur ses 15 dernières parties  
+de SoloQ, lue via l'API Riot. Un Administrateur peut relancer son calcul et celui des  
+Rangs, pour un joueur ou pour tous.
 - **Flex** : la file classée en groupe (`RANKED_FLEX_SR`), distincte de la SoloQ. Son  
 rang actuel est lu via l'API Riot et affiché à part ; il n'entre ni dans le cost ni  
 dans le MMR.
 - **Peak** : le meilleur rang qu'un joueur déclare avoir atteint (tier, division,  
-saison).
+saison), sans vérification. Il s'affiche avec sa saison dans les classements. Les saisons  
+proposées vont de S24 à la saison courante.
 - **MMR** : barème interne qui convertit un rang SoloQ en cost de départ. Ce n'est pas  
 un Elo.
 - **Cost** : la valeur d'un joueur pour équilibrer les équipes, de 1 à 6 au dixième,  

@@ -7,7 +7,6 @@ const valide = {
   clientId: "123456789012345678",
   clientSecret: "abcdefghijklmnopqrstuvwxyz012345",
   guildId: "987654321098765432",
-  adminIds: "111111111111111111",
 };
 const secrets = { botApiKey: "a".repeat(64), webhookSecret: "b".repeat(64), botToApiKey: "c".repeat(64) };
 const gen = { postgresPassword: "pg-secret", uchuu: secrets };
@@ -19,7 +18,7 @@ describe("options facultatives (#71)", () => {
     assert.equal(r.value?.riotKey, "");
     assert.equal(r.value?.timezone, "Europe/Paris");
     assert.equal(r.value?.uchuu, false);
-    const env = buildInstanceEnv(r.value!, { postgresPassword: "x" });
+    const env = buildInstanceEnv({ ...r.value!, superadminId: "111111111111111111" }, { postgresPassword: "x" });
     assert.equal(env.RIOT_API_KEY, "");
     assert.equal(env.SHAMELESS_TIMEZONE, "Europe/Paris");
     for (const nom of Object.keys(env)) assert.ok(!/^SHAMELESS_(BOT|WEB|WEBHOOK)/.test(nom), nom);
@@ -49,14 +48,14 @@ describe("options facultatives (#71)", () => {
 
   it("écrit la clé Riot et le fuseau dans instance.env", () => {
     const v = validateConfig({ ...valide, riotKey: "RGAPI-abc-123", timezone: "America/New_York" }).value!;
-    const env = buildInstanceEnv(v, gen);
+    const env = buildInstanceEnv({ ...v, superadminId: "111111111111111111" }, gen);
     assert.equal(env.RIOT_API_KEY, "RGAPI-abc-123");
     assert.equal(env.SHAMELESS_TIMEZONE, "America/New_York");
   });
 
   it("écrit les variables Uchuu avec les trois secrets distincts quand l'intégration est activée", () => {
     const v = validateConfig({ ...valide, uchuu: true, botUrl: "https://bot.example.org" }).value!;
-    const env = buildInstanceEnv(v, gen);
+    const env = buildInstanceEnv({ ...v, superadminId: "111111111111111111" }, gen);
     assert.equal(env.SHAMELESS_BOT_URL, "https://bot.example.org");
     assert.equal(env.SHAMELESS_WEB_URL, "https://shameless.example.org");
     assert.equal(env.SHAMELESS_BOT_API_KEY, secrets.botApiKey);
@@ -66,6 +65,6 @@ describe("options facultatives (#71)", () => {
 
   it("refuse d'écrire Uchuu sans secrets générés", () => {
     const v = validateConfig({ ...valide, uchuu: true, botUrl: "https://bot.example.org" }).value!;
-    assert.throws(() => buildInstanceEnv(v, { postgresPassword: "x" }));
+    assert.throws(() => buildInstanceEnv({ ...v, superadminId: "111111111111111111" }, { postgresPassword: "x" }), /secrets Uchuu/);
   });
 });

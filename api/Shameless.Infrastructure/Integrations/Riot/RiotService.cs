@@ -82,6 +82,7 @@ public sealed class RiotService : IRiotService
             if (matchIds == null || matchIds.Count == 0) return null;
 
             var roleCounts = new Dictionary<string, int>();
+            var echecs = 0;
 
             foreach (var matchId in matchIds)
             {
@@ -101,16 +102,22 @@ public sealed class RiotService : IRiotService
                 }
                 catch (HttpRequestException ex)
                 {
+                    echecs++;
                     _logger.LogWarning(ex, "Failed to fetch match {MatchId} for main role detection", matchId);
                 }
             }
+
+            // Aucune partie lisible parce que Riot a échoué : ce n'est pas « pas d'historique ».
+            if (roleCounts.Count == 0 && echecs > 0)
+                throw new HttpRequestException($"Aucune des {echecs} parties n'a pu être lue");
 
             return roleCounts.Count == 0 ? null : roleCounts.MaxBy(x => x.Value).Key;
         }
         catch (HttpRequestException ex)
         {
+            // L'appelant distingue « Riot a échoué » (exception) de « pas de parties » (null).
             _logger.LogError(ex, "Failed to fetch main role for PUUID: {PUUID}", puuid);
-            return null;
+            throw;
         }
     }
 

@@ -20,12 +20,12 @@ public sealed class OAuthStateStore : IOAuthStateStore
         _ttl = TimeSpan.FromMinutes(Math.Clamp(minutes, 1, 60));
     }
 
-    public string CreateState(string? returnUrl)
+    public string CreateState(string? returnUrl, bool refresh = false)
     {
         CleanupExpiredIfNeeded();
 
         var state = GenerateSecureTokenUrlSafe(32);
-        var entry = new StateEntry(returnUrl, _clock.GetUtcNow().UtcDateTime.Add(_ttl));
+        var entry = new StateEntry(returnUrl, refresh,_clock.GetUtcNow().UtcDateTime.Add(_ttl));
 
         _states[state] = entry;
         return state;
@@ -41,7 +41,7 @@ public sealed class OAuthStateStore : IOAuthStateStore
         if (entry.ExpiresAtUtc <= _clock.GetUtcNow().UtcDateTime)
             return null;
 
-        return new OAuthStateData(entry.ReturnUrl);
+        return new OAuthStateData(entry.ReturnUrl, entry.Refresh);
     }
 
     private int _cleanupCounter = 0;
@@ -70,5 +70,5 @@ public sealed class OAuthStateStore : IOAuthStateStore
             .TrimEnd('=');
     }
 
-    private sealed record StateEntry(string? ReturnUrl, DateTime ExpiresAtUtc);
+    private sealed record StateEntry(string? ReturnUrl, bool Refresh, DateTime ExpiresAtUtc);
 }

@@ -1,6 +1,7 @@
 using Shameless.Application.Entities;
 using Shameless.Application.Picker;
 using Shameless.Application.Stats;
+using Shameless.Application.Votes;
 
 namespace Shameless.Application.Joueurs;
 
@@ -88,7 +89,7 @@ internal sealed record PartieDuJoueur(
     {
         if (game.Participants.FirstOrDefault(p => p.PlayerId == playerId) is not { } participant) return null;
 
-        var stats = StatsDuParticipant.Lire(participant.RiotParticipantData);
+        var stats = ValeursEffectives.Stats(participant);
         var duree = NotesDeLaGame.DureeDe(game);
         var killsDeLEquipe = NotesDeLaGame.KillsDeLEquipe(game, participant.Side);
 
@@ -110,15 +111,18 @@ internal sealed record PartieDuJoueur(
     /// <summary>Les minutes jouées, null sans durée connue.</summary>
     public double? Minutes => DureeSecondes / 60.0;
 
-    public GameDeLaFiche EnLigne() => new(
+    /// <summary>La Game vue de la fiche ; les titres du Joueur ne se dévoilent que votes clos.</summary>
+    public GameDeLaFiche EnLigne(ResultatsDesVotes? votes) => new(
         Game.Id,
         Game.SeriesId,
         Game.PlayedAt,
         Game.EquipeOn(Participant.Side),
         Victoire,
         DureeSecondes,
-        Participant.ChampionId,
+        ValeursEffectives.Champion(Participant),
         Role,
         Stats,
-        Performance);
+        Performance,
+        Mvp: votes is { Statut: FenetreDeVote.Clos } && votes.Mvp.Gagnants.Contains(Participant.PlayerId),
+        Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId));
 }

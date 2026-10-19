@@ -54,6 +54,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: "Top",
       stats: { kills: 9, deaths: 2, assists: 7 } as Schemas["StatsDuParticipant"],
       performance: { note: 86, role: "Top", sourceDuRole: "Position", composantes: [] } as unknown as Schemas["NoteDePerformance"],
+      mvp: false,
+      dofd: false,
     },
     {
       gameId: 30,
@@ -66,6 +68,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: null,
       stats: null,
       performance: null,
+      mvp: false,
+      dofd: false,
     },
   ],
   titres: { mvp: 3, dofd: 1 },
@@ -100,6 +104,7 @@ const open = (
       peakTier: "DIAMOND",
       peakDivision: 1,
       peakLp: 0,
+      peakSeason: "S25",
       mainRole: "TOP",
     }),
     "GET /players/7/fiche": f,
@@ -118,6 +123,7 @@ describe("Fiche d'un joueur", () => {
     expect(await screen.findByText("Diamond II · 45 LP")).toBeInTheDocument();
     expect(screen.getByText("Platinum I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("Diamond I · 0 LP")).toBeInTheDocument();
+    expect(screen.getByText("S25")).toBeInTheDocument();
     expect(await screen.findByText("3 MVP")).toBeInTheDocument();
     expect(screen.getByText("1 DOFD")).toBeInTheDocument();
     expect(screen.getByText("SS")).toBeInTheDocument();

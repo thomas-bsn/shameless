@@ -100,6 +100,24 @@ public class BestOfSeries
         }
     }
 
+    /// <summary>
+    /// Recompte score et issue après la correction ou la suppression d'une game terminée : la Série
+    /// peut redevenir en cours (ou changer de vainqueur). Une Série interrompue le reste (ADR 0009) :
+    /// seul son score suit les games terminées.
+    /// </summary>
+    public void RecalculerLesResultats(IEnumerable<CustomGame> games)
+    {
+        var interrompue = Outcome == SeriesOutcome.Interrompue;
+        Outcome = SeriesOutcome.EnCours;
+        WinningTeam = null;
+        ApplyResults(games);
+        if (interrompue)
+        {
+            Outcome = SeriesOutcome.Interrompue;
+            WinningTeam = null;
+        }
+    }
+
     public IEnumerable<SeriesPlayer> PlayersOf(string equipe) => Players.Where(p => p.Equipe == equipe);
 
     /// <summary>

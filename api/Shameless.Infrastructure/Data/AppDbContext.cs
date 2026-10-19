@@ -85,8 +85,14 @@ public class AppDbContext : DbContext
             entity.ToTable("users");
             entity.HasKey(e => e.Id).HasName("users_pk");
             entity.Property(e => e.Id).UseSerialColumn();
+            entity.HasIndex(e => e.DiscordId).IsUnique();
             entity.Property(e => e.DiscordUsername).HasColumnType("character varying");
             entity.Property(e => e.AvatarUrl).HasColumnType("character varying");
+            entity.Property(e => e.BannerUrl).HasColumnType("character varying");
+            entity.Property(e => e.BannerColor).HasMaxLength(7);
+            entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(30).HasDefaultValue(UserRole.Utilisateur);
+            entity.Property(e => e.PromotedBy).HasColumnType("character varying");
+            entity.Property(e => e.PromotedAt).HasColumnType(Timestamp);
 
             entity.HasOne(u => u.Player)
                   .WithOne(p => p.User)
@@ -127,6 +133,8 @@ public class AppDbContext : DbContext
                   .HasDefaultValueSql("now()");
 
             entity.Property(e => e.CompletedAt).HasColumnType(Timestamp);
+            entity.Property(e => e.ModifieeParAdminLe).HasColumnType(Timestamp);
+            entity.Property(e => e.VainqueurOuCompositionCorriges).HasDefaultValue(false);
 
             entity.HasOne(e => e.Series)
                   .WithMany(s => s.Games)
@@ -158,6 +166,9 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => new { e.CustomGameId, e.PlayerId });
+
+            // Toute lecture d'un participant charge ses corrections : l'affichage prend la valeur corrigée.
+            entity.Navigation(e => e.Corrections).AutoInclude();
         });
 
         modelBuilder.Entity<PlayerMonthlyCost>(entity =>
@@ -187,6 +198,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PickerSessionConfiguration());
         modelBuilder.ApplyConfiguration(new PickerSessionPlayerConfiguration());
         modelBuilder.ApplyConfiguration(new LienAccesConfiguration());
+        modelBuilder.ApplyConfiguration(new CorrectionDeStatConfiguration());
         modelBuilder.ApplyConfiguration(new DraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new ActionDraftChampionsConfiguration());
         modelBuilder.ApplyConfiguration(new RapportCompanionConfiguration());

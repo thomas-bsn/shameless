@@ -26,3 +26,4 @@ et des clips de parties réellement jouées et fait revenir le cost en arrière.
 - Annuler n'a jamais à recalculer le cost, puisqu'aucune game terminée n'est effacée.
 - Le départ d'un joueur peut aussi se gérer par un remplacement, sans arrêter la série.
 - Le comportement actuel de `AbandonSeries` (suppression systématique) change.
+- La correction d'une game par un Administrateur (vainqueur, composition) recalcule le score et l'issue de la série, mais ne modifie pas l'équipe de la série (ses joueurs) : l'équipe d'une série reste celle de son lancement.

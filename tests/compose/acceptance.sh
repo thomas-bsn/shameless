@@ -18,6 +18,7 @@ BASE="http://localhost:$PORT"
 SETUP="$BASE/_setup/api"
 export SHAMELESS_HTTP_PORT=$PORT SHAMELESS_HTTPS_PORT=18443
 export WIZARD_DISCORD_CHECK=off   # pas d'appel réseau vers Discord pendant le test
+export WIZARD_DISCORD_LOGIN_FAKE_ID=111111111111111111   # la connexion Discord de l'Opérateur renvoie ce compte (pas de vrai compte en CI)
 export WIZARD_INSTALL_TIMEOUT_SECONDS=240
 unset SHAMELESS_VERSION SHAMELESS_IMAGE_PREFIX
 
@@ -45,6 +46,16 @@ post() {
 expect_status() { # expect_status <attendu> <obtenu> <message>
   [ "$1" = "$2" ] || fail "$3 (attendu $1, obtenu $2 : $(cat "$TMP/body" 2>/dev/null))"
   ok "$3"
+}
+# L'Opérateur se connecte avec Discord : on démarre la connexion, puis on rejoue le retour de Discord
+# (sans cookie, comme une navigation venue d'un autre site). Le wizard échange le code (faux compte en CI).
+connecter_discord() { # connecter_discord <jar> <adresse publique>
+  local jar=$1 public=$2 etat
+  expect_status 200 "$(post "$jar" discord/start "$(printf '{"publicUrl":"%s","clientId":"%s","clientSecret":"%s"}' "$public" "$CLIENT_ID" "$CLIENT_SECRET")")" "la connexion Discord de l'Opérateur démarre"
+  etat=$(grep -o 'state=[A-Za-z0-9]*' "$TMP/body" | head -1)
+  [ "$(curl -s -o /dev/null -w '%{http_code}' "$SETUP/discord/callback?code=acceptance&$etat")" = "200" ] || fail "le retour de Discord n'est pas accepté"
+  curl -s -b "$jar" "$SETUP/state" | grep -q "\"id\":\"$ADMIN_ID\"" || fail "le compte connecté n'apparaît pas dans l'état du wizard"
+  ok "le compte Discord connecté est retenu comme premier Superadministrateur"
 }
 wait_for() { # wait_for <secondes> <description> <commande...>
   local max=$1 desc=$2; shift 2
@@ -88,8 +99,8 @@ dc down -v --remove-orphans >/dev/null 2>&1
 # --- Parcours d'installation : parcours <nom> <json des options> ----------------------------------
 # Rend la saisie complète : Discord (toujours obligatoire) + les options propres au parcours.
 saisie() {
-  printf '{"publicUrl":"%s","clientId":"%s","clientSecret":"%s","guildId":"%s","adminIds":"%s",%s}' \
-    "$BASE" "$CLIENT_ID" "$CLIENT_SECRET" "$GUILD_ID" "$ADMIN_ID" "$1"
+  printf '{"publicUrl":"%s","clientId":"%s","clientSecret":"%s","guildId":"%s",%s}' \
+    "$BASE" "$CLIENT_ID" "$CLIENT_SECRET" "$GUILD_ID" "$1"
 }
 
 parcours() {
@@ -108,8 +119,10 @@ parcours() {
   expect_status 401 "$(post "$jar_a" unlock '{"code":"AAAA-AAAA-AAAA-AAAA"}')" "un mauvais code est refusé"
   expect_status 200 "$(post "$jar_a" unlock "{\"code\":\"$code\"}")" "le code affiché dans les logs ouvre une session"
   expect_status 401 "$(post "$jar_b" unlock "{\"code\":\"$code\"}")" "le code est à usage unique"
+  expect_status 422 "$(post "$jar_a" install "$(saisie '"riotKey":"","timezone":"","uchuu":false,"botUrl":""')")" "sans connexion Discord, l'installation est refusée"
+  connecter_discord "$jar_a" "$BASE"
 
-  local invalide="{\"publicUrl\":\"$BASE\",\"clientId\":\"abc\",\"clientSecret\":\"x\",\"guildId\":\"1\",\"adminIds\":\"\",\"uchuu\":true,\"botUrl\":\"\",\"riotKey\":\"pas-une-cle\"}"
+  local invalide="{\"publicUrl\":\"$BASE\",\"clientId\":\"abc\",\"clientSecret\":\"x\",\"guildId\":\"1\",\"uchuu\":true,\"botUrl\":\"\",\"riotKey\":\"pas-une-cle\"}"
   expect_status 422 "$(post "$jar_a" install "$invalide")" "une saisie invalide est expliquée et refusée"
   grep -q '"clientId"' "$TMP/body" || fail "l'erreur ne nomme pas le champ clientId"
   grep -q '"riotKey"' "$TMP/body" || fail "l'erreur ne nomme pas le champ riotKey"
@@ -137,6 +150,12 @@ parcours() {
   [ -n "$PG_PASSWORD" ] || fail "le mot de passe de base généré est introuvable dans instance.env"
   ok "« docker compose exec api cat /instance/instance.env » relit la configuration ; un mot de passe de base a été généré"
   [ -n "$(env_value SHAMELESS_TIMEZONE)" ] || fail "SHAMELESS_TIMEZONE absent d'instance.env"
+
+  echo "== Commande superadmin de l'image de l'API ($nom)"
+  PREMIER_ADMIN=$(env_value Auth__AdminDiscordIds | cut -d, -f1)
+  dc exec -T api dotnet Shameless.Api.dll superadmin lister 2>/dev/null | grep -q "^$PREMIER_ADMIN " ||
+    fail "« superadmin lister » ne montre pas l'identifiant de la configuration ($PREMIER_ADMIN) comme Superadministrateur"
+  ok "« docker compose exec api dotnet Shameless.Api.dll superadmin lister » montre le Superadministrateur importé de la configuration"
 }
 
 # Secrets à ne jamais voir dans les logs ; chaque parcours complète la liste.
@@ -232,6 +251,7 @@ JAR_D="$TMP/reprise.jar"
 WIZARD_INSTALL_TIMEOUT_SECONDS=30 dc up -d >/dev/null
 wait_for 60 "le wizard affiche son code dans les logs" has_code
 expect_status 200 "$(post "$JAR_D" unlock "{\"code\":\"$(code_from_logs)\"}")" "le code ouvre une session"
+connecter_discord "$JAR_D" "$BASE"
 dc stop postgres >/dev/null 2>&1
 expect_status 202 "$(post "$JAR_D" install "$(saisie '"riotKey":"","timezone":"Europe/Paris","uchuu":false,"botUrl":""')")" "la première saisie est acceptée"
 phase_echec() { curl -s -b "$JAR_D" "$SETUP/state" | grep -q '"phase":"failed"'; }
@@ -278,8 +298,9 @@ DOMAINE="shameless.example.org"
 dc up -d >/dev/null
 wait_for 60 "le wizard affiche son code dans les logs" has_code
 expect_status 200 "$(post "$JAR_E2" unlock "{\"code\":\"$(code_from_logs)\"}")" "le code ouvre une session"
+connecter_discord "$JAR_E2" "https://$DOMAINE"
 amont() { curl -s -o /dev/null -w '%{http_code}' -H "Host: $DOMAINE" -H 'X-Forwarded-Proto: https' "$BASE/api/health"; }
-POST_HEADER='X-Forwarded-Proto: https' expect_status 202 "$(POST_HEADER='X-Forwarded-Proto: https' post "$JAR_E2" install "$(printf '{"publicUrl":"https://%s","clientId":"%s","clientSecret":"%s","guildId":"%s","adminIds":"%s","riotKey":"","timezone":"","uchuu":false,"botUrl":""}' "$DOMAINE" "$CLIENT_ID" "$CLIENT_SECRET" "$GUILD_ID" "$ADMIN_ID")")" "l'installation d'un domaine HTTPS est acceptée derrière un proxy"
+POST_HEADER='X-Forwarded-Proto: https' expect_status 202 "$(POST_HEADER='X-Forwarded-Proto: https' post "$JAR_E2" install "$(printf '{"publicUrl":"https://%s","clientId":"%s","clientSecret":"%s","guildId":"%s","riotKey":"","timezone":"","uchuu":false,"botUrl":""}' "$DOMAINE" "$CLIENT_ID" "$CLIENT_SECRET" "$GUILD_ID")")" "l'installation d'un domaine HTTPS est acceptée derrière un proxy"
 grep -q 'proxy en amont' "$TMP/body" || fail "le wizard n'a pas signalé le HTTPS géré en amont"
 amont_sain() { [ "$(amont)" = "200" ]; }
 wait_for 240 "l'Instance répond en HTTP sur le port 80 sans redirection, pour le domaine public" amont_sain

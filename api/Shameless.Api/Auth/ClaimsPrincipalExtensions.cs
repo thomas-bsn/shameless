@@ -13,6 +13,10 @@ public static class ClaimsPrincipalExtensions
         user.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Signed-in user without a Discord id.");
 
+    /// <summary>L'identifiant Discord en nombre, ou null sans session (ou identifiant illisible).</summary>
+    public static long? DiscordIdOrNull(this ClaimsPrincipal user) =>
+        long.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     public static string? Username(this ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.Name);
 
     public static string? AvatarUrl(this ClaimsPrincipal user) => user.FindFirstValue(AvatarClaim);

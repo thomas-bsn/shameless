@@ -72,6 +72,7 @@ public class CustomGameService
                             Id: g.Id,
                             SeriesId: g.SeriesId,
                             PlayedAt: g.PlayedAt,
+                            ModifieeParAdminLe: g.ModifieeParAdminLe,
                             TeamASide: g.TeamASide,
                             TeamBSide: g.TeamBSide,
                             Winner: g.WinningTeam,

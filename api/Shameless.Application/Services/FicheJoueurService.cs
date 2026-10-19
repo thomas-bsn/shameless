@@ -23,7 +23,6 @@ public class FicheJoueurService
     {
         if (await _players.GetWithUserAsync(playerId) is not { } joueur) return null;
         var games = await _games.GetCompletedGamesOfPlayerAsync(playerId);
-        var titres = await _votes.GetTitresAsync(games);
-        return FicheJoueur.Calculer(joueur, games, titres.GetValueOrDefault(playerId));
+        return FicheJoueur.Calculer(joueur, games, await _votes.GetResultatsDesGamesAsync(games));
     }
 }

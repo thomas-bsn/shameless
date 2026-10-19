@@ -20,7 +20,7 @@ function useMediaQuery(query: string): boolean {
 
 /**
  * Le Fond : derrière les pages à session, une vidéo muette qui enchaîne des Clips de l'Instance, floutée
- * sous un voile. Un décor fixe prend le relais sans session, sans Clip, sur écran étroit, avec la
+ * sous un voile sombre dans les deux thèmes. Un décor fixe prend le relais sans session, sans Clip, sur écran étroit, avec la
  * réduction des animations, ou quand aucun clip ne se lit. Un seul clip est chargé à la fois.
  */
 export function Fond() {
@@ -47,6 +47,16 @@ export function Fond() {
     document.addEventListener("visibilitychange", surVisibilite);
     return () => document.removeEventListener("visibilitychange", surVisibilite);
   }, [actif]);
+
+  // Le thème clair en dépend : avec la vidéo, le Fond est assombri et le texte posé dessus devient clair (index.css).
+  const avecVideo = courant !== undefined;
+  useEffect(() => {
+    if (!avecVideo) return;
+    document.documentElement.dataset.fond = "video";
+    return () => {
+      delete document.documentElement.dataset.fond;
+    };
+  }, [avecVideo]);
 
   // Le clip suivant n'est préchargé qu'en métadonnées, hors de l'écran : un seul clip est chargé en entier.
   const suivantId = courant && lisibles.length > 1 ? lisibles[(rang + 1) % lisibles.length].id : undefined;
@@ -84,7 +94,7 @@ export function Fond() {
               onError={() => setIllisibles((ids) => [...ids, courant.id])}
               className="absolute inset-0 size-full scale-105 object-cover blur-[12px]"
             />
-            <div className="absolute inset-0 bg-white/80 dark:bg-black/75" />
+            <div className="absolute inset-0 bg-black/55" />
           </>
         )}
       </div>

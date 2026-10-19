@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Loader2, PartyPopper } from "lucide-react";
+import { AlertTriangle, Check, Loader2, PartyPopper, UserCheck } from "lucide-react";
 import logo from "../../public/logo.png";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { getState, install, unlock, validate, type FieldErrors, type Phase, type RecapUchuu, type Values } from "./api";
+import { getState, install, startDiscord, unlock, validate, type FieldErrors, type Phase, type RecapUchuu, type Values, type WizardState } from "./api";
 import { BoiteACopier, Champ, LigneACopier } from "./champs";
 
 const ETAPES = [
@@ -24,13 +24,13 @@ type Etape = (typeof ETAPES)[number]["cle"];
 const CHAMPS_PAR_ETAPE: Record<Etape, (keyof Values)[]> = {
   intro: [],
   adresse: ["publicUrl"],
-  discord: ["clientId", "clientSecret", "guildId", "adminIds"],
+  discord: ["clientId", "clientSecret", "guildId"],
   options: ["riotKey", "timezone", "botUrl"],
   recap: [],
   fin: [],
 };
 
-const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", adminIds: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "", botName: "" };
+const VIDE: Values = { publicUrl: "", clientId: "", clientSecret: "", guildId: "", riotKey: "", timezone: "Europe/Paris", uchuu: false, botUrl: "", botName: "" };
 /** Adresse de cette page si elle est locale (port compris), sinon localhost sur le port par défaut. */
 const adresseLocale = () => (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? window.location.origin : "http://localhost:8080");
 const NOM_BOT_PAR_DEFAUT = "Bot Discord";
@@ -57,9 +57,21 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
   const [connexionCoupee, setConnexionCoupee] = useState(false);
   const [avertissements, setAvertissements] = useState<string[]>([]);
   const [recap, setRecap] = useState<RecapUchuu | null>(null);
+  const [compte, setCompte] = useState<{ id: string; username: string } | null>(null);
+  const [erreurDiscord, setErreurDiscord] = useState("");
+  const [connexionDiscord, setConnexionDiscord] = useState(false);
+  const [lienDiscord, setLienDiscord] = useState("");
+  const [compteRequis, setCompteRequis] = useState(false);
+  const [redirectWizard, setRedirectWizard] = useState<string | null>(null);
 
-  const appliquer = useCallback((e: { phase: Phase; publicUrl?: string; failure?: string; codeExpired?: boolean; uchuu?: RecapUchuu }) => {
+  const appliquer = useCallback((e: Pick<WizardState, "phase" | "publicUrl" | "failure" | "codeExpired" | "uchuu" | "discord" | "discordError">) => {
     setPhase(e.phase);
+    setCompte(e.discord ?? null);
+    setErreurDiscord(e.discordError ?? "");
+    if (e.discord || e.discordError) {
+      setConnexionDiscord(false);
+      setLienDiscord("");
+    }
     if (e.uchuu) setRecap(e.uchuu);
     setCodeExpire(!!e.codeExpired);
     if (e.publicUrl) setUrlPublique(e.publicUrl);
@@ -92,8 +104,16 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
     return () => clearInterval(timer);
   }, [etape, phase, intervalleMs, appliquer]);
 
+  // Attente du retour de Discord : le callback est traité par le serveur dans une autre fenêtre.
+  useEffect(() => {
+    if (!connexionDiscord) return;
+    const timer = setInterval(() => void getState().then((r) => appliquer(r.body), () => {}), intervalleMs);
+    return () => clearInterval(timer);
+  }, [connexionDiscord, intervalleMs, appliquer]);
+
   const verifier = useCallback(async (v: Values) => {
     const r = await validate(v);
+    setRedirectWizard(r.body.wizardRedirectUri ?? null);
     setErreurs(r.body.errors ?? {});
     setCallback(r.body.callbackUrl ?? null);
     setAvertissements(r.body.warnings ?? []);
@@ -119,7 +139,29 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
     const champs = CHAMPS_PAR_ETAPE[etape];
     setTouches((t) => new Set([...t, ...champs]));
     if (champs.some((c) => errs[c])) return;
+    if (etape === "discord" && !compte) return setCompteRequis(true);
     setEtape(ETAPES[index + 1].cle);
+  };
+
+  const connecterDiscord = async () => {
+    // La fenêtre s'ouvre pendant le clic (sinon le navigateur la bloque), puis reçoit l'adresse de Discord.
+    const fenetre = window.open("", "_blank");
+    const errs = await verifier(valeurs);
+    const champs = CHAMPS_PAR_ETAPE.adresse.concat(["clientId", "clientSecret"]);
+    setTouches((t) => new Set([...t, ...champs]));
+    if (champs.some((c) => errs[c])) return fenetre?.close();
+    const r = await startDiscord(valeurs);
+    if (r.status !== 200 || !r.body.authorizeUrl) {
+      fenetre?.close();
+      setErreurs((e) => ({ ...e, ...r.body.errors }));
+      setErreurDiscord(r.body.message ?? "La connexion Discord n'a pas pu démarrer. Réessayez.");
+      return;
+    }
+    setErreurDiscord("");
+    setCompteRequis(false);
+    setConnexionDiscord(true);
+    if (fenetre) fenetre.location.href = r.body.authorizeUrl;
+    else setLienDiscord(r.body.authorizeUrl);
   };
 
   const installer = async () => {
@@ -188,7 +230,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
             <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
               <li>L'adresse publique (HTTPS) de votre Instance</li>
               <li>Une application OAuth Discord dans le portail développeur : nous vous guidons</li>
-              <li>L'identifiant de votre serveur Discord et le vôtre</li>
+              <li>L'identifiant de votre serveur Discord ; vous vous connecterez avec votre compte Discord pour devenir Superadministrateur</li>
             </ul>
             <p className="text-xs text-muted-foreground">Les clés techniques internes sont générées automatiquement.</p>
           </CardContent>
@@ -247,8 +289,36 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
               aide="Même page, bouton « Reset Secret ». Il n'est affiché qu'une fois : copiez-le tout de suite. Il reste masqué ici et n'est jamais écrit dans les journaux." />
             <Champ label="Identifiant du serveur Discord" value={valeurs.guildId} onChange={(v) => modifier("guildId", v)} onBlur={() => quitter("guildId")} error={erreur("guildId")}
               aide="Dans Discord, activez le mode développeur (Paramètres avancés), puis clic droit sur votre serveur, « Copier l'identifiant du serveur ». Seuls ses membres pourront se connecter." />
-            <Champ label="Identifiants Discord des administrateurs" value={valeurs.adminIds} onChange={(v) => modifier("adminIds", v)} onBlur={() => quitter("adminIds")} error={erreur("adminIds")}
-              aide="Clic droit sur votre profil (mode développeur activé), « Copier l'identifiant de l'utilisateur ». Au moins un ; séparez-en plusieurs par une virgule ou un espace." />
+            <section aria-label="Premier Superadministrateur" className="space-y-3 rounded-lg border p-3">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium">Premier Superadministrateur</h3>
+                <p className="text-xs text-muted-foreground">
+                  Connectez-vous avec Discord : le compte connecté devient le premier Superadministrateur d'une installation neuve. Il pourra ensuite nommer des Administrateurs depuis le site.
+                  Sur une base qui a déjà un Superadministrateur, ce compte est ignoré : ajoutez-en un avec la commande « superadmin ajouter ».
+                  Shameless ne lit que votre identifiant Discord, une seule fois, et ne le saisit jamais à la main.
+                </p>
+              </div>
+              <div className="space-y-2 rounded-md border border-dashed p-3">
+                <p className="text-xs">Ajoutez aussi cette seconde URL dans <b>Redirects</b> (même page OAuth2) : c'est elle qui ramène la connexion jusqu'au wizard.</p>
+                <BoiteACopier valeur={redirectWizard ?? `${valeurs.publicUrl}/_setup/api/discord/callback`} />
+                <p className="text-xs text-muted-foreground">Ouvrez ce wizard à l'adresse publique indiquée plus haut : la connexion revient sur cette adresse.</p>
+              </div>
+              {compte ? (
+                <p className="flex items-center gap-2 rounded-md bg-emerald-500/10 p-3 text-sm"><UserCheck className="size-4" /> Connecté en tant que <b>{compte.username}</b> ({compte.id})</p>
+              ) : connexionDiscord ? (
+                <p className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" /> En attente de Discord : terminez dans la fenêtre qui vient de s'ouvrir.</p>
+              ) : null}
+              {lienDiscord && (
+                <p className="text-xs">
+                  Le navigateur a bloqué la fenêtre : <a className="underline" href={lienDiscord} target="_blank" rel="noreferrer">Ouvrir Discord</a>.
+                </p>
+              )}
+              {erreurDiscord && <Alert variant="destructive"><AlertTriangle /><AlertDescription>{erreurDiscord}</AlertDescription></Alert>}
+              {compteRequis && !compte && <p className="text-xs text-destructive">Connectez-vous avec Discord pour continuer.</p>}
+              <Button type="button" variant={compte ? "outline" : "default"} disabled={connexionDiscord} onClick={() => void connecterDiscord()}>
+                {compte ? "Changer de compte" : erreurDiscord ? "Réessayer la connexion" : "Se connecter avec Discord"}
+              </Button>
+            </section>
           </CardContent>
           <Navigation retour={() => aller("adresse")} suite={() => void continuer()} />
         </Card>
@@ -315,7 +385,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                 ["Client ID", valeurs.clientId],
                 ["Client Secret", masquer(valeurs.clientSecret)],
                 ["Serveur Discord", valeurs.guildId],
-                ["Administrateurs", valeurs.adminIds],
+                ["Superadministrateur", compte ? `${compte.username} (${compte.id})` : "—"],
                 ["Clé Riot", valeurs.riotKey ? masquer(valeurs.riotKey) : "Non renseignée (facultatif)"],
                 ["Fuseau horaire", valeurs.timezone],
                 [nomBot, valeurs.uchuu ? `Activé : ${valeurs.botUrl}` : "Ignoré"],
