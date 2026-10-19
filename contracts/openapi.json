@@ -4720,6 +4720,26 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "default": {
             "description": "Erreur",
             "content": {
@@ -7509,7 +7529,8 @@
         "required": [
           "discordId",
           "username",
-          "avatarUrl"
+          "avatarUrl",
+          "principal"
         ],
         "type": "object",
         "properties": {
@@ -7527,6 +7548,9 @@
               "null",
               "string"
             ]
+          },
+          "principal": {
+            "type": "boolean"
           }
         }
       },
@@ -8172,6 +8196,7 @@
           "prenom",
           "riotId",
           "discord",
+          "comptesDiscord",
           "cost",
           "soloQ",
           "flex",
@@ -8202,6 +8227,12 @@
                 "$ref": "#/components/schemas/CompteDiscordLie"
               }
             ]
+          },
+          "comptesDiscord": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompteDiscordLie"
+            }
           },
           "cost": {
             "type": "number",

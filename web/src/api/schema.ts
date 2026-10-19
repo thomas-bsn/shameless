@@ -4260,6 +4260,24 @@ export interface paths {
                         "text/json": components["schemas"]["PlayerLinkResponse"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Erreur */
                 default: {
                     headers: {
@@ -6393,6 +6411,7 @@ export interface components {
             discordId: string;
             username: null | string;
             avatarUrl: null | string;
+            principal: boolean;
         };
         CorrectGameRequest: {
             winner: null | string;
@@ -6547,6 +6566,7 @@ export interface components {
             prenom: string;
             riotId: string;
             discord: null | components["schemas"]["CompteDiscordLie"];
+            comptesDiscord: components["schemas"]["CompteDiscordLie"][];
             /** Format: double */
             cost: number;
             soloQ: null | components["schemas"]["RangActuel"];

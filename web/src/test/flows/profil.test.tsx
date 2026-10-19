@@ -28,6 +28,7 @@ const fiche = (overrides = {}) => ({
   prenom: "Alice",
   riotId: "Alice#EUW",
   discord: null,
+  comptesDiscord: [],
   cost: 4.6,
   soloQ: null,
   flex: null,
@@ -189,6 +190,39 @@ describe("Profil (variante A3)", () => {
     expect(within(joueur).getByText("Jungle")).toBeInTheDocument();
     expect(within(joueur).getByText("Diamond IV · 10 LP")).toBeInTheDocument();
     expect(within(joueur).getByText("S25")).toBeInTheDocument();
+  });
+
+  it("liste les autres Comptes Discord liés au même Joueur, marque le principal et prévient que le lien n'est pas vérifié", async () => {
+    mockApi(
+      routes({
+        "GET /players/1/fiche": fiche({
+          discord: { discordId: "2002", username: "Nono", avatarUrl: null, principal: true },
+          comptesDiscord: [
+            { discordId: "2002", username: "Nono", avatarUrl: null, principal: true },
+            { discordId: "1001", username: "Sam", avatarUrl: null, principal: false },
+          ],
+        }),
+      }),
+    );
+    renderApp("/compte");
+
+    const joueur = await screen.findByRole("region", { name: "Joueur lié" });
+    const comptes = await within(joueur).findByRole("list", { name: "Comptes Discord liés" });
+    const lignes = within(comptes).getAllByRole("listitem");
+    expect(lignes).toHaveLength(2);
+    expect(lignes[0]).toHaveTextContent("Nono");
+    expect(lignes[0]).toHaveTextContent("Principal");
+    expect(lignes[1]).toHaveTextContent("Sam");
+    expect(lignes[1]).toHaveTextContent("toi");
+    expect(lignes[1]).not.toHaveTextContent("Principal");
+    expect(within(joueur).getByText(/Le lien n'est pas vérifié/)).toBeInTheDocument();
+  });
+
+  it("prévient aussi, avant de lier, que n'importe quel Discord peut se lier à n'importe quel joueur", async () => {
+    mockApi(routes({ "GET /players/me": problem(404, "Aucun joueur n'est lié à ton compte Discord.") }));
+    renderApp("/compte");
+
+    expect(await screen.findByText(/Le lien n'est pas vérifié/)).toBeInTheDocument();
   });
 
   it("affiche les titres Roi/Reine et DOFD des games où le joueur les a remportés", async () => {

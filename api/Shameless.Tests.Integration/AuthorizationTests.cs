@@ -240,19 +240,18 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
     }
 
     [Fact]
-    public async Task Lier_un_joueur_deja_lie_a_quelqu_un_d_autre_est_refuse_sauf_admin()
+    public async Task Lier_un_joueur_deja_lie_a_quelqu_un_d_autre_ajoute_un_discord_sans_rien_retirer_au_premier()
     {
         var owner = Factory.CreateSignedInClient("7003");
         var playerId = await CreatePlayerAsync(owner, "Pris");
         await ReadJsonAsync(await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct));
 
+        // Sans vérification (ADR 0018) : un second Discord, même non admin, se lie au même Joueur.
         var other = Factory.CreateSignedInClient("7004");
-        var stolen = await other.PostAsJsonAsync("/players/link", new { playerId }, Ct);
-        Assert.Equal(HttpStatusCode.Conflict, stolen.StatusCode);
+        Assert.True((await other.PostAsJsonAsync("/players/link", new { playerId }, Ct)).IsSuccessStatusCode);
 
-        // Le propriétaire peut re-lier son propre joueur, l'admin peut ré-attribuer.
         Assert.True((await owner.PostAsJsonAsync("/players/link", new { playerId }, Ct)).IsSuccessStatusCode);
-        Assert.True((await Factory.CreateAdminClient().PostAsJsonAsync("/players/link", new { playerId }, Ct)).IsSuccessStatusCode);
+        Assert.Equal(playerId, (await ReadJsonAsync(await owner.GetAsync("/players/me", Ct))).GetProperty("id").GetInt32());
     }
 
     private async Task<(string Method, string Url)> PrepareAdminActionAsync(string action)

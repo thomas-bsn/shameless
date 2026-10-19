@@ -134,7 +134,7 @@ public class PlayerService : IPlayerService
         }
     }
     
-    public async Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl, bool canTakeOver)
+    public async Task<LinkResult> LinkPlayerAsync(string discordUserId, int playerId, string? username, string? avatarUrl)
     {
         var player = await _players.GetByIdAsync(playerId);
         if (player is null) return LinkResult.PlayerNotFound;
@@ -142,8 +142,10 @@ public class PlayerService : IPlayerService
         var discordIdLong = long.Parse(discordUserId);
         var user = await _users.GetByDiscordIdAsync(discordIdLong);
 
-        if (player.UserId is { } ownerId && ownerId != user?.Id && !canTakeOver)
-            return LinkResult.AlreadyLinkedToAnotherUser;
+        // Sans vérification (ADR 0018) : un Joueur déjà lié accepte d'autres Utilisateurs. Un Utilisateur,
+        // lui, n'a qu'un Joueur : il se délie d'abord pour en changer.
+        if (user?.PlayerId is { } actuel && actuel != playerId)
+            return LinkResult.AlreadyLinkedToAnotherPlayer;
 
         user ??= await _users.CreateAsync(discordIdLong, username, avatarUrl);
 

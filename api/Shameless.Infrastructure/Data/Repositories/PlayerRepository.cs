@@ -88,34 +88,61 @@ public class PlayerRepository : IPlayerRepository
 
     public async Task LinkUserAsync(int playerId, int userId)
     {
-        var player = await _db.Players.FindAsync(playerId);
-        if (player == null) throw new InvalidOperationException("Player not found");
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null) throw new InvalidOperationException("User not found");
+        if (user.PlayerId == playerId) return;
 
-        // Un utilisateur n'est lié qu'à un seul joueur : on détache l'ancien.
-        var previous = await _db.Players.Where(p => p.UserId == userId && p.Id != playerId).ToListAsync();
-        foreach (var other in previous)
-            other.UserId = null;
-
-        player.UserId = userId;
+        // Un Utilisateur n'est lié qu'à un seul Joueur ; plusieurs Utilisateurs peuvent l'être au même (ADR 0018).
+        var ancien = user.PlayerId;
+        user.PlayerId = playerId;
+        user.PlayerLinkedAt = _clock.GetUtcNow().UtcDateTime;
         await _db.SaveChangesAsync();
+
+        await RecalculerPrincipalAsync(playerId);
+        if (ancien is { } a) await RecalculerPrincipalAsync(a);
     }
 
     public async Task<bool> UnlinkUserAsync(int userId)
     {
-        var linked = await _db.Players.Where(p => p.UserId == userId).ToListAsync();
-        foreach (var player in linked)
-            player.UserId = null;
+        var user = await _db.Users.FindAsync(userId);
+        if (user?.PlayerId is not { } playerId) return false;
 
+        user.PlayerId = null;
+        user.PlayerLinkedAt = null;
         await _db.SaveChangesAsync();
-        return linked.Count > 0;
+
+        await RecalculerPrincipalAsync(playerId);
+        return true;
+    }
+
+    /// <summary>
+    /// Le Discord principal d'un Joueur : le lien le plus ancien, à égalité le plus petit id d'Utilisateur
+    /// (ADR 0018). Recalculé depuis la table des Utilisateurs à chaque lien ou déliaison.
+    /// </summary>
+    private async Task RecalculerPrincipalAsync(int playerId)
+    {
+        var principal = await _db.Users
+            .Where(u => u.PlayerId == playerId)
+            .OrderBy(u => u.PlayerLinkedAt).ThenBy(u => u.Id)
+            .Select(u => (int?)u.Id)
+            .FirstOrDefaultAsync();
+        var player = await _db.Players.FindAsync(playerId);
+        if (player == null || player.UserId == principal) return;
+
+        player.UserId = principal;
+        await _db.SaveChangesAsync();
     }
 
     public async Task<PlayerDto?> GetByUserIdAsync(int userId)
     {
-        var player = await _db.Players.Include(p => p.User).FirstOrDefaultAsync(p => p.UserId == userId);
+        var player = await _db.Players.Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Users.Any(u => u.Id == userId));
         return player == null ? null : ToDto(player);
     }
-    
+
+    public Task<int?> GetPlayerIdByDiscordIdAsync(long discordId) =>
+        _db.Users.AsNoTracking().Where(u => u.DiscordId == discordId).Select(u => u.PlayerId).FirstOrDefaultAsync();
+
     public async Task UpdateMainRoleAsync(int id, string? mainRole)
     {
         var player = await _db.Players.FindAsync(id);
@@ -160,7 +187,7 @@ public class PlayerRepository : IPlayerRepository
         await _db.Players.FindAsync(id);
 
     public Task<Player?> GetWithUserAsync(int id) =>
-        _db.Players.AsNoTracking().Include(p => p.User).SingleOrDefaultAsync(p => p.Id == id);
+        _db.Players.AsNoTracking().Include(p => p.User).Include(p => p.Users.OrderBy(u => u.PlayerLinkedAt).ThenBy(u => u.Id)).SingleOrDefaultAsync(p => p.Id == id);
 
     public async Task<List<Player>> GetByIdsAsync(List<int> ids) =>
         await _db.Players.Where(p => ids.Contains(p.Id)).ToListAsync();
@@ -168,7 +195,8 @@ public class PlayerRepository : IPlayerRepository
     public async Task<List<Player>> GetByDiscordIdsAsync(IReadOnlyCollection<long> discordIds) =>
         await _db.Players.AsNoTracking()
             .Include(p => p.User)
-            .Where(p => p.User != null && discordIds.Contains(p.User.DiscordId))
+            .Include(p => p.Users)
+            .Where(p => p.Users.Any(u => discordIds.Contains(u.DiscordId)))
             .ToListAsync();
 
     public async Task<List<Player>> GetByPuuidsAsync(IReadOnlyCollection<string> puuids) =>

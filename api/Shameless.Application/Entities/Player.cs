@@ -16,8 +16,15 @@ public class Player
     public string? FlexRankTier { get; set; }
     public int? FlexRankDivision { get; set; }
     public int? FlexLp { get; set; }
+    /// <summary>
+    /// Le Discord principal (ADR 0018) : l'Utilisateur lié depuis le plus longtemps, dont la photo et l'identité
+    /// s'affichent partout. Dérivé de <see cref="Users"/> par le dépôt à chaque lien ou déliaison ; null sans lien.
+    /// </summary>
     public int? UserId { get; set; }
     public User? User { get; set; }
+
+    /// <summary>Tous les Utilisateurs liés à ce Joueur, sans vérification (ADR 0018). Chargé à la demande.</summary>
+    public ICollection<User> Users { get; set; } = new List<User>();
     public string? PeakTier { get; set; }
     public int? PeakDivision { get; set; }
     public string? PeakSeason { get; set; }

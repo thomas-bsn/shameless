@@ -126,7 +126,7 @@ function ProfilDuJoueur({ player }: { player: Player }) {
       </div>
       <div className="flex min-w-0 flex-col gap-4">
         {fiche.data ? <DernieresGames games={fiche.data.games} /> : null}
-        <JoueurLie player={player} />
+        <JoueurLie player={player} comptes={fiche.data?.comptesDiscord ?? []} />
         <Preferences />
       </div>
     </div>
@@ -230,7 +230,8 @@ function MesCustoms({
 }
 
 /** Le Joueur lié : RiotId, changement et déliage ; la SoloQ (rang, rôle principal, peak) reste discrète. */
-function JoueurLie({ player }: { player: Player }) {
+function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["CompteDiscordLie"][] }) {
+  const { user } = Route.useRouteContext();
   const [changement, setChangement] = useState(false);
   const [delier, setDelier] = useState(false);
   const [peakOuvert, setPeakOuvert] = useState(false);
@@ -278,6 +279,8 @@ function JoueurLie({ player }: { player: Player }) {
         }
       >
         <p className="font-mono text-sm font-semibold">{player.riotId}</p>
+        <ComptesDiscordLies comptes={comptes} moi={user.discordUserId} />
+        <AvertissementLiaison />
         <dl className="flex flex-col gap-2 border-t pt-3 text-sm text-muted-foreground">
           <div className="flex items-center justify-between gap-3">
             <dt>SoloQ</dt>
@@ -371,6 +374,40 @@ function JoueurLie({ player }: { player: Player }) {
   );
 }
 
+/** Tous les Comptes Discord liés au Joueur, le principal (celui de la photo et de l'identité affichées) marqué. */
+function ComptesDiscordLies({ comptes, moi }: { comptes: Schemas["CompteDiscordLie"][]; moi: string | null | undefined }) {
+  if (comptes.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 border-t pt-3 text-sm">
+      <p className="text-muted-foreground">Comptes Discord liés à ce joueur</p>
+      <ul aria-label="Comptes Discord liés" className="flex flex-col gap-1.5">
+        {comptes.map((c) => (
+          <li key={c.discordId} className="flex flex-wrap items-center gap-2">
+            <Avatar className="size-6">
+              {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt="" />}
+              <AvatarFallback className="text-xs">{c.username?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{c.username ?? c.discordId}</span>
+            {c.principal && <Badge variant="secondary">Principal</Badge>}
+            {c.discordId === moi && <span className="text-muted-foreground">(toi)</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Le lien est libre : personne ne vérifie qui se lie à qui (ADR 0018). */
+function AvertissementLiaison() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Le lien n'est pas vérifié : n'importe quel compte Discord peut se lier à n'importe quel joueur. Le premier Discord
+      lié donne la photo et l'identité affichées.
+    </p>
+  );
+}
+
 /** Un utilisateur sans Joueur lié : l'invitation à lier son compte. */
 function JoueurNonLie() {
   return (
@@ -407,6 +444,7 @@ function FormulaireDeLiaison({ joueurLieId, onLie }: { joueurLieId?: number; onL
         <CardTitle>{joueurLieId ? "Changer de joueur" : "Lier mon compte à un joueur"}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        {joueurLieId === undefined && <AvertissementLiaison />}
         <Input
           type="search"
           aria-label="Chercher un joueur"

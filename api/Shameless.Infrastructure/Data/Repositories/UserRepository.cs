@@ -107,6 +107,7 @@ public class UserRepository : IUserRepository
         BannerUrl = u.BannerUrl,
         BannerColor = u.BannerColor,
         Role = u.Role,
+        PlayerId = u.PlayerId,
         PromotedBy = u.PromotedBy,
         PromotedAt = u.PromotedAt
     };
