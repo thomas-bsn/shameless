@@ -26,9 +26,10 @@ public sealed record DraftChampionsResponse(
     List<GameParticipantDto> TeamB,
     int? CapitaineA,
     int? CapitaineB,
-    List<string>? ChampionsDejaJoues) // null sans Fearless
+    List<string>? ChampionsDejaJoues, // null sans Fearless
+    ResetDemandeResponse? ResetDemande) // null sans demande de Reset en attente
 {
-    public static DraftChampionsResponse From(DraftChampions draft)
+    public static DraftChampionsResponse From(DraftChampions draft, DateTime maintenant)
     {
         var game = draft.Game;
         var series = game.Series!;
@@ -55,7 +56,10 @@ public sealed record DraftChampionsResponse(
             TeamB: Joueurs(Equipes.B),
             CapitaineA: series.CapitaineOf(Equipes.A),
             CapitaineB: series.CapitaineOf(Equipes.B),
-            ChampionsDejaJoues: draft.ChampionsDejaJoues?.ToList());
+            ChampionsDejaJoues: draft.ChampionsDejaJoues?.ToList(),
+            ResetDemande: draft.ResetEnAttente(maintenant)
+                ? new ResetDemandeResponse(draft.ResetDemandeParEquipe!, draft.ResetDemandeLe!.Value, draft.ResetExpireLe!.Value)
+                : null);
 
         List<GameParticipantDto> Joueurs(string equipe) =>
             game.ParticipantsOf(equipe)
@@ -63,6 +67,9 @@ public sealed record DraftChampionsResponse(
                 .ToList();
     }
 }
+
+/// <summary>Une demande de Reset de la draft en attente : l'Équipe qui la demande, quand, et quand elle expire (60 secondes).</summary>
+public sealed record ResetDemandeResponse(string Equipe, DateTime DemandeLe, DateTime ExpireLe);
 
 /// <summary>Le tour à jouer : son numéro (1 à 20), "ban" | "pick", le Side et l'Équipe attendue, quand il a commencé et son
 /// échéance (60 secondes plus tard), après laquelle l'organisateur connecté peut jouer à la place de l'Équipe attendue.

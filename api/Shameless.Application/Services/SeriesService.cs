@@ -193,7 +193,7 @@ public sealed class SeriesService
             return CommandResult<EtatDuPret>.NotFound("Cette Série n'existe pas.");
         if (!series.IsEnCours)
             return CommandResult<EtatDuPret>.Conflict("Cette Série est terminée : plus personne n'a à être prêt.");
-        if (series.Games.Any(g => g.Status == GameStatuses.Pending))
+        if (series.Games.Any(g => g.Status == GameStatuses.Pending && g.DraftChampions != null))
             return CommandResult<EtatDuPret>.Conflict("La draft a déjà démarré : on ne change plus d'avis.");
 
         lien = series.LienCapitaine(equipe);
@@ -210,7 +210,9 @@ public sealed class SeriesService
         {
             var maintenant = _clock.GetUtcNow().UtcDateTime;
             // Les deux Capitaines sont là : la Game et sa Draft de champions démarrent ensemble.
-            NouvelleGame(series).DraftChampions = new DraftChampions
+            // Après un Reset accepté, la Game est restée : on lui rouvre sa draft au lieu d'en créer une autre.
+            var game = series.Games.LastOrDefault(g => g.Status == GameStatuses.Pending) ?? NouvelleGame(series);
+            game.DraftChampions = new DraftChampions
             {
                 TourCommenceLe = maintenant.AddTicks(-(maintenant.Ticks % 10)) // microseconde, comme PostgreSQL
             };

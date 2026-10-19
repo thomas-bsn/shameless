@@ -426,6 +426,15 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("game_id");
 
+                    b.Property<DateTime?>("ResetDemandeLe")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("reset_demande_le");
+
+                    b.Property<string>("ResetDemandeParEquipe")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("reset_demande_par_equipe");
+
                     b.Property<DateTime>("TourCommenceLe")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("tour_commence_le");

@@ -20,6 +20,7 @@ import { points } from "@/lib/cost";
 import { ajouterCandidats, type PickerStep, pickerStep, pickerSteps } from "@/lib/picker";
 import { matchesPlayer } from "@/lib/players";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 // « soiree_ » : la page n'est pas imbriquée dans le layout de l'écran Soirée.
 export const Route = createFileRoute("/_connecte/soiree_/picker")({
@@ -280,6 +281,7 @@ function Selection({ initial, onDone, onCancel }: { initial: number[]; onDone: (
                     )}
                   >
                     <Checkbox checked={checked} onCheckedChange={() => toggle(p.id)} />
+                    <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-6 text-[10px]" />
                     <span className="flex-1 truncate">
                       {p.prenom} <span className="text-xs text-muted-foreground">{p.riotId}</span>
                     </span>
@@ -337,7 +339,8 @@ function SelectedPlayers({ picker, onEdit }: { picker: Picker; onEdit: () => voi
   return (
     <section aria-label="Les dix joueurs" className="flex flex-wrap items-center gap-2">
       {picker.players.map((p) => (
-        <Badge key={p.playerId} variant="secondary">
+        <Badge key={p.playerId} variant="secondary" className="gap-1.5 pl-1">
+          <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
           {p.prenom}
         </Badge>
       ))}

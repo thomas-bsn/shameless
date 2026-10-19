@@ -1738,6 +1738,150 @@
         }
       }
     },
+    "/liens/{lien}/draft-champions/reset": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liens/{lien}/draft-champions/reset/reponse": {
+      "post": {
+        "tags": [
+          "DraftChampions"
+        ],
+        "parameters": [
+          {
+            "name": "lien",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepondreResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/series/{id}/draft-champions": {
       "post": {
         "tags": [
@@ -7191,7 +7335,8 @@
           "teamB",
           "capitaineA",
           "capitaineB",
-          "championsDejaJoues"
+          "championsDejaJoues",
+          "resetDemande"
         ],
         "type": "object",
         "properties": {
@@ -7271,6 +7416,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "resetDemande": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResetDemandeResponse"
+              }
+            ]
           }
         }
       },
@@ -7829,7 +7984,8 @@
           "championId",
           "stats",
           "performance",
-          "champsCorriges"
+          "champsCorriges",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -7894,6 +8050,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8001,7 +8163,8 @@
           "rankDivision",
           "cost",
           "playerId",
-          "role"
+          "role",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8043,6 +8206,12 @@
               {
                 "$ref": "#/components/schemas/Role"
               }
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -8295,7 +8464,8 @@
         "required": [
           "playerId",
           "prenom",
-          "correct"
+          "correct",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -8310,6 +8480,12 @@
             "type": [
               "null",
               "boolean"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -9581,6 +9757,38 @@
           }
         }
       },
+      "RepondreResetRequest": {
+        "required": [
+          "accepte"
+        ],
+        "type": "object",
+        "properties": {
+          "accepte": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResetDemandeResponse": {
+        "required": [
+          "equipe",
+          "demandeLe",
+          "expireLe"
+        ],
+        "type": "object",
+        "properties": {
+          "equipe": {
+            "type": "string"
+          },
+          "demandeLe": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expireLe": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ResultatActualisationJoueur": {
         "required": [
           "playerId",
@@ -10742,7 +10950,8 @@
         "required": [
           "playerId",
           "prenom",
-          "voix"
+          "voix",
+          "avatarUrl"
         ],
         "type": "object",
         "properties": {
@@ -10756,6 +10965,12 @@
           "voix": {
             "type": "integer",
             "format": "int32"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

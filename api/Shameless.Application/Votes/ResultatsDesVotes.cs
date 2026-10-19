@@ -69,11 +69,11 @@ public sealed record ResultatDuTitre(List<int> Gagnants, List<VoixDuJoueur> Deco
     public static ResultatDuTitre Calculer(CustomGame game, IEnumerable<int?> choix, bool clos)
     {
         if (!clos) return new ResultatDuTitre([], []);
-        var prenoms = game.Participants.ToDictionary(p => p.PlayerId, p => p.Player.Prenom);
+        var joueurs = game.Participants.ToDictionary(p => p.PlayerId, p => p.Player);
         var decompte = choix
             .OfType<int>()
             .GroupBy(playerId => playerId)
-            .Select(g => new VoixDuJoueur(g.Key, prenoms.GetValueOrDefault(g.Key, ""), g.Count()))
+            .Select(g => new VoixDuJoueur(g.Key, joueurs.GetValueOrDefault(g.Key)?.Prenom ?? "", g.Count(), joueurs.GetValueOrDefault(g.Key)?.User?.AvatarUrl))
             .OrderByDescending(v => v.Voix)
             .ThenBy(v => v.Prenom, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -84,4 +84,4 @@ public sealed record ResultatDuTitre(List<int> Gagnants, List<VoixDuJoueur> Deco
 }
 
 /// <summary>Les voix reçues par un Joueur pour un titre.</summary>
-public sealed record VoixDuJoueur(int PlayerId, string Prenom, int Voix);
+public sealed record VoixDuJoueur(int PlayerId, string Prenom, int Voix, string? AvatarUrl = null);

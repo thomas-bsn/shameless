@@ -33,15 +33,23 @@ type Portee = Schemas["PorteeLien"];
 /** Revalidation du lien : un lien renouvelé est refusé dès le prochain appel. */
 const POLLING_LIEN_MS = 5000;
 
-
 /**
  * La Draft de champions ouverte par un lien d'accès (ADR 0010), sans connexion. Un Lien capitaine
  * permet de bannir et de choisir les champions de son Équipe quand c'est son tour ; en lecture seule
  * sinon. Suit la dernière Draft de la Série : la game suivante remplace la précédente dès son ouverture.
  */
-export function DraftParLien({ lien, portee }: { lien: string; portee: Portee }) {
+export function DraftParLien({
+  lien,
+  portee,
+}: {
+  lien: string;
+  portee: Portee;
+}) {
   const path = { params: { path: { lien } } };
-  const acces = $api.useQuery("get", "/liens/{lien}", path, { refetchInterval: POLLING_LIEN_MS, retry: false });
+  const acces = $api.useQuery("get", "/liens/{lien}", path, {
+    refetchInterval: POLLING_LIEN_MS,
+    retry: false,
+  });
   const draft = $api.useQuery("get", "/liens/{lien}/draft-champions", path, {
     refetchInterval: POLLING_DRAFT_MS,
     retry: false,
@@ -49,16 +57,50 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   });
   const champions = useChampions();
   const queryClient = useQueryClient();
-  const jouer = $api.useMutation("post", "/liens/{lien}/draft-champions/actions", {
-    onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}/draft-champions", path], data),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}/draft-champions"] }),
-  });
+  const jouer = $api.useMutation(
+    "post",
+    "/liens/{lien}/draft-champions/actions",
+    {
+      onSuccess: (data) =>
+        queryClient.setQueryData(
+          ["get", "/liens/{lien}/draft-champions", path],
+          data,
+        ),
+      onSettled: () =>
+        queryClient.invalidateQueries({
+          queryKey: ["get", "/liens/{lien}/draft-champions"],
+        }),
+    },
+  );
+
+  const rafraichir = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["get", "/liens/{lien}/draft-champions"],
+    });
+    queryClient.invalidateQueries({ queryKey: ["get", "/liens/{lien}"] });
+  };
+  const demanderReset = $api.useMutation(
+    "post",
+    "/liens/{lien}/draft-champions/reset",
+    { onSettled: rafraichir },
+  );
+  const repondreReset = $api.useMutation(
+    "post",
+    "/liens/{lien}/draft-champions/reset/reponse",
+    {
+      onSettled: rafraichir,
+    },
+  );
 
   const pret = $api.useMutation("put", "/liens/{lien}/pret", {
-    onSuccess: (data) => queryClient.setQueryData(["get", "/liens/{lien}", path], data),
+    onSuccess: (data) =>
+      queryClient.setQueryData(["get", "/liens/{lien}", path], data),
   });
 
-  const titre = portee === "Capitaine" ? "Draft de champions — capitaine" : "Draft de champions — spectateur";
+  const titre =
+    portee === "Capitaine"
+      ? "Draft de champions — capitaine"
+      : "Draft de champions — spectateur";
   const meta = draft.data
     ? `Série ${draft.data.seriesId} · Game ${draft.data.gameId}${draft.data.fearless ? " · Fearless" : ""}`
     : undefined;
@@ -66,7 +108,11 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   if (acces.isError) {
     return (
       <Page titre={titre}>
-        {problemStatus(acces.error) === 404 ? <LienInvalide /> : <ErrorAlert error={acces.error} />}
+        {problemStatus(acces.error) === 404 ? (
+          <LienInvalide />
+        ) : (
+          <ErrorAlert error={acces.error} />
+        )}
       </Page>
     );
   }
@@ -79,22 +125,38 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
   }
 
   // Un Lien spectateur sur la page capitaine ne donne aucune action.
-  const equipe = portee === "Capitaine" && acces.data.portee === "Capitaine" ? acces.data.equipe : null;
+  const equipe =
+    portee === "Capitaine" && acces.data.portee === "Capitaine"
+      ? acces.data.equipe
+      : null;
 
   return (
     <Page
       titre={titre}
       meta={meta}
-      badge={equipe ? `Tu es le capitaine de l'Équipe ${equipe}` : "En direct · lecture seule"}
+      badge={
+        equipe
+          ? `Tu es le capitaine de l'Équipe ${equipe}`
+          : "En direct · lecture seule"
+      }
     >
       {draft.isPending ? (
         <LoadingRows />
-      ) : draft.isError && !draft.data ? (
+      ) : draft.isError &&
+        (!draft.data || problemStatus(draft.error) === 404) ? (
         problemStatus(draft.error) === 404 ? (
           <div className="flex flex-col gap-4">
+            {draft.data && (
+              <Alert>
+                <AlertTitle>Draft remise à zéro</AlertTitle>
+                <AlertDescription>
+                  Les bans, les picks et le chrono sont effacés.
+                </AlertDescription>
+              </Alert>
+            )}
             <p className="text-muted-foreground">
-              La Draft de champions n'est pas encore ouverte : elle démarre toute seule quand les deux Capitaines
-              sont prêts.
+              La Draft de champions n'est pas encore ouverte : elle démarre
+              toute seule quand les deux Capitaines sont prêts.
             </p>
             {equipe && (
               <PretDuCapitaine
@@ -102,7 +164,9 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
                 adversairePret={acces.data.adversairePret}
                 enCours={pret.isPending}
                 erreur={pret.isError ? pret.error : null}
-                onChange={(valeur) => pret.mutate({ ...path, body: { pret: valeur } })}
+                onChange={(valeur) =>
+                  pret.mutate({ ...path, body: { pret: valeur } })
+                }
               />
             )}
           </div>
@@ -110,24 +174,107 @@ export function DraftParLien({ lien, portee }: { lien: string; portee: Portee })
           <ErrorAlert error={draft.error} />
         )
       ) : (
-        <DraftChampionsView
-          draft={draft.data!}
-          champions={champions.data ?? []}
-          equipe={equipe}
-          spectateur={equipe === null}
-          jeu={
-            equipe && peutJouer(draft.data!, equipe)
-              ? {
-                  pending: jouer.isPending,
-                  error: jouer.isError ? jouer.error : null,
-                  onJouer: (tour, championId) => jouer.mutate({ ...path, body: { tour, championId } }),
-                }
-              : null
-          }
-        />
+        <div className="flex flex-col gap-6">
+          <ResetDeLaDraft
+            draft={draft.data!}
+            equipe={equipe}
+            enCours={demanderReset.isPending || repondreReset.isPending}
+            erreur={demanderReset.error ?? repondreReset.error}
+            onDemander={() => demanderReset.mutate(path)}
+            onRepondre={(accepte) =>
+              repondreReset.mutate({ ...path, body: { accepte } })
+            }
+          />
+          <DraftChampionsView
+            draft={draft.data!}
+            champions={champions.data ?? []}
+            equipe={equipe}
+            spectateur={equipe === null}
+            jeu={
+              equipe && peutJouer(draft.data!, equipe)
+                ? {
+                    pending: jouer.isPending,
+                    error: jouer.isError ? jouer.error : null,
+                    onJouer: (tour, championId) =>
+                      jouer.mutate({ ...path, body: { tour, championId } }),
+                  }
+                : null
+            }
+          />
+        </div>
       )}
       {champions.isError && <ErrorAlert error={champions.error} />}
     </Page>
+  );
+}
+
+/**
+ * Reset de la draft : le Capitaine demande, l'autre accepte ou refuse sous 60 s ; le spectateur voit
+ * seulement « Reset demandé ». Rien une fois la draft terminée.
+ */
+function ResetDeLaDraft({
+  draft,
+  equipe,
+  enCours,
+  erreur,
+  onDemander,
+  onRepondre,
+}: {
+  draft: Draft;
+  equipe: string | null;
+  enCours: boolean;
+  erreur: unknown;
+  onDemander: () => void;
+  onRepondre: (accepte: boolean) => void;
+}) {
+  const maintenant = useMaintenant(1000);
+  if (draft.terminee) return null;
+
+  const demande = draft.resetDemande;
+  const secondes = demande
+    ? Math.max(0, Math.ceil((Date.parse(demande.expireLe) - maintenant) / 1000))
+    : 0;
+
+  if (!demande || secondes === 0) {
+    return equipe ? (
+      <div className="flex flex-col items-start gap-2">
+        <Button variant="outline" disabled={enCours} onClick={onDemander}>
+          Demander un Reset de la draft
+        </Button>
+        {erreur != null && <ErrorAlert error={erreur} />}
+      </div>
+    ) : null;
+  }
+
+  const peutRepondre = equipe !== null && equipe !== demande.equipe;
+  const texte =
+    equipe === demande.equipe
+      ? "En attente de la réponse de l'autre Capitaine."
+      : `L'Équipe ${demande.equipe} demande à remettre la draft à zéro.`;
+  return (
+    <Alert role="status">
+      <AlertTitle>Reset demandé</AlertTitle>
+      <AlertDescription className="flex flex-col items-start gap-2">
+        <span>
+          {texte} Sans réponse dans {secondes} s, rien ne change.
+        </span>
+        {peutRepondre && (
+          <span className="flex gap-2">
+            <Button disabled={enCours} onClick={() => onRepondre(true)}>
+              Accepter le Reset
+            </Button>
+            <Button
+              variant="outline"
+              disabled={enCours}
+              onClick={() => onRepondre(false)}
+            >
+              Refuser le Reset
+            </Button>
+          </span>
+        )}
+        {erreur != null && <ErrorAlert error={erreur} />}
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -148,11 +295,18 @@ function PretDuCapitaine({
   return (
     <Card>
       <CardContent className="flex flex-col items-start gap-3">
-        <Button size="lg" variant={pret ? "outline" : "default"} disabled={enCours} onClick={() => onChange(!pret)}>
+        <Button
+          size="lg"
+          variant={pret ? "outline" : "default"}
+          disabled={enCours}
+          onClick={() => onChange(!pret)}
+        >
           {pret ? "Je ne suis plus prêt" : "Je suis prêt"}
         </Button>
         <p role="status" className="text-sm text-muted-foreground">
-          {adversairePret ? "L'autre Capitaine est prêt." : "L'autre Capitaine n'est pas encore prêt."}
+          {adversairePret
+            ? "L'autre Capitaine est prêt."
+            : "L'autre Capitaine n'est pas encore prêt."}
         </p>
         {erreur != null && <ErrorAlert error={erreur} />}
       </CardContent>
@@ -190,8 +344,9 @@ function LienInvalide() {
     <Alert variant="destructive">
       <AlertTitle>Ce lien n'est pas valide</AlertTitle>
       <AlertDescription>
-        Il est inconnu, a été renouvelé par l'organisateur, ou le Lien spectateur n'est pas encore disponible.
-        Demande le lien à jour à l'organisateur.
+        Il est inconnu, a été renouvelé par l'organisateur, ou le Lien
+        spectateur n'est pas encore disponible. Demande le lien à jour à
+        l'organisateur.
       </AlertDescription>
     </Alert>
   );
@@ -242,14 +397,22 @@ export function DraftChampionsView({
   /** Vue en lecture seule du lien public : le tour annoncé en grand, sans grille de champions. */
   spectateur?: boolean;
 }) {
-  const parId = useMemo(() => new Map(champions.map((c) => [c.id, c])), [champions]);
+  const parId = useMemo(
+    () => new Map(champions.map((c) => [c.id, c])),
+    [champions],
+  );
   const tours = toursDeLaDraft(draft);
   const blue = draft.equipeBlue;
   const red = draft.equipeRed;
 
   return (
     <div className="flex flex-col gap-6">
-      <EtatDuTour draft={draft} equipe={equipe} consigne={consigne} spectateur={spectateur} />
+      <EtatDuTour
+        draft={draft}
+        equipe={equipe}
+        consigne={consigne}
+        spectateur={spectateur}
+      />
 
       {spectateur ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -260,26 +423,47 @@ export function DraftChampionsView({
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)]">
           <CoteDraft side="blue" equipe={blue} tours={tours} parId={parId} />
           <div className="order-last flex flex-col gap-4 lg:order-none">
-            {(jeu || equipe !== null) && !draft.terminee && draft.tourCourant && (
-              <ChoixChampion key={draft.tourCourant.numero} draft={draft} champions={champions} jeu={jeu} />
-            )}
+            {(jeu || equipe !== null) &&
+              !draft.terminee &&
+              draft.tourCourant && (
+                <ChoixChampion
+                  key={draft.tourCourant.numero}
+                  draft={draft}
+                  champions={champions}
+                  jeu={jeu}
+                />
+              )}
           </div>
           <CoteDraft side="red" equipe={red} tours={tours} parId={parId} />
         </div>
       )}
 
-      {draft.championsDejaJoues && <DejaJoues championIds={draft.championsDejaJoues} parId={parId} />}
+      {draft.championsDejaJoues && (
+        <DejaJoues championIds={draft.championsDejaJoues} parId={parId} />
+      )}
 
       <OrdreTournament tours={tours} parId={parId} />
 
       {avecEquipes && (
         <>
           <div className="grid gap-4 md:grid-cols-2">
-            <TeamCard equipe="A" players={draft.teamA} capitaine={draft.capitaineA} highlighted={equipe === "A"} />
-            <TeamCard equipe="B" players={draft.teamB} capitaine={draft.capitaineB} highlighted={equipe === "B"} />
+            <TeamCard
+              equipe="A"
+              players={draft.teamA}
+              capitaine={draft.capitaineA}
+              highlighted={equipe === "A"}
+            />
+            <TeamCard
+              equipe="B"
+              players={draft.teamB}
+              capitaine={draft.capitaineB}
+              highlighted={equipe === "B"}
+            />
           </div>
           {!draft.terminee && (
-            <p className="text-sm text-muted-foreground">Les rôles de l'Autorole s'afficheront à la fin de la Draft.</p>
+            <p className="text-sm text-muted-foreground">
+              Les rôles de l'Autorole s'afficheront à la fin de la Draft.
+            </p>
           )}
         </>
       )}
@@ -303,7 +487,9 @@ function EtatDuTour({
     return (
       <Alert>
         <AlertTitle>Draft terminée</AlertTitle>
-        <AlertDescription>Les champions et les rôles de la game sont fixés.</AlertDescription>
+        <AlertDescription>
+          Les champions et les rôles de la game sont fixés.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -316,20 +502,30 @@ function EtatDuTour({
         <div className="flex flex-col gap-1">
           {aToi && (
             <span className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
-              <span aria-hidden className="size-2 rounded-full bg-primary-foreground motion-safe:animate-pulse" />
+              <span
+                aria-hidden
+                className="size-2 rounded-full bg-primary-foreground motion-safe:animate-pulse"
+              />
               À toi de {verbe}
             </span>
           )}
           {spectateur && (
             <h2 className="text-2xl font-bold">
-              L'Équipe {tour.equipe} {tour.action === "ban" ? "bannit" : "choisit"}
+              L'Équipe {tour.equipe}{" "}
+              {tour.action === "ban" ? "bannit" : "choisit"}
             </h2>
           )}
           <p aria-label="Tour courant" className="text-lg font-semibold">
-            Tour {tour.numero}/20 · <span className={sideTextClass(tour.side)}>{libelleTour(draft.tours, tour.numero)}</span>
+            Tour {tour.numero}/20 ·{" "}
+            <span className={sideTextClass(tour.side)}>
+              {libelleTour(draft.tours, tour.numero)}
+            </span>
           </p>
           <p className="text-sm text-muted-foreground">
-            {consigne ?? (aToi ? `Équipe ${tour.equipe}, c'est ton tour` : `Au tour de l'Équipe ${tour.equipe}`)}
+            {consigne ??
+              (aToi
+                ? `Équipe ${tour.equipe}, c'est ton tour`
+                : `Au tour de l'Équipe ${tour.equipe}`)}
           </p>
         </div>
         <TempsRestant tour={tour} />
@@ -344,7 +540,10 @@ function TempsRestant({ tour }: { tour: Schemas["TourCourantResponse"] }) {
   return (
     <span
       aria-label="Temps restant"
-      className={cn("flex items-center gap-2 text-2xl font-bold tabular-nums", secondes <= 10 && "text-destructive")}
+      className={cn(
+        "flex items-center gap-2 text-2xl font-bold tabular-nums",
+        secondes <= 10 && "text-destructive",
+      )}
     >
       <Timer className="size-5" />
       {secondes} s
@@ -373,25 +572,39 @@ function CoteDraft({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">Bans</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+            Bans
+          </p>
           <ul className="flex flex-wrap gap-2">
             {duSide
               .filter((t) => t.action === "ban")
               .map((t) => (
                 <li key={t.numero}>
-                  <CaseChampion tour={t} champion={t.championId ? parId.get(t.championId) : undefined} />
+                  <CaseChampion
+                    tour={t}
+                    champion={
+                      t.championId ? parId.get(t.championId) : undefined
+                    }
+                  />
                 </li>
               ))}
           </ul>
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">Picks</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+            Picks
+          </p>
           <ul className="flex flex-wrap gap-2">
             {duSide
               .filter((t) => t.action === "pick")
               .map((t) => (
                 <li key={t.numero}>
-                  <CaseChampion tour={t} champion={t.championId ? parId.get(t.championId) : undefined} />
+                  <CaseChampion
+                    tour={t}
+                    champion={
+                      t.championId ? parId.get(t.championId) : undefined
+                    }
+                  />
                 </li>
               ))}
           </ul>
@@ -402,7 +615,13 @@ function CoteDraft({
 }
 
 /** Un tour de la Draft : le champion joué, la case du tour courant, ou une case vide. */
-function CaseChampion({ tour, champion }: { tour: TourDeLaDraft; champion?: Champion }) {
+function CaseChampion({
+  tour,
+  champion,
+}: {
+  tour: TourDeLaDraft;
+  champion?: Champion;
+}) {
   const nom = champion?.name ?? tour.championId;
   return (
     <div
@@ -416,12 +635,17 @@ function CaseChampion({ tour, champion }: { tour: TourDeLaDraft; champion?: Cham
         <img
           src={champion.imageUrl}
           alt={champion.name}
-          className={cn("size-full object-cover", tour.action === "ban" && "grayscale")}
+          className={cn(
+            "size-full object-cover",
+            tour.action === "ban" && "grayscale",
+          )}
         />
       ) : (
         (nom ?? tour.numero)
       )}
-      {tour.action === "ban" && champion && <Ban aria-hidden className="absolute size-8 text-destructive/80" />}
+      {tour.action === "ban" && champion && (
+        <Ban aria-hidden className="absolute size-8 text-destructive/80" />
+      )}
     </div>
   );
 }
@@ -430,7 +654,13 @@ function CaseChampion({ tour, champion }: { tour: TourDeLaDraft; champion?: Cham
  * Fearless : les champions réellement joués dans les games précédentes de la Série. Simple rappel,
  * ils restent bannissables et pickables.
  */
-function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<string, Champion> }) {
+function DejaJoues({
+  championIds,
+  parId,
+}: {
+  championIds: string[];
+  parId: Map<string, Champion>;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -441,17 +671,32 @@ function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<s
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">
-          Champions joués dans les games précédentes : l'app les signale, elle ne les bloque pas.
+          Champions joués dans les games précédentes : l'app les signale, elle
+          ne les bloque pas.
         </p>
         {championIds.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucun champion joué pour l'instant.</p>
+          <p className="text-sm text-muted-foreground">
+            Aucun champion joué pour l'instant.
+          </p>
         ) : (
-          <ul aria-label="Champions déjà joués (Fearless)" className="flex flex-wrap gap-2">
+          <ul
+            aria-label="Champions déjà joués (Fearless)"
+            className="flex flex-wrap gap-2"
+          >
             {championIds.map((id) => {
               const champion = parId.get(id);
               return (
-                <li key={id} className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm">
-                  {champion && <img src={champion.imageUrl} alt="" className="size-6 rounded" />}
+                <li
+                  key={id}
+                  className="flex items-center gap-2 rounded-md border border-amber-500/60 py-1 pr-2 pl-1 text-sm"
+                >
+                  {champion && (
+                    <img
+                      src={champion.imageUrl}
+                      alt=""
+                      className="size-6 rounded"
+                    />
+                  )}
                   <span>{champion?.name ?? id}</span>
                 </li>
               );
@@ -463,7 +708,13 @@ function DejaJoues({ championIds, parId }: { championIds: string[]; parId: Map<s
   );
 }
 
-function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<string, Champion> }) {
+function OrdreTournament({
+  tours,
+  parId,
+}: {
+  tours: TourDeLaDraft[];
+  parId: Map<string, Champion>;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -476,10 +727,14 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
               <Badge
                 variant={t.courant ? "default" : "outline"}
                 aria-current={t.courant ? "step" : undefined}
-                className={cn(!t.courant && sideTextClass(t.side), !t.courant && !t.championId && "opacity-60")}
+                className={cn(
+                  !t.courant && sideTextClass(t.side),
+                  !t.courant && !t.championId && "opacity-60",
+                )}
               >
                 {t.numero}. {t.libelle}
-                {t.championId && ` · ${parId.get(t.championId)?.name ?? t.championId}`}
+                {t.championId &&
+                  ` · ${parId.get(t.championId)?.name ?? t.championId}`}
               </Badge>
             </li>
           ))}
@@ -490,7 +745,15 @@ function OrdreTournament({ tours, parId }: { tours: TourDeLaDraft[]; parId: Map<
 }
 
 /** Le champion du tour courant, choisi parmi ceux encore disponibles. */
-function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Champion[]; jeu: JeuDuTour | null }) {
+function ChoixChampion({
+  draft,
+  champions,
+  jeu,
+}: {
+  draft: Draft;
+  champions: Champion[];
+  jeu: JeuDuTour | null;
+}) {
   const tour = draft.tourCourant!;
   const [recherche, setRecherche] = useState("");
   const [voie, setVoie] = useState<Voie | null>(null);
@@ -498,13 +761,20 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
   const pris = championsPris(draft.actions);
   const dejaJoues = new Set(draft.championsDejaJoues ?? []);
   const verbe = tour.action === "ban" ? "Bannir" : "Choisir";
-  const nomChoisi = choisi ? champions.find((c) => c.id === choisi)?.name : null;
+  const nomChoisi = choisi
+    ? champions.find((c) => c.id === choisi)?.name
+    : null;
 
   return (
     <Card className={cn(jeu && "border-primary")}>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
         <CardTitle>
-          {jeu ? (jeu.titre ?? (tour.action === "ban" ? "Bannir un champion" : "Choisir un champion")) : "Champions"}
+          {jeu
+            ? (jeu.titre ??
+              (tour.action === "ban"
+                ? "Bannir un champion"
+                : "Choisir un champion"))
+            : "Champions"}
         </CardTitle>
         {jeu && (
           <Button
@@ -525,7 +795,11 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
         />
-        <div role="group" aria-label="Filtrer par voie" className="flex flex-wrap gap-2">
+        <div
+          role="group"
+          aria-label="Filtrer par voie"
+          className="flex flex-wrap gap-2"
+        >
           {[{ id: null, libelle: "Tous" }, ...VOIES].map((v) => (
             <Button
               key={v.libelle}
@@ -540,7 +814,8 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Les champions grisés sont bannis. Ceux marqués « Joué » le sont par Fearless : ils restent affichés.
+          Les champions grisés sont bannis. Ceux marqués « Joué » le sont par
+          Fearless : ils restent affichés.
         </p>
         <ul className="grid max-h-96 grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2 overflow-y-auto">
           {filtrerChampions(champions, recherche, voie).map((c) => {
@@ -570,12 +845,19 @@ function ChoixChampion({ draft, champions, jeu }: { draft: Draft; champions: Cha
                   </span>
                   <span className="w-full truncate text-center">{c.name}</span>
                   {dejaJoue && (
-                    <Badge variant="outline" className="border-amber-500/60 px-1 py-0 text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500/60 px-1 py-0 text-[10px]"
+                    >
                       Joué
                     </Badge>
                   )}
-                  {dejaJoue && <span className="sr-only">(déjà joué dans la Série)</span>}
-                  {indisponible && <span className="sr-only">(indisponible)</span>}
+                  {dejaJoue && (
+                    <span className="sr-only">(déjà joué dans la Série)</span>
+                  )}
+                  {indisponible && (
+                    <span className="sr-only">(indisponible)</span>
+                  )}
                 </button>
               </li>
             );

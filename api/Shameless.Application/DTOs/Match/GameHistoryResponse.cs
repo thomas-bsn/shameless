@@ -37,14 +37,16 @@ public record GameHistoryParticipantDto(
     string? ChampionId,
     StatsDuParticipant? Stats,
     NoteDePerformance? Performance,
-    List<string> ChampsCorriges
+    List<string> ChampsCorriges,
+    string? AvatarUrl = null // la photo Discord du compte lié au Joueur
 )
 {
     public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant, NoteDePerformance? performance) =>
         new(participant.PlayerId, participant.Player.Prenom, participant.Player.RiotId, participant.Player.RankTier,
             participant.Player.RankDivision, participant.Player.CurrentCost, ValeursEffectives.Champion(participant),
             ValeursEffectives.Stats(participant), performance,
-            participant.Corrections.Select(c => Entities.ChampCorrigeableExtensions.Nom(c.Champ)).Order().ToList());
+            participant.Corrections.Select(c => Entities.ChampCorrigeableExtensions.Nom(c.Champ)).Order().ToList(),
+            participant.Player.User?.AvatarUrl);
 }
 
 public record GameParticipantDto(
@@ -54,9 +56,10 @@ public record GameParticipantDto(
     int? RankDivision,
     decimal? Cost,
     int PlayerId,
-    Picker.Role? Role = null // le rôle attribué par l'Autorole, quand il y en a un
+    Picker.Role? Role = null, // le rôle attribué par l'Autorole, quand il y en a un
+    string? AvatarUrl = null // la photo Discord du compte lié au Joueur
 )
 {
     public static GameParticipantDto From(Entities.Player player, Picker.Role? role = null) =>
-        new(player.Prenom, player.RiotId, player.RankTier, player.RankDivision, player.CurrentCost, player.Id, role);
+        new(player.Prenom, player.RiotId, player.RankTier, player.RankDivision, player.CurrentCost, player.Id, role, player.User?.AvatarUrl);
 }

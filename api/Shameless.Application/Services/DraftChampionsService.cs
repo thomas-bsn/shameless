@@ -163,6 +163,60 @@ public sealed class DraftChampionsService
         return CommandResult<DraftChampions>.Ok(draft);
     }
 
+    /// <summary>
+    /// Le Capitaine de l'Équipe <paramref name="equipe"/> demande à remettre la draft en cours à zéro ;
+    /// l'autre Capitaine a <see cref="DraftChampions.DelaiReponseReset"/> pour répondre. Refusé une fois la
+    /// draft terminée, ou si une demande attend déjà sa réponse.
+    /// </summary>
+    public async Task<CommandResult<bool>> DemanderResetAsync(int seriesId, string equipe)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série.");
+        if (draft.EstTerminee)
+            return CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro.");
+        if (draft.ResetEnAttente(Maintenant()))
+            return CommandResult<bool>.Conflict("Une demande de Reset est déjà en attente de réponse.");
+
+        draft.DemanderReset(equipe, Maintenant());
+        return await EnregistrerAsync(draft);
+    }
+
+    /// <summary>
+    /// Le Capitaine de l'Équipe <paramref name="equipe"/> répond à la demande de Reset de l'autre Équipe.
+    /// Accepté : la draft est effacée (bans, picks, chrono) et les deux Capitaines redeviennent « pas prêts » ;
+    /// la Game reste la même. Refusé : la demande tombe, rien d'autre ne change.
+    /// </summary>
+    public async Task<CommandResult<bool>> RepondreResetAsync(int seriesId, string equipe, bool accepte)
+    {
+        var draft = await _drafts.GetDerniereOfSeriesAsync(seriesId);
+        if (draft == null)
+            return CommandResult<bool>.Conflict("Aucune draft n'est en cours dans cette Série.");
+        if (draft.EstTerminee)
+            return CommandResult<bool>.Conflict("La draft est terminée : elle ne peut plus être remise à zéro.");
+        if (!draft.ResetEnAttente(Maintenant()))
+            return CommandResult<bool>.Conflict("Aucune demande de Reset n'attend de réponse.");
+        if (draft.ResetDemandeParEquipe == equipe)
+            return CommandResult<bool>.Conflict("Seul l'autre Capitaine peut répondre à ta demande de Reset.");
+
+        if (!accepte)
+        {
+            draft.AnnulerDemandeReset();
+            return await EnregistrerAsync(draft);
+        }
+
+        var series = await _series.GetWithGamesAsync(seriesId);
+        series?.RemettrePasPrets();
+        series?.Touch();
+        _drafts.Remove(draft);
+        return await EnregistrerAsync(draft);
+    }
+
+    private async Task<CommandResult<bool>> EnregistrerAsync(DraftChampions draft) =>
+        await _drafts.TrySaveChangesAsync()
+            ? CommandResult<bool>.Ok(true)
+            : CommandResult<bool>.Conflict("La draft vient d'être modifiée par une autre commande : réessayez.");
+
     // Tronqué à la microseconde, la précision de Postgres : l'échéance renvoyée juste après
     // une action est ainsi la même que celle relue en base ensuite.
     private DateTime Maintenant()
