@@ -81,8 +81,8 @@ affiché sur le site et posté par le bot.
 format et options, score, les deux Équipes, la liste des Games avec leur vainqueur. Elle  
 ne montre ni Capitaine, ni lien, ni code, ni commande.
 - **Écran de préparation** : l'écran réservé à l'organisateur, affiché juste après la  
-création de la Série. Il montre les Équipes, désigne les Capitaines (après une Roulette, ou  
-pour en changer), donne les deux Liens capitaine, le Lien spectateur et le Code Companion,  
+création de la Série. Il montre les Équipes, affiche les Capitaines en lecture seule (ils se  
+désignent dans le Picker), donne les deux Liens capitaine, le Lien spectateur et le Code Companion,  
 et porte le seul bouton « Lancer la draft », grisé tant que les deux Capitaines n'ont pas  
 rejoint. Il se rouvre depuis l'Espace organisateur, sans ce bouton une fois la Draft de  
 champions lancée.
@@ -111,7 +111,7 @@ Les champions sont choisis pour l'Équipe, pas pour un joueur : qui joue quoi se
 décide en vocal. À ne pas confondre avec la **Draft**, qui forme les équipes.
 - **Capitaine** : le joueur qui mène une Équipe dans une Draft ou une Draft de  
 champions. Ceux de la Draft le restent pour la Draft de champions ; après une  
-Roulette, l'organisateur en désigne un par Équipe sur l'Écran de préparation. Un joueur  
+Roulette, l'organisateur en désigne un par Équipe dans le Picker (étape « Capitaines »). Un joueur  
 ne peut pas être Capitaine des deux Équipes. Le Capitaine n'est affiché ni sur la Page de  
 la Série ni sur le récap du Picker.
 - **Capitaine rejoint** : un Capitaine a rejoint dès que son Lien capitaine a été ouvert  
