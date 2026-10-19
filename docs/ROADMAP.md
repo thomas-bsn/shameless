@@ -38,6 +38,8 @@ Objectif : une soirée complète sans saisie manuelle.
 - [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion (#160)
 - [ ] Détection du client LoL via lockfile + écoute WebSocket locale (#161)
 - [ ] Administration : Companion connecté, signal de présence du Companion (#146)
+- [ ] Publication de l'exécutable Windows en GitHub Release par la CI (#164)
+- [ ] Écran de préparation : adresse, Code et téléchargement du Companion ; tutoriel à jour (#165)
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
 - [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit), file de renvoi et procédure d'échec avec le Fichier de Rapport (#162)
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
@@ -102,7 +104,7 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion
-- Packaging du Companion (installeur, mise à jour automatique, signature)
+- Companion : mise à jour automatique, signature de l'exécutable, installeur
 - Administrateurs repérables dans Discord (pseudo en rouge) pour que le Companion dise « donne le fichier à un admin »
 - Nom du bot lu depuis Forgeyard (aujourd'hui saisi dans le wizard)
 - Wizard : générer ou expliquer `INTERNAL_API_KEY` du bot
