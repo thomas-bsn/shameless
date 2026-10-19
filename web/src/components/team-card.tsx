@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { points } from "@/lib/cost";
 import { parRole } from "@/lib/picker";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 export const roleLabels: Record<NonNullable<Schemas["Role"]>, string> = {
   Top: "Top",
@@ -53,6 +54,7 @@ export function TeamCard({
                       {roleLabels[p.role]}
                     </Badge>
                   )}
+                  <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-6 text-[10px]" />
                   {p.prenom}
                   {p.playerId === capitaine && <Crown aria-label="Capitaine" className="size-4 text-amber-400" />}
                 </span>

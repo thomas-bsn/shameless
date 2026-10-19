@@ -32,7 +32,7 @@ public sealed record PronosticsDeLaGame(
 
         JoueurPronostique? Joueur(int? playerId, Player? player, ResultatDuTitre titre) =>
             playerId is { } id
-                ? new JoueurPronostique(id, player?.Prenom ?? "", votesClos ? titre.Gagnants.Contains(id) : null)
+                ? new JoueurPronostique(id, player?.Prenom ?? "", votesClos ? titre.Gagnants.Contains(id) : null, player?.User?.AvatarUrl)
                 : null;
 
         // Une game terminée a toujours commencé : sans début enregistré, sa clôture borne les pronostics. Une
@@ -73,4 +73,4 @@ public sealed record EquipePronostiquee(string Equipe, bool? Correct);
 
 /// <summary>Le Joueur pronostiqué MVP ou DOFD.</summary>
 /// <param name="Correct">Juste ou non, null tant que les votes ne sont pas clos.</param>
-public sealed record JoueurPronostique(int PlayerId, string Prenom, bool? Correct);
+public sealed record JoueurPronostique(int PlayerId, string Prenom, bool? Correct, string? AvatarUrl = null);

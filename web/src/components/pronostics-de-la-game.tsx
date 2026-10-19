@@ -1,5 +1,6 @@
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -38,8 +39,8 @@ export function PronosticsDeLaGame({ gameId }: { gameId: number }) {
                   {p.equipeGagnante && (
                     <Choix label={`Vainqueur : Équipe ${p.equipeGagnante.equipe}`} correct={p.equipeGagnante.correct} />
                   )}
-                  {p.mvp && <Choix label={`MVP : ${p.mvp.prenom}`} correct={p.mvp.correct} />}
-                  {p.dofd && <Choix label={`DOFD : ${p.dofd.prenom}`} correct={p.dofd.correct} />}
+                  {p.mvp && <Choix label={`MVP : ${p.mvp.prenom}`} joueur={p.mvp} correct={p.mvp.correct} />}
+                  {p.dofd && <Choix label={`DOFD : ${p.dofd.prenom}`} joueur={p.dofd} correct={p.dofd.correct} />}
                 </ul>
               </CardContent>
             </Card>
@@ -50,10 +51,13 @@ export function PronosticsDeLaGame({ gameId }: { gameId: number }) {
   );
 }
 
-function Choix({ label, correct }: { label: string; correct: boolean | null }) {
+function Choix({ label, joueur, correct }: { label: string; joueur?: { prenom: string; avatarUrl?: string | null }; correct: boolean | null }) {
   return (
     <li className="flex items-center justify-between gap-2 text-sm">
-      <span>{label}</span>
+      <span className="flex items-center gap-2">
+        {joueur && <AvatarJoueur prenom={joueur.prenom} avatarUrl={joueur.avatarUrl} className="size-5 text-[9px]" />}
+        {label}
+      </span>
       {correct === null ? (
         <Badge variant="outline">En attente</Badge>
       ) : correct ? (

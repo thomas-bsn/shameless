@@ -12,6 +12,7 @@ const participant = (
   playerId,
   prenom,
   riotId: `${prenom}#EUW`,
+  avatarUrl: null,
   rankTier: "GOLD",
   rankDivision: 2,
   cost: 3,
@@ -90,8 +91,8 @@ const votes = (overrides: Partial<Schemas["ResultatsDesVotes"]> = {}): Schemas["
   ouvertureLe: "2026-10-16T21:05:00Z",
   fermetureLe: "2026-10-16T21:15:00Z",
   votants: 4,
-  mvp: { gagnants: [1], decompte: [{ playerId: 1, prenom: "Alice", voix: 3 }] },
-  dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 2 }] },
+  mvp: { gagnants: [1], decompte: [{ playerId: 1, prenom: "Alice", voix: 3, avatarUrl: null }] },
+  dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 2, avatarUrl: null }] },
   ...overrides,
 });
 

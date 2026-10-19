@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
 import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
@@ -48,5 +49,70 @@ describe("Avatars des joueurs", () => {
     renderApp("/joueurs/7");
 
     expect(await screen.findByRole("img", { name: "Photo de Aldric" })).toHaveAttribute("src", PHOTO);
+  });
+
+  const participant = (playerId: number, prenom: string, avatarUrl: string | null): Schemas["GameParticipantDto"] => ({
+    playerId,
+    prenom,
+    riotId: `${prenom}#EUW`,
+    rankTier: null,
+    rankDivision: null,
+    cost: 3,
+    role: null,
+    avatarUrl,
+  });
+
+  it("l'affiche sur la page de la Série", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /series/5": {
+        seriesId: 5,
+        soireeId: 7,
+        format: 3,
+        fearless: false,
+        outcome: "EnCours",
+        winningTeam: null,
+        teamAWins: 0,
+        teamBWins: 0,
+        teamA: [participant(1, "Aldric", PHOTO), participant(2, "Kuro", null)],
+        teamB: [],
+        capitaineA: null,
+        capitaineB: null,
+        games: [],
+      },
+    });
+    renderApp("/series/5");
+
+    const equipe = await screen.findByRole("group", { name: "Équipe A" });
+    expect(within(equipe).getByRole("img", { name: "Photo de Aldric" })).toHaveAttribute("src", PHOTO);
+    expect(within(equipe).queryByRole("img", { name: "Photo de Kuro" })).not.toBeInTheDocument();
+    expect(equipe).toHaveTextContent("KU");
+  });
+
+  it("l'affiche sur la draft de champions d'un Lien spectateur, sans connexion", async () => {
+    mockApi({
+      "GET /champions": [],
+      "GET /liens/lien-spec": { seriesId: 5, portee: "Spectateur", equipe: null },
+      "GET /liens/lien-spec/draft-champions": {
+        gameId: 12,
+        seriesId: 5,
+        fearless: false,
+        equipeBlue: "A",
+        equipeRed: "B",
+        terminee: false,
+        tourCourant: null,
+        tours: [],
+        actions: [],
+        teamA: [participant(1, "Aldric", PHOTO)],
+        teamB: [participant(3, "Mina", null)],
+        capitaineA: 1,
+        capitaineB: 3,
+        championsDejaJoues: [],
+      },
+    });
+    renderApp("/draft/spectateur/lien-spec");
+
+    expect(await screen.findByRole("img", { name: "Photo de Aldric" })).toHaveAttribute("src", PHOTO);
+    expect(screen.queryByRole("img", { name: "Photo de Mina" })).not.toBeInTheDocument();
   });
 });

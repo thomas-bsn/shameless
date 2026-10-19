@@ -5,6 +5,7 @@ import { useChampions } from "@/lib/draft-champions-queries";
 import { posteLabel } from "@/lib/game";
 import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 export type Participant = Schemas["GameHistoryParticipantDto"];
 export type Side = "blue" | "red";
@@ -114,6 +115,7 @@ export function TableauEquipe({
                       <ChampionCarre championId={p.championId} nom={champion?.name} image={champion?.imageUrl} niveau={p.stats?.champLevel} side={side} />
                       <div className="flex min-w-0 flex-col">
                         <span className="flex flex-wrap items-center gap-1 font-medium">
+                          <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
                           <span className="truncate">{p.prenom}</span>
                           {badges}
                         </span>
