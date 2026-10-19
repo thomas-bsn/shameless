@@ -12,7 +12,7 @@ public class PickerSessionRepository : IPickerSessionRepository
 
     public Task<PickerSession?> GetBySoireeAsync(int soireeId) =>
         _db.PickerSessions
-            .Include(s => s.Players.OrderBy(p => p.Position)).ThenInclude(p => p.Player)
+            .Include(s => s.Players.OrderBy(p => p.Position)).ThenInclude(p => p.Player).ThenInclude(p => p.User)
             .SingleOrDefaultAsync(s => s.SoireeId == soireeId);
 
     public Task<bool> TryAddAsync(PickerSession session) => _db.TryAddAsync(session);

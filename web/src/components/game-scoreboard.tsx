@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { csTotal, kdaLabel, millierLabel, noteTone, statLabel } from "@/lib/game";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { AvatarJoueur } from "@/components/avatar-joueur";
 
 
 /** Le MVP (or) et le DOFD (rouge) sont entourés : une bordure sur les cellules de leur ligne. */
@@ -128,7 +129,10 @@ export function EquipeSansStats({ team, side, players, won }: { team: string; si
         <ul className="flex flex-wrap gap-2">
           {players.map((p) => (
             <li key={p.playerId}>
-              <Badge variant="outline">{p.prenom}</Badge>
+              <Badge variant="outline" className="gap-1.5 pl-1">
+                <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
+                {p.prenom}
+              </Badge>
             </li>
           ))}
         </ul>

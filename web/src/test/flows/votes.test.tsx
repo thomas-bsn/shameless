@@ -78,12 +78,12 @@ describe("Votes MVP et DOFD", () => {
         mvp: {
           gagnants: [1, 2],
           decompte: [
-            { playerId: 1, prenom: "Alice", voix: 2 },
-            { playerId: 2, prenom: "Bob", voix: 2 },
-            { playerId: 3, prenom: "Chloé", voix: 1 },
+            { playerId: 1, prenom: "Alice", voix: 2, avatarUrl: null },
+            { playerId: 2, prenom: "Bob", voix: 2, avatarUrl: null },
+            { playerId: 3, prenom: "Chloé", voix: 1, avatarUrl: null },
           ],
         },
-        dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 3 }] },
+        dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 3, avatarUrl: null }] },
       }),
     });
 

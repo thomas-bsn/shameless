@@ -6318,6 +6318,7 @@ export interface components {
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
             champsCorriges: string[];
+            avatarUrl: null | string;
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -6349,6 +6350,7 @@ export interface components {
             /** Format: int32 */
             playerId: number;
             role: null | components["schemas"]["Role"];
+            avatarUrl: null | string;
         };
         GameRecapResponse: {
             /** Format: int32 */
@@ -6414,6 +6416,7 @@ export interface components {
             playerId: number;
             prenom: string;
             correct: null | boolean;
+            avatarUrl: null | string;
         };
         JsonElement: unknown;
         LancerDraftRequest: {
@@ -7047,6 +7050,7 @@ export interface components {
             prenom: string;
             /** Format: int32 */
             voix: number;
+            avatarUrl: null | string;
         };
         VoterRequest: {
             votantDiscordId: string;

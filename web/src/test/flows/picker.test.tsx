@@ -12,6 +12,7 @@ const participant = (playerId: number, cost: number, overrides: Partial<Particip
   playerId,
   prenom: `Joueur${playerId}`,
   riotId: `J${playerId}#EUW`,
+  avatarUrl: null,
   rankTier: null,
   rankDivision: null,
   cost,

@@ -9,6 +9,7 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
   prenoms.map((prenom, i) => ({
     prenom,
     riotId: `${prenom}#EUW`,
+    avatarUrl: null,
     rankTier: "GOLD",
     rankDivision: 2,
     cost: 3,
