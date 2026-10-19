@@ -19,12 +19,55 @@ public sealed class DraftChampionsController : ControllerBase
 {
     private readonly DraftChampionsService _drafts;
 
+    private readonly ChatDraftChampionsService _chat;
+
     private readonly TimeProvider _clock;
 
-    public DraftChampionsController(DraftChampionsService drafts, TimeProvider clock)
+    public DraftChampionsController(DraftChampionsService drafts, ChatDraftChampionsService chat, TimeProvider clock)
     {
         _drafts = drafts;
+        _chat = chat;
         _clock = clock;
+    }
+
+    /// <summary>
+    /// Sans connexion, par un Lien capitaine ou le Lien spectateur : les messages du chat de la dernière
+    /// draft de la Série, du plus ancien au plus récent ; aucun une fois la draft terminée.
+    /// </summary>
+    [HttpGet("liens/{lien}/draft-champions/messages")]
+    [AccesParLien]
+    [ProducesResponseType<MessagesDraftResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    public async Task<ActionResult<MessagesDraftResponse>> LireMessages(string lien)
+    {
+        var result = await _chat.LireAsync(this.AccesParLien());
+        if (!result.IsOk) return this.Refusal(result);
+
+        return new MessagesDraftResponse(result.Value!.Select(MessageDraftResponse.From).ToList());
+    }
+
+    /// <summary>
+    /// Sans connexion, par un Lien capitaine (sous le prénom de son Joueur) ou le Lien spectateur (sous le
+    /// nom Discord si une session existe, sinon sous un pseudo « Spectateur N » lié à <c>spectateurId</c>).
+    /// Message vide, trop long (300 caractères) ou spectateur sans identifiant : 400 ; draft terminée : 409 ;
+    /// débit dépassé (5 messages par 10 secondes et par personne) : 429.
+    /// </summary>
+    [HttpPost("liens/{lien}/draft-champions/messages")]
+    [AccesParLien]
+    [ProducesResponseType<MessageDraftResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests, "application/problem+json")]
+    public async Task<ActionResult<MessageDraftResponse>> EcrireMessage(string lien, [FromBody] EcrireMessageRequest request)
+    {
+        AuteurChat auteur = User.DiscordIdOrNull() is { } discordId
+            ? new AuteurChat.Discord(discordId, User.Username() ?? "Discord", User.AvatarUrl())
+            : new AuteurChat.Anonyme(request.SpectateurId);
+        var result = await _chat.EcrireAsync(this.AccesParLien(), request.Contenu, auteur);
+        if (!result.IsOk) return this.Refusal(result);
+
+        return StatusCode(StatusCodes.Status201Created, MessageDraftResponse.From(result.Value!));
     }
 
     private DraftChampionsResponse Reponse(DraftChampions draft) =>
