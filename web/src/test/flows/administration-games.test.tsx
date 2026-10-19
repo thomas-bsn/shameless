@@ -212,6 +212,55 @@ describe("Administration : onglet Games", () => {
     expect(await within(dialogue).findByText("La série est terminée.")).toBeInTheDocument();
   });
 
+  it("importe un Fichier de Rapport sur la game et relit la game", async () => {
+    const fichier = { riotMatchId: "EUW1_1", donnees: {}, joueurs: [{ puuid: "p1", side: "blue", championId: 64, victoire: true, stats: {} }] };
+    const fetchMock = mockApi({ ...base(), "POST /games/42/import-rapport": recap({ riotMatchId: "EUW1_1" }) });
+    const dialogue = await ouvrir();
+
+    await userEvent.upload(
+      within(dialogue).getByLabelText("Fichier de Rapport"),
+      new File([JSON.stringify(fichier)], "rapport.json", { type: "application/json" }),
+    );
+    await userEvent.click(within(dialogue).getByRole("button", { name: "Importer le rapport" }));
+
+    expect(JSON.parse(await corps(fetchMock, "POST", "/games/42/import-rapport"))).toEqual(fichier);
+    expect(await within(dialogue).findByText("Rapport importé.")).toBeInTheDocument();
+  });
+
+  it("affiche les écarts d'un import refusé, game inchangée", async () => {
+    mockApi({
+      ...base(),
+      "POST /games/42/import-rapport": json(
+        {
+          status: 409,
+          title: "Import refusé",
+          detail: "Le fichier ne correspond pas à la game : rien n'a été importé.",
+          ecarts: ["Alice est participant de la game mais absent du fichier.", "Le vainqueur diffère : l'Équipe A a gagné la game."],
+        },
+        409,
+      ),
+    });
+    const dialogue = await ouvrir();
+
+    await userEvent.upload(within(dialogue).getByLabelText("Fichier de Rapport"), new File(["{}"], "rapport.json", { type: "application/json" }));
+    await userEvent.click(within(dialogue).getByRole("button", { name: "Importer le rapport" }));
+
+    expect(await within(dialogue).findByText("Alice est participant de la game mais absent du fichier.")).toBeInTheDocument();
+    expect(within(dialogue).getByText(/Le vainqueur diffère/)).toBeInTheDocument();
+    expect(within(dialogue).queryByText("Rapport importé.")).not.toBeInTheDocument();
+  });
+
+  it("refuse un fichier qui n'est pas du JSON sans appeler l'API", async () => {
+    const fetchMock = mockApi({ ...base(), "POST /games/42/import-rapport": recap() });
+    const dialogue = await ouvrir();
+
+    await userEvent.upload(within(dialogue).getByLabelText("Fichier de Rapport"), new File(["pas du json"], "rapport.json", { type: "application/json" }));
+    await userEvent.click(within(dialogue).getByRole("button", { name: "Importer le rapport" }));
+
+    expect(await within(dialogue).findByText(/n'est pas un fichier JSON/)).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([r]) => r.method === "POST")).toBe(false);
+  });
+
   it("supprime la game après une confirmation qui explique la conséquence", async () => {
     const fetchMock = mockApi({ ...base(), "DELETE /games/42": new Response(null, { status: 204 }) });
     const dialogue = await ouvrir();

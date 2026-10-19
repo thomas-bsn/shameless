@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Shameless.Tests.Integration.Infrastructure;
 using static Shameless.Tests.Integration.Infrastructure.RapportsDeTest;
@@ -143,6 +144,47 @@ public class RapportsCompanionTests(ApiFactory factory) : IntegrationTest(factor
             .ToDictionary(c => c.GetProperty("playerId").GetInt32(), c => c.GetProperty("championId").GetString());
         Assert.Equal("Thresh", champions[remplacant]);
         Assert.DoesNotContain(serie.TeamA[4], champions.Keys);
+    }
+
+    [Fact]
+    public async Task Un_id_de_champion_inconnu_laisse_le_rapport_en_attente_et_la_game_inchangee()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        // Un champion sorti après la dernière mise à jour du catalogue : le client donne un id que l'API ne connaît pas.
+        var rapport = JsonSerializer.SerializeToNode(Rapport("EUW1_7000000070", teamASide: "blue", gagnante: "A"))!;
+        rapport["joueurs"]![3]!["championId"] = 9999;
+
+        var reponse = await EnvoyerRapportAsync(code, rapport);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, reponse.StatusCode);
+        var game = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0];
+        Assert.Equal("pending", game.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, game.GetProperty("riotMatchId").ValueKind);
+        Assert.Equal(JsonValueKind.Null, game.GetProperty("rapportEnRevue").ValueKind);
+
+        // Le catalogue à jour, le renvoi du même rapport est appliqué.
+        Factory.Champions.Ajouter(new("Nouveau", "9999", "Nouveau", "https://ddragon.test/img/champion/Nouveau.png", []));
+        var renvoi = await EnvoyerRapportAsync(code, rapport);
+        Assert.Equal(HttpStatusCode.OK, renvoi.StatusCode);
+        var jouee = (await SerieAsync(client, serie.SeriesId)).GetProperty("games")[0].GetProperty("championsJoues")
+            .EnumerateArray().Single(c => c.GetProperty("playerId").GetInt32() == serie.TeamA[3]);
+        Assert.Equal("Nouveau", jouee.GetProperty("championId").GetString());
+    }
+
+    [Fact]
+    public async Task Un_rapport_sans_id_de_champion_valide_est_mal_forme()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client, format: 3);
+        await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
+        var code = await CodeCompanionAsync(client, serie.SeriesId);
+        var rapport = JsonSerializer.SerializeToNode(Rapport("EUW1_7000000071", teamASide: "blue", gagnante: "A"))!;
+        rapport["joueurs"]![0]!["championId"] = 0;
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await EnvoyerRapportAsync(code, rapport)).StatusCode);
     }
 
     [Fact]

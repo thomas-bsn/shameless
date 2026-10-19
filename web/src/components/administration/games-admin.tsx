@@ -137,6 +137,7 @@ function GameDialog({ gameId, onFermer }: { gameId: number; onFermer: () => void
             <Vainqueur game={game.data} onErreur={setErreur} />
             <Composition game={game.data} onErreur={setErreur} />
             <StatsDesJoueurs game={game.data} onErreur={setErreur} />
+            <ImportDeRapport gameId={gameId} onErreur={setErreur} />
             <Suppression gameId={gameId} onErreur={setErreur} onSupprimee={onFermer} />
           </div>
         )}
@@ -393,6 +394,90 @@ function StatsForm({ gameId, participant, onErreur }: { gameId: number; particip
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Les écarts d'un import refusé (409) : la liste des différences entre le fichier et la game. */
+const ecartsDe = (erreur: unknown): string[] | null => {
+  const ecarts = (erreur as { ecarts?: unknown } | null)?.ecarts;
+  return Array.isArray(ecarts) ? ecarts.map(String) : null;
+};
+
+/**
+ * L'Import d'un Rapport (ADR 0020) : le Fichier de Rapport remis par un joueur dont le Companion n'a pas
+ * pu envoyer. Il doit correspondre à la game (participants, Sides, vainqueur), sinon il est refusé en
+ * entier et les écarts s'affichent.
+ */
+function ImportDeRapport({ gameId, onErreur }: { gameId: number } & SurErreur) {
+  const relire = useRelire();
+  const [fichier, setFichier] = useState<File | null>(null);
+  const [refus, setRefus] = useState<string | null>(null);
+  const [ecarts, setEcarts] = useState<string[] | null>(null);
+  const [importe, setImporte] = useState(false);
+  const importer = $api.useMutation("post", "/games/{id}/import-rapport", {
+    onError: (e) => {
+      const liste = ecartsDe(e);
+      if (liste) setEcarts(liste);
+      else onErreur(e);
+    },
+    onSuccess: async () => {
+      setImporte(true);
+      await relire();
+    },
+  });
+
+  const lancer = async () => {
+    if (!fichier) return;
+    onErreur(null);
+    setEcarts(null);
+    setImporte(false);
+    let rapport: unknown;
+    try {
+      rapport = JSON.parse(await fichier.text());
+    } catch {
+      setRefus("Ce fichier n'est pas un fichier JSON : déposez le Fichier de Rapport tel que reçu.");
+      return;
+    }
+    setRefus(null);
+    importer.mutate({ params: { path: { id: gameId } }, body: rapport as Schemas["RapportDeGameRequest"] });
+  };
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="font-semibold">Import d'un Rapport</h3>
+      <p className="text-sm text-muted-foreground">
+        Déposez le Fichier de Rapport d'un joueur dont le Companion n'a pas pu envoyer. Ses participants, ses Sides et son vainqueur doivent
+        être ceux de la game : le vainqueur et la composition ne changent jamais, les stats, les champions et les costs si.
+      </p>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor={`rapport-${gameId}`} className="text-xs">
+            Fichier de Rapport
+          </Label>
+          <Input
+            id={`rapport-${gameId}`}
+            type="file"
+            accept=".json,application/json"
+            onChange={(e) => setFichier(e.target.files?.[0] ?? null)}
+          />
+        </div>
+        <Button size="sm" disabled={!fichier || importer.isPending} onClick={lancer}>
+          Importer le rapport
+        </Button>
+      </div>
+      {refus && <p className="text-sm text-destructive">{refus}</p>}
+      {importe && <p className="text-sm text-muted-foreground">Rapport importé.</p>}
+      {ecarts && (
+        <div role="alert" className="flex flex-col gap-1 rounded-md border border-destructive/50 p-3 text-sm">
+          <span className="font-medium text-destructive">Import refusé : le fichier ne correspond pas à la game, rien n'a été importé.</span>
+          <ul className="list-disc pl-5">
+            {ecarts.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 

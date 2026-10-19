@@ -7,6 +7,14 @@ namespace Shameless.Application.Services;
 /// <summary>Un rapport traité : sa game et où en est le rapport.</summary>
 public sealed record RapportTraite(CustomGame Game, StatutRapport Statut);
 
+/// <summary>Le résultat d'un Import d'un Rapport : la game importée, ou la liste des écarts qui l'ont fait refuser.</summary>
+public sealed record ImportDeRapport(CustomGame? Game, IReadOnlyList<string> Ecarts)
+{
+    public bool EstAccepte => Game != null;
+    public static ImportDeRapport Accepte(CustomGame game) => new(game, []);
+    public static ImportDeRapport Refuse(IReadOnlyList<string> ecarts) => new(null, ecarts);
+}
+
 /// <summary>
 /// Les rapports de fin de game envoyés par le Companion avec le code de sa Série (ADR 0004). Un rapport
 /// conforme à la composition de la game en attente la termine comme une saisie manuelle, qui reste
@@ -22,6 +30,8 @@ public sealed class RapportsCompanionService
     private readonly SeriesService _seriesService;
     private readonly IPlayerRepository _players;
     private readonly IRiotService _riot;
+    private readonly IChampionCatalog _champions;
+    private readonly CostCalculationService _costs;
     private readonly TimeProvider _clock;
 
     public RapportsCompanionService(
@@ -30,6 +40,8 @@ public sealed class RapportsCompanionService
         SeriesService seriesService,
         IPlayerRepository players,
         IRiotService riot,
+        IChampionCatalog champions,
+        CostCalculationService costs,
         TimeProvider clock)
     {
         _series = series;
@@ -37,6 +49,8 @@ public sealed class RapportsCompanionService
         _seriesService = seriesService;
         _players = players;
         _riot = riot;
+        _champions = champions;
+        _costs = costs;
         _clock = clock;
     }
 
@@ -74,6 +88,10 @@ public sealed class RapportsCompanionService
             return CommandResult<RapportTraite>.Conflict(
                 "Un rapport de la game en attente est déjà en revue : l'organisateur doit l'accepter ou le rejeter.");
 
+        var convertis = await ConvertirLesChampionsAsync(rapport);
+        if (!convertis.IsOk) return convertis.As<RapportTraite>();
+        rapport = convertis.Value!;
+
         var ecart = rapport.EcartAvec(game);
         if (!ecart.EstVide)
         {
@@ -94,6 +112,50 @@ public sealed class RapportsCompanionService
 
         // Refusé par la base : un envoi simultané du même rapport a pu le rattacher entre-temps.
         return await DejaRecuAsync(seriesId, rapport) ?? terminee;
+    }
+
+    /// <summary>
+    /// L'Import d'un Rapport (ADR 0020) : le Fichier de Rapport d'un Administrateur sur une game
+    /// terminée. Même validation que le rapport ; ses participants, ses Sides et son vainqueur doivent
+    /// être ceux de la game, sinon le refus est complet et liste les écarts. L'import ne change jamais
+    /// le vainqueur ni la composition : il donne à la game ses données Riot, champions et stats, puis
+    /// recalcule les costs.
+    /// </summary>
+    public async Task<CommandResult<ImportDeRapport>> ImporterAsync(int gameId, RapportDeGame rapport)
+    {
+        var invalidite = rapport.Invalidite();
+        if (invalidite != null)
+            return CommandResult<ImportDeRapport>.Invalid(invalidite);
+
+        var game = await _games.GetByIdWithParticipantsAsync(gameId);
+        if (game == null)
+            return CommandResult<ImportDeRapport>.NotFound("Cette game n'existe pas.");
+        if (game.Status != GameStatuses.Completed)
+            return CommandResult<ImportDeRapport>.Conflict(
+                "Cette game n'est pas terminée : un rapport s'importe sur une game terminée.");
+
+        var convertis = await ConvertirLesChampionsAsync(rapport);
+        if (!convertis.IsOk) return convertis.As<ImportDeRapport>();
+        rapport = convertis.Value!;
+
+        var ecarts = rapport.EcartsPourImport(game);
+        if (ecarts.Count > 0)
+            return CommandResult<ImportDeRapport>.Ok(ImportDeRapport.Refuse(ecarts));
+
+        var autre = await _games.GetByRiotMatchIdAsync(rapport.RiotMatchId);
+        if (autre != null && autre.Id != game.Id)
+            return CommandResult<ImportDeRapport>.Conflict("Cette partie Riot est déjà rattachée à une autre game.");
+        if (game.RiotMatchId != null && game.RiotMatchId != rapport.RiotMatchId)
+            return CommandResult<ImportDeRapport>.Conflict(
+                "Cette game porte déjà les données d'une autre partie Riot : elle ne les remplace pas.");
+
+        game.AppliquerRapport(rapport);
+        if (!await _games.TrySaveChangesAsync())
+            return CommandResult<ImportDeRapport>.Conflict(
+                "Cette game ou cette partie Riot vient d'être modifiée par une autre commande : rechargez et réessayez.");
+
+        await _costs.RecalculateCosts(game.Id);
+        return CommandResult<ImportDeRapport>.Ok(ImportDeRapport.Accepte(game));
     }
 
     /// <summary>
@@ -152,6 +214,26 @@ public sealed class RapportsCompanionService
                 .Select(j => riotIds.TryGetValue(j.Puuid, out var riotId) ? j with { RiotId = riotId } : j)
                 .ToList()
         };
+    }
+
+    /// <summary>
+    /// Le rapport où le champion de chaque joueur, reçu comme l'id numérique du client (ADR 0019), est
+    /// l'id Data Dragon du catalogue. Un id que le catalogue ne connaît pas (nouveau champion, catalogue
+    /// pas encore à jour) n'est pas deviné : le rapport reste en attente, rien n'est appliqué, et le
+    /// Companion le renvoie plus tard.
+    /// </summary>
+    private async Task<CommandResult<RapportDeGame>> ConvertirLesChampionsAsync(RapportDeGame rapport)
+    {
+        var parCle = (await _champions.GetAllAsync()).ToDictionary(c => c.Key, c => c.Id);
+        var inconnus = rapport.Joueurs.Select(j => j.ChampionId).Where(id => !parCle.ContainsKey(id)).Distinct().ToList();
+        if (inconnus.Count > 0)
+            return CommandResult<RapportDeGame>.Indisponible(
+                $"Champion inconnu du catalogue (id {string.Join(", ", inconnus)}) : le rapport reste en attente, renvoyez-le quand le catalogue sera à jour.");
+
+        return CommandResult<RapportDeGame>.Ok(rapport with
+        {
+            Joueurs = rapport.Joueurs.Select(j => j with { ChampionId = parCle[j.ChampionId] }).ToList()
+        });
     }
 
     private const string DejaDecide = "Ce rapport n'est plus en revue : l'organisateur a déjà décidé.";

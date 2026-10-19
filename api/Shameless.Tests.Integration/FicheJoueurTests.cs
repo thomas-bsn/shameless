@@ -78,7 +78,7 @@ public class FicheJoueurTests(ApiFactory factory) : IntegrationTest(factory)
 
         var g2 = await PlayGameAsync(client, serie.SeriesId, teamASide: "red");
         await ReadJsonAsync(await EnvoyerRapportAsync(code, Rapport("EUW1_7000000002", "red", "B",
-            champions: ["Sett", .. ChampionsA[1..], .. ChampionsB],
+            champions: ["Teemo", .. ChampionsA[1..], .. ChampionsB],
             statsDe: i => i == 0
                 ? new { kills = 1, deaths = 5, assists = 2, totalMinionsKilled = 120, neutralMinionsKilled = 0, totalDamageDealtToChampions = 9000, teamPosition = "JUNGLE" }
                 : new { kills = i < 5 ? 1 : 4, deaths = 1, assists = 2 },
@@ -123,7 +123,7 @@ public class FicheJoueurTests(ApiFactory factory) : IntegrationTest(factory)
         var fiche = await FicheAsync(client, serie.TeamA[0]);
 
         var champions = fiche.GetProperty("champions").EnumerateArray().ToList();
-        Assert.Equal(["Garen", "Sett"], champions.Select(c => c.GetProperty("championId").GetString()));
+        Assert.Equal(["Garen", "Teemo"], champions.Select(c => c.GetProperty("championId").GetString()));
         var garen = champions[0].GetProperty("stats");
         Assert.Equal(1, garen.GetProperty("gamesJouees").GetInt32());
         Assert.Equal(100.0, garen.GetProperty("winrate").GetDouble());
@@ -161,7 +161,7 @@ public class FicheJoueurTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(JsonValueKind.Null, manuelle.GetProperty("championId").ValueKind);
         Assert.Equal(JsonValueKind.Null, manuelle.GetProperty("dureeSecondes").ValueKind);
 
-        Assert.Equal("Sett", g2.GetProperty("championId").GetString());
+        Assert.Equal("Teemo", g2.GetProperty("championId").GetString());
         Assert.Equal("Jungle", g2.GetProperty("role").GetString());
         Assert.Equal(1200, g2.GetProperty("dureeSecondes").GetInt32());
         Assert.Equal(1, g2.GetProperty("stats").GetProperty("kills").GetInt32());
