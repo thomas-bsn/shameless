@@ -37,6 +37,8 @@ export function PreparationDeSerie({ series }: { series: Series }) {
   });
   const lesDeuxOntRejoint = liens.data?.capitaineARejointLe != null && liens.data.capitaineBRejointLe != null;
   const dejaLancee = series.games.length > 0;
+  const lesDeuxSontDesignes = series.capitaineA != null && series.capitaineB != null;
+  const peutLancer = lesDeuxSontDesignes && lesDeuxOntRejoint;
   const renouveler = $api.useMutation("post", "/series/{id}/liens/{equipe}/renouveler", {
     onSuccess: (data: Schemas["LiensSerieResponse"]) =>
       queryClient.setQueryData(["get", "/series/{id}/liens", params], data),
@@ -45,7 +47,7 @@ export function PreparationDeSerie({ series }: { series: Series }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Prépare la série</h1>
+        <h1 className="text-2xl font-bold">Prépare la Série</h1>
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant="outline">BO{series.format}</Badge>
           {series.fearless && <Badge variant="outline">Fearless</Badge>}
@@ -126,13 +128,17 @@ export function PreparationDeSerie({ series }: { series: Series }) {
         <div className="flex flex-col gap-2">
           <Button
             size="lg"
-            disabled={!lesDeuxOntRejoint || lancer.isPending}
+            disabled={!peutLancer || lancer.isPending}
             onClick={() => lancer.mutate({ params: { path: { id: series.seriesId } } })}
           >
             Lancer la draft
           </Button>
-          {!lesDeuxOntRejoint && (
-            <p className="text-sm text-muted-foreground">Les deux Capitaines doivent avoir ouvert leur lien.</p>
+          {!lesDeuxSontDesignes ? (
+            <p className="text-sm text-muted-foreground">Désigne les deux capitaines.</p>
+          ) : (
+            !lesDeuxOntRejoint && (
+              <p className="text-sm text-muted-foreground">Les deux Capitaines doivent avoir ouvert leur lien.</p>
+            )
           )}
           {lancer.isError && <ErrorAlert error={lancer.error} />}
         </div>

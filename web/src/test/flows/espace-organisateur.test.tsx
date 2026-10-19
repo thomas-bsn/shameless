@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
-import { json, mockApi } from "@/test/api";
+import { json, mockApi, problem } from "@/test/api";
 import { player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
@@ -97,6 +97,22 @@ describe("Espace organisateur", () => {
 
     await waitFor(() => expect(appels(fetch, "POST", "/api/series/5/games")).toHaveLength(1));
     expect(await appels(fetch, "POST", "/api/series/5/games")[0]![0].clone().text()).toBe("");
+  });
+
+  it("explique un refus 409 du lancement (capitaines pas prêts) et renvoie vers « Liens et code »", async () => {
+    mockApi({
+      ...routes(),
+      "POST /series/5/games": problem(409, "Les deux Capitaines doivent avoir rejoint avant de lancer la draft."),
+    });
+    renderApp("/series/5/organisateur");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Lancer la game 2" }));
+
+    const alerte = await screen.findByRole("alert");
+    expect(alerte).toHaveTextContent("Les capitaines ne sont pas prêts");
+    expect(alerte).not.toHaveTextContent("doivent avoir rejoint avant de lancer la draft");
+    const liens = within(alerte).getByRole("link", { name: "Liens et code" });
+    expect(liens).toHaveAttribute("href", "/series/5/preparation");
   });
 
   it("renvoie vers l'Écran de préparation tant qu'aucune game n'existe, sans bouton de lancement", async () => {
@@ -216,6 +232,18 @@ describe("Espace organisateur", () => {
     await userEvent.click(await screen.findByRole("link", { name: "Liens et code" }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/series/5/preparation"));
+  });
+
+  it("ouvre l'Écran de préparation de la nouvelle Série après une Revanche", async () => {
+    mockApi({
+      ...routes(serie({ outcome: "Gagnee", winningTeam: "A", teamAWins: 2, games: [game(21), game(22)] })),
+      "POST /series/5/rematch": json({ seriesId: 9 }, 201),
+    });
+    const { router } = renderApp("/series/5/organisateur");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Lancer la revanche" }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/series/9/preparation"));
   });
 
   it("propose la Revanche à la fin, sans les commandes de la série en cours", async () => {

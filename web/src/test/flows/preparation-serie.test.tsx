@@ -58,6 +58,8 @@ const rejoint = (equipes: { a?: string; b?: string }): Schemas["LiensSerieRespon
 const heure = (iso: string) =>
   new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
+const avecCapitaines = (overrides: Partial<Series> = {}) => serie({ capitaineA: 1, capitaineB: 3, ...overrides });
+
 const routes = (series: Series = serie()) => ({
   "GET /auth/me": user(),
   "GET /series/5": series,
@@ -81,7 +83,7 @@ describe("Écran de préparation", () => {
     });
     const { router } = renderApp("/series/5/preparation");
 
-    expect(await screen.findByRole("heading", { name: "Prépare la série" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Prépare la Série" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/series/5/preparation");
   });
 
@@ -207,15 +209,25 @@ describe("Écran de préparation", () => {
   });
 
   it("grise « Lancer la draft » tant que les deux Capitaines n'ont pas rejoint", async () => {
-    mockApi({ ...routes(), "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z" }) });
+    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z" }) });
     renderApp("/series/5/preparation");
 
     expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
+    expect(screen.getByText("Les deux Capitaines doivent avoir ouvert leur lien.")).toBeInTheDocument();
+  });
+
+  it("grise « Lancer la draft » en disant pourquoi tant que les deux capitaines ne sont pas désignés", async () => {
+    const quand = "2026-10-19T21:04:00Z";
+    mockApi({ ...routes(serie({ capitaineA: 1 })), "GET /series/5/liens": rejoint({ a: quand, b: quand }) });
+    renderApp("/series/5/preparation");
+
+    expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
+    expect(screen.getByText("Désigne les deux capitaines.")).toBeInTheDocument();
   });
 
   it("active « Lancer la draft » sans recharger la page dès que le deuxième Capitaine a rejoint", async () => {
     let reponse = rejoint({ a: "2026-10-19T21:04:00Z" });
-    mockApi({ ...routes(), "GET /series/5/liens": () => json(reponse) });
+    mockApi({ ...routes(avecCapitaines()), "GET /series/5/liens": () => json(reponse) });
     renderApp("/series/5/preparation");
     expect(await screen.findByRole("button", { name: "Lancer la draft" })).toBeDisabled();
 
@@ -231,7 +243,8 @@ describe("Écran de préparation", () => {
     let lancee = false;
     mockApi({
       ...routes(),
-      "GET /series/5": () => json(lancee ? serie({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] }) : serie()),
+      "GET /series/5": () =>
+        json(lancee ? avecCapitaines({ games: [{ id: 12 } as Schemas["SeriesGameResponse"]] }) : avecCapitaines()),
       "GET /series/5/liens": rejoint({ a: "2026-10-19T21:04:00Z", b: "2026-10-19T21:06:00Z" }),
       "POST /series/5/games": () => {
         lancee = true;
@@ -253,7 +266,7 @@ describe("Écran de préparation", () => {
     });
     renderApp("/series/5/preparation");
 
-    await screen.findByRole("heading", { name: "Prépare la série" });
+    await screen.findByRole("heading", { name: "Prépare la Série" });
     expect(screen.queryByRole("button", { name: "Lancer la draft" })).not.toBeInTheDocument();
   });
 

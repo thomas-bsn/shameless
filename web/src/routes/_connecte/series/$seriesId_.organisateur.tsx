@@ -6,6 +6,7 @@ import { DraftChampionsOrganisateur } from "@/components/draft-champions-organis
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { RapportEnRevuePanel } from "@/components/rapport-en-revue-panel";
 import { SeriesOptionsForm } from "@/components/series-options-form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { pendingGame, outcomeLabel, replacementCandidates, sideLabel } from "@/lib/series";
+import { problemStatus } from "@/lib/problem";
+import { pendingGame,outcomeLabel, replacementCandidates, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 
 export const Route = createFileRoute("/_connecte/series/$seriesId_/organisateur")({
@@ -192,7 +194,24 @@ function GamePanel({ series }: { series: Series }) {
               </Button>
               {play.isError && (
                 <div className="w-full">
-                  <ErrorAlert error={play.error} />
+                  {problemStatus(play.error) === 409 ? (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        <span>
+                          Les capitaines ne sont pas prêts : les deux doivent être désignés et avoir ouvert leur lien.
+                        </span>
+                        <Link
+                          to="/series/$seriesId/preparation"
+                          params={{ seriesId: String(series.seriesId) }}
+                          className="font-medium underline"
+                        >
+                          Liens et code
+                        </Link>
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <ErrorAlert error={play.error} />
+                  )}
                 </div>
               )}
             </form>
@@ -326,7 +345,8 @@ function RevanchePanel({ series }: { series: Series }) {
   const rematch = $api.useMutation("post", "/series/{id}/rematch", {
     onSuccess: async (created) => {
       await refresh();
-      await navigate({ to: "/series/$seriesId", params: { seriesId: String(created.seriesId) } });
+      // La nouvelle Série s'ouvre sur son Écran de préparation (Capitaines, liens), pas sur le récap.
+      await navigate({ to: "/series/$seriesId/preparation", params: { seriesId: String(created.seriesId) } });
     },
   });
 
