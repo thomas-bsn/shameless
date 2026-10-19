@@ -1,7 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { fetchClient, type Schemas } from "@/api/client";
-import { roleLabel } from "./ranks";
-import { rankScore } from "./soloq";
+import { normalizeTier, roleLabel } from "./ranks";
+import { compareRanks } from "./soloq";
+
+type RankKey = Parameters<typeof compareRanks>[0];
 
 /** Le Joueur lié au compte Discord connecté, ou null s'il n'y en a pas. */
 export const myPlayerQuery = queryOptions({
@@ -45,7 +47,7 @@ export function sortPlayers(
   direction: SortDirection,
   winrates: ReadonlyMap<number, number>,
 ): Schemas["PlayerDto"][] {
-  const value = (p: Schemas["PlayerDto"]): number | string | null => {
+  const value = (p: Schemas["PlayerDto"]): number | string | RankKey | null => {
     switch (key) {
       case "joueur":
         return fold(p.prenom);
@@ -54,9 +56,9 @@ export function sortPlayers(
       case "role":
         return roleLabel(p.mainRole);
       case "rang":
-        return rankScore(p.rankTier ?? "UNRANKED", p.rankDivision, p.lp);
+        return { tier: normalizeTier(p.rankTier), division: p.rankDivision, lp: p.lp };
       case "peak":
-        return p.peakTier ? rankScore(p.peakTier, p.peakDivision, p.peakLp) : null;
+        return p.peakTier ? { tier: normalizeTier(p.peakTier), division: p.peakDivision, lp: p.peakLp } : null;
       case "winrate":
         return winrates.get(p.id) ?? null;
     }
@@ -66,7 +68,12 @@ export function sortPlayers(
     const va = value(a);
     const vb = value(b);
     if (va === null || vb === null) return va === vb ? 0 : va === null ? 1 : -1;
-    const order = typeof va === "string" ? va.localeCompare(vb as string, "fr") : va - (vb as number);
+    const order =
+      typeof va === "string"
+        ? va.localeCompare(vb as string, "fr")
+        : typeof va === "number"
+          ? va - (vb as number)
+          : compareRanks(va, vb as RankKey);
     return sign * order || a.prenom.localeCompare(b.prenom, "fr");
   });
 }
