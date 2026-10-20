@@ -9,7 +9,17 @@ type Details = Schemas["DetailsDuJoueur"];
 
 const catalogue: Schemas["CatalogueDeJeu"] = {
   version: "16.1.1",
-  champions: [],
+  champions: [
+    {
+      id: "Ahri",
+      capacites: [
+        { touche: "Q", name: "Orbe", iconUrl: "https://dd/ahri-q.png" },
+        { touche: "W", name: "Feu de renard", iconUrl: "https://dd/ahri-w.png" },
+        { touche: "E", name: "Charme", iconUrl: "https://dd/ahri-e.png" },
+        { touche: "R", name: "Assaut", iconUrl: "https://dd/ahri-r.png" },
+      ],
+    },
+  ],
   objets: [
     { id: 3006, name: "Bottes de berserker", iconUrl: "https://dd/3006.png" },
     { id: 3047, name: "Sandales de Mercure", iconUrl: "https://dd/3047.png" },
@@ -420,23 +430,49 @@ describe("Onglet Détails", () => {
     expect(screen.queryByRole("group", { name: "Détails de Alice" })).not.toBeInTheDocument();
   });
 
-  it("montre les six sorts lancés et les pings non nuls du joueur choisi", async () => {
+  it("montre les sorts lancés avec leurs icônes de capacité et d'invocateur, et leur nombre", async () => {
     ouvrirApp();
     await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
     await userEvent.click(within(screen.getByRole("group", { name: "Joueur" })).getByRole("button", { name: "Alice" }));
 
-    const alice = screen.getByRole("group", { name: "Détails de Alice" });
-    const sorts = within(alice).getByRole("group", { name: "Sorts lancés" });
+    const sorts = within(screen.getByRole("group", { name: "Détails de Alice" })).getByRole("group", { name: "Sorts lancés" });
+    expect(await within(sorts).findByRole("img", { name: "Q : Orbe" })).toHaveAttribute("src", "https://dd/ahri-q.png");
+    for (const nom of ["W : Feu de renard", "E : Charme", "R : Assaut", "Flash", "Embrasement"]) {
+      expect(within(sorts).getByRole("img", { name: nom })).toBeInTheDocument();
+    }
     for (const [touche, valeur] of [["Q", "118"], ["W", "87"], ["E", "142"], ["R", "9"], ["D", "3"], ["F", "2"]]) {
       expect(sorts).toHaveTextContent(new RegExp(`${touche}\\s*${valeur}(?!\\d)`));
     }
-    const pings = within(alice).getByRole("group", { name: "Pings" });
-    expect(pings).toHaveTextContent(/En route\s*14/);
-    expect(pings).toHaveTextContent(/À l'aide\s*10/);
-    expect(pings).toHaveTextContent(/Commande\s*7/);
-    expect(pings).toHaveTextContent(/Ennemi disparu\s*1/);
-    expect(pings).not.toHaveTextContent(/Danger/);
-    expect(pings).not.toHaveTextContent(/Retraite/);
+  });
+
+  it("montre les pings non nuls en icônes avec leur nombre, et masque les pings nuls", async () => {
+    ouvrirApp();
+    await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Joueur" })).getByRole("button", { name: "Alice" }));
+
+    const pings = within(screen.getByRole("group", { name: "Détails de Alice" })).getByRole("group", { name: "Pings" });
+    for (const [nom, nb] of [["En route", "14"], ["À l'aide", "10"], ["Commande", "7"], ["Ennemi disparu", "1"]]) {
+      const icone = within(pings).getByRole("img", { name: nom });
+      expect(icone.parentElement).toHaveTextContent(new RegExp(`^${nb}$`));
+    }
+    expect(within(pings).queryByRole("img", { name: "Danger" })).not.toBeInTheDocument();
+    expect(within(pings).queryByRole("img", { name: "Retraite" })).not.toBeInTheDocument();
+    expect(within(pings).getAllByRole("img")).toHaveLength(4);
+  });
+
+  it("montre un emplacement neutre pour un sort d'invocateur inconnu, sans erreur", async () => {
+    ouvrirApp(
+      recap({
+        teamA: [participant(1, "Alice", { championId: "Ahri", details: details({ spell1Id: 999 }) })],
+        teamB: [participant(2, "Bob", { championId: "Darius" })],
+      }),
+    );
+    await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Joueur" })).getByRole("button", { name: "Alice" }));
+
+    const sorts = within(screen.getByRole("group", { name: "Détails de Alice" })).getByRole("group", { name: "Sorts lancés" });
+    expect(await within(sorts).findAllByRole("img", { name: "Inconnu" })).toHaveLength(1);
+    expect(screen.queryByText(/erreur|indisponible|503|unavailable/i)).not.toBeInTheDocument();
   });
 
   it("n'affiche ni sorts lancés ni pings pour un joueur dont le Rapport n'en porte pas", async () => {
@@ -472,26 +508,55 @@ describe("Onglet Détails", () => {
 });
 
 describe("Onglet Runes", () => {
-  it("montre les runes et les arbres des joueurs avec leurs icônes", async () => {
-    ouvrirApp();
+  it("montre pour chaque joueur la clé de voûte, les runes de l'arbre principal et de l'arbre secondaire", async () => {
+    ouvrirApp(
+      recap({
+        teamA: [
+          participant(1, "Alice", {
+            championId: "Ahri",
+            details: details({ perks: [8112, 8126, 8126, 8126, 8126, 8112] }),
+          }),
+        ],
+        teamB: [participant(2, "Bob", { championId: "Darius" })],
+      }),
+    );
     await userEvent.click(await screen.findByRole("tab", { name: "Runes" }));
 
     const alice = screen.getByRole("group", { name: "Runes de Alice" });
-    expect(await within(alice).findByRole("img", { name: "Électrocution" })).toHaveAttribute("src", "https://dd/electrocute.png");
-    expect(within(alice).getByRole("img", { name: "Coup bas" })).toBeInTheDocument();
-    expect(within(alice).getByRole("img", { name: "Domination" })).toBeInTheDocument();
-    expect(within(alice).getByRole("img", { name: "Inspiration" })).toBeInTheDocument();
-    for (const prenom of ["Alice", "Chloé", "Bob", "Dan"]) {
-      expect(screen.getByRole("group", { name: `Runes de ${prenom}` })).toBeInTheDocument();
-    }
-    expect(within(screen.getByRole("group", { name: "Runes de Chloé" })).getByText("777")).toBeInTheDocument();
+    const cle = await within(alice).findByRole("group", { name: "Clé de voûte" });
+    expect(within(cle).getByRole("img", { name: "Électrocution" })).toHaveAttribute("src", "https://dd/electrocute.png");
+    const principal = within(alice).getByRole("group", { name: "Arbre principal" });
+    expect(within(principal).getByRole("img", { name: "Domination" })).toBeInTheDocument();
+    expect(within(principal).getAllByRole("img", { name: "Coup bas" })).toHaveLength(3);
+    const secondaire = within(alice).getByRole("group", { name: "Arbre secondaire" });
+    expect(within(secondaire).getByRole("img", { name: "Inspiration" })).toBeInTheDocument();
+    expect(within(secondaire).getAllByRole("img", { name: /Coup bas|Électrocution/ })).toHaveLength(2);
   });
 
-  it("affiche les ids quand le catalogue répond 503", async () => {
+  it("montre les dix joueurs, leur nom lié à leur fiche", async () => {
+    ouvrirApp();
+    await userEvent.click(await screen.findByRole("tab", { name: "Runes" }));
+
+    for (const [prenom, id] of [["Alice", 1], ["Chloé", 3], ["Bob", 2], ["Dan", 4]] as const) {
+      const groupe = await screen.findByRole("group", { name: `Runes de ${prenom}` });
+      expect(within(groupe).getByRole("link", { name: prenom })).toHaveAttribute("href", `/joueurs/${id}`);
+    }
+  });
+
+  it("montre un emplacement neutre pour une rune inconnue", async () => {
+    ouvrirApp();
+    await userEvent.click(await screen.findByRole("tab", { name: "Runes" }));
+
+    const chloe = await screen.findByRole("group", { name: "Runes de Chloé" });
+    expect(within(chloe).getAllByRole("img", { name: "Inconnu" }).length).toBeGreaterThan(0);
+  });
+
+  it("montre des emplacements neutres quand le catalogue répond 503", async () => {
     ouvrirApp(recap(), { "GET /catalogue": problem(503) });
     await userEvent.click(await screen.findByRole("tab", { name: "Runes" }));
 
-    expect(await within(screen.getByRole("group", { name: "Runes de Alice" })).findByText("8112")).toBeInTheDocument();
+    const alice = await screen.findByRole("group", { name: "Runes de Alice" });
+    expect(within(alice).getAllByRole("img", { name: "Inconnu" }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/erreur|indisponible|503|unavailable/i)).not.toBeInTheDocument();
   });
 });
