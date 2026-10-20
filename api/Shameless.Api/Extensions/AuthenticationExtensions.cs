@@ -102,6 +102,7 @@ public static class AuthenticationExtensions
                 })
             .AddPolicyHandler(GetRetryPolicy());
         services.AddSingleton<IChampionCatalog, DataDragonChampionCatalog>();
+        services.AddSingleton<ICatalogueDeJeu, DataDragonCatalogueDeJeu>();
 
         // Bot Discord : pas de retry ici, les webhooks sont retentés par leur job de publication.
         services.AddHttpClient<IBotDiscord, BotDiscordClient>((sp, client) =>

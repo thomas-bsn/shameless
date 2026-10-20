@@ -16,6 +16,7 @@ public class AuthorizationTests(ApiFactory factory) : IntegrationTest(factory)
         "GET auth/discord/callback",
         "GET health",
         "GET champions",
+        "GET catalogue",
         "GET companion/administrateurs"
     ];
 
