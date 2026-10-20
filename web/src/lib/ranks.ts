@@ -47,14 +47,18 @@ const ROLES: Record<string, string> = {
 export const roleLabel = (role: string | null | undefined): string | null =>
   (role && ROLES[role.toUpperCase()]) || null;
 
-/** Les emblèmes officiels de Riot (Community Dragon), un PNG par palier : `emblem-<palier>.png`. */
+/**
+ * Les emblèmes officiels de Riot (Community Dragon), un PNG carré par palier : `<palier>.png`.
+ * Les PNG `ranked-emblem/emblem-<palier>.png` sont des plans 16:9 où l'emblème n'occupe que 15 à 25 % de la
+ * largeur : illisibles en petit. Ceux-ci sont rognés au plus près (63 à 100 % de la largeur).
+ */
 export const EMBLEMES_DE_RANG_URL =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem";
+  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default";
 
 /** L'URL de l'emblème d'un palier classé ; null pour Unranked. */
 export function emblemeDeRangUrl(tier: string | null | undefined): string | null {
   const t = normalizeTier(tier);
-  return t === "UNRANKED" ? null : `${EMBLEMES_DE_RANG_URL}/emblem-${t.toLowerCase()}.png`;
+  return t === "UNRANKED" ? null : `${EMBLEMES_DE_RANG_URL}/${t.toLowerCase()}.png`;
 }
 
 const ROLES_DE_JEU = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "Adc", UTILITY: "Support" } as const;

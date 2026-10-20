@@ -17,7 +17,7 @@ export function TuileDeProfil({
 }) {
   return (
     <div role="group" aria-label={libelle} className="flex flex-col items-center gap-1 rounded-xl border bg-background/40 px-2 py-3 text-center">
-      <span className={cn("flex size-9 items-center justify-center", couleur)}>{icone}</span>
+      <span className={cn("flex size-12 items-center justify-center", couleur)}>{icone}</span>
       <span className="text-xs text-muted-foreground">{libelle}</span>
       {valeur && <span className={cn("text-base font-bold tabular-nums", couleur)}>{valeur}</span>}
       {detail && <span className="text-xs text-muted-foreground">{detail}</span>}
