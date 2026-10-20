@@ -17,7 +17,7 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
     championId: null,
     stats: null,
     performance: null,
-    champsCorriges: [],
+    champsCorriges: [], details: null, place: null, badge: null,
     ...ORIGINE_VIDE,
   }));
 

@@ -39,7 +39,7 @@ const participant = (playerId: number, prenom: string, overrides: Partial<Partic
     position: "Mid",
   },
   performance: { note: 70, role: "Mid", sourceDuRole: "Partie", composantes: [], noteOrigine: null },
-  champsCorriges: [],
+  champsCorriges: [], details: null, place: null, badge: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
@@ -64,7 +64,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   teamBWins: 0,
   seriesOutcome: "Gagnee",
   riotMatchId: null,
-  match: null,
+  match: null, teamAObjectifs: null, teamBObjectifs: null,
   teamA: equipe(1, NOMS_A),
   teamB: equipe(11, NOMS_B),
   ...overrides,
