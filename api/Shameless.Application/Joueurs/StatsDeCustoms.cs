@@ -84,7 +84,8 @@ internal sealed record PartieDuJoueur(
     Role? Role,
     NoteDePerformance? Performance,
     int? Place = null,
-    BadgeDeGame? Badge = null)
+    BadgeDeGame? Badge = null,
+    string? AdversaireChampionId = null)
 {
     /// <summary>La participation du Joueur à la Game, null s'il n'y a pas joué.</summary>
     public static PartieDuJoueur? De(CustomGame game, int playerId)
@@ -110,8 +111,27 @@ internal sealed record PartieDuJoueur(
             role,
             lecture.Note,
             lecture.Place,
-            lecture.Badge);
+            lecture.Badge,
+            AdversaireDeLaVoie(game, participant, role, toutesLesStats));
     }
+
+    /// <summary>Le champion adverse du même poste que le Joueur ; null sans poste connu ou sans adversaire identifiable.</summary>
+    private static string? AdversaireDeLaVoie(
+        CustomGame game, CustomGameParticipant participant, Role? role, IReadOnlyDictionary<int, StatsDuParticipant?> stats)
+    {
+        if (role is null) return null;
+        var adverses = game.Participants
+            .Where(p => p.Side != participant.Side
+                && (stats[p.PlayerId]?.Position ?? NotesDeLaGame.AutoroleDe(game, p.PlayerId)) == role)
+            .ToList();
+        return adverses.Count == 1 ? ValeursEffectives.Champion(adverses[0]) : null;
+    }
+
+    /// <summary>La participation aux kills de l'Équipe en pourcentage (une décimale), null sans kills, assists ou total d'Équipe.</summary>
+    private double? ParticipationAuxKills =>
+        Stats?.Kills is { } kills && Stats.Assists is { } assists && KillsDeLEquipe is { } equipe
+            ? Math.Round(100.0 * FormulesDeStats.ParticipationAuxKills(kills, assists, equipe), 1)
+            : null;
 
     /// <summary>Les minutes jouées, null sans durée connue.</summary>
     public double? Minutes => DureeSecondes / 60.0;
@@ -131,5 +151,7 @@ internal sealed record PartieDuJoueur(
         Mvp: votes is { Statut: FenetreDeVote.Clos } && votes.Mvp.Gagnants.Contains(Participant.PlayerId),
         Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId),
         Place: Place,
-        Badge: Badge);
+        Badge: Badge,
+        ParticipationAuxKills: ParticipationAuxKills,
+        AdversaireChampionId: AdversaireChampionId);
 }

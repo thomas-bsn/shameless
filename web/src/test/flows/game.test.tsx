@@ -102,16 +102,45 @@ const votes = (overrides: Partial<Schemas["ResultatsDesVotes"]> = {}): Schemas["
 const ligne = (prenom: string) => screen.getByRole("listitem", { name: prenom });
 
 describe("Page d'une Game", () => {
-  it("annonce le vainqueur, la durée et la Série dans la bannière", async () => {
+  it("présente le duel des deux équipes : noms, issue, score de kills, durée, Série et date", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap() });
 
     renderApp("/games/42");
 
     expect(await screen.findByRole("heading", { name: "Victoire de l'Équipe B · 30:34" })).toBeInTheDocument();
-    expect(screen.getByText(/Game 2 · Série BO3/)).toBeInTheDocument();
-    expect(screen.getByText("Équipe A 1 – 1 Équipe B")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Voir la Série" })).toHaveAttribute("href", "/series/5");
+    const entete = screen.getByRole("region", { name: "En-tête de la game" });
+    const bleue = within(entete).getByRole("group", { name: "Équipe B (côté bleu)" });
+    expect(bleue).toHaveTextContent("Équipe B");
+    expect(bleue).toHaveTextContent("Victoire");
+    const rouge = within(entete).getByRole("group", { name: "Équipe A (côté rouge)" });
+    expect(rouge).toHaveTextContent("Équipe A");
+    expect(rouge).toHaveTextContent("Défaite");
+    expect(within(rouge).getAllByRole("img")).toHaveLength(2);
+    const centre = within(entete).getByRole("group", { name: "Score" });
+    expect(centre).toHaveTextContent("3 : 8");
+    expect(centre).toHaveTextContent("30:34");
+    expect(centre).toHaveTextContent("Game 2 · BO3 · 1 – 1");
+    expect(centre).toHaveTextContent(/16 oct/);
+    expect(within(entete).getByRole("link", { name: "Voir la Série" })).toHaveAttribute("href", "/series/5");
     expect(screen.getByRole("tab", { name: "Général" })).toBeInTheDocument();
+  });
+
+  it("masque le score de kills quand les stats ne les donnent pas, sans rien inventer", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /games/42": recap({
+        match: null,
+        teamA: [participant(1, "Alice", { championId: "Ahri" })],
+        teamB: [participant(2, "Bob", { championId: "Darius" })],
+      }),
+    });
+
+    renderApp("/games/42");
+
+    const centre = await screen.findByRole("group", { name: "Score" });
+    expect(centre).not.toHaveTextContent(/\d+ : \d+/);
+    expect(centre).not.toHaveTextContent("30:34");
+    expect(centre).toHaveTextContent("Game 2 · BO3 · 1 – 1");
   });
 
   it("affiche les joueurs des deux équipes dans deux tableaux avec leurs stats et leur note sur 100", async () => {

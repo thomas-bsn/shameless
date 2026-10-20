@@ -1,4 +1,4 @@
-import { csTotal, dureeLabel, estSaisieAMain, kdaLabel, millierLabel, noteTone, posteLabel, statLabel, trierParRole } from "./game";
+import { csParMinute, csTotal, dureeLabel, estSaisieAMain, kdaLabel, millierLabel, noteTone, posteLabel, ratioKda, statLabel, trierParRole } from "./game";
 
 describe("dureeLabel", () => {
   it("écrit une durée en minutes:secondes", () => {
@@ -94,5 +94,27 @@ describe("trierParRole", () => {
     const joueurs = [joueur("Support", "Support"), joueur("Top", "Top")];
     trierParRole(joueurs);
     expect(joueurs.map((j) => j.nom)).toEqual(["Support", "Top"]);
+  });
+});
+
+describe("ratioKda", () => {
+  it("vaut (kills + assists) / morts, avec au moins une mort", () => {
+    expect(ratioKda({ kills: 41, deaths: 3, assists: 3 })).toBeCloseTo(14.67, 2);
+    expect(ratioKda({ kills: 5, deaths: 0, assists: 2 })).toBe(7);
+  });
+
+  it("est inconnu quand une stat manque", () => {
+    expect(ratioKda({ kills: 5, deaths: null, assists: 2 })).toBeNull();
+  });
+});
+
+describe("csParMinute", () => {
+  it("divise sbires et monstres par les minutes jouées", () => {
+    expect(csParMinute({ minionsKilled: 150, neutralMinionsKilled: 25 }, 1500)).toBe(7);
+  });
+
+  it("est inconnu sans CS ou sans durée", () => {
+    expect(csParMinute({ minionsKilled: null, neutralMinionsKilled: null }, 1500)).toBeNull();
+    expect(csParMinute({ minionsKilled: 150, neutralMinionsKilled: null }, null)).toBeNull();
   });
 });
