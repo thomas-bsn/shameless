@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { BarreDOngletsGame } from "@/components/barre-d-onglets-game";
 import { VueEnCibles } from "@/components/game-cibles";
 import { useVueDeGame } from "@/lib/vue-de-game";
@@ -7,18 +7,15 @@ import { $api, type Schemas } from "@/api/client";
 import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
 import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
-import { BoutonModifierLaGame } from "@/components/modifier-game/bouton-modifier-la-game";
+import { EnteteDeGame } from "@/components/game-entete";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { PronosticsDeLaGame } from "@/components/pronostics-de-la-game";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { VotesDeLaGame } from "@/components/votes-de-la-game";
-import { dureeLabel, estSaisieAMain } from "@/lib/game";
+import { estSaisieAMain } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
-import { dateHeureLabel, dateLabel } from "@/lib/dates";
 
 /** La page d'une Game : c'est le lien de récap posté par le bot Discord. */
 export const Route = createFileRoute("/_connecte/games/$gameId")({
@@ -54,7 +51,7 @@ function Recit({ game }: { game: Recap }) {
 
   return (
     <>
-      <Banniere game={game} />
+      <EnteteDeGame game={game} />
       <Tabs value={onglet} onValueChange={changerOnglet}>
         <BarreDOngletsGame />
         <TabsContent value="general" className="flex flex-col gap-4">
@@ -79,54 +76,6 @@ function Recit({ game }: { game: Recap }) {
         <GameClips gameId={game.id} />
       </div>
     </>
-  );
-}
-
-function Banniere({ game }: { game: Recap }) {
-  const navigate = useNavigate();
-  const winner = gameWinner(game);
-  const meta =
-    game.seriesId == null
-      ? `Game #${game.id}`
-      : `Game ${game.gameNumber} · Série BO${game.bestOf}`;
-  const duree = game.match?.durationSeconds != null ? dureeLabel(game.match.durationSeconds) : null;
-  const titre = winner ? [`Victoire de l'Équipe ${winner}`, duree].filter(Boolean).join(" · ") : meta;
-
-  return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {winner ? `${meta} · ` : ""}
-            {dateHeureLabel(game.playedAt)}
-          </p>
-          <h1 className="text-2xl font-bold">{titre}</h1>
-          {game.modifieeParAdminLe && (
-            <Badge variant="secondary" className="mt-2">
-              modifiée par un admin le {dateLabel(game.modifieeParAdminLe)}
-            </Badge>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {game.seriesId != null && (
-            <span className="font-mono font-semibold tabular-nums">
-              Équipe A {game.teamAWins} – {game.teamBWins} Équipe B
-            </span>
-          )}
-          {!winner && <Badge variant="outline">En cours</Badge>}
-          <BoutonModifierLaGame gameId={game.id} onSupprimee={() => void navigate({ to: "/historique" })} />
-          {game.seriesId != null && (
-            <Link
-              to="/series/$seriesId"
-              params={{ seriesId: String(game.seriesId) }}
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Voir la Série
-            </Link>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
