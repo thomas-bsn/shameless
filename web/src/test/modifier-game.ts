@@ -76,6 +76,7 @@ const joueurs = [
 
 export const catalogue: Schemas["CatalogueDeJeu"] = {
   version: "15.20.1",
+  champions: [],
   objets: [
     { id: 3089, name: "Coiffe de Rabadon", iconUrl: "https://ddragon.test/item/3089.png" },
     { id: 3157, name: "Sablier de Zhonya", iconUrl: "https://ddragon.test/item/3157.png" },

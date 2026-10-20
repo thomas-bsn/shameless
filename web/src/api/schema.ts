@@ -6641,14 +6641,24 @@ export interface components {
             prenom: string;
             discordId: string;
         };
+        CapaciteDuCatalogue: {
+            touche: string;
+            name: string;
+            iconUrl: string;
+        };
         CatalogueDeJeu: {
             version: string;
             objets: components["schemas"]["ObjetDuCatalogue"][];
             sorts: components["schemas"]["SortDuCatalogue"][];
             arbres: components["schemas"]["ArbreDuCatalogue"][];
+            champions: components["schemas"]["ChampionDuCatalogue"][];
         };
         /** @enum {unknown} */
         CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "PuuidPerime" | "Inattendue" | null;
+        ChampionDuCatalogue: {
+            id: string;
+            capacites: components["schemas"]["CapaciteDuCatalogue"][];
+        };
         ChampionDuResume: {
             championId: string;
             /** Format: int32 */

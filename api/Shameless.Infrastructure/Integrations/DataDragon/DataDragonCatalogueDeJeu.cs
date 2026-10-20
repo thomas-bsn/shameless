@@ -7,8 +7,8 @@ namespace Shameless.Infrastructure.Integrations.DataDragon;
 
 /// <summary>
 /// Le catalogue des objets, sorts d'invocateur et runes lu sur Data Dragon (données statiques publiques,
-/// en français) : la dernière version de versions.json, puis ses item.json, summoner.json et
-/// runesReforged.json. Gardé en mémoire quelques heures. Toute panne de Data Dragon devient une
+/// en français) : la dernière version de versions.json, puis ses item.json, summoner.json,
+/// runesReforged.json et championFull.json (capacités). Gardé en mémoire quelques heures. Toute panne de Data Dragon devient une
 /// <see cref="CatalogueIndisponibleException"/>.
 /// </summary>
 public sealed class DataDragonCatalogueDeJeu : ICatalogueDeJeu
@@ -95,6 +95,9 @@ public sealed class DataDragonCatalogueDeJeu : ICatalogueDeJeu
         var items = await http.GetFromJsonAsync<FichierDeDonnees>($"{dossier}/item.json", cancellationToken);
         var sorts = await http.GetFromJsonAsync<FichierDeDonnees>($"{dossier}/summoner.json", cancellationToken);
         var arbres = await http.GetFromJsonAsync<List<ArbreEntree>>($"{dossier}/runesReforged.json", cancellationToken);
+        var champions = await http.GetFromJsonAsync<ChampionsComplets>($"{dossier}/championFull.json", cancellationToken);
+        if (champions?.Data is not { Count: > 0 })
+            throw new CatalogueIndisponibleException($"Data Dragon n'a renvoyé aucun champion pour la version {version}.");
         if (items?.Data is not { Count: > 0 } || sorts?.Data is not { Count: > 0 } || arbres is not { Count: > 0 })
             throw new CatalogueIndisponibleException($"Data Dragon n'a renvoyé aucun objet, sort ou rune pour la version {version}.");
 
@@ -119,8 +122,29 @@ public sealed class DataDragonCatalogueDeJeu : ICatalogueDeJeu
                     (a.Slots ?? []).SelectMany(slot => slot.Runes ?? [])
                         .Select(r => new RuneDuCatalogue(r.Id, r.Name, Icone($"cdn/img/{r.Icon}")))
                         .ToList()))
+                .ToList(),
+            champions.Data.Values
+                .Select(c => new ChampionDuCatalogue(c.Id,
+                    (c.Spells ?? []).Zip(Touches, (sp, touche) => (sp, touche))
+                        .Where(t => t.sp.Image is not null)
+                        .Select(t => new CapaciteDuCatalogue(t.touche, t.sp.Name,
+                            Icone($"cdn/{version}/img/spell/{t.sp.Image!.Full}")))
+                        .ToList()))
+                .OrderBy(c => c.Id, StringComparer.Ordinal)
                 .ToList());
     }
+
+    private static readonly string[] Touches = ["Q", "W", "E", "R"];
+
+    private sealed record ChampionsComplets([property: JsonPropertyName("data")] Dictionary<string, ChampionEntree>? Data);
+
+    private sealed record ChampionEntree(
+        [property: JsonPropertyName("id")] string Id,
+        [property: JsonPropertyName("spells")] List<SortEntree>? Spells);
+
+    private sealed record SortEntree(
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("image")] ImageEntree? Image);
 
     private sealed record FichierDeDonnees([property: JsonPropertyName("data")] Dictionary<string, Entree>? Data);
 

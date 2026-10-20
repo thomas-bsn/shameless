@@ -21,6 +21,9 @@ export function useCatalogue() {
     objet: (id: number) => trouve(catalogue?.objets, id),
     sort: (id: number) => trouve(catalogue?.sorts, id),
     arbre: (id: number) => trouve(arbres, id),
+    /** La capacité Q, W, E ou R d'un champion (id Data Dragon, « LeeSin »). */
+    capacite: (championId: string, touche: string) =>
+      catalogue?.champions.find((c) => c.id === championId)?.capacites.find((c) => c.touche === touche),
     rune: (id: number) =>
       trouve(
         arbres.flatMap((a) => a.runes),

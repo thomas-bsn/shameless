@@ -205,9 +205,10 @@ votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par t
 (MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
 voix remportent le titre, tous en cas d'égalité. Les voix restent secrètes jusqu'à la  
 clôture ; résultats ensuite dans le récap et l'historique, titres comptés sur la fiche du joueur.
-- **MVP** : le meilleur joueur d'une game, élu par vote. Titre affiché : Roi ou Reine.
+- **Roi ou Reine** : le titre voté du meilleur joueur d'une game (le vote « MVP » des  
+Votes), gardé sous son nom d'affichage Roi ou Reine ; à ne pas confondre avec le badge **MVP**.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
-élu par vote. Illustré par une bouse de cheval.
+élu par vote ; son badge sur la page d'une game vient des votes clos. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
 - **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
@@ -262,9 +263,10 @@ la game en attente si la Série est interrompue ou annulée (`RapportCompanion`)
 reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
 connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
 récent, « aucun Companion détecté ».
-- **Meilleure perf** et **ACE** : deux badges de note sur une Game. « Meilleure perf » va au joueur de  
-plus haute note de l'Équipe gagnante, « ACE » à celui de plus haute note de l'Équipe perdante. À ne pas  
-confondre avec le **MVP**, le titre voté par les joueurs (Roi ou Reine).
+- **MVP**, **ACE** et **DOFD** (badges) : les trois badges de la page d'une Game. « MVP » est le badge de  
+la plus haute note de l'Équipe gagnante (`MeilleurePerf` dans l'API), « ACE » celui de la plus haute note  
+de l'Équipe perdante, « DOFD » vient des votes clos. Le titre voté par les joueurs garde son nom  
+d'affichage, Roi ou Reine.
 - **Rôle joué** : le rôle qu'un Joueur a réellement tenu dans une Game, tel que le client LoL  
 le détecte et le transmet dans le Rapport (`teamPosition`, ADR 0021). À défaut, le rôle de  
 l'Autorole de la Série, puis le rôle principal du Joueur. Un Administrateur peut le corriger.
