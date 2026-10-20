@@ -13,7 +13,8 @@ public sealed record OptionsSurveillance(int Essais, TimeSpan DelaiEntreEssais)
 /// la game de l'historique pour construire le Rapport. Une seule fois par gameId. L'envoi du Rapport n'est pas ici :
 /// #162 se branche sur <see cref="RapportConstruit"/>.
 /// </summary>
-public sealed class SurveillanceFinDeGame(IClientLol client, IJournal journal, OptionsSurveillance? options = null)
+public sealed class SurveillanceFinDeGame(IClientLol client, IJournal journal, OptionsSurveillance? options = null,
+    EchantillonneurDePartie? echantillonneur = null)
 {
     private const string UriBlocFinDeGame = "/lol-end-of-game/v1/eog-stats-block";
     private const string UriPhase = "/lol-gameflow/v1/gameflow-phase";
@@ -114,7 +115,7 @@ public sealed class SurveillanceFinDeGame(IClientLol client, IJournal journal, O
                     journal.Ecrire($"Fin de game, partie ignorée : {ignore.Raison}");
                     break;
                 case ResultatRapport.Construit construit:
-                    var rapport = construit.Rapport;
+                    var rapport = construit.Rapport with { Chronologie = ChronologieDe(echantillonneur, eog) };
                     var sansPuuid = rapport.JoueursSansPuuid.Count;
                     if (sansPuuid > 0)
                         journal.Ecrire($"Game {gameId} : {sansPuuid} joueur(s) sans PUUID dans le Rapport (il partira en revue côté API).");
@@ -129,6 +130,23 @@ public sealed class SurveillanceFinDeGame(IClientLol client, IJournal journal, O
         catch (Exception e)
         {
             journal.Ecrire($"Fin de game abandonnée : {e.Message}");
+        }
+    }
+
+    /// <summary>La chronologie échantillonnée pendant la partie ; null sans échantillonneur, sans lecture fiable ou en cas d'erreur : le Rapport part sans.</summary>
+    private ChronologieDuRapport? ChronologieDe(EchantillonneurDePartie? echantillonneur, string eog)
+    {
+        try
+        {
+            var chronologie = echantillonneur?.Prendre(eog);
+            if (chronologie is not null)
+                journal.Ecrire($"Chronologie jointe : {chronologie.Points.Count} points, {chronologie.Evenements.Count} événements");
+            return chronologie;
+        }
+        catch (Exception e)
+        {
+            journal.Ecrire($"Chronologie écartée : {e.Message}");
+            return null;
         }
     }
 

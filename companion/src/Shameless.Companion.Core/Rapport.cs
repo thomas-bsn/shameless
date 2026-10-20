@@ -6,8 +6,8 @@ namespace Shameless.Companion.Core;
 /// <summary>Un joueur du Rapport (JoueurDuRapportRequest). <c>Puuid</c> est null quand le client n'en donne pas : on ne l'invente pas.</summary>
 public sealed record JoueurDuRapport(string? Puuid, string Side, int ChampionId, bool Victoire, JsonElement Stats);
 
-/// <summary>Le Rapport d'une game (RapportDeGameRequest). Stats brutes de Riot : aucun calcul ni conversion (ADR 0019).</summary>
-public sealed record RapportDeGame(string RiotMatchId, JsonObject Donnees, IReadOnlyList<JoueurDuRapport> Joueurs)
+/// <summary>Le Rapport d'une game (RapportDeGameRequest). Stats brutes de Riot : aucun calcul ni conversion (ADR 0019). <c>Chronologie</c> : facultative, lue dans l'API locale du jeu (ADR 0022).</summary>
+public sealed record RapportDeGame(string RiotMatchId, JsonObject Donnees, IReadOnlyList<JoueurDuRapport> Joueurs, ChronologieDuRapport? Chronologie = null)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<JoueurDuRapport> JoueursSansPuuid => Joueurs.Where(j => j.Puuid is null).ToList();
