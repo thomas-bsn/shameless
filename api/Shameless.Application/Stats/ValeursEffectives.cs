@@ -24,9 +24,12 @@ public static class ValeursEffectives
             return brutes;
 
         var s = brutes ?? new StatsDuParticipant(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        // Le CS total d'abord : les sbires et les monstres corrigés séparément le précisent ensuite.
-        foreach (var c in corrections.OrderBy(c => c.Champ == ChampCorrigeable.Cs ? 0 : 1))
+        foreach (var c in corrections.Where(c => c.Champ != ChampCorrigeable.Cs))
             s = Appliquer(s, c);
+        if (corrections.FirstOrDefault(c => c.Champ == ChampCorrigeable.Cs) is { } cs)
+            s = AppliquerLeTotalDeCs(s, Entier(cs),
+                corrections.Any(c => c.Champ == ChampCorrigeable.MinionsKilled),
+                corrections.Any(c => c.Champ == ChampCorrigeable.NeutralMinionsKilled));
         return s;
     }
 
@@ -36,6 +39,19 @@ public static class ValeursEffectives
 
     /// <summary>Le champion du rapport du Companion, sans correction.</summary>
     public static string? ChampionOrigine(CustomGameParticipant participant) => participant.ChampionId;
+
+    /// <summary>
+    /// Le CS vaut sbires + monstres neutres : le total corrigé complète la moitié corrigée (plancher 0).
+    /// Sans moitié corrigée, il remplace les sbires et met les monstres à 0.
+    /// </summary>
+    private static StatsDuParticipant AppliquerLeTotalDeCs(StatsDuParticipant s, int total, bool sbiresCorriges, bool monstresCorriges) =>
+        (sbiresCorriges, monstresCorriges) switch
+        {
+            (true, true) => s,
+            (true, false) => s with { NeutralMinionsKilled = Math.Max(0, total - (s.MinionsKilled ?? 0)) },
+            (false, true) => s with { MinionsKilled = Math.Max(0, total - (s.NeutralMinionsKilled ?? 0)) },
+            _ => s with { MinionsKilled = total, NeutralMinionsKilled = 0 }
+        };
 
     private static StatsDuParticipant Appliquer(StatsDuParticipant s, CorrectionDeStat c)
     {
@@ -51,8 +67,7 @@ public static class ValeursEffectives
             ChampCorrigeable.Kills => s with { Kills = v },
             ChampCorrigeable.Deaths => s with { Deaths = v },
             ChampCorrigeable.Assists => s with { Assists = v },
-            // Le CS vaut sbires + monstres neutres : la correction donne le total.
-            ChampCorrigeable.Cs => s with { MinionsKilled = v, NeutralMinionsKilled = 0 },
+            ChampCorrigeable.Cs => s, // appliqué à part, après les autres : AppliquerLeTotalDeCs
             ChampCorrigeable.GoldEarned => s with { GoldEarned = v },
             ChampCorrigeable.DamageToChampions => s with { DamageToChampions = v },
             ChampCorrigeable.VisionScore => s with { VisionScore = v },
