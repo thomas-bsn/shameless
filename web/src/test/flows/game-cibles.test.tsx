@@ -97,16 +97,10 @@ describe("Vue en cibles", () => {
     expect(within(dan).queryByText(/ACE|MVP/)).toBeNull();
   });
 
-  it("explique les couleurs d'équipe et les badges MVP et ACE dans une légende", async () => {
+  it("n'affiche pas de légende sous la cible", async () => {
     await ouvrirCibles();
 
-    const legende = screen.getByRole("group", { name: "Légende" });
-    expect(legende).toHaveTextContent(/Équipe bleue/);
-    expect(legende).toHaveTextContent(/Équipe rouge/);
-    expect(within(legende).getByText("MVP")).toBeInTheDocument();
-    expect(legende).toHaveTextContent(/meilleure note des gagnants/i);
-    expect(within(legende).getByText("ACE")).toBeInTheDocument();
-    expect(legende).toHaveTextContent(/meilleure note des perdants/i);
+    expect(screen.queryByRole("group", { name: "Légende" })).toBeNull();
   });
 
   it("ouvre le profil du joueur au clic", async () => {
