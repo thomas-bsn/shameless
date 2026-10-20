@@ -17,7 +17,7 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
     championId: null,
     stats: null,
     performance: null,
-    champsCorriges: [], details: null, place: null, badge: null,
+    champsCorriges: [], details: null, place: null, badge: null, impact: null,
     ...ORIGINE_VIDE,
   }));
 
@@ -111,7 +111,7 @@ describe("Historique", () => {
     expect(lien[0]).toHaveFocus();
   });
 
-  it("montre le MVP et le DOFD élus de chaque game", async () => {
+  it("montre le Roi ou la Reine et le DOFD élus de chaque game", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /games/history/2026/10": {
@@ -131,11 +131,11 @@ describe("Historique", () => {
     renderApp("/historique?annee=2026&mois=10");
 
     const equipeA = await screen.findByRole("group", { name: "Équipe A · Blue side" });
-    expect(within(equipeA).getByText("Alice").parentElement).toHaveTextContent("MVP");
+    expect(within(equipeA).getByText("Alice").parentElement).toHaveTextContent("Roi/Reine");
     expect(within(equipeA).queryByText("DOFD")).not.toBeInTheDocument();
     const equipeB = screen.getByRole("group", { name: "Équipe B · Red side" });
     expect(within(equipeB).getByText("Dan").parentElement).toHaveTextContent("DOFD");
-    expect(within(equipeB).queryByText("MVP")).not.toBeInTheDocument();
+    expect(within(equipeB).queryByText("Roi/Reine")).not.toBeInTheDocument();
   });
 
   it("navigates from month to month", async () => {

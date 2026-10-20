@@ -20,7 +20,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   teamBWins: 0,
   seriesOutcome: "EnCours",
   riotMatchId: null,
-  match: null, teamAObjectifs: null, teamBObjectifs: null,
+  match: null, teamAObjectifs: null, teamBObjectifs: null, chronologie: null,
   teamA: [],
   teamB: [],
   ...overrides,
@@ -64,13 +64,13 @@ describe("Pronostics des Spectateurs", () => {
 
     const kiki = await screen.findByRole("group", { name: "Pronostic de Kiki" });
     expect(within(kiki).getByText("Vainqueur : Équipe A")).toBeInTheDocument();
-    expect(within(kiki).getByText("MVP : Alice")).toBeInTheDocument();
+    expect(within(kiki).getByText("Roi/Reine : Alice")).toBeInTheDocument();
     expect(within(kiki).getByText("DOFD : Dan")).toBeInTheDocument();
     expect(within(kiki).getAllByText("Juste")).toHaveLength(2);
     expect(within(kiki).getByText("Raté")).toBeInTheDocument();
     const anonyme = screen.getByRole("group", { name: "Pronostic de Spectateur 0002" });
     expect(within(anonyme).getByText("Raté")).toBeInTheDocument();
-    expect(within(anonyme).queryByText(/MVP/)).not.toBeInTheDocument();
+    expect(within(anonyme).queryByText(/Roi\/Reine/)).not.toBeInTheDocument();
     expect(screen.queryByText(/point/i)).not.toBeInTheDocument();
   });
 

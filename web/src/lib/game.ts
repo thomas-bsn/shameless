@@ -40,6 +40,24 @@ export function csTotal({
 export const posteLabel = (role: string | null | undefined): string | null =>
   role ? (role === "Adc" ? "ADC" : role) : null;
 
+const ORDRE_DES_ROLES = ["Top", "Jungle", "Mid", "Adc", "Support"];
+
+/**
+ * Les joueurs d'une équipe dans l'ordre des voies (Top, Jungle, Mid, ADC, Support) d'après le rôle joué.
+ * Ceux dont le rôle est inconnu viennent après, dans leur ordre d'origine ; sans aucun rôle connu,
+ * l'ordre d'origine est gardé. La liste reçue n'est pas modifiée.
+ */
+export function trierParRole<T extends { stats?: { position?: string | null } | null }>(joueurs: readonly T[]): T[] {
+  const rang = (j: T) => {
+    const i = ORDRE_DES_ROLES.indexOf(j.stats?.position ?? "");
+    return i === -1 ? ORDRE_DES_ROLES.length : i;
+  };
+  return joueurs
+    .map((j, ordre) => ({ j, ordre }))
+    .sort((x, y) => rang(x.j) - rang(y.j) || x.ordre - y.ordre)
+    .map((x) => x.j);
+}
+
 /** Le ton d'une note sur 100 : 75 et plus bonne, 50 et plus moyenne, sinon mauvaise. */
 export function noteTone(note: number): "good" | "mid" | "bad" {
   return note >= 75 ? "good" : note >= 50 ? "mid" : "bad";
@@ -82,4 +100,26 @@ export const parMinuteLabel = (value: number | null, decimales = 0): string =>
 export function partLabel(value: number | null, total: number | null): string {
   if (value == null || total == null || total <= 0) return "–";
   return `${Math.round((value / total) * 100)} %`;
+}
+
+/** Le ratio (kills + assists) / morts, au moins une mort comme l'API ; null sans kills, morts ou assists. */
+export function ratioKda({ kills, deaths, assists }: Kda): number | null {
+  if (kills == null || deaths == null || assists == null) return null;
+  return (kills + assists) / Math.max(1, deaths);
+}
+
+/** Les CS par minute ; null sans CS connus ou sans durée. */
+export function csParMinute(
+  stats: { minionsKilled: number | null; neutralMinionsKilled: number | null },
+  dureeSecondes: number | null,
+): number | null {
+  const cs = csTotal(stats);
+  return cs == null || !dureeSecondes ? null : cs / (dureeSecondes / 60);
+}
+
+/** Le badge MVP ou ACE que l'API attribue d'après les notes (BadgeDeGame) ; null sans badge. */
+export function titreDeBadge(badge: "MeilleurePerf" | "Ace" | null | undefined): "MVP" | "ACE" | null {
+  if (badge === "MeilleurePerf") return "MVP";
+  if (badge === "Ace") return "ACE";
+  return null;
 }

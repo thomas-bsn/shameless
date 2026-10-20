@@ -27,7 +27,9 @@ public sealed class App : Application
             var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             var connexion = new ConnexionCompanion(stockage, http);
             IClientLol client = new ClientLolLcu(journal: journal);
-            var surveillance = new SurveillanceFinDeGame(client, journal);
+            // Chronologie (#198) : l'API locale du jeu, lue pendant la partie, jointe au Rapport à la fin.
+            var echantillonneur = new EchantillonneurDePartie(new PartieEnCoursLive(), journal);
+            var surveillance = new SurveillanceFinDeGame(client, journal, echantillonneur: echantillonneur);
             // Présence (#146) : un émetteur isolé, relié seulement à la détection du client et au Code stocké.
             var presence = new EmetteurPresence(client, stockage, http, journal);
             surveillance.ClientDetecteChange += presence.ClientDetecte;
@@ -53,6 +55,7 @@ public sealed class App : Application
             _ = modele.DemarrerAsync();
             _ = surveillance.ExecuterAsync(_arret.Token);
             _ = presence.ExecuterAsync(_arret.Token);
+            _ = echantillonneur.ExecuterAsync(_arret.Token);
             bureau.Exit += (_, _) => _arret.Cancel();
         }
         base.OnFrameworkInitializationCompleted();

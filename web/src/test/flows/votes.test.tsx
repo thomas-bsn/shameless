@@ -20,7 +20,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   teamBWins: 0,
   seriesOutcome: "EnCours",
   riotMatchId: null,
-  match: null, teamAObjectifs: null, teamBObjectifs: null,
+  match: null, teamAObjectifs: null, teamBObjectifs: null, chronologie: null,
   teamA: [],
   teamB: [],
   ...overrides,
@@ -85,7 +85,7 @@ const fiche = (titres: Schemas["TitresDuJoueur"]): Schemas["FicheJoueur"] => ({
   liste: [],
 });
 
-describe("Votes MVP et DOFD", () => {
+describe("Votes Roi/Reine et DOFD", () => {
   it("montre dans le récap les gagnants, tous en cas d'égalité, et le décompte des voix", async () => {
     mockApi({
       "GET /auth/me": user(),
@@ -105,7 +105,7 @@ describe("Votes MVP et DOFD", () => {
 
     renderApp("/games/42");
 
-    const mvp = await screen.findByRole("group", { name: "MVP" });
+    const mvp = await screen.findByRole("group", { name: "Roi/Reine" });
     expect(within(mvp).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
       expect.stringContaining("Alice"),
       expect.stringContaining("Bob"),
@@ -130,7 +130,7 @@ describe("Votes MVP et DOFD", () => {
 
     expect(await screen.findByText(/Votes ouverts dans Discord jusqu'à .* · 1 votant$/)).toBeInTheDocument();
     expect(screen.getByText("Les gagnants et le décompte des voix seront dévoilés à la clôture.")).toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: "MVP" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Roi/Reine" })).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "DOFD" })).not.toBeInTheDocument();
   });
 
@@ -156,7 +156,7 @@ describe("Votes MVP et DOFD", () => {
     renderApp("/joueurs/7");
 
     const titres = await screen.findByRole("group", { name: "Titres" });
-    expect(await within(titres).findByText("3 MVP")).toBeInTheDocument();
+    expect(await within(titres).findByText("3 Roi/Reine")).toBeInTheDocument();
     expect(within(titres).getByText("1 DOFD")).toBeInTheDocument();
   });
 });

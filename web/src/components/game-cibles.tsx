@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import type { Schemas } from "@/api/client";
-import { AvatarJoueur } from "@/components/avatar-joueur";
 import type { Participant, Side } from "@/components/game-equipe-table";
 import { sidesOf } from "@/components/game-scoreboard";
+import { AnneauDeNote } from "@/components/icones-de-jeu/anneau-de-note";
+import { BadgeDeTitre } from "@/components/icones-de-jeu/badge-de-titre";
+import { IconeChampion } from "@/components/icones-de-jeu/icones-catalogue";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { titreDeBadge } from "@/lib/game";
 import { sideBorderClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -69,14 +72,24 @@ export function VueEnCibles({ game }: { game: Schemas["GameRecapResponse"] }) {
           <Pastille key={p.joueur.playerId} place={p} />
         ))}
       </div>
-      <p className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+      <div
+        role="group"
+        aria-label="Légende"
+        className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"
+      >
         <span className="flex items-center gap-1.5">
           <span className={cn("size-3 rounded-full border-2", sideBorderClass("blue"))} /> Équipe bleue
         </span>
         <span className="flex items-center gap-1.5">
           <span className={cn("size-3 rounded-full border-2", sideBorderClass("red"))} /> Équipe rouge
         </span>
-      </p>
+        <span className="flex items-center gap-1.5">
+          <BadgeDeTitre titre="MVP" /> meilleure note des gagnants
+        </span>
+        <span className="flex items-center gap-1.5">
+          <BadgeDeTitre titre="ACE" /> meilleure note des perdants
+        </span>
+      </div>
     </section>
   );
 }
@@ -84,6 +97,7 @@ export function VueEnCibles({ game }: { game: Schemas["GameRecapResponse"] }) {
 function Pastille({ place }: { place: Place }) {
   const { joueur, side, anneau, classe } = place;
   const centre = anneau === 0;
+  const titre = titreDeBadge(joueur.badge);
 
   return (
     <div data-anneau={anneau} className={cn("absolute -translate-x-1/2 -translate-y-1/2", classe)}>
@@ -93,27 +107,19 @@ function Pastille({ place }: { place: Place }) {
         data-equipe={side}
         className="group flex w-20 flex-col items-center gap-0.5 text-center sm:w-24"
       >
-        <AvatarJoueur
-          prenom={joueur.prenom}
-          avatarUrl={joueur.avatarUrl}
+        <IconeChampion
+          championId={joueur.championId}
           className={cn(
-            "rounded-full border-[3px] transition-transform group-hover:scale-105",
+            "rounded-full border-[3px] bg-muted transition-transform group-hover:scale-105",
             sideBorderClass(side),
-            centre ? "size-16 text-xl sm:size-24 sm:text-3xl" : "size-11 text-sm sm:size-16 sm:text-lg",
+            centre ? "size-16 sm:size-24" : "size-11 sm:size-16",
           )}
         />
-        <span className="max-w-full truncate text-xs font-medium sm:text-sm">{joueur.prenom}</span>
-        {joueur.performance && (
-          <span className="font-mono text-xs font-semibold tabular-nums sm:text-sm">{joueur.performance.note}</span>
-        )}
-        {joueur.badge === "MeilleurePerf" && (
-          <span className="rounded bg-emerald-500 px-1 text-[10px] leading-4 font-semibold whitespace-nowrap text-black">
-            Meilleure perf
-          </span>
-        )}
-        {joueur.badge === "Ace" && (
-          <span className="rounded bg-fuchsia-500 px-1 text-[10px] leading-4 font-semibold text-black">ACE</span>
-        )}
+        <span className="max-w-full truncate text-xs font-medium underline underline-offset-2 sm:text-sm">{joueur.prenom}</span>
+        <span className="flex items-center gap-1.5">
+          {joueur.performance && <AnneauDeNote note={joueur.performance.note} className="size-8" />}
+          {titre && <BadgeDeTitre titre={titre} />}
+        </span>
       </Link>
     </div>
   );

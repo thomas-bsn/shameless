@@ -41,7 +41,7 @@ const participant = (playerId: number, prenom: string, s: Stats | null): Schemas
   championId: null,
   stats: s,
   performance: null,
-  champsCorriges: [], details: null, place: null, badge: null,
+  champsCorriges: [], details: null, place: null, badge: null, impact: null,
   ...ORIGINE_VIDE,
 });
 
@@ -62,7 +62,7 @@ const recap = (durationSeconds: number | null = 1800): Schemas["GameRecapRespons
   teamBWins: 1,
   seriesOutcome: "Gagnee",
   riotMatchId: "EUW1_1",
-  match: durationSeconds == null ? null : { durationSeconds, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null }, teamAObjectifs: null, teamBObjectifs: null,
+  match: durationSeconds == null ? null : { durationSeconds, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null }, teamAObjectifs: null, teamBObjectifs: null, chronologie: null,
   teamA: [
     participant(1, "Alice", stats({ damageToChampions: 20000, damageTaken: 12000, goldEarned: 12000, turretKills: 2, dragonKills: 1, baronKills: 0, damageToObjectives: 8000, visionScore: 30, wardsPlaced: 10, wardsKilled: 4, controlWardsBought: 3 })),
     participant(3, "Chloé", stats({ damageToChampions: 10000, damageTaken: null, goldEarned: 8000, turretKills: 1, dragonKills: 2, baronKills: 1, damageToObjectives: 2000, visionScore: 60, wardsPlaced: 20, wardsKilled: 6, controlWardsBought: 5 })),
@@ -95,7 +95,7 @@ async function ouvrir(comparaison: string, game = recap()) {
 async function ouvrirReplay() {
   mockApi({ "GET /auth/me": user(), "GET /games/42": recap() });
   renderApp("/games/42");
-  await userEvent.click(await screen.findByRole("tab", { name: "Replay" }));
+  await userEvent.click(await screen.findByRole("tab", { name: "Replay 3D" }));
 }
 
 describe("Détails : comparaison Dégâts", () => {
@@ -186,7 +186,7 @@ describe("Onglet Replay", () => {
   it("est grisé et explique pourquoi le replay 3D n'est pas disponible", async () => {
     await ouvrirReplay();
 
-    expect(screen.getByRole("tab", { name: "Replay" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tab", { name: "Replay 3D" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("heading", { name: "Le replay 3D arrive bientôt" })).toBeInTheDocument();
     expect(screen.getByText(/positions des joueurs/)).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();

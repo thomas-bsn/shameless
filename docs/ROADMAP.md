@@ -33,15 +33,15 @@ Objectif : une soirée complète sans saisie manuelle.
 
 ### 1b. Companion (récupération des stats)
 - [ ] Spec : Companion, l'app PC (#157) ; Windows uniquement, packaging en Backlog
-- [ ] Spike : capturer les données de fin de game du client LoL sur un vrai poste (#158)
-- [ ] Contrat API et site : champion en id numérique, route des administrateurs, Import d'un Rapport (#159, ADR 0019 et 0020)
-- [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion (#160)
-- [ ] Détection du client LoL via lockfile + écoute WebSocket locale (#161)
-- [ ] Administration : Companion connecté, signal de présence du Companion (#146)
-- [ ] Publication de l'exécutable Windows en GitHub Release par la CI (#164)
-- [ ] Écran de préparation : adresse, Code et téléchargement du Companion ; tutoriel à jour (#165)
+- [x] Spike : capturer les données de fin de game du client LoL sur un vrai poste (#158)
+- [x] Contrat API et site : champion en id numérique, route des administrateurs, Import d'un Rapport (#159, ADR 0019 et 0020)
+- [ ] App .NET 10 Avalonia, icône barre des tâches, saisie et conservation du Code Companion (#160) (code fusionné, à tester sur Windows)
+- [ ] Détection du client LoL via lockfile + écoute WebSocket locale (#161) (code fusionné, à tester sur Windows)
+- [ ] Administration : Companion connecté, signal de présence du Companion (#146) (code fusionné, à tester sur Windows)
+- [x] Publication de l'exécutable Windows en GitHub Release par la CI (#164)
+- [x] Écran de préparation : adresse, Code et téléchargement du Companion ; tutoriel à jour (#165)
 - [x] Rattachement de la custom à la série en cours (joueurs du lobby vs équipes)
-- [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit), file de renvoi et procédure d'échec avec le Fichier de Rapport (#162)
+- [ ] Envoi des stats de fin de partie des 10 joueurs à l'API (un seul joueur équipé suffit), file de renvoi et procédure d'échec avec le Fichier de Rapport (#162) (code fusionné, à tester sur Windows)
 - [x] Dédoublonnage côté API ; saisie manuelle gardée en secours
 - [ ] Signal de fin de partie (Rapport), sans retour sur le site ; le début est donné par la fin de la draft (ADR 0017)
 - [ ] Side détecté par le Companion ; joueur inconnu signalé à l'organisateur dans le Rapport en revue
@@ -102,15 +102,15 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
   - [x] Game créée au lancement de la draft, `game_started` au signal du Companion, Side sans choix manuel
 
 ## Statistiques détaillées (hors phases 0 à 3)
-- [ ] Spec : Rapport enrichi, page de game, profil, classements, note (#168)
-  - [ ] Rapport enrichi : rôle joué, objets, sorts, objectifs d'équipe (#169)
-  - [ ] API : détails d'un joueur dans une game (#170)
-  - [ ] Page d'une game : Général, Détails, Runes (#171) et vue en cibles (#172)
-  - [ ] Administration : correction de toutes les stats (#173), fenêtre « Modifier la game » (#174), recherche sur l'onglet Joueurs (#180)
-  - [ ] Profil joueur : fiche enrichie (#175), profil public (#176), Mon profil (#177)
-  - [ ] Classement des costs : escalier et podium avec liste (#178)
-  - [ ] Historique : le bloc de game cliquable (#179)
-  - [ ] Note : script de collecte (#181), outil d'appariement et d'ajustement (#185), calage sur dpm.lol (#182)
+- [x] Spec : Rapport enrichi, page de game, profil, classements, note (#168)
+  - [x] Rapport enrichi : rôle joué, objets, sorts, objectifs d'équipe (#169)
+  - [x] API : détails d'un joueur dans une game (#170)
+  - [x] Page d'une game : Général, Détails, Runes (#171) et vue en cibles (#172)
+  - [x] Administration : correction de toutes les stats (#173), fenêtre « Modifier la game » (#174), recherche sur l'onglet Joueurs (#180)
+  - [x] Profil joueur : fiche enrichie (#175), profil public (#176), Mon profil (#177)
+  - [x] Classement des costs : escalier et podium avec liste (#178)
+  - [x] Historique : le bloc de game cliquable (#179)
+  - [x] Note : script de collecte (#181), outil d'appariement et d'ajustement (#185), calage sur dpm.lol (#182)
   - [ ] Rapport d'exemple pour la game #78 (#183)
 
 ## Backlog

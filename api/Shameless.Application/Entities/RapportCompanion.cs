@@ -68,7 +68,8 @@ public class RapportCompanion
                 j["championId"]!.GetValue<string>(),
                 j["victoire"]!.GetValue<bool>(),
                 j["stats"]!.ToJsonString(),
-                j["riotId"]?.GetValue<string>())).ToList());
+                j["riotId"]?.GetValue<string>())).ToList(),
+            ChronologieDeGame.Lire(contenu["chronologie"]?.ToJsonString()));
     }
 
     /// <summary>L'organisateur tranche : le rapport en revue est accepté ou rejeté.</summary>
@@ -89,6 +90,7 @@ public class RapportCompanion
             ["victoire"] = j.Victoire,
             ["stats"] = JsonNode.Parse(j.Stats!),
             ["riotId"] = j.RiotId
-        }).ToArray())
+        }).ToArray()),
+        ["chronologie"] = rapport.Chronologie == null ? null : JsonNode.Parse(rapport.Chronologie.ToJson())
     }.ToJsonString(new JsonSerializerOptions());
 }

@@ -138,6 +138,7 @@ public class AppDbContext : DbContext
             // Une partie Riot n'est rattachée qu'à une game (ADR 0004), même sous rapports simultanés.
             entity.HasIndex(e => e.RiotMatchId).IsUnique();
             entity.Property(e => e.RiotMatchData).HasColumnType("jsonb");
+            entity.Property(e => e.Chronologie).HasColumnType("jsonb");
             // Jeton de concurrence : le résultat d'une game ne se saisit qu'une fois, même simultanément.
             entity.Property(e => e.Status).HasColumnType("text").HasDefaultValue("").IsConcurrencyToken();
 

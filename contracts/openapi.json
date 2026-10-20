@@ -7514,6 +7514,42 @@
           "Aleatoire"
         ]
       },
+      "AxeDeFaceAFace": {
+        "required": [
+          "axe",
+          "score",
+          "scoreAdversaire",
+          "ecart"
+        ],
+        "type": "object",
+        "properties": {
+          "axe": {
+            "$ref": "#/components/schemas/AxeDImpact"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scoreAdversaire": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ecart": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AxeDImpact": {
+        "enum": [
+          "Survie",
+          "Utilite",
+          "Combat",
+          "Objectifs",
+          "Vision",
+          "Economie"
+        ]
+      },
       "BadgeDeGame": {
         "enum": [
           "MeilleurePerf",
@@ -7599,12 +7635,32 @@
           }
         }
       },
+      "CapaciteDuCatalogue": {
+        "required": [
+          "touche",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "touche": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
+      },
       "CatalogueDeJeu": {
         "required": [
           "version",
           "objets",
           "sorts",
-          "arbres"
+          "arbres",
+          "champions"
         ],
         "type": "object",
         "properties": {
@@ -7628,6 +7684,12 @@
             "items": {
               "$ref": "#/components/schemas/ArbreDuCatalogue"
             }
+          },
+          "champions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChampionDuCatalogue"
+            }
           }
         }
       },
@@ -7642,6 +7704,24 @@
           "Inattendue",
           null
         ]
+      },
+      "ChampionDuCatalogue": {
+        "required": [
+          "id",
+          "capacites"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "capacites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapaciteDuCatalogue"
+            }
+          }
+        }
       },
       "ChampionDuResume": {
         "required": [
@@ -7714,6 +7794,61 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "ChronologieDeGameResponse": {
+        "required": [
+          "series",
+          "points",
+          "evenements"
+        ],
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SerieDeChronologieDto"
+            }
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PointDeChronologieDto"
+            }
+          },
+          "evenements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvenementDeChronologieDto"
+            }
+          }
+        }
+      },
+      "ChronologieRequest": {
+        "required": [
+          "points",
+          "evenements"
+        ],
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PointDeChronologieRequest"
+            }
+          },
+          "evenements": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EvenementDeChronologieRequest"
             }
           }
         }
@@ -9252,6 +9387,95 @@
           null
         ]
       },
+      "EvenementDeChronologieDto": {
+        "required": [
+          "t",
+          "type",
+          "side"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          }
+        }
+      },
+      "EvenementDeChronologieRequest": {
+        "required": [
+          "t",
+          "type",
+          "side"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "side": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "FaceAFace": {
+        "required": [
+          "adversaireId",
+          "role",
+          "axes",
+          "axesGagnes",
+          "axesPerdus"
+        ],
+        "type": "object",
+        "properties": {
+          "adversaireId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "axes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AxeDeFaceAFace"
+            }
+          },
+          "axesGagnes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "axesPerdus": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -9461,7 +9685,9 @@
           "mvp",
           "dofd",
           "place",
-          "badge"
+          "badge",
+          "participationAuxKills",
+          "adversaireChampionId"
         ],
         "type": "object",
         "properties": {
@@ -9552,6 +9778,19 @@
               {
                 "$ref": "#/components/schemas/BadgeDeGame"
               }
+            ]
+          },
+          "participationAuxKills": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "adversaireChampionId": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -9706,7 +9945,8 @@
           "championOrigine",
           "details",
           "place",
-          "badge"
+          "badge",
+          "impact"
         ],
         "type": "object",
         "properties": {
@@ -9818,6 +10058,16 @@
               },
               {
                 "$ref": "#/components/schemas/BadgeDeGame"
+              }
+            ]
+          },
+          "impact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImpactDuJoueur"
               }
             ]
           }
@@ -10001,7 +10251,8 @@
           "teamAObjectifs",
           "teamBObjectifs",
           "teamA",
-          "teamB"
+          "teamB",
+          "chronologie"
         ],
         "type": "object",
         "properties": {
@@ -10122,6 +10373,16 @@
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
             }
+          },
+          "chronologie": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChronologieDeGameResponse"
+              }
+            ]
           }
         }
       },
@@ -10154,6 +10415,15 @@
           }
         }
       },
+      "GroupeDImpact": {
+        "enum": [
+          "Global",
+          "VsAdversaire",
+          "Objectifs",
+          "Equipe",
+          "Role"
+        ]
+      },
       "HallDeLaHonte": {
         "required": [
           "joueurs"
@@ -10171,6 +10441,31 @@
       "IFormFile": {
         "type": "string",
         "format": "binary"
+      },
+      "ImpactDuJoueur": {
+        "required": [
+          "sousScores",
+          "faceAFace"
+        ],
+        "type": "object",
+        "properties": {
+          "sousScores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SousScoreDImpact"
+            }
+          },
+          "faceAFace": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FaceAFace"
+              }
+            ]
+          }
+        }
       },
       "ImportDeRapportRefuseResponse": {
         "required": [
@@ -10255,6 +10550,142 @@
           },
           "riotId": {
             "type": "string"
+          }
+        }
+      },
+      "JoueurDuPointDto": {
+        "required": [
+          "playerId",
+          "kills",
+          "deaths",
+          "assists",
+          "cs",
+          "niveau",
+          "vision",
+          "valeurObjets",
+          "mort",
+          "orEstime"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kills": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deaths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assists": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "niveau": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valeurObjets": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mort": {
+            "type": "boolean"
+          },
+          "orEstime": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "JoueurDuPointRequest": {
+        "required": [
+          "puuid",
+          "kills",
+          "deaths",
+          "assists",
+          "cs",
+          "level",
+          "vision",
+          "itemsValue",
+          "dead"
+        ],
+        "type": "object",
+        "properties": {
+          "puuid": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "deaths": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "assists": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "cs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "level": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "vision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "itemsValue": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dead": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         }
       },
@@ -10387,6 +10818,16 @@
             ]
           }
         }
+      },
+      "LettreDImpact": {
+        "enum": [
+          "S+",
+          "S",
+          "A",
+          "B",
+          "C",
+          "D"
+        ]
       },
       "LiensSerieResponse": {
         "required": [
@@ -10563,6 +11004,37 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "LigneDImpact": {
+        "required": [
+          "critere",
+          "valeur",
+          "score",
+          "poids",
+          "points"
+        ],
+        "type": "object",
+        "properties": {
+          "critere": {
+            "$ref": "#/components/schemas/CritereDeNote"
+          },
+          "valeur": {
+            "type": "number",
+            "format": "double"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "poids": {
+            "type": "number",
+            "format": "double"
+          },
+          "points": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -11525,6 +11997,50 @@
           }
         }
       },
+      "PointDeChronologieDto": {
+        "required": [
+          "t",
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuPointDto"
+            }
+          }
+        }
+      },
+      "PointDeChronologieRequest": {
+        "required": [
+          "t",
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "joueurs": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuPointRequest"
+            }
+          }
+        }
+      },
       "PorteeLien": {
         "enum": [
           "Capitaine",
@@ -11825,7 +12341,8 @@
         "required": [
           "riotMatchId",
           "donnees",
-          "joueurs"
+          "joueurs",
+          "chronologie"
         ],
         "type": "object",
         "properties": {
@@ -11840,6 +12357,16 @@
             "items": {
               "$ref": "#/components/schemas/JoueurDuRapportRequest"
             }
+          },
+          "chronologie": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChronologieRequest"
+              }
+            ]
           }
         }
       },
@@ -12348,6 +12875,21 @@
           }
         }
       },
+      "SerieDeChronologieDto": {
+        "required": [
+          "nom",
+          "nature"
+        ],
+        "type": "object",
+        "properties": {
+          "nom": {
+            "type": "string"
+          },
+          "nature": {
+            "type": "string"
+          }
+        }
+      },
       "SerieDuCompanionResponse": {
         "required": [
           "seriesId",
@@ -12832,6 +13374,38 @@
           "RolePrincipal",
           "Inconnue"
         ]
+      },
+      "SousScoreDImpact": {
+        "required": [
+          "groupe",
+          "score",
+          "lettre",
+          "points",
+          "lignes"
+        ],
+        "type": "object",
+        "properties": {
+          "groupe": {
+            "$ref": "#/components/schemas/GroupeDImpact"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lettre": {
+            "$ref": "#/components/schemas/LettreDImpact"
+          },
+          "points": {
+            "type": "number",
+            "format": "double"
+          },
+          "lignes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LigneDImpact"
+            }
+          }
+        }
       },
       "SpectateursDeLaGame": {
         "required": [

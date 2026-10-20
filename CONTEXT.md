@@ -187,6 +187,10 @@ rapport aux références du rôle joué, puis pondéré selon ce rôle ; la vict
 une composante de plus (100 si gagnée, 0 sinon). Références et poids sont calés sur les  
 scores de dpm.lol (ADR 0011). Un critère non mesurable est omis et les poids renormalisés ;  
 une game saisie à la main n'a pas de note.
+- **Impact** : le détail d'un joueur pour une game : ses sous-scores par groupe (Global, Vs  
+adversaire, Objectifs, Équipe, Rôle) avec lettre (S+ à D) et lignes tirées de la note, et son  
+face-à-face à six axes (Survie, Utilité, Combat, Objectifs, Vision, Économie) contre  
+l'adversaire du même rôle (ADR 0011). Calculé à la lecture ; une stat absente masque sa ligne.
 - **Fiche Joueur** : la page d'un joueur : ses stats de customs sur ses games terminées  
 (winrate, KDA, CS/min, KP, dégâts, note de performance moyenne), par champion et par  
 rôle joué, l'historique de ses games avec leur note, son compte Discord lié, son cost  
@@ -205,9 +209,10 @@ votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par t
 (MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
 voix remportent le titre, tous en cas d'égalité. Les voix restent secrètes jusqu'à la  
 clôture ; résultats ensuite dans le récap et l'historique, titres comptés sur la fiche du joueur.
-- **MVP** : le meilleur joueur d'une game, élu par vote. Titre affiché : Roi ou Reine.
+- **Roi ou Reine** : le titre voté du meilleur joueur d'une game (le vote « MVP » des  
+Votes), gardé sous son nom d'affichage Roi ou Reine ; à ne pas confondre avec le badge **MVP**.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
-élu par vote. Illustré par une bouse de cheval.
+élu par vote ; son badge sur la page d'une game vient des votes clos. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
 plus de morts, plus faible participation aux kills), sans vote.
 - **Hall de la Honte** : classement historique du cumul des titres de DOFD (votes clos de toutes  
@@ -262,9 +267,10 @@ la game en attente si la Série est interrompue ou annulée (`RapportCompanion`)
 reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
 connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
 récent, « aucun Companion détecté ».
-- **Meilleure perf** et **ACE** : deux badges de note sur une Game. « Meilleure perf » va au joueur de  
-plus haute note de l'Équipe gagnante, « ACE » à celui de plus haute note de l'Équipe perdante. À ne pas  
-confondre avec le **MVP**, le titre voté par les joueurs (Roi ou Reine).
+- **MVP**, **ACE** et **DOFD** (badges) : les trois badges de la page d'une Game. « MVP » est le badge de  
+la plus haute note de l'Équipe gagnante (`MeilleurePerf` dans l'API), « ACE » celui de la plus haute note  
+de l'Équipe perdante, « DOFD » vient des votes clos. Le titre voté par les joueurs garde son nom  
+d'affichage, Roi ou Reine.
 - **Rôle joué** : le rôle qu'un Joueur a réellement tenu dans une Game, tel que le client LoL  
 le détecte et le transmet dans le Rapport (`teamPosition`, ADR 0021). À défaut, le rôle de  
 l'Autorole de la Série, puis le rôle principal du Joueur. Un Administrateur peut le corriger.
@@ -280,6 +286,16 @@ terminée, depuis l'Administration, pour y ajouter ses données Riot (stats, cha
 recalculer les costs. Il est refusé en entier, avec la liste des écarts, si les participants,  
 leurs Sides ou le vainqueur du fichier diffèrent de la Game ; il ne change jamais le  
 vainqueur ni la composition.
+- **Chronologie** : la partie dans le temps, partie facultative du Rapport : des points datés  
+(secondes depuis le début) avec, par joueur, kills, morts, assists, CS, niveau, vision, valeur  
+des objets et état mort ou vivant, et des événements d'objectifs datés (dragon, héraut, baron,  
+tourelle, inhibiteur, avec le side). Chaque série porte sa **nature** : réelle, **estimée**  
+(l'or : valeur des objets remise à l'échelle sur l'or total final, calculée par l'API) ou  
+indisponible (dégâts, XP). Une game sans chronologie reste valide (ADR 0022).
+- **Courbes** : l'onglet de la page d'une Game qui trace la Chronologie, une série à la fois (or,
+kills, CS, niveau, etc.), avec les objectifs en repères.
+- **Cible** (ou **Vue en cibles**) : la vue de l'onglet Performance d'une Game où les dix joueurs
+sont placés en anneaux autour d'un centre selon leur note, avec leur badge MVP ou ACE.
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  

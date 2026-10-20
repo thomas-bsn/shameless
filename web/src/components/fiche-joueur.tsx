@@ -1,4 +1,4 @@
-import { GameLinkCard } from "@/components/game-link-card";
+import { LigneDeGame } from "@/components/ligne-de-game";
 import { keepPreviousData } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { points } from "@/lib/cost";
-import { dateHeureLabel } from "@/lib/dates";
 import { useChampions } from "@/lib/draft-champions-queries";
 import {
   COST_MAX,
@@ -19,12 +18,11 @@ import {
   COURBE,
   decimalLabel,
   entierLabel,
-  kdaDetailLabel,
   pointsDeLaCourbe,
   pourcentLabel,
   yDuCost,
 } from "@/lib/fiche";
-import { dureeLabel, noteTone, posteLabel } from "@/lib/game";
+import { posteLabel } from "@/lib/game";
 import { roleLabel } from "@/lib/ranks";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +31,6 @@ type Stats = Schemas["StatsDeCustoms"];
 
 const GRADUATIONS = Array.from({ length: COST_MAX - COST_MIN + 1 }, (_, i) => COST_MIN + i);
 
-const noteClass = { good: "text-emerald-400", mid: "text-foreground", bad: "text-red-400" } as const;
 
 type Filtres = {
   role: Schemas["Role"];
@@ -138,7 +135,7 @@ export function HeroDuJoueur({ player, fiche }: { player: Schemas["PlayerDto"]; 
             </div>
             {fiche && (
               <div role="group" aria-label="Titres" className="flex flex-wrap gap-2">
-                <Badge className="bg-yellow-400 text-black">{fiche.titres.mvp} MVP</Badge>
+                <Badge className="bg-yellow-400 text-black">{fiche.titres.mvp} Roi/Reine</Badge>
                 <Badge variant="destructive">{fiche.titres.dofd} DOFD</Badge>
               </div>
             )}
@@ -300,9 +297,9 @@ function JaugeDeWinrate({ winrate }: { winrate: number | null }) {
 function ResumeDesDernieresGames({ resume }: { resume: Fiche["resume"] }) {
   const catalogue = useChampions().data ?? [];
   const titres: Array<[string, number, string]> = [
-    ["Meilleure perf", resume.meilleuresPerfs, "bg-sky-400/15 text-sky-300"],
+    ["MVP", resume.meilleuresPerfs, "bg-sky-400/15 text-sky-300"],
     ["ACE", resume.aces, "bg-violet-400/15 text-violet-300"],
-    ["MVP", resume.mvp, "bg-yellow-300/15 text-yellow-200"],
+    ["Roi/Reine", resume.mvp, "bg-yellow-300/15 text-yellow-200"],
     ["DOFD", resume.dofd, "bg-red-400/15 text-red-300"],
   ];
   return (
@@ -476,7 +473,6 @@ function BarreDeFiltres({
 
 const jourCourt = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
-const placeLabel = (place: number) => (place === 1 ? "1er" : `${place}e`);
 
 function titreDuGroupe(groupe: Fiche["liste"][number], regroupement: Schemas["Regroupement"]): string | null {
   const premiere = groupe.games[0];
@@ -523,50 +519,6 @@ function ListeDesGames({
         );
       })}
     </div>
-  );
-}
-
-function LigneDeGame({ game: g }: { game: Fiche["games"][number] }) {
-  const catalogue = useChampions().data ?? [];
-  const champion = catalogue.find((c) => c.id === g.championId);
-  const poste = posteLabel(g.role ?? g.stats?.position);
-  return (
-    <GameLinkCard
-      gameId={g.gameId}
-      label={`Voir la game ${g.gameId}`}
-      header={dateHeureLabel(g.playedAt)}
-      badge={
-        <Badge variant={g.victoire ? "secondary" : "destructive"} className={cn(g.victoire && "text-emerald-400")}>
-          {g.victoire ? "Victoire" : "Défaite"}
-        </Badge>
-      }
-    >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 text-sm">
-        <span className="flex min-w-0 flex-1 basis-40 items-center gap-2">
-          <ChampionCarre nom={champion?.name ?? g.championId} image={champion?.imageUrl} />
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate font-medium">{champion?.name ?? g.championId ?? "–"}</span>
-            <span className="text-xs text-muted-foreground">
-              {[poste, g.dureeSecondes != null ? dureeLabel(g.dureeSecondes) : null].filter(Boolean).join(" · ")}
-            </span>
-          </span>
-        </span>
-        <span className="font-mono tabular-nums">{kdaDetailLabel(g.stats)}</span>
-        {g.mvp && <Badge className="bg-yellow-400 text-black">MVP</Badge>}
-        {g.dofd && <Badge variant="destructive">DOFD</Badge>}
-        {g.badge && (
-          <Badge variant="outline" className={g.badge === "Ace" ? "text-violet-300" : "text-sky-300"}>
-            {g.badge === "Ace" ? "ACE" : "Meilleure perf"}
-          </Badge>
-        )}
-        <span className="flex flex-col items-center leading-tight">
-          <span className={cn("font-mono text-lg font-semibold tabular-nums", g.performance && noteClass[noteTone(g.performance.note)])}>
-            {g.performance ? g.performance.note : "–"}
-          </span>
-          <span className="text-xs text-muted-foreground">{g.place != null ? placeLabel(g.place) : "Note"}</span>
-        </span>
-      </div>
-    </GameLinkCard>
   );
 }
 

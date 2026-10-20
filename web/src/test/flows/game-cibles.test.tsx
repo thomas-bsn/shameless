@@ -27,6 +27,7 @@ const participant = (
   details: null,
   place,
   badge: null,
+  impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
@@ -51,7 +52,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   riotMatchId: "EUW1_1",
   match: { durationSeconds: 1800, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
   teamAObjectifs: null,
-  teamBObjectifs: null,
+  teamBObjectifs: null, chronologie: null,
   teamA: [0, 2, 4, 6, 8].map((i) => participant(i + 1, NOMS[i]!, i + 1, i === 0 ? { badge: "Ace" } : {})),
   teamB: [1, 3, 5, 7, 9].map((i) => participant(i + 1, NOMS[i]!, i + 1, i === 1 ? { badge: "MeilleurePerf" } : {})),
   ...overrides,
@@ -62,7 +63,7 @@ const CATALOGUE = { version: "1", objets: [], sorts: [], arbres: [] };
 async function ouvrirCibles(game = recap()) {
   mockApi({ "GET /auth/me": user(), "GET /games/42": game, "GET /catalogue": CATALOGUE });
   renderApp("/games/42");
-  await userEvent.click(await screen.findByRole("tab", { name: "Cibles" }));
+  await userEvent.click(await screen.findByRole("tab", { name: "Performance" }));
 }
 
 const cible = () => screen.getByRole("group", { name: "Cibles" });
@@ -91,10 +92,22 @@ describe("Vue en cibles", () => {
     expect(within(alice).getByText("ACE")).toBeInTheDocument();
     expect(alice).toHaveAttribute("data-equipe", "red");
     const bob = within(cible()).getByRole("link", { name: /Bob/ });
-    expect(within(bob).getByText("Meilleure perf")).toBeInTheDocument();
+    expect(within(bob).getByText("MVP")).toBeInTheDocument();
     expect(bob).toHaveAttribute("data-equipe", "blue");
     const dan = within(cible()).getByRole("link", { name: /Dan/ });
-    expect(within(dan).queryByText(/ACE|Meilleure perf/)).toBeNull();
+    expect(within(dan).queryByText(/ACE|MVP/)).toBeNull();
+  });
+
+  it("explique les couleurs d'équipe et les badges MVP et ACE dans une légende", async () => {
+    await ouvrirCibles();
+
+    const legende = screen.getByRole("group", { name: "Légende" });
+    expect(legende).toHaveTextContent(/Équipe bleue/);
+    expect(legende).toHaveTextContent(/Équipe rouge/);
+    expect(within(legende).getByText("MVP")).toBeInTheDocument();
+    expect(legende).toHaveTextContent(/meilleure note des gagnants/i);
+    expect(within(legende).getByText("ACE")).toBeInTheDocument();
+    expect(legende).toHaveTextContent(/meilleure note des perdants/i);
   });
 
   it("ouvre le profil du joueur au clic", async () => {
@@ -120,7 +133,7 @@ describe("Vue en cibles", () => {
     cleanup();
 
     renderApp("/games/42");
-    expect(await screen.findByRole("tab", { name: "Cibles" })).toHaveAttribute("data-state", "active");
+    expect(await screen.findByRole("tab", { name: "Performance" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("tab", { name: "Général" })).toHaveAttribute("data-state", "inactive");
   });
 });

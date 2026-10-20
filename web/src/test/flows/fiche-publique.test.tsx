@@ -40,6 +40,8 @@ const ligne = (gameId: number, o: Partial<Ligne> = {}): Ligne => ({
   dofd: false,
   place: 1,
   badge: null,
+  participationAuxKills: null,
+  adversaireChampionId: null,
   ...o,
 });
 
@@ -97,14 +99,31 @@ const open = (reponse: Fiche | ((url: URL) => Fiche) = fiche()) => {
     "GET /players/7/fiche": (req: Request) =>
       Response.json(typeof reponse === "function" ? reponse(new URL(req.url)) : reponse),
     "GET /players/7/cost/historique": { playerId: 7, mois: [] },
-    "GET /champions": [{ id: "Camille", key: "164", name: "Camille", imageUrl: "https://dd/camille.png" }],
+    "GET /champions": [
+      { id: "Camille", key: "164", name: "Camille", imageUrl: "https://dd/camille.png" },
+      { id: "Ahri", key: "103", name: "Ahri", imageUrl: "https://dd/ahri.png" },
+    ],
+    "GET /catalogue": {
+      version: "15.1.1",
+      objets: [{ id: 6655, name: "Rayon de Luden", iconUrl: "https://dd/item/6655.png" }],
+      sorts: [{ id: 4, name: "Saut éclair", iconUrl: "https://dd/spell/Flash.png" }],
+      arbres: [
+        {
+          id: 8100,
+          name: "Domination",
+          iconUrl: "https://dd/perk/8100.png",
+          runes: [{ id: 8112, name: "Électrocution", iconUrl: "https://dd/perk/8112.png" }],
+        },
+      ],
+      champions: [],
+    },
   });
   renderApp("/joueurs/7");
   return mock;
 };
 
 describe("Fiche publique", () => {
-  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges, MVP et DOFD", async () => {
+  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges, Roi/Reine et DOFD", async () => {
     open(
       fiche({
         resume: {
@@ -129,9 +148,9 @@ describe("Fiche publique", () => {
     expect(within(resume).getByRole("listitem", { name: /Camille/ })).toHaveTextContent("75 %");
     expect(within(resume).getByText("2,8").parentElement).toHaveTextContent("KDA moyen");
     expect(within(resume).getByText("78").parentElement).toHaveTextContent("Note moyenne");
-    expect(within(resume).getByText("Meilleure perf").parentElement).toHaveTextContent("× 4");
+    expect(within(resume).getByText("MVP").parentElement).toHaveTextContent("× 4");
     expect(within(resume).getByText("ACE").parentElement).toHaveTextContent("× 2");
-    expect(within(resume).getByText("MVP").parentElement).toHaveTextContent("× 6");
+    expect(within(resume).getByText("Roi/Reine").parentElement).toHaveTextContent("× 6");
     expect(within(resume).getByText("DOFD").parentElement).toHaveTextContent("× 1");
   });
 
@@ -192,9 +211,111 @@ describe("Fiche publique", () => {
     expect(lien).toHaveAttribute("href", "/games/31");
     expect(lien).toHaveTextContent("86");
     expect(lien).toHaveTextContent("1er");
-    expect(lien).toHaveTextContent("Meilleure perf");
+    expect(lien).toHaveTextContent("MVP");
     expect(lien).toHaveTextContent("9 / 2 / 7");
     expect(within(groupe).getByRole("link", { name: "Voir la game 30" })).toHaveTextContent("ACE");
+  });
+
+  it("montre la ligne dense d'une game : résultat, série, durée, champion, sorts, runes, rôle, KDA, ratios, objets, adversaire et note", async () => {
+    open(
+      fiche({
+        liste: [
+          {
+            soireeId: null,
+            jour: null,
+            games: [
+              ligne(31, {
+                badge: "MeilleurePerf",
+                mvp: true,
+                role: "Mid",
+                dureeSecondes: 1500,
+                adversaireChampionId: "Ahri",
+                participationAuxKills: 86,
+                stats: {
+                  kills: 41,
+                  deaths: 3,
+                  assists: 3,
+                  minionsKilled: 150,
+                  neutralMinionsKilled: 25,
+                  spell1Id: 4,
+                  spell2Id: 4,
+                  perks: [8112],
+                  perkSubStyle: 8100,
+                  items: [6655, null, null, null, null, null, 6655],
+                } as unknown as Schemas["StatsDuParticipant"],
+                performance: { note: 95 } as Schemas["NoteDePerformance"],
+              }),
+            ],
+          },
+        ],
+      }),
+    );
+
+    const lien = await screen.findByRole("link", { name: "Voir la game 31" });
+    expect(lien).toHaveTextContent("Victoire");
+    expect(lien).not.toHaveTextContent("Série");
+    expect(lien).toHaveTextContent("25:00");
+    expect(lien).toHaveTextContent("41 / 3 / 3");
+    expect(lien).toHaveTextContent("MVP");
+    expect(lien).toHaveTextContent("Roi/Reine");
+    expect(lien).toHaveTextContent("14,7 KDA");
+    expect(lien).toHaveTextContent("7 CS/m");
+    expect(lien).toHaveTextContent("86 % KP");
+    expect(lien).toHaveTextContent("VS");
+    expect(await within(lien).findByRole("img", { name: "Ahri" })).toHaveAttribute("src", "https://dd/ahri.png");
+    expect(within(lien).getByRole("img", { name: "Mid" })).toBeInTheDocument();
+    expect(within(lien).getByRole("img", { name: "Note 95 sur 100" })).toBeInTheDocument();
+    expect(await within(lien).findAllByRole("img", { name: "Saut éclair" })).toHaveLength(2);
+    expect(within(lien).getByRole("img", { name: "Électrocution" })).toBeInTheDocument();
+    expect(within(lien).getByRole("img", { name: "Domination" })).toBeInTheDocument();
+    expect(within(within(lien).getByRole("list", { name: "Objets" })).getAllByRole("listitem")).toHaveLength(6);
+  });
+
+  it("masque ce que l'API ne donne pas plutôt que de l'inventer : adversaire, participation aux kills, durée", async () => {
+    open(
+      fiche({
+        liste: [
+          {
+            soireeId: null,
+            jour: null,
+            games: [ligne(31, { adversaireChampionId: null, participationAuxKills: null, dureeSecondes: null, seriesId: null })],
+          },
+        ],
+      }),
+    );
+
+    const lien = await screen.findByRole("link", { name: "Voir la game 31" });
+    expect(lien).not.toHaveTextContent("VS");
+    expect(lien).not.toHaveTextContent("KP");
+    expect(lien).not.toHaveTextContent("CS/m");
+    expect(lien).not.toHaveTextContent("Série");
+    expect(lien).not.toHaveTextContent("NaN");
+  });
+
+  it("déplie la ligne pour donner accès à la game sans ouvrir la game", async () => {
+    open(fiche({ liste: [{ soireeId: null, jour: null, games: [ligne(31)] }] }));
+
+    const deplier = await screen.findByRole("button", { name: "Déplier la game 31" });
+    expect(deplier).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("link", { name: /Scoreboard, stats, votes, pronostics et clips/ })).not.toBeInTheDocument();
+
+    await userEvent.click(deplier);
+
+    expect(screen.getByRole("button", { name: "Replier la game 31" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: /Scoreboard, stats, votes, pronostics et clips/ })).toHaveAttribute("href", "/games/31");
+  });
+
+  it("affiche une ligne dédiée « Stats non saisies » pour une game sans stats, qui reste ouvrable", async () => {
+    open(
+      fiche({
+        liste: [{ soireeId: null, jour: null, games: [ligne(31, { stats: null, performance: null, place: null, championId: null })] }],
+      }),
+    );
+
+    const lien = await screen.findByRole("link", { name: "Voir la game 31" });
+    expect(lien).toHaveTextContent("Stats non saisies");
+    expect(lien).toHaveAttribute("href", "/games/31");
+    expect(lien).not.toHaveTextContent("– / – / –");
   });
 
   it("relit la liste quand on filtre par rôle, regroupement, champion, série ou résultat, et Réinitialiser revient au départ", async () => {

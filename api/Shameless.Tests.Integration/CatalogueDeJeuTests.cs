@@ -20,6 +20,11 @@ public class CatalogueDeJeuTests(ApiFactory factory) : IntegrationTest(factory)
         var domination = catalogue.GetProperty("arbres").EnumerateArray().Single();
         Assert.Equal(8100, domination.GetProperty("id").GetInt32());
         Assert.Equal("Électrocution", domination.GetProperty("runes")[0].GetProperty("name").GetString());
+        var leeSin = catalogue.GetProperty("champions").EnumerateArray().Single();
+        Assert.Equal("LeeSin", leeSin.GetProperty("id").GetString());
+        var q = leeSin.GetProperty("capacites")[0];
+        Assert.Equal("Q", q.GetProperty("touche").GetString());
+        Assert.Equal("https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkQOne.png", q.GetProperty("iconUrl").GetString());
     }
 
     [Fact]

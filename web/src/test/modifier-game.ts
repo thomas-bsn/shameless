@@ -36,6 +36,7 @@ export const participant = (playerId: number, prenom: string, overrides: Partial
   details: null,
   place: null,
   badge: null,
+  impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
@@ -62,7 +63,7 @@ export const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Sc
   riotMatchId: null,
   match: null,
   teamAObjectifs: null,
-  teamBObjectifs: null,
+  teamBObjectifs: null, chronologie: null,
   teamA: equipe(1, NOMS_A),
   teamB: equipe(11, NOMS_B),
   ...overrides,
@@ -76,6 +77,7 @@ const joueurs = [
 
 export const catalogue: Schemas["CatalogueDeJeu"] = {
   version: "15.20.1",
+  champions: [],
   objets: [
     { id: 3089, name: "Coiffe de Rabadon", iconUrl: "https://ddragon.test/item/3089.png" },
     { id: 3157, name: "Sablier de Zhonya", iconUrl: "https://ddragon.test/item/3157.png" },

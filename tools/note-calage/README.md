@@ -83,3 +83,25 @@ npm test
 ```
 
 Jeux de données synthétiques : lecture, appariement (dont ambigu et sans correspondance), note sur cas chiffrés, ajustement qui retrouve des poids et des références connus, évaluation et séparation, et l'outil de bout en bout. `npm run typecheck` demande `npm install` (types Node et TypeScript, en développement seulement).
+
+## Calibrer les références de l'Impact (face-à-face)
+
+Le face-à-face de l'Impact (ADR 0011, addendum du 2026-10-20) note six axes avec, pour cinq mesures qui ne sont pas dans la note, des références par rôle de `api/Shameless.Application/Stats/ReferencesDImpact.cs`. Leurs valeurs actuelles sont des ordres de grandeur **à calibrer**, choisis sans aucune donnée : cette procédure les remplace. Elle ne s'applique pas à l'outil `main.ts` (qui cale la note sur dpm.lol) : les références d'un axe viennent de percentiles, pas d'un score externe.
+
+Mesures et formules (sur les stats effectives d'un participant, `d` = durée de la game en minutes) :
+
+| Mesure (`MesureDAxe`) | Valeur | Sens |
+|---|---|---|
+| `MortsParMinute` | morts / d | moins vaut mieux |
+| `SoinsEtBouclierParMinute` | (soins + boucliers posés sur les alliés) / d | plus vaut mieux |
+| `ControleParMinute` | secondes de contrôle infligé / d | plus vaut mieux |
+| `ObjectifsPris` | tourelles + dragons + barons (par game, pas par minute) | plus vaut mieux |
+| `BalisesParMinute` | (balises posées + détruites) / d | plus vaut mieux |
+
+1. Prendre des parties de SoloQ collectées (`tools/riot-collecte`, hors dépôt) et ne garder que les joueurs dont la position (`teamPosition`) est connue ; une ligne par joueur et par partie, avec les cinq mesures calculées comme ci-dessus. Ignorer les parties sans durée ; ignorer une mesure dont une stat manque (comme l'API : elle masque la ligne).
+2. Par rôle (Top, Jungle, Mid, ADC, Support) et par mesure, calculer les percentiles 10, 50 et 90 de la valeur. Pour les mesures où plus vaut mieux : Faible = P10, Moyen = P50, Excellent = P90. Pour `MortsParMinute` (moins vaut mieux) : Faible = P90, Moyen = P50, Excellent = P10.
+3. Arrondir à deux ou trois chiffres significatifs et s'assurer que les trois valeurs sont distinctes (Faible < Moyen < Excellent, ou l'inverse pour les morts) ; si deux percentiles coïncident, écarter Faible et Excellent d'au moins 15 % de Moyen de chaque côté, comme le lissage de la note.
+4. Reporter les quinze valeurs par rôle dans `ReferencesDImpact.cs`, retirer la mention « À CALIBRER » du commentaire de la classe et noter dans l'ADR 0011 la taille de l'échantillon par rôle et la date. Ne rien committer d'autre : ni parties, ni identifiants, ni pseudos, ni fichier de percentiles bruts.
+5. Mettre à jour les valeurs attendues des tests d'intégration `ImpactDuJoueurTests` (calculées à la main à partir des nouvelles références) et relancer les suites.
+
+Pour les mesures déjà dans la note (KDA, dégâts, part des dégâts, objectifs, vision, or, CS), l'Impact reprend les références de `ReferencesDeNote.cs`, qui se recalent avec l'outil ci-dessus.
