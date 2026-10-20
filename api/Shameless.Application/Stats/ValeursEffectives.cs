@@ -20,8 +20,7 @@ public static class ValeursEffectives
     {
         var brutes = StatsDuParticipant.Lire(participant.RiotParticipantData);
         var corrections = participant.Corrections;
-        if (!corrections.Any(c => c.Champ is not (ChampCorrigeable.Champion or ChampCorrigeable.Note)))
-            return brutes;
+        if (!StatsCorrigees(participant)) return brutes;
 
         var s = brutes ?? new StatsDuParticipant(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         foreach (var c in corrections.Where(c => c.Champ != ChampCorrigeable.Cs))
@@ -32,6 +31,10 @@ public static class ValeursEffectives
                 corrections.Any(c => c.Champ == ChampCorrigeable.NeutralMinionsKilled));
         return s;
     }
+
+    /// <summary>Vrai si un admin a corrigé au moins une stat (le champion et la note n'en sont pas) : les stats effectives diffèrent alors des brutes.</summary>
+    public static bool StatsCorrigees(CustomGameParticipant participant) =>
+        participant.Corrections.Any(c => c.Champ is not (ChampCorrigeable.Champion or ChampCorrigeable.Note));
 
     /// <summary>Les stats telles que le Companion les a envoyées, sans correction ; null sans stats du Companion.</summary>
     public static StatsDuParticipant? StatsOrigine(CustomGameParticipant participant) =>

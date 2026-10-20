@@ -254,6 +254,65 @@ public class NoteDePerformanceTests
         Assert.Null(NotesDeLaGame.Calculer(game)[2]);                // sans stats, pas de note
     }
 
+    private static CustomGame GameDeDeux(Action<CustomGameParticipant>? corriger = null)
+    {
+        string Stats(int kills, int degats, int or) =>
+            $$"""{ "kills": {{kills}}, "deaths": 2, "assists": 3, "totalDamageDealtToChampions": {{degats}}, "goldEarned": {{or}}, "teamPosition": "MIDDLE" }""";
+        var game = new CustomGame
+        {
+            TeamASide = "blue",
+            WinningTeam = Equipes.A,
+            RiotMatchData = """{ "gameDuration": 1800 }""",
+            Participants =
+            {
+                Participant(1, "blue", Stats(4, 20000, 15000)),
+                Participant(2, "blue", Stats(6, 10000, 10000)),
+                Participant(3, "red", Stats(8, 25000, 20000))
+            }
+        };
+        corriger?.Invoke(game.Participants.Single(p => p.PlayerId == 2));
+        return game;
+    }
+
+    [Fact]
+    public void La_note_d_origine_se_calcule_sur_les_stats_d_origine_du_joueur_et_de_toute_son_equipe()
+    {
+        var sansCorrection = NotesDeLaGame.Calculer(GameDeDeux());
+        var corrigee = GameDeDeux(p => p.Corrections.Add(new CorrectionDeStat { Champ = ChampCorrigeable.Kills, Valeur = "20" }));
+
+        var notes = NotesDeLaGame.Calculer(corrigee);
+
+        Assert.Equal(sansCorrection[2]!.Note, notes[2]!.NoteOrigine);
+        Assert.Equal(sansCorrection[1]!.Note, notes[1]!.NoteOrigine); // le coéquipier corrigé change les totaux de l'Équipe
+        Assert.NotEqual(sansCorrection[1]!.Note, notes[1]!.Note);
+    }
+
+    [Fact]
+    public void Une_correction_de_champion_ou_de_note_ne_change_pas_la_note_d_origine()
+    {
+        var game = GameDeDeux(p => p.Corrections.Add(new CorrectionDeStat { Champ = ChampCorrigeable.Note, Valeur = "99" }));
+        var sansCorrection = NotesDeLaGame.Calculer(GameDeDeux());
+
+        var notes = NotesDeLaGame.Calculer(game);
+
+        Assert.Equal(99, notes[2]!.Note);
+        Assert.Equal(sansCorrection[2]!.Note, notes[2]!.NoteOrigine);
+        Assert.Equal(sansCorrection[1]!.Note, notes[1]!.NoteOrigine);
+    }
+
+    [Fact]
+    public void La_page_de_la_game_n_affiche_pas_de_part_sur_un_total_d_equipe_incomplet()
+    {
+        var game = GameDeDeux();
+        game.Participants.Add(Participant(4, "blue", stats: null)); // un coéquipier sans stats : les totaux de dégâts et d'or sont partiels
+
+        var details = LectureDeLaGame.Calculer(game)[1].Details;
+
+        Assert.Null(details.PartDesDegats);
+        Assert.Null(details.PartDeLOr);
+        Assert.Equal(0.4, details.PartDesKills); // les kills connus : 4 / 10, comme pour la note
+    }
+
     [Fact]
     public void Le_role_note_est_la_position_de_la_partie_sinon_celui_de_l_autorole_sinon_le_role_principal()
     {

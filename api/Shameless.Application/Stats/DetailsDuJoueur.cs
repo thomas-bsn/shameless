@@ -60,19 +60,7 @@ public sealed record DetailsDuJoueur(
     SortsLances? SortsLances = null,
     PingsDuJoueur? Pings = null)
 {
-    /// <summary>Les totaux de l'Équipe, sur les valeurs effectives de ses participants.</summary>
-    internal sealed record TotauxDEquipe(int? Degats, int? Or, int? Kills)
-    {
-        public static TotauxDEquipe De(IEnumerable<StatsDuParticipant?> stats)
-        {
-            var liste = stats.Where(s => s is not null).Select(s => s!).ToList();
-            int? Somme(Func<StatsDuParticipant, int?> champ) =>
-                liste.Any(s => champ(s) is not null) ? liste.Sum(s => champ(s) ?? 0) : null;
-            return new TotauxDEquipe(Somme(s => s.DamageToChampions), Somme(s => s.GoldEarned), Somme(s => s.Kills));
-        }
-    }
-
-    internal static DetailsDuJoueur Calculer(RoleJoue role, StatsDuParticipant? stats, int? dureeSecondes, TotauxDEquipe equipe)
+    internal static DetailsDuJoueur Calculer(RoleJoue role, StatsDuParticipant? stats, int? dureeSecondes, NotesDeLaGame.TotauxDEquipe equipe)
     {
         var minutes = dureeSecondes is > 0 ? dureeSecondes.Value / 60.0 : (double?)null;
         double? ParMinute(double? valeur) => valeur is { } v && minutes is { } m ? Math.Round(v / m, 2) : null;
