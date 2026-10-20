@@ -71,6 +71,24 @@ export function VueEnCibles({ game }: { game: Schemas["GameRecapResponse"] }) {
           <Pastille key={p.joueur.playerId} place={p} />
         ))}
       </div>
+      <div
+        role="group"
+        aria-label="Légende"
+        className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"
+      >
+        <span className="flex items-center gap-1.5">
+          <span className={cn("size-3 rounded-full border-2", sideBorderClass("blue"))} /> Équipe bleue
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className={cn("size-3 rounded-full border-2", sideBorderClass("red"))} /> Équipe rouge
+        </span>
+        <span className="flex items-center gap-1.5">
+          <BadgeDeTitre titre="MVP" /> meilleure note des gagnants
+        </span>
+        <span className="flex items-center gap-1.5">
+          <BadgeDeTitre titre="ACE" /> meilleure note des perdants
+        </span>
+      </div>
     </section>
   );
 }
