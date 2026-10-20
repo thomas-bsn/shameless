@@ -1,4 +1,5 @@
 import type { Schemas } from "@/api/client";
+import { parRole } from "@/lib/picker";
 import { useChampions } from "@/lib/draft-champions-queries";
 import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,7 @@ export function ChampionsJoues({ game }: { game: Game }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {(["A", "B"] as const).map((equipe) => {
-        const joueurs = equipe === "A" ? game.teamA : game.teamB;
+        const joueurs = parRole(equipe === "A" ? game.teamA : game.teamB);
         const side = equipe === "A" ? game.teamASide : game.teamBSide;
         return (
           <ul
