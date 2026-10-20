@@ -9,6 +9,7 @@ type Details = Schemas["DetailsDuJoueur"];
 
 const catalogue: Schemas["CatalogueDeJeu"] = {
   version: "16.1.1",
+  champions: [],
   objets: [
     { id: 3006, name: "Bottes de berserker", iconUrl: "https://dd/3006.png" },
     { id: 3047, name: "Sandales de Mercure", iconUrl: "https://dd/3047.png" },
