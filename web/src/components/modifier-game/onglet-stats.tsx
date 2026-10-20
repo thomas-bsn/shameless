@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CHAMPS, corpsDeCorrection, normaliser, SECTIONS, valeurCourante, valeurOrigine } from "@/lib/champs-corrigeables";
-import { kdaLabel, posteLabel } from "@/lib/game";
+import { kdaLabel, posteLabel, trierParRole } from "@/lib/game";
 import { CaseDeStat } from "./case-de-stat";
 import { Pied, type Retour } from "./pied";
 import { entreesDe, useCatalogue } from "./use-catalogue";
@@ -20,8 +20,8 @@ const idDeSection = (section: string) => `section-${normaliser(section).replace(
 /** Les stats des dix joueurs : la liste, puis toutes les stats d'un joueur par sections. */
 export function OngletStats({ game, onFermer }: { game: Recap; onFermer: () => void }) {
   const joueurs: { participant: Participant; equipe: "A" | "B" }[] = [
-    ...game.teamA.map((participant) => ({ participant, equipe: "A" as const })),
-    ...game.teamB.map((participant) => ({ participant, equipe: "B" as const })),
+    ...trierParRole(game.teamA).map((participant) => ({ participant, equipe: "A" as const })),
+    ...trierParRole(game.teamB).map((participant) => ({ participant, equipe: "B" as const })),
   ];
   const [courant, setCourant] = useState<number | null>(null);
   const [brouillons, setBrouillons] = useState<Brouillons>({});

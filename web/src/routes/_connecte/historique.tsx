@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calendarCells, daysPlayed, gameWinner, type Month, monthLabel, seriesScore, shiftMonth } from "@/lib/history";
+import { IconeRole } from "@/components/icones-de-jeu/icone-role";
+import { roleJoue, trierParRole } from "@/lib/game";
 import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
@@ -272,16 +274,20 @@ function TeamColumn({
         <span className={sideTextClass(side)}>{label}</span>
         <span className="text-muted-foreground">{cost} pts</span>
       </div>
-      {players.map((p) => (
-        <div key={p.riotId} className="flex items-center justify-between gap-2 text-sm">
+      {trierParRole(players).map((p) => {
+        const role = roleJoue(p);
+        return (
+        <div key={p.riotId} data-testid="joueur-de-game" className="flex items-center justify-between gap-2 text-sm">
           <span className="flex min-w-0 items-center gap-1.5">
+            {role && <IconeRole role={role} className="size-4 text-foreground/80" />}
             <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
             <span className="truncate">{p.prenom}</span>
             {dofd.includes(p.playerId) && <Badge variant="outline">DOFD</Badge>}
           </span>
           <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { mockApi, problem } from "@/test/api";
-import { base, corps, onglet, ouvrir, recap } from "@/test/modifier-game";
+import { base, corps, onglet, ouvrir, participant, recap } from "@/test/modifier-game";
 
 describe("Fenêtre Modifier la game : onglet Composition", () => {
   it("grise les joueurs déjà placés, dans l'autre équipe comme dans la même", async () => {
@@ -14,6 +14,19 @@ describe("Fenêtre Modifier la game : onglet Composition", () => {
     expect(within(liste).getByRole("option", { name: /Gaëlle.*déjà en équipe B/ })).toBeDisabled();
     expect(within(liste).getByRole("option", { name: "Farid" })).toBeEnabled();
     expect(within(liste).getByRole("option", { name: "Kevin" })).toBeEnabled();
+  });
+
+  it("garde les lignes dans l'ordre Top, Jungle, Mid, ADC, Support même si l'équipe arrive dans le désordre", async () => {
+    const poste = (id: number, prenom: string, position: string) =>
+      participant(id, prenom, { stats: { ...participant(id, prenom).stats!, position } });
+    const desordre = [poste(1, "Alice", "Top"), poste(2, "Bob", "Jungle"), poste(3, "Chloé", "Support"), poste(4, "David", "Mid"), poste(5, "Emma", "Adc")];
+    mockApi({ ...base(), "GET /games/42": recap({ teamA: desordre }) });
+    const dialogue = await ouvrir();
+    await onglet(dialogue, "Composition");
+
+    const listes = [1, 2, 3, 4, 5].map((n) => within(dialogue).getByLabelText(`Équipe A, joueur ${n}`) as HTMLSelectElement);
+    expect(listes.map((l) => l.selectedOptions[0]!.textContent)).toEqual(["Alice", "Bob", "David", "Emma", "Chloé"]);
+    expect(listes.map((l) => l.previousElementSibling?.textContent)).toEqual(["Top", "Jungle", "Mid", "ADC", "Support"]);
   });
 
   it("enregistre une composition modifiée, le bouton étant grisé sans changement", async () => {
