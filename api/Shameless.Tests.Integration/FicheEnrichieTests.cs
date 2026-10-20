@@ -11,7 +11,7 @@ namespace Shameless.Tests.Integration;
 /// soirée 1 (jour 1), Série S1 : G1 victoire Garen Top 4/2/6, G2 victoire Teemo Jungle 1/5/2 ;
 /// soirée 2 (jour 2), Série S2 où A1 joue avec A2, B1, B2, B3 : G3 victoire Garen Top 10/0/5,
 /// G4 défaite Garen Adc 7/3/4. A1 est le meilleur de son équipe en G1 et G3 (Meilleure perf) et en G4 (ACE).
-/// B1 vote A1 MVP en G1 et G3, et A1 DOFD en G1.
+/// B1 vote A1 DOFD en G1.
 /// </summary>
 public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
 {
@@ -38,7 +38,7 @@ public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
                 ? new { kills = 4, deaths = 2, assists = 6, totalMinionsKilled = 150, neutralMinionsKilled = 30, teamPosition = "TOP" }
                 : i < 5 ? Faible() : new { kills = 1, deaths = 1, assists = 2 },
             donnees: new { gameDuration = 1800, gameMode = "CLASSIC" })));
-        await VoterAsync(g1, mvp: ids[0], dofd: ids[0]);
+        await VoterAsync(g1, dofd: ids[0]);
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var g2 = await PlayGameAsync(client, s1.SeriesId);
@@ -68,7 +68,6 @@ public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
                 ? new { kills = 10, deaths = 0, assists = 5, totalMinionsKilled = 200, neutralMinionsKilled = 0, teamPosition = "TOP" }
                 : i < 5 ? Faible() : new { kills = 1, deaths = 1, assists = 2 },
             donnees: new { gameDuration = 1500, gameMode = "CLASSIC" })));
-        await VoterAsync(g3, mvp: ids[0], dofd: null);
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var g4 = await PlayGameAsync(client, s2Id);
@@ -82,10 +81,10 @@ public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
         return new Jeu(ids[0], ids, s1.SeriesId, s2Id, g1, g2, g3, g4, client);
     }
 
-    private async Task VoterAsync(int gameId, int mvp, int? dofd)
+    private async Task VoterAsync(int gameId, int dofd)
     {
         await ReadJsonAsync(await Factory.CreateBotClient().PutAsJsonAsync($"/bot/games/{gameId}/votes",
-            new { votantDiscordId = DiscordB1, mvpPlayerId = mvp, dofdPlayerId = dofd }, Ct));
+            new { votantDiscordId = DiscordB1, dofdPlayerId = dofd }, Ct));
     }
 
     private async Task<JsonElement> FicheAsync(Jeu jeu, string requete = "") =>
@@ -132,7 +131,6 @@ public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(fiche.GetProperty("stats").GetProperty("noteMoyenne").GetDouble(), resume.GetProperty("noteMoyenne").GetDouble());
         Assert.Equal(2, resume.GetProperty("meilleuresPerfs").GetInt32()); // G1 et G3
         Assert.Equal(1, resume.GetProperty("aces").GetInt32()); // G4
-        Assert.Equal(2, resume.GetProperty("mvp").GetInt32());
         Assert.Equal(1, resume.GetProperty("dofd").GetInt32());
     }
 
@@ -218,6 +216,5 @@ public class FicheEnrichieTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(JsonValueKind.Null, resume.GetProperty("noteMoyenne").ValueKind);
         Assert.Empty(resume.GetProperty("topChampions").EnumerateArray());
         Assert.Equal(0, resume.GetProperty("meilleuresPerfs").GetInt32());
-        Assert.Equal(0, resume.GetProperty("mvp").GetInt32());
-    }
+            }
 }

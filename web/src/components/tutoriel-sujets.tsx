@@ -55,7 +55,7 @@ const roles: [string, string][] = [
   ["Capitaine", "Le joueur qui mène une Équipe dans la Draft et dans la Draft de champions, avec son Lien capitaine."],
   ["Organisateur", "Celui qui ouvre la Soirée, crée la Série et la pilote jusqu'au bout."],
   ["Administrateur", "Un Utilisateur qui corrige les games, fixe les costs et les peaks, et gère les clips."],
-  ["Spectateur", "Un membre du serveur Discord qui regarde sans jouer : il fait des pronostics et vote pour son Roi/Reine."],
+  ["Spectateur", "Un membre du serveur Discord qui regarde sans jouer : il fait des pronostics et vote pour le DOFD."],
 ];
 
 /** Les sujets, dans l'ordre d'affichage. */

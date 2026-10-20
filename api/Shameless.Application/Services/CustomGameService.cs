@@ -80,7 +80,6 @@ public class CustomGameService
                             Match: DonneesDuMatch.Lire(g.RiotMatchData),
                             TeamA: Equipe(Equipes.A),
                             TeamB: Equipe(Equipes.B),
-                            Mvp: votes[g.Id].Mvp.Gagnants,
                             Dofd: votes[g.Id].Dofd.Gagnants);
                     }).ToList()
                 );

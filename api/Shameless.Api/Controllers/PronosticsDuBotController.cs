@@ -36,7 +36,7 @@ public sealed class PronosticsDuBotController : ControllerBase
 
     /// <summary>
     /// Dépose ou remplace le pronostic d'un Spectateur sur la prochaine Game de la Série : Équipe
-    /// gagnante, MVP et DOFD, chacun facultatif (trois null retirent le pronostic). 409 une fois la Game
+    /// gagnante et DOFD, chacun facultatif (deux null retirent le pronostic). 409 une fois la Game
     /// lancée ou la Série terminée ; 400 pour un Joueur de la Série, une autre Game ou un choix invalide.
     /// </summary>
     [HttpPut("series/{id:int}/pronostics")]
@@ -49,7 +49,7 @@ public sealed class PronosticsDuBotController : ControllerBase
     {
         var result = await _pronostics.PronostiquerAsync(
             id, request.PronostiqueurDiscordId, request.PronostiqueurNom, request.GameNumber,
-            request.EquipeGagnante, request.MvpPlayerId, request.DofdPlayerId);
+            request.EquipeGagnante, request.DofdPlayerId);
         return result.IsOk ? result.Value! : this.Refusal(result);
     }
 

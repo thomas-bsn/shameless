@@ -94,7 +94,6 @@ const votes = (overrides: Partial<Schemas["ResultatsDesVotes"]> = {}): Schemas["
   ouvertureLe: "2026-10-16T21:05:00Z",
   fermetureLe: "2026-10-16T21:15:00Z",
   votants: 4,
-  mvp: { gagnants: [1], decompte: [{ playerId: 1, prenom: "Alice", voix: 3, avatarUrl: null }] },
   dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 2, avatarUrl: null }] },
   ...overrides,
 });
@@ -172,18 +171,16 @@ describe("Page d'une Game", () => {
     expect(ligne("Dan")).toHaveTextContent("0/7/3");
   });
 
-  it("signale le Roi ou la Reine et le DOFD et détaille les votes", async () => {
+  it("signale le DOFD et détaille les votes", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap(), "GET /games/42/votes": votes() });
 
     renderApp("/games/42");
 
-    const alice = await screen.findByRole("listitem", { name: "Alice" });
-    expect(await within(alice).findByText("Roi/Reine")).toBeInTheDocument();
     expect(await within(await screen.findByRole("listitem", { name: "Dan" })).findByText("DOFD")).toBeInTheDocument();
-    expect(within(ligne("Bob")).queryByText("Roi/Reine")).not.toBeInTheDocument();
+    expect(within(ligne("Bob")).queryByText("DOFD")).not.toBeInTheDocument();
 
-    const mvp = screen.getByRole("group", { name: "Roi/Reine" });
-    expect(within(mvp).getByText("3 voix")).toBeInTheDocument();
+    const dofd = screen.getByRole("group", { name: "DOFD" });
+    expect(within(dofd).getByText("2 voix")).toBeInTheDocument();
   });
 
   it("affiche les pronostics et les clips de la Game", async () => {
@@ -200,7 +197,6 @@ describe("Page d'une Game", () => {
             pronostiqueurDiscordId: "1234",
             pronostiqueurNom: "Léa",
             equipeGagnante: { equipe: "B", correct: true },
-            mvp: null,
             dofd: null,
           },
         ],
@@ -235,7 +231,7 @@ describe("Page d'une Game", () => {
         teamA: [participant(1, "Alice")],
         teamB: [participant(2, "Bob")],
       }),
-      "GET /games/42/votes": votes({ statut: "ouverts", mvp: { gagnants: [], decompte: [] }, dofd: { gagnants: [], decompte: [] } }),
+      "GET /games/42/votes": votes({ statut: "ouverts", dofd: { gagnants: [], decompte: [] } }),
     });
 
     renderApp("/games/42");

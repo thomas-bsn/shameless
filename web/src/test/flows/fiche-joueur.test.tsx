@@ -55,7 +55,6 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: "Top",
       stats: { kills: 9, deaths: 2, assists: 7 } as Schemas["StatsDuParticipant"],
       performance: { note: 86, role: "Top", sourceDuRole: "Position", composantes: [] } as unknown as Schemas["NoteDePerformance"],
-      mvp: false,
       dofd: false,
       place: null,
       badge: null,
@@ -73,7 +72,6 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       role: null,
       stats: null,
       performance: null,
-      mvp: false,
       dofd: false,
       place: null,
       badge: null,
@@ -81,7 +79,7 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       adversaireChampionId: null,
     },
   ],
-  titres: { mvp: 3, dofd: 1 },
+  titres: { dofd: 1 },
   joueAvec: [],
   resume: {
     games: 0,
@@ -93,7 +91,6 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
     noteMoyenne: null,
     meilleuresPerfs: 0,
     aces: 0,
-    mvp: 0,
     dofd: 0,
   },
   liste: [],
@@ -148,8 +145,7 @@ describe("Fiche d'un joueur", () => {
     expect(screen.getByText("Platinum I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("Diamond I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("S25")).toBeInTheDocument();
-    expect(await screen.findByText("3 Roi/Reine")).toBeInTheDocument();
-    expect(screen.getByText("1 DOFD")).toBeInTheDocument();
+    expect(await screen.findByText("1 DOFD")).toBeInTheDocument();
     expect(screen.getByText("SS")).toBeInTheDocument();
     expect(screen.getByText("6 pts")).toBeInTheDocument();
   });

@@ -4,7 +4,7 @@ using Shameless.Application.Votes;
 
 namespace Shameless.Api.Controllers;
 
-/// <summary>Les résultats des votes MVP et DOFD d'une Game, affichés dans son récap.</summary>
+/// <summary>Les résultats des votes DOFD d'une Game, affichés dans son récap.</summary>
 [ApiController]
 [Route("games/{id:int}/votes")]
 public sealed class VotesController : ControllerBase

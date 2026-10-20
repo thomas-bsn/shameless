@@ -7,7 +7,7 @@ namespace Shameless.Tests.Integration;
 
 /// <summary>
 /// Les pronostics des Spectateurs : déposés par le bot avant le lancement de la prochaine Game d'une
-/// Série (vainqueur, MVP, DOFD), verrouillés à son lancement, puis évalués séparément quand chaque
+/// Série (vainqueur, DOFD), verrouillés à son lancement, puis évalués séparément quand chaque
 /// résultat est disponible — sans points ni classement.
 /// </summary>
 public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
@@ -17,7 +17,7 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     private const string Spectateur2 = "900000000000000002";
 
     private Task<HttpResponseMessage> PronostiquerAsync(
-        int seriesId, string pronostiqueur, int gameNumber, string? equipeGagnante, int? mvp, int? dofd, string? nom = null) =>
+        int seriesId, string pronostiqueur, int gameNumber, string? equipeGagnante, int? dofd, string? nom = null) =>
         Factory.CreateBotClient().PutAsJsonAsync(
             $"/bot/series/{seriesId}/pronostics",
             new
@@ -26,15 +26,14 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
                 pronostiqueurNom = nom,
                 gameNumber,
                 equipeGagnante,
-                mvpPlayerId = mvp,
                 dofdPlayerId = dofd,
             },
             Ct);
 
-    private Task<HttpResponseMessage> VoterAsync(int gameId, string votant, int? mvp, int? dofd) =>
+    private Task<HttpResponseMessage> VoterAsync(int gameId, string votant, int? dofd) =>
         Factory.CreateBotClient().PutAsJsonAsync(
             $"/bot/games/{gameId}/votes",
-            new { votantDiscordId = votant, mvpPlayerId = mvp, dofdPlayerId = dofd },
+            new { votantDiscordId = votant, dofdPlayerId = dofd },
             Ct);
 
     private static JsonElement PronosticDe(JsonElement pronostics, string discordId) =>
@@ -54,11 +53,11 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
 
         var depot = await ReadJsonAsync(await PronostiquerAsync(
-            serie.SeriesId, Spectateur, gameNumber: 1, equipeGagnante: "A", mvp: serie.TeamA[2], dofd: serie.TeamB[3], nom: "Kiki"));
+            serie.SeriesId, Spectateur, gameNumber: 1, equipeGagnante: "A", dofd: serie.TeamB[3], nom: "Kiki"));
         Assert.Equal(1, depot.GetProperty("gameNumber").GetInt32());
 
         var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[4]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[3]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var pronostics = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct));
@@ -67,9 +66,8 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal("Kiki", pronostic.GetProperty("pronostiqueurNom").GetString());
         Assert.Equal("A", pronostic.GetProperty("equipeGagnante").GetProperty("equipe").GetString());
         Assert.True(Correct(pronostic, "equipeGagnante"));
-        Assert.Equal("A3", pronostic.GetProperty("mvp").GetProperty("prenom").GetString());
-        Assert.True(Correct(pronostic, "mvp"));
-        Assert.False(Correct(pronostic, "dofd"));
+        Assert.Equal("B4", pronostic.GetProperty("dofd").GetProperty("prenom").GetString());
+        Assert.True(Correct(pronostic, "dofd"));
     }
 
     [Fact]
@@ -77,19 +75,19 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 3);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null));
 
         var gameId = await PlayGameAsync(client, serie.SeriesId);
 
         // Draft lancée, partie pas commencée : le pronostic de la game 1 est encore possible.
         var avant = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/series/{serie.SeriesId}/pronostics", Ct));
         Assert.Equal(1, avant.GetProperty("gameNumber").GetInt32());
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null, null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null));
 
         await JouerLaDraftAsync(client, serie.SeriesId, gameId);
 
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null, null), HttpStatusCode.Conflict);
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 2, "B", null, null), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 2, "B", null), HttpStatusCode.Conflict);
         var ouverts = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/series/{serie.SeriesId}/pronostics", Ct));
         Assert.Equal(JsonValueKind.Null, ouverts.GetProperty("gameNumber").ValueKind);
 
@@ -111,8 +109,8 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal(5, ouverts.GetProperty("teamA").GetArrayLength());
         Assert.Equal("B1", ouverts.GetProperty("teamB")[0].GetProperty("prenom").GetString());
 
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 3, "A", null, null), HttpStatusCode.BadRequest);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 2, "B", null, null));
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 3, "A", null), HttpStatusCode.BadRequest);
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 2, "B", null));
         var game2 = await PlayAndWinAsync(client, serie.SeriesId, "B");
 
         var pronostics1 = await ReadJsonAsync(await client.GetAsync($"/games/{game1}/pronostics", Ct));
@@ -129,21 +127,20 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 1);
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
 
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, DiscordA1, 1, "A", null, null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, DiscordA1, 1, "A", null), HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task On_pronostique_une_equipe_et_des_joueurs_de_la_serie()
+    public async Task On_pronostique_une_equipe_et_un_joueur_de_la_serie()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
         var horsSerie = await CreatePlayerAsync(client, "Z9");
 
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "C", null, null), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, null, horsSerie, null), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, null, null, horsSerie), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, "pas-un-id", 1, "A", null, null), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await PronostiquerAsync(999, Spectateur, 1, "A", null, null), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "C", null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, null, horsSerie), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, "pas-un-id", 1, "A", null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await PronostiquerAsync(999, Spectateur, 1, "A", null), HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -152,45 +149,44 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", serie.TeamA[1], null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", serie.TeamA[1]));
         var gameId = await PlayGameAsync(client, serie.SeriesId);
 
         var enCours = PronosticDe(await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct)), Spectateur);
         Assert.Null(Correct(enCours, "equipeGagnante"));
-        Assert.Null(Correct(enCours, "mvp"));
-        Assert.Equal(JsonValueKind.Null, enCours.GetProperty("dofd").ValueKind);
+        Assert.Null(Correct(enCours, "dofd"));
 
         await ReadJsonAsync(await client.PutAsJsonAsync($"/games/{gameId}/result", new { winner = "A" }, Ct));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: null));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[1]));
         var pendantLesVotes = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct));
         Assert.True(pendantLesVotes.GetProperty("vainqueurConnu").GetBoolean());
         Assert.False(pendantLesVotes.GetProperty("votesClos").GetBoolean());
         Assert.False(Correct(PronosticDe(pendantLesVotes, Spectateur), "equipeGagnante"));
-        Assert.Null(Correct(PronosticDe(pendantLesVotes, Spectateur), "mvp"));
+        Assert.Null(Correct(PronosticDe(pendantLesVotes, Spectateur), "dofd"));
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var apres = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/games/{gameId}/pronostics", Ct));
-        Assert.True(Correct(PronosticDe(apres, Spectateur), "mvp"));
+        Assert.True(Correct(PronosticDe(apres, Spectateur), "dofd"));
     }
 
     [Fact]
-    public async Task Un_mvp_a_egalite_rend_juste_le_pronostic_de_chacun_des_gagnants()
+    public async Task Un_dofd_a_egalite_rend_juste_le_pronostic_de_chacun_des_gagnants()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
         await LierADiscordAsync(serie.TeamB[0], "100000000000000006");
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, null, serie.TeamA[2], null));
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, null, serie.TeamB[2], null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, null, serie.TeamA[2]));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, null, serie.TeamB[2]));
         var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: null));
-        await ReadJsonAsync(await VoterAsync(gameId, "100000000000000006", mvp: serie.TeamB[2], dofd: null));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[2]));
+        await ReadJsonAsync(await VoterAsync(gameId, "100000000000000006", dofd: serie.TeamB[2]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var pronostics = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct));
 
-        Assert.True(Correct(PronosticDe(pronostics, Spectateur), "mvp"));
-        Assert.True(Correct(PronosticDe(pronostics, Spectateur2), "mvp"));
+        Assert.True(Correct(PronosticDe(pronostics, Spectateur), "dofd"));
+        Assert.True(Correct(PronosticDe(pronostics, Spectateur2), "dofd"));
         Assert.Equal(JsonValueKind.Null, PronosticDe(pronostics, Spectateur).GetProperty("equipeGagnante").ValueKind);
     }
 
@@ -199,10 +195,10 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, null));
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null, null));
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "A", null, null));
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, null, null, null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "B", null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "A", null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, null, null));
         var gameId = await PlayGameAsync(client, serie.SeriesId);
 
         var pronostics = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct));
@@ -216,15 +212,15 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, null, nom: "Zoé"));
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null, null, nom: "Alex"));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, nom: "Zoé"));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur2, 1, "B", null, nom: "Alex"));
         var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
 
         var pronostics = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/pronostics", Ct));
 
         Assert.Equal(["gameId", "gameNumber", "vainqueurConnu", "votesClos", "pronostics"],
             pronostics.EnumerateObject().Select(p => p.Name));
-        Assert.Equal(["pronostiqueurDiscordId", "pronostiqueurNom", "equipeGagnante", "mvp", "dofd"],
+        Assert.Equal(["pronostiqueurDiscordId", "pronostiqueurNom", "equipeGagnante", "dofd"],
             pronostics.GetProperty("pronostics")[0].EnumerateObject().Select(p => p.Name));
         // Listés par nom, pas par justesse.
         Assert.Equal(["Alex", "Zoé"], pronostics.GetProperty("pronostics").EnumerateArray()
@@ -236,7 +232,7 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 1);
-        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null, null));
+        await ReadJsonAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 1, "A", null));
 
         await ReadJsonAsync(await client.PostAsync($"/series/{serie.SeriesId}/stop", null, Ct));
 
@@ -250,6 +246,6 @@ public class PronosticsTests(ApiFactory factory) : IntegrationTest(factory)
         var serie = await CreateSerieAsync(client, format: 1);
         await PlayAndWinAsync(client, serie.SeriesId, "A");
 
-        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 2, "A", null, null), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await PronostiquerAsync(serie.SeriesId, Spectateur, 2, "A", null), HttpStatusCode.Conflict);
     }
 }

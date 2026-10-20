@@ -32,7 +32,6 @@ const votes = (overrides: Partial<Schemas["ResultatsDesVotes"]> = {}): Schemas["
   ouvertureLe: "2026-10-16T21:05:00Z",
   fermetureLe: "2026-10-16T21:15:00Z",
   votants: 4,
-  mvp: { gagnants: [], decompte: [] },
   dofd: { gagnants: [], decompte: [] },
   ...overrides,
 });
@@ -79,19 +78,18 @@ const fiche = (titres: Schemas["TitresDuJoueur"]): Schemas["FicheJoueur"] => ({
     noteMoyenne: null,
     meilleuresPerfs: 0,
     aces: 0,
-    mvp: 0,
     dofd: 0,
   },
   liste: [],
 });
 
-describe("Votes Roi/Reine et DOFD", () => {
+describe("Votes DOFD", () => {
   it("montre dans le récap les gagnants, tous en cas d'égalité, et le décompte des voix", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /games/42": recap(),
       "GET /games/42/votes": votes({
-        mvp: {
+        dofd: {
           gagnants: [1, 2],
           decompte: [
             { playerId: 1, prenom: "Alice", voix: 2, avatarUrl: null },
@@ -99,23 +97,19 @@ describe("Votes Roi/Reine et DOFD", () => {
             { playerId: 3, prenom: "Chloé", voix: 1, avatarUrl: null },
           ],
         },
-        dofd: { gagnants: [4], decompte: [{ playerId: 4, prenom: "Dan", voix: 3, avatarUrl: null }] },
       }),
     });
 
     renderApp("/games/42");
 
-    const mvp = await screen.findByRole("group", { name: "Roi/Reine" });
-    expect(within(mvp).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+    const dofd = await screen.findByRole("group", { name: "DOFD" });
+    expect(within(dofd).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
       expect.stringContaining("Alice"),
       expect.stringContaining("Bob"),
       expect.stringContaining("Chloé"),
     ]);
-    expect(within(mvp).getAllByText("Gagnant")).toHaveLength(2);
-    expect(within(mvp).getByText("1 voix")).toBeInTheDocument();
-    const dofd = screen.getByRole("group", { name: "DOFD" });
-    expect(within(dofd).getByText("Dan")).toBeInTheDocument();
-    expect(within(dofd).getByText("3 voix")).toBeInTheDocument();
+    expect(within(dofd).getAllByText("Gagnant")).toHaveLength(2);
+    expect(within(dofd).getByText("1 voix")).toBeInTheDocument();
     expect(screen.getByText("Votes clos · 4 votants")).toBeInTheDocument();
   });
 
@@ -130,7 +124,6 @@ describe("Votes Roi/Reine et DOFD", () => {
 
     expect(await screen.findByText(/Votes ouverts dans Discord jusqu'à .* · 1 votant$/)).toBeInTheDocument();
     expect(screen.getByText("Les gagnants et le décompte des voix seront dévoilés à la clôture.")).toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: "Roi/Reine" })).not.toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "DOFD" })).not.toBeInTheDocument();
   });
 
@@ -146,17 +139,16 @@ describe("Votes Roi/Reine et DOFD", () => {
     expect(await screen.findByText("Les votes ouvriront dans Discord à la fin de la Game.")).toBeInTheDocument();
   });
 
-  it("montre les titres de MVP et de DOFD sur la fiche du Joueur", async () => {
+  it("montre le titre de DOFD sur la fiche du Joueur", async () => {
     mockApi({
       "GET /auth/me": user(),
       "GET /players/7": player({ id: 7, prenom: "Kélio" }),
-      "GET /players/7/fiche": fiche({ mvp: 3, dofd: 1 }),
+      "GET /players/7/fiche": fiche({ dofd: 1 }),
     });
 
     renderApp("/joueurs/7");
 
     const titres = await screen.findByRole("group", { name: "Titres" });
-    expect(await within(titres).findByText("3 Roi/Reine")).toBeInTheDocument();
-    expect(within(titres).getByText("1 DOFD")).toBeInTheDocument();
+    expect(await within(titres).findByText("1 DOFD")).toBeInTheDocument();
   });
 });

@@ -60,10 +60,10 @@ Objectif : une soirée complète sans saisie manuelle.
 - [x] Communication par API HTTP authentifiée + webhooks
 
 ## Phase 2 — V2 : votes, spectateurs, clips
-- [x] Votes de fin de game : MVP (Roi/Reine) et DOFD (Dick of the Day, image de bouse de cheval)
+- [x] Votes de fin de game : ~~MVP (Roi/Reine) et~~ DOFD (Dick of the Day, image de bouse de cheval)
 - [x] Votes en base (remplace /polls), badges sur fiche joueur et historique
 - [x] Hall de la Honte (cumul DOFD) ~~+ mention Honte automatique par les stats~~
-- [x] Spectateurs : pronostics avant la game (vainqueur, MVP, DOFD), ~~points, titre de Doyen~~
+- [x] Spectateurs : pronostics avant la game (vainqueur, ~~MVP,~~ DOFD), ~~points, titre de Doyen~~
 - [x] Clips : postés dans #clips, téléchargés par le bot, rattachés à la game
 
 Votes, pronostics et clips : côté API et site livrés (#59), intégration Discord du bot

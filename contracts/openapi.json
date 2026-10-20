@@ -7561,7 +7561,6 @@
         "required": [
           "gameId",
           "votantDiscordId",
-          "mvpPlayerId",
           "dofdPlayerId"
         ],
         "type": "object",
@@ -7572,13 +7571,6 @@
           },
           "votantDiscordId": {
             "type": "string"
-          },
-          "mvpPlayerId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
           },
           "dofdPlayerId": {
             "type": [
@@ -9696,7 +9688,6 @@
           "role",
           "stats",
           "performance",
-          "mvp",
           "dofd",
           "place",
           "badge",
@@ -9768,10 +9759,6 @@
                 "$ref": "#/components/schemas/NoteDePerformance"
               }
             ]
-          },
-          "mvp": {
-            "type": "boolean",
-            "default": false
           },
           "dofd": {
             "type": "boolean",
@@ -10100,7 +10087,6 @@
           "match",
           "teamA",
           "teamB",
-          "mvp",
           "dofd"
         ],
         "type": "object",
@@ -10165,13 +10151,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
-            }
-          },
-          "mvp": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
             }
           },
           "dofd": {
@@ -12115,7 +12094,6 @@
           "pronostiqueurDiscordId",
           "pronostiqueurNom",
           "equipeGagnante",
-          "mvpPlayerId",
           "dofdPlayerId"
         ],
         "type": "object",
@@ -12143,13 +12121,6 @@
               "string"
             ]
           },
-          "mvpPlayerId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
-          },
           "dofdPlayerId": {
             "type": [
               "null",
@@ -12164,7 +12135,6 @@
           "pronostiqueurDiscordId",
           "pronostiqueurNom",
           "equipeGagnante",
-          "mvp",
           "dofd"
         ],
         "type": "object",
@@ -12185,16 +12155,6 @@
               },
               {
                 "$ref": "#/components/schemas/EquipePronostiquee"
-              }
-            ]
-          },
-          "mvp": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/JoueurPronostique"
               }
             ]
           },
@@ -12287,7 +12247,6 @@
           "pronostiqueurNom",
           "gameNumber",
           "equipeGagnante",
-          "mvpPlayerId",
           "dofdPlayerId"
         ],
         "type": "object",
@@ -12310,13 +12269,6 @@
               "null",
               "string"
             ]
-          },
-          "mvpPlayerId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
           },
           "dofdPlayerId": {
             "type": [
@@ -12681,7 +12633,6 @@
           "ouvertureLe",
           "fermetureLe",
           "votants",
-          "mvp",
           "dofd"
         ],
         "type": "object",
@@ -12711,9 +12662,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "mvp": {
-            "$ref": "#/components/schemas/ResultatDuTitre"
-          },
           "dofd": {
             "$ref": "#/components/schemas/ResultatDuTitre"
           }
@@ -12730,7 +12678,6 @@
           "noteMoyenne",
           "meilleuresPerfs",
           "aces",
-          "mvp",
           "dofd"
         ],
         "type": "object",
@@ -12779,10 +12726,6 @@
             "format": "int32"
           },
           "aces": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "mvp": {
             "type": "integer",
             "format": "int32"
           },
@@ -14004,15 +13947,10 @@
       },
       "TitresDuJoueur": {
         "required": [
-          "mvp",
           "dofd"
         ],
         "type": "object",
         "properties": {
-          "mvp": {
-            "type": "integer",
-            "format": "int32"
-          },
           "dofd": {
             "type": "integer",
             "format": "int32"
@@ -14226,20 +14164,12 @@
       "VoterRequest": {
         "required": [
           "votantDiscordId",
-          "mvpPlayerId",
           "dofdPlayerId"
         ],
         "type": "object",
         "properties": {
           "votantDiscordId": {
             "type": "string"
-          },
-          "mvpPlayerId": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
           },
           "dofdPlayerId": {
             "type": [

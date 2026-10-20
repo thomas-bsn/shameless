@@ -28,11 +28,10 @@ export function sidesOf(game: Schemas["GameRecapResponse"]) {
   ];
 }
 
-/** Le Roi ou la Reine (vote MVP) et le DOFD de la Game, d'après les votes clos (aucun tant qu'ils ne le sont pas). */
+/** Le DOFD de la Game, d'après les votes clos (aucun tant qu'ils ne le sont pas). */
 function useTitres(gameId: number) {
   const votes = $api.useQuery("get", "/games/{id}/votes", { params: { path: { id: gameId } } });
   return {
-    mvp: votes.data?.mvp.gagnants ?? [],
     dofd: votes.data?.dofd.gagnants ?? [],
   };
 }
@@ -162,7 +161,6 @@ export function ScoreboardEquipe({
             const role = ROLES[d?.role ?? s?.position ?? ""];
             const badge: Titre | null = titreDeBadge(p.badge);
             const estDofd = titres.dofd.includes(p.playerId);
-            const estRoi = titres.mvp.includes(p.playerId);
             const degats = s?.damageToChampions ?? null;
             const meilleur = degats != null && degats > 0 && degats === maxDegats;
             const fiche = { to: "/joueurs/$playerId", params: { playerId: String(p.playerId) } } as const;
@@ -225,7 +223,6 @@ export function ScoreboardEquipe({
                         {p.prenom}
                       </Link>
                       {estDofd && <BadgeDeTitre titre="DOFD" />}
-                      {estRoi && <BadgeDeTitre titre="Roi/Reine" />}
                     </span>
                     <span className={cn("truncate text-muted-foreground", dim.sousTexte)}>
                       {rankLabel(p.rankTier, p.rankDivision, null)}

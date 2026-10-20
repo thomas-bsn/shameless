@@ -1,6 +1,6 @@
 # 0013 — Identités machine du bot Discord
 
-Statut : acceptée — 2026-10-17 (« Début de la Game » révisé par l'ADR 0017)
+Statut : acceptée — 2026-10-17 (« Début de la Game » révisé par l'ADR 0017 ; remplacée en partie par l'ADR 0023 : il n'y a plus de vote ni de pronostic de MVP, seuls restent le vainqueur et le DOFD)
 
 ## Contexte
 L'ADR 0005 fait de Discord OAuth la seule connexion des personnes ; l'ADR 0010 y ajoute

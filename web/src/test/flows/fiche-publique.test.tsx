@@ -36,7 +36,6 @@ const ligne = (gameId: number, o: Partial<Ligne> = {}): Ligne => ({
   role: "Top",
   stats: { kills: 9, deaths: 2, assists: 7 } as Schemas["StatsDuParticipant"],
   performance: { note: 86, role: "Top", sourceDuRole: "Position", composantes: [] } as unknown as Schemas["NoteDePerformance"],
-  mvp: false,
   dofd: false,
   place: 1,
   badge: null,
@@ -58,7 +57,7 @@ const fiche = (o: Partial<Fiche> = {}): Fiche => ({
   champions: [],
   roles: [],
   games: [],
-  titres: { mvp: 3, dofd: 1 },
+  titres: { dofd: 1 },
   joueAvec: [],
   resume: {
     games: 0,
@@ -70,7 +69,6 @@ const fiche = (o: Partial<Fiche> = {}): Fiche => ({
     noteMoyenne: null,
     meilleuresPerfs: 0,
     aces: 0,
-    mvp: 0,
     dofd: 0,
   },
   liste: [],
@@ -123,7 +121,7 @@ const open = (reponse: Fiche | ((url: URL) => Fiche) = fiche()) => {
 };
 
 describe("Fiche publique", () => {
-  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges, Roi/Reine et DOFD", async () => {
+  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges et DOFD", async () => {
     open(
       fiche({
         resume: {
@@ -136,7 +134,6 @@ describe("Fiche publique", () => {
           noteMoyenne: 78,
           meilleuresPerfs: 4,
           aces: 2,
-          mvp: 6,
           dofd: 1,
         },
       }),
@@ -150,7 +147,6 @@ describe("Fiche publique", () => {
     expect(within(resume).getByText("78").parentElement).toHaveTextContent("Note moyenne");
     expect(within(resume).getByText("MVP").parentElement).toHaveTextContent("× 4");
     expect(within(resume).getByText("ACE").parentElement).toHaveTextContent("× 2");
-    expect(within(resume).getByText("Roi/Reine").parentElement).toHaveTextContent("× 6");
     expect(within(resume).getByText("DOFD").parentElement).toHaveTextContent("× 1");
   });
 
@@ -195,7 +191,7 @@ describe("Fiche publique", () => {
             soireeId: 3,
             jour: null,
             games: [
-              ligne(31, { badge: "MeilleurePerf", place: 1, mvp: true }),
+              ligne(31, { badge: "MeilleurePerf", place: 1 }),
               ligne(30, { victoire: false, badge: "Ace", place: 2, performance: { note: 70 } as Schemas["NoteDePerformance"] }),
             ],
           },
@@ -225,7 +221,6 @@ describe("Fiche publique", () => {
             games: [
               ligne(31, {
                 badge: "MeilleurePerf",
-                mvp: true,
                 role: "Mid",
                 dureeSecondes: 1500,
                 adversaireChampionId: "Ahri",
@@ -256,7 +251,6 @@ describe("Fiche publique", () => {
     expect(lien).toHaveTextContent("25:00");
     expect(lien).toHaveTextContent("41 / 3 / 3");
     expect(lien).toHaveTextContent("MVP");
-    expect(lien).toHaveTextContent("Roi/Reine");
     expect(lien).toHaveTextContent(/il y a \d+ j/);
     expect(lien).toHaveTextContent("Custom");
     expect(lien).toHaveTextContent("14,7 KDA");
@@ -349,7 +343,7 @@ describe("Fiche publique", () => {
           appels++;
           return game();
         },
-        "GET /games/31/votes": { mvp: { gagnants: [] }, dofd: { gagnants: [] } },
+        "GET /games/31/votes": { dofd: { gagnants: [] } },
       });
       renderApp("/joueurs/7");
       return { mock, appels: () => appels };

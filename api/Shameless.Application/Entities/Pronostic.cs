@@ -1,8 +1,8 @@
 namespace Shameless.Application.Entities;
 
 /// <summary>
-/// Le pronostic d'un Spectateur sur une Game à venir d'une Série : l'Équipe gagnante, le MVP et le
-/// DOFD, chacun facultatif. Aucune Game n'existe avant son lancement (ADR 0013) : le pronostic vise la
+/// Le pronostic d'un Spectateur sur une Game à venir d'une Série : l'Équipe gagnante et le DOFD,
+/// chacun facultatif. Aucune Game n'existe avant son lancement (ADR 0013) : le pronostic vise la
 /// Série et le numéro de la Game, et se verrouille à son lancement. Le Spectateur est identifié par son
 /// ID Discord, sans clé vers <c>users</c>.
 /// </summary>
@@ -22,10 +22,6 @@ public class Pronostic
 
     /// <summary>L'Équipe pronostiquée gagnante, « A » ou « B », null sans choix.</summary>
     public string? EquipeGagnante { get; set; }
-
-    /// <summary>Le Joueur pronostiqué MVP, null sans choix.</summary>
-    public int? MvpPlayerId { get; set; }
-    public Player? Mvp { get; set; }
 
     /// <summary>Le Joueur pronostiqué DOFD, null sans choix.</summary>
     public int? DofdPlayerId { get; set; }

@@ -142,10 +142,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("dofd_player_id");
 
-                    b.Property<int?>("MvpPlayerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("mvp_player_id");
-
                     b.Property<DateTime>("VoteLe")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("vote_le");
@@ -155,9 +151,6 @@ namespace Shameless.Infrastructure.Migrations
 
                     b.HasIndex("DofdPlayerId")
                         .HasDatabaseName("ix_bulletins_de_vote_dofd_player_id");
-
-                    b.HasIndex("MvpPlayerId")
-                        .HasDatabaseName("ix_bulletins_de_vote_mvp_player_id");
 
                     b.ToTable("bulletins_de_vote", (string)null);
                 });
@@ -991,10 +984,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasColumnType("character varying(1)")
                         .HasColumnName("equipe_gagnante");
 
-                    b.Property<int?>("MvpPlayerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("mvp_player_id");
-
                     b.Property<DateTime>("PronostiqueLe")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("pronostique_le");
@@ -1009,9 +998,6 @@ namespace Shameless.Infrastructure.Migrations
 
                     b.HasIndex("DofdPlayerId")
                         .HasDatabaseName("ix_pronostics_dofd_player_id");
-
-                    b.HasIndex("MvpPlayerId")
-                        .HasDatabaseName("ix_pronostics_mvp_player_id");
 
                     b.ToTable("pronostics", null, t =>
                         {
@@ -1268,12 +1254,6 @@ namespace Shameless.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_bulletins_de_vote_custom_games_game_id");
 
-                    b.HasOne("Shameless.Application.Entities.Player", null)
-                        .WithMany()
-                        .HasForeignKey("MvpPlayerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_bulletins_de_vote_players_mvp_player_id");
-
                     b.Navigation("Game");
                 });
 
@@ -1446,12 +1426,6 @@ namespace Shameless.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_pronostics_players_dofd_player_id");
 
-                    b.HasOne("Shameless.Application.Entities.Player", "Mvp")
-                        .WithMany()
-                        .HasForeignKey("MvpPlayerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_pronostics_players_mvp_player_id");
-
                     b.HasOne("Shameless.Application.Entities.BestOfSeries", "Series")
                         .WithMany()
                         .HasForeignKey("SeriesId")
@@ -1460,8 +1434,6 @@ namespace Shameless.Infrastructure.Migrations
                         .HasConstraintName("fk_pronostics_best_of_series_series_id");
 
                     b.Navigation("Dofd");
-
-                    b.Navigation("Mvp");
 
                     b.Navigation("Series");
                 });

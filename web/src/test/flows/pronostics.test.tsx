@@ -46,14 +46,12 @@ describe("Pronostics des Spectateurs", () => {
             pronostiqueurDiscordId: "900000000000000001",
             pronostiqueurNom: "Kiki",
             equipeGagnante: { equipe: "A", correct: true },
-            mvp: { playerId: 3, prenom: "Alice", correct: true, avatarUrl: null },
             dofd: { playerId: 4, prenom: "Dan", correct: false, avatarUrl: null },
           },
           {
             pronostiqueurDiscordId: "900000000000000002",
             pronostiqueurNom: null,
             equipeGagnante: { equipe: "B", correct: false },
-            mvp: null,
             dofd: null,
           },
         ],
@@ -64,13 +62,11 @@ describe("Pronostics des Spectateurs", () => {
 
     const kiki = await screen.findByRole("group", { name: "Pronostic de Kiki" });
     expect(within(kiki).getByText("Vainqueur : Équipe A")).toBeInTheDocument();
-    expect(within(kiki).getByText("Roi/Reine : Alice")).toBeInTheDocument();
     expect(within(kiki).getByText("DOFD : Dan")).toBeInTheDocument();
-    expect(within(kiki).getAllByText("Juste")).toHaveLength(2);
+    expect(within(kiki).getByText("Juste")).toBeInTheDocument();
     expect(within(kiki).getByText("Raté")).toBeInTheDocument();
     const anonyme = screen.getByRole("group", { name: "Pronostic de Spectateur 0002" });
     expect(within(anonyme).getByText("Raté")).toBeInTheDocument();
-    expect(within(anonyme).queryByText(/Roi\/Reine/)).not.toBeInTheDocument();
     expect(screen.queryByText(/point/i)).not.toBeInTheDocument();
   });
 
@@ -85,8 +81,7 @@ describe("Pronostics des Spectateurs", () => {
             pronostiqueurDiscordId: "900000000000000001",
             pronostiqueurNom: "Kiki",
             equipeGagnante: { equipe: "A", correct: true },
-            mvp: { playerId: 3, prenom: "Alice", correct: null, avatarUrl: null },
-            dofd: null,
+            dofd: { playerId: 3, prenom: "Alice", correct: null, avatarUrl: null },
           },
         ],
       }),

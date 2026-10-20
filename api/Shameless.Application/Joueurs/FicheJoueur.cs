@@ -16,7 +16,7 @@ namespace Shameless.Application.Joueurs;
 /// <param name="Champions">Les champions joués, du plus joué au moins joué.</param>
 /// <param name="Roles">Les rôles joués, du plus joué au moins joué.</param>
 /// <param name="Games">Les Games terminées du Joueur, de la plus récente à la plus ancienne.</param>
-/// <param name="Titres">Les titres de MVP et de DOFD remportés par le Joueur (votes clos, égalités comprises).</param>
+/// <param name="Titres">Les titres de DOFD remportés par le Joueur (votes clos, égalités comprises).</param>
 /// <param name="JoueAvec">Les coéquipiers du Joueur, du plus fréquent au moins fréquent.</param>
 /// <param name="Resume">Le résumé de ses 30 dernières games.</param>
 /// <param name="Liste">Ses games groupées et filtrées selon la demande ; <paramref name="Games"/> reste l'historique complet.</param>
@@ -120,10 +120,9 @@ public sealed record StatsParRole(Role Role, StatsDeCustoms Stats);
 /// <param name="Role">Le rôle joué, null si inconnu.</param>
 /// <param name="Stats">Ses stats, null sans rapport du Companion pour le Joueur.</param>
 /// <param name="Performance">Sa note de performance, null sans stats suffisantes.</param>
-/// <param name="Mvp">true si le Joueur a le titre de MVP (Roi ou Reine) de la Game : votes clos, égalités comprises.</param>
 /// <param name="Dofd">true si le Joueur a le titre de DOFD de la Game : votes clos, égalités comprises.</param>
 /// <param name="Place">Sa place de 1 à 10 dans la game d'après sa note, null sans note.</param>
-/// <param name="Badge">Son badge de note (Meilleure perf, ACE), null sinon ; distinct du titre MVP voté.</param>
+/// <param name="Badge">Son badge de note (Meilleure perf, ACE), null sinon.</param>
 /// <param name="ParticipationAuxKills">Ses kills et assists / les kills de son Équipe, en pourcentage (une décimale), null sans ces données.</param>
 /// <param name="AdversaireChampionId">Le champion adverse du même poste (id Data Dragon), null sans poste connu ou sans adversaire unique.</param>
 public sealed record GameDeLaFiche(
@@ -137,7 +136,6 @@ public sealed record GameDeLaFiche(
     Role? Role,
     StatsDuParticipant? Stats,
     NoteDePerformance? Performance,
-    bool Mvp = false,
     bool Dofd = false,
     int? Place = null,
     BadgeDeGame? Badge = null,

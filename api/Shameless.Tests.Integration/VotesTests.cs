@@ -6,8 +6,8 @@ using Shameless.Tests.Integration.Infrastructure;
 namespace Shameless.Tests.Integration;
 
 /// <summary>
-/// Les votes MVP et DOFD d'une Game : déposés par le bot pour les dix Joueurs et les Spectateurs
-/// présents en vocal, ouverts 10 minutes après la fin de la Game, un Joueur au plus par titre, jamais
+/// Les votes DOFD d'une Game : déposés par le bot pour les dix Joueurs et les Spectateurs
+/// présents en vocal, ouverts 10 minutes après la fin de la Game, un Joueur au plus, jamais
 /// pour soi. Les résultats (tous les Joueurs à égalité gagnent) sont lus par le récap et le bot.
 /// </summary>
 public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
@@ -28,10 +28,10 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         return (serie, gameId, client);
     }
 
-    private Task<HttpResponseMessage> VoterAsync(int gameId, string votant, int? mvp, int? dofd) =>
+    private Task<HttpResponseMessage> VoterAsync(int gameId, string votant, int? dofd) =>
         Factory.CreateBotClient().PutAsJsonAsync(
             $"/bot/games/{gameId}/votes",
-            new { votantDiscordId = votant, mvpPlayerId = mvp, dofdPlayerId = dofd },
+            new { votantDiscordId = votant, dofdPlayerId = dofd },
             Ct);
 
     private Task<HttpResponseMessage> SignalerSpectateursAsync(int gameId, params string[] discordIds) =>
@@ -47,22 +47,20 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
             .SingleOrDefault();
 
     [Fact]
-    public async Task Les_votes_des_joueurs_donnent_le_mvp_et_le_dofd_une_fois_les_votes_clos()
+    public async Task Les_votes_des_joueurs_donnent_le_dofd_une_fois_les_votes_clos()
     {
         var (serie, gameId, client) = await GameTermineeAsync();
 
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, mvp: serie.TeamA[2], dofd: serie.TeamA[1]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, dofd: serie.TeamA[1]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, dofd: serie.TeamB[3]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var votes = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
 
         Assert.Equal("clos", votes.GetProperty("statut").GetString());
         Assert.Equal(3, votes.GetProperty("votants").GetInt32());
-        Assert.Equal([serie.TeamA[2]], Gagnants(votes, "mvp"));
         Assert.Equal([serie.TeamB[3]], Gagnants(votes, "dofd"));
-        Assert.Equal(3, Voix(votes, "mvp", serie.TeamA[2]));
         Assert.Equal(2, Voix(votes, "dofd", serie.TeamB[3]));
         Assert.Equal(1, Voix(votes, "dofd", serie.TeamA[1]));
         var decompte = votes.GetProperty("dofd").GetProperty("decompte")[0];
@@ -74,13 +72,12 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var (serie, gameId, client) = await GameTermineeAsync();
 
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, mvp: serie.TeamB[2], dofd: serie.TeamA[4]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, dofd: serie.TeamA[4]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(11));
 
         var votes = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
 
-        Assert.Equal([serie.TeamA[2], serie.TeamB[2]], Gagnants(votes, "mvp").Order());
         Assert.Equal([serie.TeamA[4], serie.TeamB[3]], Gagnants(votes, "dofd").Order());
     }
 
@@ -91,13 +88,12 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         var spectateurs = await ReadJsonAsync(await SignalerSpectateursAsync(gameId, Spectateur));
         Assert.Equal([Spectateur], spectateurs.GetProperty("discordIds").EnumerateArray().Select(d => d.GetString()));
 
-        var bulletin = await ReadJsonAsync(await VoterAsync(gameId, Spectateur, mvp: serie.TeamA[0], dofd: null));
+        var bulletin = await ReadJsonAsync(await VoterAsync(gameId, Spectateur, dofd: serie.TeamA[0]));
 
-        Assert.Equal(serie.TeamA[0], bulletin.GetProperty("mvpPlayerId").GetInt32());
-        Assert.Equal(JsonValueKind.Null, bulletin.GetProperty("dofdPlayerId").ValueKind);
+        Assert.Equal(serie.TeamA[0], bulletin.GetProperty("dofdPlayerId").GetInt32());
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var votes = await ReadJsonAsync(await Factory.CreateBotClient().GetAsync($"/bot/games/{gameId}/votes", Ct));
-        Assert.Equal(1, Voix(votes, "mvp", serie.TeamA[0]));
+        Assert.Equal(1, Voix(votes, "dofd", serie.TeamA[0]));
     }
 
     [Fact]
@@ -107,8 +103,8 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await SignalerSpectateursAsync(gameId, Spectateur, "900000000000000002"));
         await ReadJsonAsync(await SignalerSpectateursAsync(gameId, "900000000000000002"));
 
-        await AssertRefusAsync(await VoterAsync(gameId, Spectateur, mvp: serie.TeamA[0], dofd: null), HttpStatusCode.BadRequest);
-        await ReadJsonAsync(await VoterAsync(gameId, "900000000000000002", mvp: serie.TeamA[0], dofd: null));
+        await AssertRefusAsync(await VoterAsync(gameId, Spectateur, dofd: serie.TeamA[0]), HttpStatusCode.BadRequest);
+        await ReadJsonAsync(await VoterAsync(gameId, "900000000000000002", dofd: serie.TeamA[0]));
     }
 
     [Fact]
@@ -116,7 +112,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var (serie, gameId, _) = await GameTermineeAsync();
 
-        await AssertRefusAsync(await VoterAsync(gameId, Spectateur, mvp: serie.TeamA[0], dofd: null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await VoterAsync(gameId, Spectateur, dofd: serie.TeamA[0]), HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -124,8 +120,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var (serie, gameId, _) = await GameTermineeAsync();
 
-        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[0], dofd: null), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, mvp: null, dofd: serie.TeamA[0]), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[0]), HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -134,26 +129,24 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         var (serie, gameId, client) = await GameTermineeAsync();
         var autre = await CreatePlayerAsync(client, "Autre");
 
-        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, mvp: autre, dofd: null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, dofd: autre), HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Un_votant_peut_changer_son_vote_ou_s_abstenir()
     {
         var (serie, gameId, client) = await GameTermineeAsync();
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[3], dofd: null));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, mvp: serie.TeamA[3], dofd: serie.TeamB[3]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, mvp: null, dofd: null));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA2, dofd: null));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
 
         var votes = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
 
         Assert.Equal(1, votes.GetProperty("votants").GetInt32());
-        Assert.Equal([serie.TeamA[3]], Gagnants(votes, "mvp"));
-        Assert.Equal(0, Voix(votes, "mvp", serie.TeamA[2]));
-        Assert.Empty(Gagnants(votes, "dofd"));
-        Assert.Equal(0, votes.GetProperty("dofd").GetProperty("decompte").GetArrayLength());
+        Assert.Equal([serie.TeamA[3]], Gagnants(votes, "dofd"));
+        Assert.Equal(0, Voix(votes, "dofd", serie.TeamB[3]));
     }
 
     [Fact]
@@ -164,7 +157,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
         var gameId = await PlayGameAsync(client, serie.SeriesId);
 
-        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: null), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[1]), HttpStatusCode.Conflict);
         var votes = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
         Assert.Equal("a_venir", votes.GetProperty("statut").GetString());
         Assert.Equal(JsonValueKind.Null, votes.GetProperty("fermetureLe").ValueKind);
@@ -175,18 +168,18 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     {
         var (serie, gameId, client) = await GameTermineeAsync();
         Factory.Clock.Advance(TimeSpan.FromMinutes(9));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: null));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamA[1]));
         var ouverts = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
         Assert.Equal("ouverts", ouverts.GetProperty("statut").GetString());
         Assert.Equal(1, ouverts.GetProperty("votants").GetInt32());
-        Assert.Empty(Gagnants(ouverts, "mvp"));
+        Assert.Empty(Gagnants(ouverts, "dofd"));
         Assert.Equal(
             ouverts.GetProperty("ouvertureLe").GetDateTime().AddMinutes(10),
             ouverts.GetProperty("fermetureLe").GetDateTime());
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
 
-        await AssertRefusAsync(await VoterAsync(gameId, DiscordA2, mvp: serie.TeamA[0], dofd: null), HttpStatusCode.Conflict);
+        await AssertRefusAsync(await VoterAsync(gameId, DiscordA2, dofd: serie.TeamA[0]), HttpStatusCode.Conflict);
         await AssertRefusAsync(await SignalerSpectateursAsync(gameId, Spectateur), HttpStatusCode.Conflict);
     }
 
@@ -194,7 +187,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     public async Task Le_decompte_des_voix_reste_cache_au_site_et_au_bot_tant_que_les_votes_sont_ouverts()
     {
         var (serie, gameId, client) = await GameTermineeAsync();
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[1], dofd: serie.TeamB[2]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[2]));
 
         foreach (var lecteur in new[] { client, Factory.CreateBotClient() })
         {
@@ -202,21 +195,20 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
             var votes = await ReadJsonAsync(await lecteur.GetAsync($"{prefixe}/games/{gameId}/votes", Ct));
             Assert.Equal("ouverts", votes.GetProperty("statut").GetString());
             Assert.Equal(1, votes.GetProperty("votants").GetInt32());
-            Assert.Equal(0, votes.GetProperty("mvp").GetProperty("decompte").GetArrayLength());
             Assert.Equal(0, votes.GetProperty("dofd").GetProperty("decompte").GetArrayLength());
         }
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var clos = await ReadJsonAsync(await client.GetAsync($"/games/{gameId}/votes", Ct));
-        Assert.Equal(1, Voix(clos, "mvp", serie.TeamA[1]));
+        Assert.Equal(1, Voix(clos, "dofd", serie.TeamB[2]));
     }
 
     [Fact]
-    public async Task L_historique_donne_le_mvp_et_le_dofd_de_chaque_game_une_fois_les_votes_clos()
+    public async Task L_historique_donne_le_dofd_de_chaque_game_une_fois_les_votes_clos()
     {
         var (serie, gameId, client) = await GameTermineeAsync();
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[3]));
-        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, mvp: serie.TeamB[2], dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordA1, dofd: serie.TeamB[3]));
+        await ReadJsonAsync(await VoterAsync(gameId, DiscordB1, dofd: serie.TeamB[3]));
 
         async Task<JsonElement> GameDeLHistoriqueAsync()
         {
@@ -230,12 +222,10 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
             game.GetProperty(titre).EnumerateArray().Select(i => i.GetInt32()).Order().ToList();
 
         var ouverts = await GameDeLHistoriqueAsync();
-        Assert.Empty(Ids(ouverts, "mvp"));
         Assert.Empty(Ids(ouverts, "dofd"));
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var clos = await GameDeLHistoriqueAsync();
-        Assert.Equal(new[] { serie.TeamA[2], serie.TeamB[2] }.Order(), Ids(clos, "mvp"));
         Assert.Equal([serie.TeamB[3]], Ids(clos, "dofd"));
     }
 
@@ -255,7 +245,7 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
     [Fact]
     public async Task Les_votes_d_une_game_inconnue_repondent_404()
     {
-        await AssertRefusAsync(await VoterAsync(999, DiscordA1, mvp: 1, dofd: null), HttpStatusCode.NotFound);
+        await AssertRefusAsync(await VoterAsync(999, DiscordA1, dofd: 1), HttpStatusCode.NotFound);
         await AssertRefusAsync(await SignalerSpectateursAsync(999, Spectateur), HttpStatusCode.NotFound);
         await AssertRefusAsync(await Factory.CreateSignedInClient().GetAsync("/games/999/votes", Ct), HttpStatusCode.NotFound);
     }
@@ -266,62 +256,54 @@ public class VotesTests(ApiFactory factory) : IntegrationTest(factory)
         var (serie, gameId, _) = await GameTermineeAsync();
 
         await AssertRefusAsync(await SignalerSpectateursAsync(gameId, "pas-un-id"), HttpStatusCode.BadRequest);
-        await AssertRefusAsync(await VoterAsync(gameId, "pas-un-id", mvp: serie.TeamA[0], dofd: null), HttpStatusCode.BadRequest);
+        await AssertRefusAsync(await VoterAsync(gameId, "pas-un-id", dofd: serie.TeamA[0]), HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task La_fiche_d_un_joueur_compte_ses_titres_de_mvp_et_de_dofd_une_fois_les_votes_clos()
+    public async Task La_fiche_d_un_joueur_compte_ses_titres_de_dofd_une_fois_les_votes_clos()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 5);
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
         await LierADiscordAsync(serie.TeamB[0], DiscordB1);
         var game1 = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(game1, DiscordA1, mvp: serie.TeamA[2], dofd: serie.TeamB[1]));
-        await ReadJsonAsync(await VoterAsync(game1, DiscordB1, mvp: serie.TeamB[2], dofd: serie.TeamB[1]));
+        await ReadJsonAsync(await VoterAsync(game1, DiscordA1, dofd: serie.TeamB[1]));
+        await ReadJsonAsync(await VoterAsync(game1, DiscordB1, dofd: serie.TeamB[1]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var game2 = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(game2, DiscordB1, mvp: serie.TeamA[2], dofd: serie.TeamA[1]));
+        await ReadJsonAsync(await VoterAsync(game2, DiscordB1, dofd: serie.TeamA[1]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var game3 = await PlayAndWinAsync(client, serie.SeriesId, "B");
-        await ReadJsonAsync(await VoterAsync(game3, DiscordB1, mvp: serie.TeamA[2], dofd: serie.TeamB[1]));
+        await ReadJsonAsync(await VoterAsync(game3, DiscordB1, dofd: serie.TeamB[1]));
 
         async Task<JsonElement> TitresAsync(int playerId) =>
             (await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/fiche", Ct))).GetProperty("titres");
 
-        var a3 = await TitresAsync(serie.TeamA[2]);
-        Assert.Equal(2, a3.GetProperty("mvp").GetInt32());
-        Assert.Equal(0, a3.GetProperty("dofd").GetInt32());
-        var b2 = await TitresAsync(serie.TeamB[1]);
-        Assert.Equal(0, b2.GetProperty("mvp").GetInt32());
-        Assert.Equal(1, b2.GetProperty("dofd").GetInt32());
-        Assert.Equal(1, (await TitresAsync(serie.TeamB[2])).GetProperty("mvp").GetInt32());
+        Assert.Equal(1, (await TitresAsync(serie.TeamB[1])).GetProperty("dofd").GetInt32());
         Assert.Equal(1, (await TitresAsync(serie.TeamA[1])).GetProperty("dofd").GetInt32());
-        Assert.Equal(0, (await TitresAsync(serie.TeamA[4])).GetProperty("mvp").GetInt32());
+        Assert.Equal(0, (await TitresAsync(serie.TeamA[4])).GetProperty("dofd").GetInt32());
     }
 
     [Fact]
-    public async Task La_fiche_marque_les_games_ou_le_joueur_a_ete_mvp_ou_dofd_une_fois_les_votes_clos()
+    public async Task La_fiche_marque_les_games_ou_le_joueur_a_ete_dofd_une_fois_les_votes_clos()
     {
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 5);
         await LierADiscordAsync(serie.TeamA[0], DiscordA1);
         var game1 = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(game1, DiscordA1, mvp: serie.TeamB[2], dofd: serie.TeamB[1]));
+        await ReadJsonAsync(await VoterAsync(game1, DiscordA1, dofd: serie.TeamB[1]));
         Factory.Clock.Advance(TimeSpan.FromMinutes(10));
         var game2 = await PlayAndWinAsync(client, serie.SeriesId, "A");
-        await ReadJsonAsync(await VoterAsync(game2, DiscordA1, mvp: serie.TeamB[2], dofd: serie.TeamB[1]));
+        await ReadJsonAsync(await VoterAsync(game2, DiscordA1, dofd: serie.TeamB[1]));
 
-        async Task<Dictionary<int, (bool Mvp, bool Dofd)>> GamesAsync(int playerId) =>
+        async Task<Dictionary<int, bool>> GamesAsync(int playerId) =>
             (await ReadJsonAsync(await client.GetAsync($"/players/{playerId}/fiche", Ct))).GetProperty("games").EnumerateArray()
-            .ToDictionary(g => g.GetProperty("gameId").GetInt32(), g => (g.GetProperty("mvp").GetBoolean(), g.GetProperty("dofd").GetBoolean()));
+            .ToDictionary(g => g.GetProperty("gameId").GetInt32(), g => g.GetProperty("dofd").GetBoolean());
 
         // La game 1 est close, la game 2 a encore ses votes ouverts : son titre n'est pas dévoilé.
-        var b3 = await GamesAsync(serie.TeamB[2]);
-        Assert.Equal((true, false), b3[game1]);
-        Assert.Equal((false, false), b3[game2]);
         var b2 = await GamesAsync(serie.TeamB[1]);
-        Assert.Equal((false, true), b2[game1]);
-        Assert.Equal((false, false), (await GamesAsync(serie.TeamA[4]))[game1]);
+        Assert.True(b2[game1]);
+        Assert.False(b2[game2]);
+        Assert.False((await GamesAsync(serie.TeamA[4]))[game1]);
     }
 }
