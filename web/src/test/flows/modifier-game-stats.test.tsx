@@ -38,6 +38,18 @@ describe("Fenêtre Modifier la game : onglet Stats, liste", () => {
   });
 });
 
+describe("Fenêtre Modifier la game : onglet Stats, ordre", () => {
+  it("liste chaque équipe Top, Jungle, Mid, ADC, Support quel que soit l'ordre reçu", async () => {
+    const poste = (id: number, prenom: string, position: string) =>
+      participant(id, prenom, { stats: { ...participant(id, prenom).stats!, position } });
+    const desordre = [poste(1, "Alice", "Top"), poste(2, "Bob", "Jungle"), poste(3, "Chloé", "Support"), poste(4, "David", "Mid"), poste(5, "Emma", "Adc")];
+    const { dialogue } = await ouvrirLesStats({ ...base(), "GET /games/42": recap({ teamA: desordre }) } as ReturnType<typeof base>);
+
+    const noms = within(dialogue).getAllByRole("button", { name: /^Stats de / }).slice(0, 5).map((b) => b.getAttribute("aria-label"));
+    expect(noms).toEqual(["Stats de Alice", "Stats de Bob", "Stats de David", "Stats de Emma", "Stats de Chloé"]);
+  });
+});
+
 describe("Fenêtre Modifier la game : onglet Stats, un joueur", () => {
   it("montre les sections, la valeur du Companion sous chaque case et entoure les cases changées", async () => {
     const { dialogue } = await ouvrirAlice();

@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
-import { ORIGINE_VIDE, user } from "@/test/fixtures";
+import { ORIGINE_VIDE, STATS_VIDES, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
@@ -79,6 +79,27 @@ describe("Historique", () => {
     expect(within(games[2]!).getByText("Équipe A gagne")).toBeInTheDocument();
     expect(within(games[1]!).getByRole("group", { name: "Équipe A · Red side" })).toHaveTextContent("Alice");
     expect(within(games[1]!).getByRole("link", { name: /Game 2/ })).toHaveAttribute("href", "/games/12");
+  });
+
+  it("range chaque équipe Top, Jungle, Mid, ADC, Support d'après le rôle joué, avec son icône", async () => {
+    const positions = ["Top", "Jungle", null, "Mid", "Support"];
+    const desordre = team(1, "Charles", "Fares", "Qao", "Thomas", "Zoubir").map((p, i) => ({
+      ...p,
+      stats: positions[i] ? { ...STATS_VIDES, position: positions[i] } : null,
+    }));
+    const unique: Schemas["GameHistoryListResponse"] = {
+      games: [{ ...october.games[0]!, games: [{ ...game(11, "A", "blue"), teamA: desordre }] }],
+    };
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": unique });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    const equipe = await screen.findByRole("group", { name: "Équipe A · Blue side" });
+    const lignes = within(equipe).getAllByTestId("joueur-de-game");
+    const noms = lignes.map((l) => ["Charles", "Fares", "Qao", "Thomas", "Zoubir"].find((n) => l.textContent?.includes(`${n}Gold`)));
+    expect(noms).toEqual(["Charles", "Fares", "Thomas", "Zoubir", "Qao"]);
+    expect(within(lignes[2]!).getByRole("img", { name: "Mid" })).toBeInTheDocument();
+    expect(within(lignes[4]!).queryByRole("img", { name: /^(Top|Jungle|Mid|ADC|Support)$/ })).not.toBeInTheDocument();
   });
 
   it("ouvre la game d'un clic n'importe où dans son bloc, et le dit au repos", async () => {

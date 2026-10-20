@@ -58,6 +58,12 @@ export function trierParRole<T extends { stats?: { position?: string | null } | 
     .map((x) => x.j);
 }
 
+/** Le rôle joué d'un participant (position détectée, corrigée par un admin le cas échéant) ; null s'il est inconnu. */
+export function roleJoue(joueur: { stats?: { position?: string | null } | null }): "Top" | "Jungle" | "Mid" | "Adc" | "Support" | null {
+  const position = joueur.stats?.position;
+  return ORDRE_DES_ROLES.find((r) => r === position) as ReturnType<typeof roleJoue> ?? null;
+}
+
 /** Le ton d'une note sur 100 : 75 et plus bonne, 50 et plus moyenne, sinon mauvaise. */
 export function noteTone(note: number): "good" | "mid" | "bad" {
   return note >= 75 ? "good" : note >= 50 ? "mid" : "bad";

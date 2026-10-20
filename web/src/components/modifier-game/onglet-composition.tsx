@@ -2,7 +2,7 @@ import { useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { ErrorAlert } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
-import { posteLabel } from "@/lib/game";
+import { posteLabel, trierParRole } from "@/lib/game";
 import { Pied, type Retour } from "./pied";
 import { useRelire } from "./use-relire";
 
@@ -12,7 +12,13 @@ type Equipes = { A: number[]; B: number[] };
 const CHAMP_NATIF = "h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm shadow-xs";
 const COULEURS = { A: "bg-blue-400", B: "bg-red-400" } as const;
 
-const composition = (game: Recap): Equipes => ({ A: game.teamA.map((p) => p.playerId), B: game.teamB.map((p) => p.playerId) });
+/** Les lignes de chaque équipe suivent toujours Top, Jungle, Mid, ADC, Support d'après le rôle joué, quel que soit l'ordre reçu. */
+const rangees = (game: Recap) => ({ A: trierParRole(game.teamA), B: trierParRole(game.teamB) });
+
+const composition = (game: Recap): Equipes => {
+  const { A, B } = rangees(game);
+  return { A: A.map((p) => p.playerId), B: B.map((p) => p.playerId) };
+};
 
 /** La composition des deux équipes : un joueur déjà placé est grisé dans toutes les listes. */
 export function OngletComposition({ game, onFermer }: { game: Recap; onFermer: () => void }) {
@@ -21,6 +27,7 @@ export function OngletComposition({ game, onFermer }: { game: Recap; onFermer: (
 }
 
 function Formulaire({ game, actuelle, onFermer }: { game: Recap; actuelle: Equipes; onFermer: () => void }) {
+  const lignes = rangees(game);
   const relire = useRelire();
   const joueurs = $api.useQuery("get", "/players");
   const [equipes, setEquipes] = useState<Equipes>(actuelle);
@@ -62,7 +69,7 @@ function Formulaire({ game, actuelle, onFermer }: { game: Recap; actuelle: Equip
               Équipe {equipe} · {equipe === "A" ? game.teamASide : game.teamBSide}
             </span>
             {equipes[equipe].map((id, i) => {
-              const poste = posteLabel((equipe === "A" ? game.teamA : game.teamB)[i]?.stats?.position);
+              const poste = posteLabel(lignes[equipe][i]?.stats?.position);
               return (
                 <div key={i} className="flex items-center gap-2">
                   <span className="w-16 shrink-0 text-xs text-muted-foreground">{poste ?? `Joueur ${i + 1}`}</span>
