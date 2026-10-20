@@ -7,14 +7,14 @@ import { IconeRole } from "@/components/icones-de-jeu/icone-role";
 import { IconeChampion, IconeObjet, IconeRune, IconeSort } from "@/components/icones-de-jeu/icones-catalogue";
 import { dateHeureLabel } from "@/lib/dates";
 import { decimalLabel, kdaDetailLabel } from "@/lib/fiche";
-import { csParMinute, dureeLabel, ratioKda } from "@/lib/game";
+import { csParMinute, dureeLabel, ratioKda, titreDeBadge } from "@/lib/game";
 import { cn } from "@/lib/utils";
 
 type Game = Schemas["GameDeLaFiche"];
 
 const placeLabel = (place: number) => (place === 1 ? "1er" : `${place}e`);
 
-/** Résultat, heure, série et durée : ce que la ligne dit de la game avant son champion. */
+/** Résultat, heure et durée : ce que la ligne dit de la game avant son champion. */
 function Contexte({ game: g }: { game: Game }) {
   return (
     <div className="flex w-24 shrink-0 flex-col leading-tight">
@@ -23,9 +23,7 @@ function Contexte({ game: g }: { game: Game }) {
         {g.victoire ? "Victoire" : "Défaite"}
       </span>
       <span className="text-xs text-muted-foreground">
-        {[g.seriesId != null ? `Série ${g.seriesId}` : null, g.dureeSecondes != null ? dureeLabel(g.dureeSecondes) : null]
-          .filter(Boolean)
-          .join(" · ")}
+        {g.dureeSecondes != null ? dureeLabel(g.dureeSecondes) : null}
       </span>
     </div>
   );
@@ -62,14 +60,14 @@ function Portrait({ game: g }: { game: Game }) {
 }
 
 function Kda({ game: g }: { game: Game }) {
+  const titre = titreDeBadge(g.badge);
   return (
     <div className="flex w-24 shrink-0 flex-col items-center gap-1 leading-tight">
       <span className="font-mono text-xl font-bold tabular-nums">{kdaDetailLabel(g.stats)}</span>
       <span className="flex gap-1">
-        {g.mvp && <BadgeDeTitre titre="MVP" />}
-        {g.badge === "Ace" && <BadgeDeTitre titre="ACE" />}
+        {titre && <BadgeDeTitre titre={titre} />}
+        {g.mvp && <BadgeDeTitre titre="Roi/Reine" />}
         {g.dofd && <BadgeDeTitre titre="DOFD" />}
-        {g.badge === "MeilleurePerf" && <span className="text-[10px] font-semibold text-sky-300">Meilleure perf</span>}
       </span>
     </div>
   );

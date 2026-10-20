@@ -148,7 +148,7 @@ describe("Fiche d'un joueur", () => {
     expect(screen.getByText("Platinum I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("Diamond I · 0 LP")).toBeInTheDocument();
     expect(screen.getByText("S25")).toBeInTheDocument();
-    expect(await screen.findByText("3 MVP")).toBeInTheDocument();
+    expect(await screen.findByText("3 Roi/Reine")).toBeInTheDocument();
     expect(screen.getByText("1 DOFD")).toBeInTheDocument();
     expect(screen.getByText("SS")).toBeInTheDocument();
     expect(screen.getByText("6 pts")).toBeInTheDocument();
