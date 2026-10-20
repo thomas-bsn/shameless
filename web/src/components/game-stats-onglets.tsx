@@ -1,7 +1,9 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import type { Schemas } from "@/api/client";
 import { type Participant, TableauEquipe } from "@/components/game-equipe-table";
+import { SelecteurDeJoueur } from "@/components/game-details-joueur";
 import { sidesOf } from "@/components/game-scoreboard";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   millierLabel,
@@ -227,6 +229,40 @@ export function OngletStats({ game, onglet }: { game: Recap; onglet: NomOnglet }
           />
         );
       })}
+    </div>
+  );
+}
+
+const COMPARAISONS: Array<[NomOnglet, string]> = [
+  ["degats", "Dégâts"],
+  ["objectifs", "Objectifs"],
+  ["vision", "Vision"],
+];
+
+/** L'onglet Détails : le joueur choisi, puis la comparaison des équipes (dégâts, objectifs, vision). */
+export function OngletDetails({ game }: { game: Recap }) {
+  const [comparaison, setComparaison] = useState<NomOnglet>("degats");
+  return (
+    <div className="flex flex-col gap-6">
+      <SelecteurDeJoueur game={game} />
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold">Comparer les équipes</h2>
+          {COMPARAISONS.map(([nom, titre]) => (
+            <Button
+              key={nom}
+              type="button"
+              size="sm"
+              variant={comparaison === nom ? "default" : "outline"}
+              aria-pressed={comparaison === nom}
+              onClick={() => setComparaison(nom)}
+            >
+              {titre}
+            </Button>
+          ))}
+        </div>
+        <OngletStats game={game} onglet={comparaison} />
+      </section>
     </div>
   );
 }

@@ -84,13 +84,21 @@ function cellule(row: HTMLElement, colonne: string) {
   return within(row).getAllByRole("cell")[index];
 }
 
-async function ouvrir(onglet: string, game = recap()) {
+/** Ouvre l'onglet Détails, puis la comparaison des équipes demandée (Dégâts, Objectifs ou Vision). */
+async function ouvrir(comparaison: string, game = recap()) {
   mockApi({ "GET /auth/me": user(), "GET /games/42": game });
   renderApp("/games/42");
-  await userEvent.click(await screen.findByRole("tab", { name: onglet }));
+  await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
+  if (game.teamA[0]?.stats) await userEvent.click(screen.getByRole("button", { name: comparaison }));
 }
 
-describe("Onglet Dégâts", () => {
+async function ouvrirReplay() {
+  mockApi({ "GET /auth/me": user(), "GET /games/42": recap() });
+  renderApp("/games/42");
+  await userEvent.click(await screen.findByRole("tab", { name: "Replay" }));
+}
+
+describe("Détails : comparaison Dégâts", () => {
   it("affiche les tuiles de totaux par équipe, cohérents avec les lignes des joueurs", async () => {
     await ouvrir("Dégâts");
 
@@ -136,7 +144,7 @@ describe("Onglet Dégâts", () => {
   });
 });
 
-describe("Onglet Objectifs", () => {
+describe("Détails : comparaison Objectifs", () => {
   it("affiche les totaux de tours, dragons, barons et les lignes par joueur", async () => {
     await ouvrir("Objectifs");
 
@@ -154,7 +162,7 @@ describe("Onglet Objectifs", () => {
   });
 });
 
-describe("Onglet Vision", () => {
+describe("Détails : comparaison Vision", () => {
   it("affiche le score de vision, les balises posées, détruites et de contrôle", async () => {
     await ouvrir("Vision");
 
@@ -176,7 +184,7 @@ describe("Onglet Vision", () => {
 
 describe("Onglet Replay", () => {
   it("est grisé et explique pourquoi le replay 3D n'est pas disponible", async () => {
-    await ouvrir("Replay");
+    await ouvrirReplay();
 
     expect(screen.getByRole("tab", { name: "Replay" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("heading", { name: "Le replay 3D arrive bientôt" })).toBeInTheDocument();

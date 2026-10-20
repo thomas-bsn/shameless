@@ -120,7 +120,7 @@ describe("Page d'une Game", () => {
     expect(screen.getByText(/Game 2 · Série BO3/)).toBeInTheDocument();
     expect(screen.getByText("Équipe A 1 – 1 Équipe B")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Voir la Série" })).toHaveAttribute("href", "/series/5");
-    expect(screen.getByRole("tab", { name: "Résumé" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Général" })).toBeInTheDocument();
   });
 
   it("affiche les joueurs des deux équipes dans deux tableaux avec leurs stats et leur note sur 100", async () => {
