@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { RiotClient, type Limites } from "./client.ts";
+import { RiotClient, type Limite } from "./client.ts";
 
 export const QUEUE_SOLOQ = 420;
 const TAILLE_PAGE = 100;
@@ -15,7 +15,7 @@ export interface OptionsCollecte {
   /** Racine de l'API ; par défaut le routage régional Riot. */
   baseUrl?: string;
   region?: string;
-  limites?: Limites;
+  limites?: Limite[];
   journal?: (ligne: string) => void;
 }
 

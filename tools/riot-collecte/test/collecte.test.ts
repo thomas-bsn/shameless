@@ -21,7 +21,7 @@ async function dossierVide() {
 }
 
 const silence = () => {};
-const limitesLarges = { parSeconde: 1000, parFenetre: 100000, fenetreMs: 120000 };
+const limitesLarges = [{ max: 100000, fenetreMs: 1000 }];
 
 describe("collecte des games de SoloQ", () => {
   let riot: FauxRiot;
@@ -59,5 +59,83 @@ describe("collecte des games de SoloQ", () => {
       duree: 1500,
       champion: "Champion0",
     });
+  });
+
+  it("reprend : une game déjà enregistrée n'est pas retéléchargée", async () => {
+    const dossier = await dossierVide();
+    const base = { riotId: "Sam#EUW", dossier, cle: CLE, baseUrl: riot.url, limites: limitesLarges, journal: silence };
+    await collecter({ ...base, nombre: 3 });
+    const avant = riot.requetes.length;
+
+    const r = await collecter({ ...base, nombre: 5 });
+
+    const telechargees = riot.requetes.slice(avant).filter((q) => /\/matches\/EUW1_\d+$/.test(q.chemin));
+    assert.equal(telechargees.length, 2);
+    assert.equal(r.telechargees, 2);
+    assert.equal(r.dejaPresentes, 3);
+    const index = JSON.parse(await readFile(join(dossier, "index.json"), "utf8"));
+    assert.equal(index.games.length, 5);
+  });
+
+  it("parcourt plusieurs pages d'identifiants au-delà de 100 games", async () => {
+    const beaucoup = parties(130).map((m) => ({ ...m, queue: 420 }));
+    const grand = await demarrerFauxRiot({ comptes: { "Sam#EUW": PUUID }, matches: { [PUUID]: beaucoup } });
+    try {
+      const dossier = await dossierVide();
+      const r = await collecter({ riotId: "Sam#EUW", nombre: 120, dossier, cle: CLE, baseUrl: grand.url, limites: limitesLarges, journal: silence });
+      assert.equal(r.telechargees, 120);
+    } finally {
+      await grand.fermer();
+    }
+  });
+});
+
+describe("limites de débit et erreur 429", () => {
+  it("ne dépasse jamais les limites déclarées, sur aucune fenêtre glissante", async () => {
+    const m = parties(12).map((g) => ({ ...g, queue: 420 }));
+    const riot = await demarrerFauxRiot({ comptes: { "Sam#EUW": PUUID }, matches: { [PUUID]: m } });
+    try {
+      const limites = [{ max: 4, fenetreMs: 300 }];
+      await collecter({ riotId: "Sam#EUW", nombre: 10, dossier: await dossierVide(), cle: CLE, baseUrl: riot.url, limites, journal: silence });
+      const t = riot.requetes.map((q) => q.temps);
+      assert.equal(t.length, 12); // compte + liste + 10 games
+      for (let i = 0; i + 4 < t.length; i++) {
+        assert.ok(t[i + 4]! - t[i]! >= 300, `5 requêtes en ${t[i + 4]! - t[i]!} ms`);
+      }
+    } finally {
+      await riot.fermer();
+    }
+  });
+
+  it("attend le Retry-After après un 429 puis reprend sans rien perdre", async () => {
+    const m = parties(4).map((g) => ({ ...g, queue: 420 }));
+    const riot = await demarrerFauxRiot({ comptes: { "Sam#EUW": PUUID }, matches: { [PUUID]: m } });
+    try {
+      riot.refuser429(2, 1);
+      const debut = Date.now();
+      const dossier = await dossierVide();
+      const r = await collecter({ riotId: "Sam#EUW", nombre: 4, dossier, cle: CLE, baseUrl: riot.url, limites: limitesLarges, journal: silence });
+      assert.equal(r.telechargees, 4);
+      // deux refus d'une seconde chacun, respectés l'un après l'autre
+      assert.ok(Date.now() - debut >= 2000, "Retry-After non respecté");
+      const t = riot.requetes.map((q) => q.temps);
+      assert.ok(t[1]! - t[0]! >= 1000 && t[2]! - t[1]! >= 1000);
+      assert.equal((await readdir(join(dossier, "matches"))).length, 4);
+    } finally {
+      await riot.fermer();
+    }
+  });
+
+  it("abandonne avec un message clair si Riot refuse sans cesse", async () => {
+    const riot = await demarrerFauxRiot({ comptes: { "Sam#EUW": PUUID }, matches: { [PUUID]: [] } });
+    try {
+      riot.refuser429(1000, 0);
+      await assert.rejects(
+        collecter({ riotId: "Sam#EUW", nombre: 1, dossier: await dossierVide(), cle: CLE, baseUrl: riot.url, limites: limitesLarges, journal: silence }),
+        /429/,
+      );
+    } finally {
+      await riot.fermer();
+    }
   });
 });
