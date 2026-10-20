@@ -63,7 +63,7 @@ describe("Page de la Série", () => {
     expect(within(screen.getByRole("group", { name: "Équipe A" })).getByText("Aldric")).toBeInTheDocument();
     const games = screen.getByRole("list", { name: "Games de la série" });
     expect(within(games).getByText("Équipe A gagne")).toBeInTheDocument();
-    const liens = within(games).getAllByRole("link", { name: "Voir la Game" });
+    const liens = within(games).getAllByRole("link", { name: /Voir la game/ });
     expect(liens.map((l) => l.getAttribute("href"))).toEqual(["/games/21", "/games/22"]);
   });
 
