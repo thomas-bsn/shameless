@@ -7110,6 +7110,9 @@ export interface components {
             /** Format: int32 */
             place: null | number;
             badge: null | components["schemas"]["BadgeDeGame"];
+            /** Format: double */
+            participationAuxKills: null | number;
+            adversaireChampionId: null | string;
         };
         GameDeLaListeDeClips: {
             /** Format: int32 */
