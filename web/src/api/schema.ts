@@ -4388,7 +4388,13 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    regroupement?: components["schemas"]["Regroupement"];
+                    role?: components["schemas"]["Role"];
+                    serieId?: number;
+                    champion?: string;
+                    resultat?: components["schemas"]["ResultatFiltre"];
+                };
                 header?: never;
                 path: {
                     playerId: number;
@@ -6643,6 +6649,15 @@ export interface components {
         };
         /** @enum {unknown} */
         CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "PuuidPerime" | "Inattendue" | null;
+        ChampionDuResume: {
+            championId: string;
+            /** Format: int32 */
+            games: number;
+            /** Format: double */
+            winrate: number;
+            /** Format: double */
+            kda: null | number;
+        };
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;
@@ -6721,6 +6736,19 @@ export interface components {
             /** Format: int32 */
             seriesId: number;
             code: string;
+        };
+        CoequipierDeLaFiche: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            /** Format: int32 */
+            parties: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: number;
         };
         CompanionConnecteResponse: {
             /** Format: int32 */
@@ -7024,6 +7052,9 @@ export interface components {
             roles: components["schemas"]["StatsParRole"][];
             games: components["schemas"]["GameDeLaFiche"][];
             titres: components["schemas"]["TitresDuJoueur"];
+            joueAvec: components["schemas"]["CoequipierDeLaFiche"][];
+            resume: components["schemas"]["ResumeDesDernieresGames"];
+            liste: components["schemas"]["GroupeDeGames"][];
         };
         FileResult: {
             contentType: null | string;
@@ -7064,6 +7095,9 @@ export interface components {
             mvp: boolean;
             /** @default false */
             dofd: boolean;
+            /** Format: int32 */
+            place: null | number;
+            badge: null | components["schemas"]["BadgeDeGame"];
         };
         GameDeLaListeDeClips: {
             /** Format: int32 */
@@ -7186,6 +7220,12 @@ export interface components {
             teamBObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
+        };
+        GroupeDeGames: {
+            /** Format: int32 */
+            soireeId: null | number;
+            jour: null | string;
+            games: components["schemas"]["GameDeLaFiche"][];
         };
         HallDeLaHonte: {
             joueurs: components["schemas"]["LigneHallDeLaHonte"][];
@@ -7610,6 +7650,8 @@ export interface components {
             /** Format: int32 */
             gameId: number;
         };
+        /** @enum {unknown} */
+        Regroupement: "Plat" | "Soiree" | "Jour";
         RematchRequest: {
             /** Format: int32 */
             format: number;
@@ -7655,6 +7697,8 @@ export interface components {
             gagnants: number[];
             decompte: components["schemas"]["VoixDuJoueur"][];
         };
+        /** @enum {unknown} */
+        ResultatFiltre: "Victoire" | "Defaite" | null;
         ResultatsDesVotes: {
             /** Format: int32 */
             gameId: number;
@@ -7667,6 +7711,29 @@ export interface components {
             votants: number;
             mvp: components["schemas"]["ResultatDuTitre"];
             dofd: components["schemas"]["ResultatDuTitre"];
+        };
+        ResumeDesDernieresGames: {
+            /** Format: int32 */
+            games: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+            topChampions: components["schemas"]["ChampionDuResume"][];
+            /** Format: double */
+            kda: null | number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            /** Format: int32 */
+            meilleuresPerfs: number;
+            /** Format: int32 */
+            aces: number;
+            /** Format: int32 */
+            mvp: number;
+            /** Format: int32 */
+            dofd: number;
         };
         RiotAccountPreview: {
             riotId: string;

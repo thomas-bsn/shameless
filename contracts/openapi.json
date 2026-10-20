@@ -4859,6 +4859,43 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "regroupement",
+            "in": "query",
+            "schema": {
+              "default": "Plat",
+              "$ref": "#/components/schemas/Regroupement"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          {
+            "name": "serieId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "champion",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resultat",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ResultatFiltre"
+            }
           }
         ],
         "responses": {
@@ -7606,6 +7643,35 @@
           null
         ]
       },
+      "ChampionDuResume": {
+        "required": [
+          "championId",
+          "games",
+          "winrate",
+          "kda"
+        ],
+        "type": "object",
+        "properties": {
+          "championId": {
+            "type": "string"
+          },
+          "games": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": "number",
+            "format": "double"
+          },
+          "kda": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "ChampionJoueResponse": {
         "required": [
           "playerId",
@@ -7901,6 +7967,42 @@
           },
           "code": {
             "type": "string"
+          }
+        }
+      },
+      "CoequipierDeLaFiche": {
+        "required": [
+          "playerId",
+          "prenom",
+          "parties",
+          "victoires",
+          "defaites",
+          "winrate"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "parties": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -9137,7 +9239,10 @@
           "champions",
           "roles",
           "games",
-          "titres"
+          "titres",
+          "joueAvec",
+          "resume",
+          "liste"
         ],
         "type": "object",
         "properties": {
@@ -9214,6 +9319,21 @@
           },
           "titres": {
             "$ref": "#/components/schemas/TitresDuJoueur"
+          },
+          "joueAvec": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoequipierDeLaFiche"
+            }
+          },
+          "resume": {
+            "$ref": "#/components/schemas/ResumeDesDernieresGames"
+          },
+          "liste": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupeDeGames"
+            }
           }
         }
       },
@@ -9312,7 +9432,9 @@
           "stats",
           "performance",
           "mvp",
-          "dofd"
+          "dofd",
+          "place",
+          "badge"
         ],
         "type": "object",
         "properties": {
@@ -9387,6 +9509,23 @@
           "dofd": {
             "type": "boolean",
             "default": false
+          },
+          "place": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "badge": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BadgeDeGame"
+              }
+            ]
           }
         }
       },
@@ -9955,6 +10094,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          }
+        }
+      },
+      "GroupeDeGames": {
+        "required": [
+          "soireeId",
+          "jour",
+          "games"
+        ],
+        "type": "object",
+        "properties": {
+          "soireeId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "jour": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameDeLaFiche"
             }
           }
         }
@@ -11629,6 +11797,13 @@
           }
         }
       },
+      "Regroupement": {
+        "enum": [
+          "Plat",
+          "Soiree",
+          "Jour"
+        ]
+      },
       "RematchRequest": {
         "required": [
           "format",
@@ -11805,6 +11980,13 @@
           }
         }
       },
+      "ResultatFiltre": {
+        "enum": [
+          "Victoire",
+          "Defaite",
+          null
+        ]
+      },
       "ResultatsDesVotes": {
         "required": [
           "gameId",
@@ -11847,6 +12029,79 @@
           },
           "dofd": {
             "$ref": "#/components/schemas/ResultatDuTitre"
+          }
+        }
+      },
+      "ResumeDesDernieresGames": {
+        "required": [
+          "games",
+          "victoires",
+          "defaites",
+          "winrate",
+          "topChampions",
+          "kda",
+          "noteMoyenne",
+          "meilleuresPerfs",
+          "aces",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "topChampions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChampionDuResume"
+            }
+          },
+          "kda": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "meilleuresPerfs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aces": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mvp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dofd": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

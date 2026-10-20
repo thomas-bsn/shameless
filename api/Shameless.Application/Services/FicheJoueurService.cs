@@ -19,10 +19,10 @@ public class FicheJoueurService
     }
 
     /// <summary>La fiche du Joueur, null s'il n'existe pas.</summary>
-    public async Task<FicheJoueur?> GetAsync(int playerId)
+    public async Task<FicheJoueur?> GetAsync(int playerId, FiltreDeGames? filtre = null)
     {
         if (await _players.GetWithUserAsync(playerId) is not { } joueur) return null;
         var games = await _games.GetCompletedGamesOfPlayerAsync(playerId);
-        return FicheJoueur.Calculer(joueur, games, await _votes.GetResultatsDesGamesAsync(games));
+        return FicheJoueur.Calculer(joueur, games, await _votes.GetResultatsDesGamesAsync(games), filtre);
     }
 }
