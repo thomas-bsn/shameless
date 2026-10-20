@@ -52,6 +52,8 @@ export interface LigneDuTableau {
   className?: string;
   /** Les pastilles à côté du prénom. */
   badges?: ReactNode;
+  /** La cellule à gauche du joueur (son rôle), quand le tableau a une colonne « avant ». */
+  avant?: ReactNode;
   /** Une cellule par colonne, dans l'ordre. */
   cellules: ReactNode[];
 }
@@ -64,6 +66,7 @@ export function TableauEquipe({
   team,
   side,
   resume,
+  colonneAvant,
   colonnes,
   players,
   ligne,
@@ -72,6 +75,8 @@ export function TableauEquipe({
   side: Side;
   /** Ce qui s'affiche à droite du titre de l'équipe : l'issue ou un résumé. */
   resume: ReactNode;
+  /** Le titre d'une colonne placée à gauche du joueur ; absente, pas de colonne. */
+  colonneAvant?: string;
   colonnes: ColonneDuTableau[];
   players: Participant[];
   ligne: (p: Participant) => LigneDuTableau;
@@ -90,6 +95,11 @@ export function TableauEquipe({
         <table aria-label={label} className="w-full min-w-[640px] border-separate border-spacing-y-1 text-sm">
           <thead className="text-xs text-muted-foreground">
             <tr>
+              {colonneAvant && (
+                <th scope="col" className="px-2 text-left font-medium">
+                  {colonneAvant}
+                </th>
+              )}
               <th scope="col" className="px-2 text-left font-medium">
                 Joueur
               </th>
@@ -103,13 +113,14 @@ export function TableauEquipe({
           <tbody>
             {players.map((p) => {
               const champion = catalogue.find((c) => c.id === p.championId);
-              const { className, badges, cellules } = ligne(p);
+              const { className, badges, avant, cellules } = ligne(p);
               return (
                 <tr
                   key={p.playerId}
                   aria-label={p.prenom}
                   className={cn("[&>td]:bg-muted/30 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg", className)}
                 >
+                  {colonneAvant && <td className="px-2 font-medium">{avant}</td>}
                   <td className="px-2 py-2">
                     <div className="flex items-center gap-3">
                       <ChampionCarre championId={p.championId} nom={champion?.name} image={champion?.imageUrl} niveau={p.stats?.champLevel} side={side} />
