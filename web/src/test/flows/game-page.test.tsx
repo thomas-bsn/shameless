@@ -173,14 +173,34 @@ function ouvrirApp(game = recap(), routes: Record<string, object | Response> = {
 }
 
 describe("Page d'une game : onglets", () => {
-  it("propose Général, Détails, Runes et Replay, Général d'abord", async () => {
+  it("propose Général, Performance, Détails, Runes et Replay 3D, Général d'abord, chacun avec une icône", async () => {
     ouvrirApp();
 
-    expect(await screen.findByRole("tab", { name: "Général" })).toHaveAttribute("data-state", "active");
-    expect(screen.getByRole("tab", { name: "Détails" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Runes" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Replay" })).toBeInTheDocument();
+    const general = await screen.findByRole("tab", { name: "Général" });
+    expect(general).toHaveAttribute("data-state", "active");
+    const noms = ["Général", "Performance", "Détails", "Runes", "Replay 3D"];
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(noms);
+    for (const nom of noms) {
+      expect(screen.getByRole("tab", { name: nom }).querySelector("svg[aria-hidden='true']")).not.toBeNull();
+    }
+    expect(screen.queryByRole("tab", { name: "Cibles" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "Résumé" })).not.toBeInTheDocument();
+  });
+
+  it("signale l'onglet actif aux lecteurs d'écran", async () => {
+    ouvrirApp();
+
+    expect(await screen.findByRole("tab", { name: "Général" })).toHaveAttribute("aria-selected", "true");
+    await userEvent.click(screen.getByRole("tab", { name: "Runes" }));
+    expect(screen.getByRole("tab", { name: "Runes" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Général" })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("garde la barre d'onglets collante en haut de la page", async () => {
+    ouvrirApp();
+
+    await screen.findByRole("tab", { name: "Général" });
+    expect(screen.getByRole("tablist")).toHaveClass("sticky");
   });
 });
 
