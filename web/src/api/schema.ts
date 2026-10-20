@@ -6927,6 +6927,8 @@ export interface components {
             partDeLOr: null | number;
             /** Format: double */
             partDesKills: null | number;
+            sortsLances: null | components["schemas"]["SortsLances"];
+            pings: null | components["schemas"]["PingsDuJoueur"];
         };
         DonneesDuMatch: {
             /** Format: int32 */
@@ -7429,6 +7431,36 @@ export interface components {
             /** Format: int32 */
             playerId: number;
         };
+        PingsDuJoueur: {
+            /** Format: int32 */
+            allIn: null | number;
+            /** Format: int32 */
+            assistMe: null | number;
+            /** Format: int32 */
+            basic: null | number;
+            /** Format: int32 */
+            command: null | number;
+            /** Format: int32 */
+            danger: null | number;
+            /** Format: int32 */
+            enemyMissing: null | number;
+            /** Format: int32 */
+            enemyVision: null | number;
+            /** Format: int32 */
+            getBack: null | number;
+            /** Format: int32 */
+            hold: null | number;
+            /** Format: int32 */
+            needVision: null | number;
+            /** Format: int32 */
+            onMyWay: null | number;
+            /** Format: int32 */
+            push: null | number;
+            /** Format: int32 */
+            retreat: null | number;
+            /** Format: int32 */
+            visionCleared: null | number;
+        };
         PlayerCostHistoryResponse: {
             /** Format: int32 */
             playerId: number;
@@ -7793,6 +7825,20 @@ export interface components {
             name: string;
             iconUrl: string;
         };
+        SortsLances: {
+            /** Format: int32 */
+            q: null | number;
+            /** Format: int32 */
+            w: null | number;
+            /** Format: int32 */
+            e: null | number;
+            /** Format: int32 */
+            r: null | number;
+            /** Format: int32 */
+            d: null | number;
+            /** Format: int32 */
+            f: null | number;
+        };
         /** @enum {unknown} */
         SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
         /** @enum {unknown} */
@@ -7908,6 +7954,8 @@ export interface components {
             perkSubStyle: null | number;
             items: null | (null | number)[];
             perks: null | (null | number)[];
+            sortsLances: null | components["schemas"]["SortsLances"];
+            pings: null | components["schemas"]["PingsDuJoueur"];
         };
         StatsParChampion: {
             championId: string;

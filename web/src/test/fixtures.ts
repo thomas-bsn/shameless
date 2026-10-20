@@ -75,6 +75,8 @@ export const STATS_VIDES: Schemas["StatsDuParticipant"] = {
   perkSubStyle: null,
   items: null,
   perks: null,
+  sortsLances: null,
+  pings: null,
 };
 
 /** Un participant sans valeur d'origine : aucune correction n'est visible. */
