@@ -4,6 +4,7 @@ import { BarreDOngletsGame } from "@/components/barre-d-onglets-game";
 import { VueEnCibles } from "@/components/game-cibles";
 import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
+import { OngletCourbes } from "@/components/game-courbes";
 import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
 import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
@@ -59,6 +60,9 @@ function Recit({ game }: { game: Recap }) {
         </TabsContent>
         <TabsContent value="cibles" className="flex flex-col gap-4">
           <VueEnCibles game={game} />
+        </TabsContent>
+        <TabsContent value="courbes" className="flex flex-col gap-4">
+          <OngletCourbes game={game} />
         </TabsContent>
         <TabsContent value="details" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <OngletDetails game={game} />}

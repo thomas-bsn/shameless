@@ -175,12 +175,12 @@ function ouvrirApp(game = recap(), routes: Record<string, object | Response> = {
 }
 
 describe("Page d'une game : onglets", () => {
-  it("propose Général, Performance, Détails, Runes et Replay 3D, Général d'abord, chacun avec une icône", async () => {
+  it("propose Général, Performance, Courbes, Détails, Runes et Replay 3D, Général d'abord, chacun avec une icône", async () => {
     ouvrirApp();
 
     const general = await screen.findByRole("tab", { name: "Général" });
     expect(general).toHaveAttribute("data-state", "active");
-    const noms = ["Général", "Performance", "Détails", "Runes", "Replay 3D"];
+    const noms = ["Général", "Performance", "Courbes", "Détails", "Runes", "Replay 3D"];
     expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(noms);
     for (const nom of noms) {
       expect(screen.getByRole("tab", { name: nom }).querySelector("svg[aria-hidden='true']")).not.toBeNull();
