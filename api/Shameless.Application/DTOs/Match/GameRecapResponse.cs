@@ -14,6 +14,7 @@ namespace Shameless.Application.DTOs.Match;
 /// <param name="Status">« pending » tant que le résultat n'est pas saisi, puis « completed ».</param>
 /// <param name="TeamAObjectifs">Les objectifs de l'Équipe A (dragons, barons, tourelles, premier sang…) lus dans le Rapport ; null sans Rapport.</param>
 /// <param name="TeamBObjectifs">Les objectifs de l'Équipe B ; null sans Rapport.</param>
+/// <param name="Chronologie">La chronologie de la partie (séries, points, événements, ADR 0022) ; null sans chronologie dans le Rapport.</param>
 /// <param name="TeamAWins">Les victoires de l'Équipe A dans la Série, à ce jour.</param>
 public record GameRecapResponse(
     int Id,
@@ -35,7 +36,8 @@ public record GameRecapResponse(
     ObjectifsDEquipe? TeamAObjectifs,
     ObjectifsDEquipe? TeamBObjectifs,
     List<GameHistoryParticipantDto> TeamA,
-    List<GameHistoryParticipantDto> TeamB)
+    List<GameHistoryParticipantDto> TeamB,
+    ChronologieDeGameResponse? Chronologie = null)
 {
     /// <summary>La page de la game, chargée avec ses participants et sa Série (games et joueurs).</summary>
     public static GameRecapResponse From(CustomGame game)
@@ -66,6 +68,7 @@ public record GameRecapResponse(
             TeamAObjectifs: ObjectifsDEquipe.Lire(game.RiotMatchData, game.TeamASide),
             TeamBObjectifs: ObjectifsDEquipe.Lire(game.RiotMatchData, game.TeamBSide),
             TeamA: Equipe(Equipes.A),
-            TeamB: Equipe(Equipes.B));
+            TeamB: Equipe(Equipes.B),
+            Chronologie: ChronologieDeGameResponse.From(game));
     }
 }

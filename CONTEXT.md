@@ -282,6 +282,12 @@ terminée, depuis l'Administration, pour y ajouter ses données Riot (stats, cha
 recalculer les costs. Il est refusé en entier, avec la liste des écarts, si les participants,  
 leurs Sides ou le vainqueur du fichier diffèrent de la Game ; il ne change jamais le  
 vainqueur ni la composition.
+- **Chronologie** : la partie dans le temps, partie facultative du Rapport : des points datés  
+(secondes depuis le début) avec, par joueur, kills, morts, assists, CS, niveau, vision, valeur  
+des objets et état mort ou vivant, et des événements d'objectifs datés (dragon, héraut, baron,  
+tourelle, inhibiteur, avec le side). Chaque série porte sa **nature** : réelle, **estimée**  
+(l'or : valeur des objets remise à l'échelle sur l'or total final, calculée par l'API) ou  
+indisponible (dégâts, XP). Une game sans chronologie reste valide (ADR 0022).
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  

@@ -9,7 +9,9 @@ namespace Shameless.Application.Companion;
 /// Companion.
 /// </summary>
 /// <param name="Donnees">Les données Riot brutes de la partie, en JSON ; null si absentes (rapport invalide).</param>
-public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnlyList<JoueurDuRapport> Joueurs)
+/// <param name="Chronologie">La chronologie facultative de la partie (ADR 0022) ; null sans chronologie.</param>
+public sealed record RapportDeGame(
+    string RiotMatchId, string? Donnees, IReadOnlyList<JoueurDuRapport> Joueurs, ChronologieDeGame? Chronologie = null)
 {
     public const int LongueurMaxRiotMatchId = 100;
     public const int LongueurMaxChampionId = 50;
@@ -38,7 +40,7 @@ public sealed record RapportDeGame(string RiotMatchId, string? Donnees, IReadOnl
         if (Joueurs.GroupBy(j => j.Side).Any(side => side.Select(j => j.Victoire).Distinct().Count() != 1)
             || Joueurs.Count(j => j.Victoire) != Equipes.PlayersPerTeam)
             return "Les cinq joueurs d'un Side gagnent ensemble, contre les cinq de l'autre.";
-        return null;
+        return Chronologie?.Invalidite(Joueurs.Select(j => j.Puuid).ToHashSet());
     }
 
     /// <summary>Le Side vainqueur ; le rapport est supposé lisible (<see cref="Invalidite"/>).</summary>
