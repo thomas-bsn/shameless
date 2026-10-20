@@ -91,10 +91,22 @@ describe("Vue en cibles", () => {
     expect(within(alice).getByText("ACE")).toBeInTheDocument();
     expect(alice).toHaveAttribute("data-equipe", "red");
     const bob = within(cible()).getByRole("link", { name: /Bob/ });
-    expect(within(bob).getByText("Meilleure perf")).toBeInTheDocument();
+    expect(within(bob).getByText("MVP")).toBeInTheDocument();
     expect(bob).toHaveAttribute("data-equipe", "blue");
     const dan = within(cible()).getByRole("link", { name: /Dan/ });
-    expect(within(dan).queryByText(/ACE|Meilleure perf/)).toBeNull();
+    expect(within(dan).queryByText(/ACE|MVP/)).toBeNull();
+  });
+
+  it("explique les couleurs d'équipe et les badges MVP et ACE dans une légende", async () => {
+    await ouvrirCibles();
+
+    const legende = screen.getByRole("group", { name: "Légende" });
+    expect(legende).toHaveTextContent(/Équipe bleue/);
+    expect(legende).toHaveTextContent(/Équipe rouge/);
+    expect(within(legende).getByText("MVP")).toBeInTheDocument();
+    expect(legende).toHaveTextContent(/meilleure note des gagnants/i);
+    expect(within(legende).getByText("ACE")).toBeInTheDocument();
+    expect(legende).toHaveTextContent(/meilleure note des perdants/i);
   });
 
   it("ouvre le profil du joueur au clic", async () => {
