@@ -175,7 +175,10 @@ describe("Onglet Courbes", () => {
 
     const marqueur = screen.getByRole("img", { name: "Dragon bleu à 5:00" });
     expect(marqueur.textContent).toBe("");
-    expect(marqueur.querySelector("path")).not.toBeNull();
+    expect(marqueur.querySelector("image")).toHaveAttribute(
+      "href",
+      "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-match-history/global/default/dragon-100.png",
+    );
   });
 
   it("affiche une infobulle au survol d'un marqueur, puis la retire", async () => {

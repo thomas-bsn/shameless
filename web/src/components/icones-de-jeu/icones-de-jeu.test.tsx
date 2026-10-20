@@ -139,6 +139,65 @@ describe("icônes SVG", () => {
     expect(await screen.findByRole("img", { name: nom })).toBeInTheDocument();
   });
 
+  it.each<[Objectif, number | undefined, string]>([
+    ["tourelle", 100, "tower-100.png"],
+    ["tourelle", 200, "tower-200.png"],
+    ["dragon", 200, "dragon-200.png"],
+    ["baron", 100, "baron-100.png"],
+    ["heraut", 200, "herald-200.png"],
+    ["inhibiteur", 100, "inhibitor-100.png"],
+    ["tourelle", undefined, "tower-100.png"],
+  ])("l'icône officielle de %s de l'équipe %s est %s", async (objectif, equipe, fichier) => {
+    renderComponent(<IconeObjectif objectif={objectif} equipe={equipe as 100 | 200 | undefined} />);
+
+    expect(await screen.findByRole("img", { name: /.+/ })).toHaveAttribute(
+      "src",
+      `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-match-history/global/default/${fichier}`,
+    );
+  });
+
+  it("la larve du Néant utilise la planche officielle des icônes", async () => {
+    renderComponent(<IconeObjectif objectif="larve" />);
+
+    const icone = await screen.findByRole("img", { name: "Larve du Néant" });
+    expect(icone.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-match-history/global/default/right_icons_grub.png",
+    );
+  });
+
+  it("une icône d'objectif qui ne charge pas laisse un repli neutre nommé", async () => {
+    renderComponent(<IconeObjectif objectif="dragon" equipe={100} />);
+
+    fireEvent.error(await screen.findByRole("img", { name: "Dragon" }));
+
+    const repli = await screen.findByRole("img", { name: "Dragon" });
+    expect(repli.tagName).not.toBe("IMG");
+  });
+
+  it("l'icône officielle du ping danger est celle de Community Dragon", async () => {
+    renderComponent(<IconePing ping="danger" />);
+
+    expect(await screen.findByRole("img", { name: "Danger" })).toHaveAttribute(
+      "src",
+      "https://raw.communitydragon.org/latest/game/assets/ux/minimap/pings/caution.png",
+    );
+  });
+
+  it("un ping sans icône officielle garde son tracé", async () => {
+    renderComponent(<IconePing ping="command" />);
+
+    expect((await screen.findByRole("img", { name: "Commande" })).tagName).toBe("svg");
+  });
+
+  it("une icône de ping qui ne charge pas retombe sur le tracé", async () => {
+    renderComponent(<IconePing ping="push" />);
+
+    fireEvent.error(await screen.findByRole("img", { name: "Pousser" }));
+
+    expect((await screen.findByRole("img", { name: "Pousser" })).tagName).toBe("svg");
+  });
+
   it.each<[Ping, string]>([
     ["allIn", "Tous en avant"],
     ["danger", "Danger"],
