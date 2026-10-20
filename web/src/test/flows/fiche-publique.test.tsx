@@ -142,7 +142,7 @@ describe("Fiche publique", () => {
     expect(within(rang).getByText("Diamond II · 45 LP")).toBeInTheDocument();
     expect(within(rang).getByText("Emerald I · 0 LP")).toBeInTheDocument();
     expect(within(rang).getByText("Platinum I · 10 LP")).toBeInTheDocument();
-    expect(await screen.findByText("Top principal")).toBeInTheDocument();
+    expect((await screen.findByText("principal")).parentElement).toHaveTextContent("Top principal");
   });
 
   it("n'affiche que les trois meilleurs champions jusqu'à « Tous les champions », et le « Joué avec »", async () => {

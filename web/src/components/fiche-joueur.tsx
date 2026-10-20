@@ -79,9 +79,15 @@ export function FichePublique({ player }: { player: Schemas["PlayerDto"] }) {
     <>
       <HeroDuJoueur player={player} fiche={fiche.data} />
       {fiche.isPending ? (
-        <Skeleton className="h-64 w-full" />
+        <>
+          <RangDuJoueur player={player} />
+          <Skeleton className="h-64 w-full" />
+        </>
       ) : fiche.isError ? (
-        <ErrorAlert error={fiche.error} />
+        <>
+          <RangDuJoueur player={player} />
+          <ErrorAlert error={fiche.error} />
+        </>
       ) : (
         <div className="flex flex-wrap items-start gap-4">
           <div className="flex min-w-0 flex-1 basis-80 flex-col gap-4 lg:max-w-sm">
@@ -126,7 +132,7 @@ export function HeroDuJoueur({ player, fiche }: { player: Schemas["PlayerDto"]; 
               {role && (
                 <span className="flex items-center gap-1">
                   <RoleIcon role={player.mainRole} />
-                  {role} principal
+                  <span>{role}</span> <span>principal</span>
                 </span>
               )}
             </div>
