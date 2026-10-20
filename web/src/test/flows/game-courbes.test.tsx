@@ -19,7 +19,7 @@ const participant = (playerId: number, prenom: string, championId: string): Sche
   championId,
   stats: { ...STATS_VIDES, kills: 1, deaths: 1, assists: 1 },
   performance: null,
-  champsCorriges: [], details: null, place: null, badge: null,
+  champsCorriges: [], details: null, place: null, badge: null, impact: null,
   ...ORIGINE_VIDE,
 });
 
