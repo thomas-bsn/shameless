@@ -236,13 +236,13 @@ describe("Onglet Général", () => {
     expect(roles).toEqual(["Top", "ADC", "Support"]);
   });
 
-  it("ouvre la fiche du joueur au clic sur sa ligne, le nom étant un lien vers elle", async () => {
+  it("ne mène à la fiche du joueur que par son nom, lien vers elle", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap(), "GET /catalogue": catalogue });
     const { router } = renderApp("/games/42");
 
     await screen.findByRole("list", { name: "Équipe A · Red side" });
     expect(within(ligne("Alice")).getByRole("link", { name: "Alice" })).toHaveAttribute("href", "/joueurs/1");
-    await userEvent.click(within(ligne("Alice")).getByText("7"));
+    await userEvent.click(within(ligne("Alice")).getByRole("link", { name: "Alice" }));
     expect(router.state.location.pathname).toBe("/joueurs/1");
   });
 
