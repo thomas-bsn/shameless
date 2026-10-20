@@ -38,7 +38,9 @@ public record GameHistoryParticipantDto(
     StatsDuParticipant? Stats,
     NoteDePerformance? Performance,
     List<string> ChampsCorriges,
-    string? AvatarUrl = null // la photo Discord du compte lié au Joueur
+    string? AvatarUrl = null, // la photo Discord du compte lié au Joueur
+    StatsDuParticipant? StatsOrigine = null, // ses stats telles que le Companion les a envoyées, sans correction
+    string? ChampionOrigine = null // le champion du rapport du Companion, sans correction
 )
 {
     public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant, NoteDePerformance? performance) =>
@@ -46,7 +48,7 @@ public record GameHistoryParticipantDto(
             participant.Player.RankDivision, participant.Player.CurrentCost, ValeursEffectives.Champion(participant),
             ValeursEffectives.Stats(participant), performance,
             participant.Corrections.Select(c => Entities.ChampCorrigeableExtensions.Nom(c.Champ)).Order().ToList(),
-            participant.Player.User?.AvatarUrl);
+            participant.Player.User?.AvatarUrl, ValeursEffectives.StatsOrigine(participant), ValeursEffectives.ChampionOrigine(participant));
 }
 
 public record GameParticipantDto(

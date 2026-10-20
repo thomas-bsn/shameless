@@ -7919,7 +7919,50 @@
           "goldEarned",
           "damageToChampions",
           "visionScore",
-          "note"
+          "note",
+          "champLevel",
+          "spell1Id",
+          "spell2Id",
+          "largestKillingSpree",
+          "killingSprees",
+          "doubleKills",
+          "tripleKills",
+          "quadraKills",
+          "pentaKills",
+          "minionsKilled",
+          "neutralMinionsKilled",
+          "goldSpent",
+          "physicalDamageToChampions",
+          "magicDamageToChampions",
+          "trueDamageToChampions",
+          "damageTaken",
+          "totalHeal",
+          "damageShielded",
+          "timeCcingOthers",
+          "wardsPlaced",
+          "wardsKilled",
+          "controlWardsBought",
+          "damageToObjectives",
+          "turretKills",
+          "dragonKills",
+          "baronKills",
+          "inhibitorKills",
+          "roleBoundItem",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "item0",
+          "item1",
+          "item2",
+          "item3",
+          "item4",
+          "item5",
+          "item6",
+          "perk0",
+          "perk1",
+          "perk2",
+          "perk3",
+          "perk4",
+          "perk5"
         ],
         "type": "object",
         "properties": {
@@ -7985,6 +8028,307 @@
             "format": "int32"
           },
           "note": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "champLevel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "largestKillingSpree": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "killingSprees": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "doubleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tripleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "quadraKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "pentaKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "minionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "neutralMinionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "goldSpent": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "physicalDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "magicDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "trueDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageTaken": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "totalHeal": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageShielded": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "timeCcingOthers": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsPlaced": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "controlWardsBought": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageToObjectives": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "turretKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dragonKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "baronKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "roleBoundItem": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item0": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item1": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item2": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item3": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item4": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item5": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item6": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk0": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk1": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk2": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk3": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk4": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk5": {
             "type": [
               "null",
               "integer"
@@ -8920,7 +9264,9 @@
           "stats",
           "performance",
           "champsCorriges",
-          "avatarUrl"
+          "avatarUrl",
+          "statsOrigine",
+          "championOrigine"
         ],
         "type": "object",
         "properties": {
@@ -8987,6 +9333,22 @@
             }
           },
           "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "statsOrigine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatsDuParticipant"
+              }
+            ]
+          },
+          "championOrigine": {
             "type": [
               "null",
               "string"
@@ -9809,7 +10171,8 @@
           "note",
           "role",
           "sourceDuRole",
-          "composantes"
+          "composantes",
+          "noteOrigine"
         ],
         "type": "object",
         "properties": {
@@ -9835,6 +10198,13 @@
             "items": {
               "$ref": "#/components/schemas/ComposanteDeNote"
             }
+          },
+          "noteOrigine": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -11670,7 +12040,28 @@
           "dragonKills",
           "baronKills",
           "champLevel",
-          "position"
+          "position",
+          "spell1Id",
+          "spell2Id",
+          "largestKillingSpree",
+          "killingSprees",
+          "doubleKills",
+          "tripleKills",
+          "quadraKills",
+          "pentaKills",
+          "goldSpent",
+          "physicalDamageToChampions",
+          "magicDamageToChampions",
+          "trueDamageToChampions",
+          "totalHeal",
+          "damageShielded",
+          "timeCcingOthers",
+          "inhibitorKills",
+          "roleBoundItem",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "items",
+          "perks"
         ],
         "type": "object",
         "properties": {
@@ -11802,6 +12193,165 @@
                 "$ref": "#/components/schemas/Role"
               }
             ]
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "largestKillingSpree": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "killingSprees": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "doubleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tripleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "quadraKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "pentaKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "goldSpent": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "physicalDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "magicDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "trueDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "totalHeal": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageShielded": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "timeCcingOthers": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "roleBoundItem": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "perks": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
           }
         }
       },
