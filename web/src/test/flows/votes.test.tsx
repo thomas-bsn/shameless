@@ -68,6 +68,21 @@ const fiche = (titres: Schemas["TitresDuJoueur"]): Schemas["FicheJoueur"] => ({
   roles: [],
   games: [],
   titres,
+  joueAvec: [],
+  resume: {
+    games: 0,
+    victoires: 0,
+    defaites: 0,
+    winrate: null,
+    topChampions: [],
+    kda: null,
+    noteMoyenne: null,
+    meilleuresPerfs: 0,
+    aces: 0,
+    mvp: 0,
+    dofd: 0,
+  },
+  liste: [],
 });
 
 describe("Votes MVP et DOFD", () => {
