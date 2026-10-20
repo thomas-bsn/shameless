@@ -140,6 +140,39 @@ describe("Administration", () => {
   });
 
   describe("onglet Joueurs", () => {
+    it("réduit la liste au fil de la saisie, sans tenir compte de la casse", async () => {
+      mockApi({
+        "GET /auth/me": admin(),
+        ...calme,
+        "GET /players": [player({ id: 1, prenom: "Alice" }), player({ id: 2, prenom: "Bastien" })],
+        "GET /players/1/cost": cost(),
+        "GET /players/2/cost": cost({ playerId: 2, name: "Bastien" }),
+      });
+      renderApp("/administration");
+
+      await screen.findByText("Alice");
+      await userEvent.type(screen.getByRole("searchbox", { name: "Rechercher un joueur" }), "BAST");
+
+      expect(screen.getByText("Bastien")).toBeInTheDocument();
+      expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+    });
+
+    it("affiche un message quand aucun joueur ne correspond", async () => {
+      mockApi({
+        "GET /auth/me": admin(),
+        ...calme,
+        "GET /players": [player({ id: 1, prenom: "Alice" })],
+        "GET /players/1/cost": cost(),
+      });
+      renderApp("/administration");
+
+      await screen.findByText("Alice");
+      await userEvent.type(screen.getByRole("searchbox", { name: "Rechercher un joueur" }), "zzz");
+
+      expect(screen.getByText("Aucun joueur ne correspond.")).toBeInTheDocument();
+      expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+    });
+
     it("règle le cost avec − et +, l'enregistre par ligne et montre la source", async () => {
       let courant = cost({ costDeDepart: 5.6, sourceDuCostDeDepart: "RangSoloQ" });
       const api = mockApi({

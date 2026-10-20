@@ -117,13 +117,28 @@ function Peak({ player }: { player: Schemas["PlayerDto"] }) {
 /** L'onglet Joueurs : cost de départ (− et +, enregistré par ligne), source et peak. */
 export function JoueursAdmin() {
   const players = $api.useQuery("get", "/players");
+  const [recherche, setRecherche] = useState("");
   if (players.isPending) return <LoadingRows />;
   if (players.isError) return <ErrorAlert error={players.error} />;
   if (players.data.length === 0) return <p className="text-sm text-muted-foreground">Aucun joueur.</p>;
 
+  const terme = recherche.trim().toLowerCase();
+  const visibles = players.data.filter((p) => p.prenom.toLowerCase().includes(terme));
+
   return (
     <div className="flex flex-col gap-4">
       <ActualisationRiotPanel />
+      <Input
+        type="search"
+        aria-label="Rechercher un joueur"
+        placeholder="Rechercher par prénom"
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+        className="max-w-sm"
+      />
+      {visibles.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun joueur ne correspond.</p>
+      ) : (
       <div className="overflow-x-auto rounded-xl border bg-card">
       <table className="w-full min-w-[820px] text-sm">
         <thead>
@@ -136,7 +151,7 @@ export function JoueursAdmin() {
           </tr>
         </thead>
         <tbody>
-          {players.data.map((player) => (
+          {visibles.map((player) => (
             <tr key={player.id} className="border-b last:border-0">
               <td className="p-3 font-medium">{player.prenom}</td>
               <td className="p-3">
@@ -156,6 +171,7 @@ export function JoueursAdmin() {
         </tbody>
       </table>
       </div>
+      )}
     </div>
   );
 }
