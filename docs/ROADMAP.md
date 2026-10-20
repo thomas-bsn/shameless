@@ -110,7 +110,7 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
   - [ ] Profil joueur : fiche enrichie (#175), profil public (#176), Mon profil (#177)
   - [ ] Classement des costs : escalier et podium avec liste (#178)
   - [ ] Historique : le bloc de game cliquable (#179)
-  - [ ] Note : script de collecte (#181), calage sur dpm.lol (#182)
+  - [ ] Note : script de collecte (#181), outil d'appariement et d'ajustement (#185), calage sur dpm.lol (#182)
   - [ ] Rapport d'exemple pour la game #78 (#183)
 
 ## Backlog
