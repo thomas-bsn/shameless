@@ -13,9 +13,10 @@ public enum BadgeDeGame
     Ace
 }
 
-/// <summary>Ce que la game dit d'un joueur : note, détails, place dans la game et badge.</summary>
+/// <summary>Ce que la game dit d'un joueur : note, détails, place dans la game, badge et Impact.</summary>
 /// <param name="Place">Sa place de 1 à 10 d'après sa note ; null sans note.</param>
-public sealed record LectureDuJoueur(NoteDePerformance? Note, DetailsDuJoueur Details, int? Place, BadgeDeGame? Badge);
+/// <param name="Impact">Ses sous-scores et son face-à-face ; null sans stats.</param>
+public sealed record LectureDuJoueur(NoteDePerformance? Note, DetailsDuJoueur Details, int? Place, BadgeDeGame? Badge, ImpactDuJoueur? Impact = null);
 
 /// <summary>Les objectifs d'une Équipe, lus dans <c>donnees.teams</c> du Rapport ; chaque champ est null quand le client ne l'a pas donné.</summary>
 public sealed record ObjectifsDEquipe(
@@ -89,11 +90,26 @@ public static class LectureDeLaGame
                 : game.EquipeOn(p.Side) == game.WinningTeam ? BadgeDeGame.MeilleurePerf : BadgeDeGame.Ace;
         }
 
+        var roles = game.Participants.ToDictionary(p => p.PlayerId, p => NotesDeLaGame.RoleJoueDe(game, p, stats[p.PlayerId]));
+        var axes = game.Participants.ToDictionary(p => p.PlayerId, p =>
+            AxesDImpact.Scores(roles[p.PlayerId].Role, stats[p.PlayerId], totaux[p.Side], duree));
+
+        // L'adversaire d'un joueur : le seul de l'autre Équipe à jouer le même rôle.
+        FaceAFace? FaceAFaceDe(CustomGameParticipant p)
+        {
+            if (roles[p.PlayerId].Role is not { } role) return null;
+            var adversaires = game.Participants.Where(o => o.Side != p.Side && roles[o.PlayerId].Role == role).ToList();
+            return adversaires.Count == 1
+                ? AxesDImpact.Comparer(adversaires[0].PlayerId, role, axes[p.PlayerId], axes[adversaires[0].PlayerId])
+                : null;
+        }
+
         var lectures = game.Participants.ToDictionary(p => p.PlayerId, p =>
         {
             var rang = classes.IndexOf(p);
-            var details = DetailsDuJoueur.Calculer(NotesDeLaGame.RoleJoueDe(game, p, stats[p.PlayerId]), stats[p.PlayerId], duree, totaux[p.Side]);
-            return new LectureDuJoueur(notes[p.PlayerId], details, rang >= 0 ? rang + 1 : null, rang >= 0 ? BadgeDe(p) : null);
+            var details = DetailsDuJoueur.Calculer(roles[p.PlayerId], stats[p.PlayerId], duree, totaux[p.Side]);
+            var impact = stats[p.PlayerId] is null ? null : new ImpactDuJoueur(ImpactDuJoueur.SousScoresDe(notes[p.PlayerId]), FaceAFaceDe(p));
+            return new LectureDuJoueur(notes[p.PlayerId], details, rang >= 0 ? rang + 1 : null, rang >= 0 ? BadgeDe(p) : null, impact);
         });
         return (lectures, stats, totaux, duree);
     }

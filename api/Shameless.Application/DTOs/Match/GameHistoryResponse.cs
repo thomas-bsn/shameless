@@ -29,6 +29,7 @@ public record GameHistoryResponse(
 /// <param name="Details">Son rôle joué et sa source, ses objets, son objet de rôle, ses sorts, ses runes et ses valeurs dérivées (par minute, parts de l'Équipe), sur les valeurs effectives.</param>
 /// <param name="Place">Sa place dans la game, de 1 à 10, d'après sa note de performance ; null sans note.</param>
 /// <param name="Badge">Le badge « Meilleure perf » (meilleure note de l'Équipe gagnante) ou « ACE » (meilleure note de l'Équipe perdante) ; null sinon. Ce n'est pas le MVP voté.</param>
+/// <param name="Impact">Ses sous-scores Global / Vs adversaire / Objectifs / Équipe / Rôle (lettre et lignes tirées de la note) et son face-à-face à six axes contre l'adversaire du même rôle ; null sans stats. Une stat absente masque sa ligne ou son axe.</param>
 /// <param name="ChampsCorriges">Les champs (champion, position, kills, deaths, assists, cs, goldEarned, damageToChampions, visionScore, note) dont la valeur affichée est corrigée par un admin ; vide si aucun.</param>
 public record GameHistoryParticipantDto(
     int PlayerId,
@@ -46,7 +47,8 @@ public record GameHistoryParticipantDto(
     string? ChampionOrigine = null, // le champion du rapport du Companion, sans correction
     DetailsDuJoueur? Details = null, // rôle joué, objets, sorts, runes, valeurs par minute et parts d'équipe
     int? Place = null, // sa place de 1 à 10 d'après sa note ; null sans note
-    BadgeDeGame? Badge = null // « Meilleure perf » ou « ACE » ; null sans badge
+    BadgeDeGame? Badge = null, // « Meilleure perf » ou « ACE » ; null sans badge
+    ImpactDuJoueur? Impact = null // sous-scores par groupe (lettre, lignes de la note) et face-à-face à six axes ; null sans stats
 )
 {
     public static GameHistoryParticipantDto From(Entities.CustomGameParticipant participant, LectureDuJoueur lecture) =>
@@ -55,7 +57,7 @@ public record GameHistoryParticipantDto(
             ValeursEffectives.Stats(participant), lecture.Note,
             participant.Corrections.Select(c => Entities.ChampCorrigeableExtensions.Nom(c.Champ)).Order().ToList(),
             participant.Player.User?.AvatarUrl, ValeursEffectives.StatsOrigine(participant), ValeursEffectives.ChampionOrigine(participant),
-            lecture.Details, lecture.Place, lecture.Badge);
+            lecture.Details, lecture.Place, lecture.Badge, lecture.Impact);
 }
 
 public record GameParticipantDto(
