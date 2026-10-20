@@ -99,16 +99,7 @@ const votes = (overrides: Partial<Schemas["ResultatsDesVotes"]> = {}): Schemas["
   ...overrides,
 });
 
-const ligne = (prenom: string) => screen.getByRole("row", { name: new RegExp(prenom) });
-
-/** Le texte de la cellule d'une ligne sous l'en-tête de colonne donné. */
-function cellule(row: HTMLElement, colonne: string) {
-  const table = row.closest("table") as HTMLElement;
-  const index = within(table)
-    .getAllByRole("columnheader")
-    .findIndex((h) => h.textContent === colonne);
-  return within(row).getAllByRole("cell")[index];
-}
+const ligne = (prenom: string) => screen.getByRole("listitem", { name: prenom });
 
 describe("Page d'une Game", () => {
   it("annonce le vainqueur, la durée et la Série dans la bannière", async () => {
@@ -128,18 +119,16 @@ describe("Page d'une Game", () => {
 
     renderApp("/games/42");
 
-    const rouge = await screen.findByRole("table", { name: "Équipe A · Red side" });
-    const bleu = screen.getByRole("table", { name: "Équipe B · Blue side" });
-    expect(within(rouge).getAllByRole("row")).toHaveLength(3);
-    expect(within(bleu).getAllByRole("row")).toHaveLength(3);
+    const rouge = await screen.findByRole("list", { name: "Équipe A · Red side" });
+    const bleu = screen.getByRole("list", { name: "Équipe B · Blue side" });
+    expect(within(rouge).getAllByRole("listitem", { name: /Alice|Chloé/ })).toHaveLength(2);
+    expect(within(bleu).getAllByRole("listitem", { name: /Bob|Dan/ })).toHaveLength(2);
 
     const alice = ligne("Alice");
-    expect(within(alice).getByText("Ahri · Top")).toBeInTheDocument();
-    expect(cellule(alice, "K/D/A")).toHaveTextContent("7/2/9");
-    expect(cellule(alice, "CS")).toHaveTextContent("200");
-    expect(cellule(alice, "Or")).toHaveTextContent("14,2 k");
-    expect(cellule(alice, "Dégâts")).toHaveTextContent("21,0 k");
-    expect(cellule(alice, "Note")).toHaveTextContent("86/100");
+    expect(within(alice).getByRole("link", { name: "Alice" })).toBeInTheDocument();
+    expect(alice).toHaveTextContent("7/2/9");
+    expect(alice).toHaveTextContent("21,0 k");
+    expect(within(alice).getByRole("img", { name: "Note 86 sur 100" })).toBeInTheDocument();
     expect(within(alice).getByText("16")).toBeInTheDocument();
   });
 
@@ -148,22 +137,21 @@ describe("Page d'une Game", () => {
 
     renderApp("/games/42");
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    expect(cellule(ligne("Chloé"), "Or")).toHaveTextContent("–");
-    expect(cellule(ligne("Chloé"), "Or")).not.toHaveTextContent("0");
-    expect(ligne("Dan").querySelector("[data-slot=niveau]")).toBeNull();
-    expect(cellule(ligne("Dan"), "K/D/A")).toHaveTextContent("0/7/3");
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect(ligne("Alice")).toHaveTextContent("–");
+    expect(within(ligne("Dan")).queryByText("16")).not.toBeInTheDocument();
+    expect(ligne("Dan")).toHaveTextContent("0/7/3");
   });
 
-  it("entoure le MVP et le DOFD et détaille les votes", async () => {
+  it("signale le Roi ou la Reine et le DOFD et détaille les votes", async () => {
     mockApi({ "GET /auth/me": user(), "GET /games/42": recap(), "GET /games/42/votes": votes() });
 
     renderApp("/games/42");
 
-    const alice = await screen.findByRole("row", { name: /Alice/ });
-    expect(await within(alice).findByText("MVP")).toBeInTheDocument();
-    expect(within(await screen.findByRole("row", { name: /Dan/ })).getByText("DOFD")).toBeInTheDocument();
-    expect(within(ligne("Bob")).queryByText("MVP")).not.toBeInTheDocument();
+    const alice = await screen.findByRole("listitem", { name: "Alice" });
+    expect(await within(alice).findByText("Roi/Reine")).toBeInTheDocument();
+    expect(await within(await screen.findByRole("listitem", { name: "Dan" })).findByText("DOFD")).toBeInTheDocument();
+    expect(within(ligne("Bob")).queryByText("Roi/Reine")).not.toBeInTheDocument();
 
     const mvp = screen.getByRole("group", { name: "MVP" });
     expect(within(mvp).getByText("3 voix")).toBeInTheDocument();

@@ -4,7 +4,6 @@ import { BarreDOngletsGame } from "@/components/barre-d-onglets-game";
 import { VueEnCibles } from "@/components/game-cibles";
 import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
-import { ObjectifsDesEquipes } from "@/components/game-objectifs-equipes";
 import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
 import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
@@ -137,7 +136,6 @@ function ResumeScoreboard({ game }: { game: Recap }) {
       {sidesOf(game).map((s) => (
         <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} />
       ))}
-      <ObjectifsDesEquipes game={game} />
     </>
   );
 }

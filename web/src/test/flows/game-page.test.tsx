@@ -167,15 +167,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   ...overrides,
 });
 
-const ligne = (prenom: string) => screen.getByRole("row", { name: new RegExp(prenom) });
-
-function cellule(row: HTMLElement, colonne: string) {
-  const table = row.closest("table") as HTMLElement;
-  const index = within(table)
-    .getAllByRole("columnheader")
-    .findIndex((h) => h.textContent === colonne);
-  return within(row).getAllByRole("cell")[index];
-}
+const ligne = (prenom: string) => screen.getByRole("listitem", { name: prenom });
 
 function ouvrirApp(game = recap(), routes: Record<string, object | Response> = { "GET /catalogue": catalogue }) {
   mockApi({ "GET /auth/me": user(), "GET /games/42": game, ...routes });
@@ -214,89 +206,163 @@ describe("Page d'une game : onglets", () => {
   });
 });
 
-describe("Onglet Général", () => {
-  it("met le rôle joué à gauche du joueur, avec CS/min, or, participation aux kills et dégâts", async () => {
-    ouvrirApp();
+const votes = (mvp: number[], dofd: number[]): Schemas["ResultatsDesVotes"] => ({
+  gameId: 42,
+  statut: "Clos",
+  ouvertureLe: null,
+  fermetureLe: null,
+  votants: 5,
+  mvp: { gagnants: mvp, decompte: [] },
+  dofd: { gagnants: dofd, decompte: [] },
+});
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    const alice = ligne("Alice");
-    expect(cellule(alice, "Rôle")).toHaveTextContent("Mid");
-    expect(alice.querySelector("td")).toBe(cellule(alice, "Rôle"));
-    expect(cellule(ligne("Chloé"), "Rôle")).toHaveTextContent("ADC");
-    expect(cellule(alice, "K/D/A")).toHaveTextContent("7/2/9");
-    expect(cellule(alice, "CS")).toHaveTextContent("220");
-    expect(cellule(alice, "CS")).toHaveTextContent("7,5 /min");
-    expect(cellule(alice, "Or")).toHaveTextContent("14,2 k");
-    expect(cellule(alice, "Or")).toHaveTextContent("420 /min");
-    expect(cellule(alice, "PK")).toHaveTextContent("65 %");
-    expect(cellule(alice, "Dégâts")).toHaveTextContent("21,0 k");
-    expect(cellule(alice, "Note")).toHaveTextContent("80/100");
+describe("Onglet Général", () => {
+  it("met le rôle à gauche en icône avec son nom, dans l'ordre Top, Jungle, Mid, ADC, Support", async () => {
+    const base = recap();
+    ouvrirApp(
+      recap({
+        teamB: [
+          ...base.teamB,
+          participant(5, "Eve", { details: details({ role: "Adc" }), stats: stats({ position: "Adc" }) }),
+        ].map((j) => (j.prenom === "Dan" ? { ...j, stats: stats({ position: "Support" }) } : j)),
+      }),
+    );
+
+    const bleue = await screen.findByRole("list", { name: "Équipe B · Blue side" });
+    const roles = within(bleue)
+      .getAllByRole("listitem", { name: /Bob|Dan|Eve/ })
+      .map((l) => within(l).getAllByRole("img", { name: /^(Top|Jungle|Mid|ADC|Support)$/ })[0]!.getAttribute("aria-label"));
+    expect(roles).toEqual(["Top", "ADC", "Support"]);
   });
 
-  it("montre les sorts et les objets avec leurs icônes, les emplacements vides restant neutres", async () => {
+  it("ouvre la fiche du joueur au clic sur sa ligne, le nom étant un lien vers elle", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /games/42": recap(), "GET /catalogue": catalogue });
+    const { router } = renderApp("/games/42");
+
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect(within(ligne("Alice")).getByRole("link", { name: "Alice" })).toHaveAttribute("href", "/joueurs/1");
+    await userEvent.click(within(ligne("Alice")).getByText("7"));
+    expect(router.state.location.pathname).toBe("/joueurs/1");
+  });
+
+  it("montre place, niveau, rang, K/D/A, participation aux kills et CS/min", async () => {
     ouvrirApp();
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
     const alice = ligne("Alice");
-    expect(await within(cellule(alice, "Sorts")).findByRole("img", { name: "Flash" })).toHaveAttribute("src", "https://dd/flash.png");
-    expect(within(cellule(alice, "Sorts")).getByRole("img", { name: "Embrasement" })).toBeInTheDocument();
-    const objets = within(cellule(alice, "Objets"));
+    expect(within(alice).getByText("4e")).toBeInTheDocument();
+    expect(within(ligne("Bob")).getByText("1er")).toBeInTheDocument();
+    expect(within(alice).getByText("16")).toBeInTheDocument();
+    expect(alice).toHaveTextContent("Gold II");
+    expect(alice).toHaveTextContent("7/2/9");
+    expect(alice).toHaveTextContent("65 %");
+    expect(alice).toHaveTextContent("7,5");
+    expect(within(alice).getByRole("img", { name: "Note 80 sur 100" })).toBeInTheDocument();
+    expect(alice).toHaveTextContent("21,0 k");
+    expect(alice).toHaveTextContent("700 /min");
+  });
+
+  it("montre la vision du Support à la place du CS/min", async () => {
+    const base = recap();
+    ouvrirApp(
+      recap({
+        teamB: [
+          base.teamB[0]!,
+          participant(4, "Dan", {
+            championId: "Leona",
+            stats: stats({ position: "Support", visionScore: 63 }),
+            details: details({ role: "Support", objetDeRole: null }),
+          }),
+        ],
+      }),
+    );
+
+    await screen.findByRole("list", { name: "Équipe B · Blue side" });
+    const dan = ligne("Dan");
+    expect(dan).toHaveTextContent("63");
+    expect(dan).toHaveTextContent("vision");
+    expect(dan).not.toHaveTextContent("7,5");
+    expect(ligne("Bob")).toHaveTextContent("CS/min");
+    expect(ligne("Bob")).not.toHaveTextContent("vision");
+  });
+
+  it("montre sorts, runes, six objets et babiole avec leurs icônes, les emplacements vides restant neutres", async () => {
+    ouvrirApp();
+
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    const alice = within(ligne("Alice"));
+    expect(await alice.findByRole("img", { name: "Flash" })).toHaveAttribute("src", "https://dd/flash.png");
+    expect(alice.getByRole("img", { name: "Embrasement" })).toBeInTheDocument();
+    expect(alice.getByRole("img", { name: "Électrocution" })).toHaveAttribute("src", "https://dd/electrocute.png");
+    expect(alice.getByRole("img", { name: "Inspiration" })).toHaveAttribute("src", "https://dd/inspiration.png");
+    const objets = within(alice.getByRole("list", { name: "Objets" }));
     expect(objets.getByRole("img", { name: "Bottes de berserker" })).toHaveAttribute("src", "https://dd/3006.png");
-    expect(objets.getByRole("img", { name: "Sandales de Mercure" })).toBeInTheDocument();
     expect(objets.getAllByRole("listitem")).toHaveLength(7);
   });
 
-  it("place l'objet de rôle à part, avec l'état de sa quête", async () => {
+  it("montre l'objet de rôle sans texte, son état se lisant à l'icône", async () => {
     ouvrirApp();
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    const fini = within(cellule(ligne("Alice"), "Objets")).getByRole("group", { name: "Objet de rôle" });
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    const fini = within(ligne("Alice")).getByRole("group", { name: "Objet de rôle terminé" });
     expect(await within(fini).findByRole("img", { name: "Quête du rôle terminée" })).toBeInTheDocument();
-    expect(fini).toHaveTextContent("Quête terminée");
-    const encours = within(cellule(ligne("Chloé"), "Objets")).getByRole("group", { name: "Objet de rôle" });
-    expect(encours).toHaveTextContent("Quête en cours");
-    expect(within(cellule(ligne("Dan"), "Objets")).queryByRole("group", { name: "Objet de rôle" })).not.toBeInTheDocument();
+    const encours = within(ligne("Chloé")).getByRole("group", { name: "Objet de rôle en cours" });
+    expect(encours).toBeInTheDocument();
+    expect(within(ligne("Dan")).queryByRole("group", { name: /Objet de rôle/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Quête/)).not.toBeInTheDocument();
   });
 
-  it("affiche la place et les badges Meilleure perf et ACE", async () => {
-    ouvrirApp();
+  it("montre MVP et ACE d'après les badges, DOFD et Roi ou Reine d'après les votes clos", async () => {
+    ouvrirApp(recap(), { "GET /catalogue": catalogue, "GET /games/42/votes": votes([3], [1]) });
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    expect(cellule(ligne("Bob"), "Note")).toHaveTextContent("#1");
-    expect(within(ligne("Bob")).getByText("Meilleure perf")).toBeInTheDocument();
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect(await within(ligne("Alice")).findByText("DOFD")).toBeInTheDocument();
     expect(within(ligne("Alice")).getByText("ACE")).toBeInTheDocument();
-    expect(cellule(ligne("Dan"), "Note")).toHaveTextContent("#10");
+    expect(within(ligne("Bob")).getByText("MVP")).toBeInTheDocument();
+    expect(within(ligne("Chloé")).getByText(/Roi/)).toBeInTheDocument();
+    expect(within(ligne("Dan")).queryByText("DOFD")).not.toBeInTheDocument();
+    expect(within(ligne("Dan")).queryByText("MVP")).not.toBeInTheDocument();
     expect(within(ligne("Dan")).queryByText("ACE")).not.toBeInTheDocument();
-    expect(within(ligne("Dan")).queryByText("Meilleure perf")).not.toBeInTheDocument();
   });
 
-  it("affiche les objectifs des deux équipes", async () => {
+  it("met les objectifs de chaque équipe en icônes dans son en-tête", async () => {
     ouvrirApp();
 
-    const bleue = await screen.findByRole("group", { name: "Objectifs de l'Équipe B" });
-    expect(within(bleue).getByText("Dragons").nextSibling).toHaveTextContent("3");
-    expect(bleue).toHaveTextContent(/Tourelles\s*9/);
-    expect(bleue).toHaveTextContent("Premier sang");
-    const rouge = screen.getByRole("group", { name: "Objectifs de l'Équipe A" });
-    expect(within(rouge).getByText("Dragons").nextSibling).toHaveTextContent("1");
+    const bleue = (await screen.findByRole("list", { name: "Équipe B · Blue side" })).closest("section")!;
+    const compteur = (nom: string) => within(bleue).getByRole("img", { name: nom }).parentElement;
+    expect(compteur("Dragon")).toHaveTextContent("3");
+    expect(compteur("Tourelle")).toHaveTextContent("9");
+    expect(compteur("Baron")).toHaveTextContent("1");
+    expect(compteur("Héraut")).toHaveTextContent("2");
+    expect(compteur("Larve du Néant")).toHaveTextContent("4");
+    expect(compteur("Inhibiteur")).toHaveTextContent("1");
+    const rouge = screen.getByRole("list", { name: "Équipe A · Red side" }).closest("section")!;
+    expect(within(rouge).getByRole("img", { name: "Dragon" }).parentElement).toHaveTextContent("1");
   });
 
-  it("affiche les ids sans erreur quand le catalogue répond 503", async () => {
+  it("allume la barre de dégâts du meilleur de la game seulement", async () => {
+    const base = recap();
+    ouvrirApp(
+      recap({
+        teamB: [participant(2, "Bob", { championId: "Darius", stats: stats({ damageToChampions: 40000, position: "Top" }), details: details({ role: "Top" }) }), base.teamB[1]!],
+      }),
+    );
+
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect(within(ligne("Bob")).getByRole("progressbar", { hidden: true })).toHaveAttribute("data-meilleur", "true");
+    expect(within(ligne("Alice")).getByRole("progressbar", { hidden: true })).toHaveAttribute("data-meilleur", "false");
+  });
+
+  it("affiche des emplacements neutres sans erreur quand le catalogue répond 503 ou ignore un id", async () => {
     ouvrirApp(recap(), { "GET /catalogue": problem(503) });
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    expect(await within(cellule(ligne("Alice"), "Objets")).findByText("3006")).toBeInTheDocument();
-    expect(within(cellule(ligne("Alice"), "Sorts")).getByText("4")).toBeInTheDocument();
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect((await within(ligne("Alice")).findAllByRole("img", { name: "Inconnu" })).length).toBeGreaterThan(0);
     expect(screen.queryByText(/erreur|indisponible|503|unavailable/i)).not.toBeInTheDocument();
   });
+});
 
-  it("affiche l'id d'un élément que le catalogue ne connaît pas", async () => {
-    ouvrirApp();
-
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    expect(await within(cellule(ligne("Chloé"), "Sorts")).findByText("999")).toBeInTheDocument();
-  });
-
+describe("Page d'une game : cas limites", () => {
   it("n'affiche aucune erreur pour une game saisie à la main", async () => {
     const base = recap();
     ouvrirApp(
@@ -329,9 +395,9 @@ describe("Onglet Général", () => {
       }),
     );
 
-    await screen.findByRole("table", { name: "Équipe A · Red side" });
-    expect(cellule(ligne("Alice"), "CS")).toHaveTextContent("220");
-    expect(cellule(ligne("Alice"), "Rôle")).toHaveTextContent("Mid");
+    await screen.findByRole("list", { name: "Équipe A · Red side" });
+    expect(within(ligne("Alice")).getByRole("img", { name: "Mid" })).toBeInTheDocument();
+    expect(ligne("Alice")).toHaveTextContent("7/2/9");
     expect(screen.queryByText(/erreur|indisponible|503|unavailable/i)).not.toBeInTheDocument();
   });
 });
