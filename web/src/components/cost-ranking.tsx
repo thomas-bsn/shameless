@@ -3,8 +3,11 @@ import { AvatarJoueur } from "@/components/avatar-joueur";
 import { Marche, PlayerLink } from "@/components/podium";
 import { CostTierBadge, RoleIcon } from "@/components/rank";
 import { Card } from "@/components/ui/card";
-import { costText, evolutionDuCost, placeText, rankByCost } from "@/lib/cost";
+import { costText, evolutionDuCost, placeText, rankByCost, stairSteps } from "@/lib/cost";
+import { type CostMode, useCostMode } from "@/lib/cost-mode";
+import { costTierClasses } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 type Player = Schemas["PlayerDto"];
 
@@ -35,16 +38,110 @@ function MarcheCost({ player, rang }: { player: Player; rang: number }) {
   );
 }
 
-/** Le classement par cost : podium des trois premiers, puis la liste des suivants. */
+const MODES: { value: CostMode; label: string }[] = [
+  { value: "escalier", label: "Escalier" },
+  { value: "podium", label: "Podium et liste" },
+];
+
+/** La hauteur de chaque marche, du D au SS. */
+const HAUTEURS = ["min-h-8", "min-h-16", "min-h-24", "min-h-32", "min-h-40", "min-h-48"];
+
+/** Un joueur debout sur sa marche ; au survol (ou au focus), son cost et sa tendance du mois. */
+function JoueurSurMarche({ player }: { player: Player }) {
+  const [survol, setSurvol] = useState(false);
+  return (
+    <li
+      className="relative flex w-14 flex-col items-center gap-1"
+      onMouseEnter={() => setSurvol(true)}
+      onMouseLeave={() => setSurvol(false)}
+      onFocus={() => setSurvol(true)}
+      onBlur={() => setSurvol(false)}
+    >
+      <AvatarJoueur prenom={player.prenom} avatarUrl={player.avatarUrl} className="size-10 text-sm" />
+      <PlayerLink playerId={player.id} prenom={player.prenom} className="max-w-full truncate text-xs" />
+      {survol && (
+        <div
+          role="tooltip"
+          className="absolute bottom-full z-10 mb-1 flex items-center gap-2 rounded-md border bg-popover px-2 py-1 text-xs whitespace-nowrap shadow-md"
+        >
+          <span className="font-mono font-bold tabular-nums">{costText(player.currentCost)}</span>
+          <Evolution player={player} />
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** L'escalier : six marches du D au SS, de gauche à droite, de plus en plus hautes. */
+function Escalier({ players }: { players: Player[] }) {
+  return (
+    <ol aria-label="Escalier du cost" className="flex items-end gap-1 overflow-x-auto pt-12">
+      {stairSteps(players).map(({ tier, players: debout }, i) => (
+        <li key={tier} aria-label={`Marche ${tier}`} className="flex min-w-24 flex-1 flex-col justify-end">
+          <ul aria-label={`Joueurs ${tier}`} className="flex flex-wrap items-end justify-center gap-2 pb-1">
+            {debout.map((p) => (
+              <JoueurSurMarche key={p.id} player={p} />
+            ))}
+          </ul>
+          <div
+            className={cn(
+              "flex items-start justify-center rounded-t-md border pt-1 text-lg font-bold",
+              HAUTEURS[i],
+              costTierClasses[tier],
+            )}
+          >
+            {tier}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Le choix du mode d'affichage, mémorisé pour l'utilisateur. */
+function ChoixDuMode() {
+  const [mode, setMode] = useCostMode();
+  return (
+    <div role="radiogroup" aria-label="Affichage du classement" className="inline-flex self-end rounded-lg border p-0.5">
+      {MODES.map((m) => (
+        <button
+          key={m.value}
+          type="button"
+          role="radio"
+          aria-checked={mode === m.value}
+          onClick={() => setMode(m.value)}
+          className={cn(
+            "rounded-md px-3 py-1 text-sm",
+            mode === m.value ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Le classement par cost : l'escalier, ou le podium des trois premiers puis la liste des suivants. */
 export function CostRanking({ players }: { players: Player[] }) {
+  const [mode] = useCostMode();
   const classes = rankByCost(players);
   const [premier, deuxieme, troisieme] = classes;
   const suivants = classes.slice(3);
 
   if (!premier) return <p className="text-muted-foreground">Aucun joueur pour l'instant.</p>;
 
+  if (mode === "escalier")
+    return (
+      <div className="flex flex-col gap-6">
+        <ChoixDuMode />
+        <Escalier players={players} />
+      </div>
+    );
+
   return (
     <div className="flex flex-col gap-6">
+      <ChoixDuMode />
       <ol aria-label="Podium du cost" className="flex flex-col gap-3 sm:flex-row sm:items-end">
         {deuxieme && <MarcheCost player={deuxieme} rang={2} />}
         <MarcheCost player={premier} rang={1} />
