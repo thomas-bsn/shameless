@@ -47,7 +47,6 @@ const fiche = (overrides = {}) => ({
       role: "Jungle",
       stats: { kills: 11, deaths: 3, assists: 9 },
       performance: { note: 86, role: "Jungle", sourceDuRole: "Position", composantes: [] },
-      mvp: true,
       dofd: false,
     },
     {
@@ -61,7 +60,6 @@ const fiche = (overrides = {}) => ({
       role: "Jungle",
       stats: { kills: 2, deaths: 8, assists: 3 },
       performance: { note: 40, role: "Jungle", sourceDuRole: "Position", composantes: [] },
-      mvp: false,
       dofd: true,
     },
     {
@@ -75,11 +73,10 @@ const fiche = (overrides = {}) => ({
       role: "Jungle",
       stats: { kills: 5, deaths: 4, assists: 6 },
       performance: { note: 60, role: "Jungle", sourceDuRole: "Position", composantes: [] },
-      mvp: false,
       dofd: false,
     },
   ],
-  titres: { mvp: 5, dofd: 2 },
+  titres: { dofd: 2 },
   ...overrides,
 });
 

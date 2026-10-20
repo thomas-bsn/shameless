@@ -4,7 +4,6 @@ namespace Shameless.Application.DTOs.Match;
 
 /// <summary>Une game terminée de l'historique.</summary>
 /// <param name="ModifieeParAdminLe">Quand un Administrateur a corrigé la game ; null si elle est telle que saisie.</param>
-/// <param name="Mvp">Les Joueurs élus MVP par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
 /// <param name="Dofd">Les Joueurs élus DOFD par les votes, tous en cas d'égalité ; vide tant que les votes ne sont pas clos.</param>
 public record GameHistoryResponse(
     int Id,
@@ -18,7 +17,6 @@ public record GameHistoryResponse(
     DonneesDuMatch? Match, // null sans données Riot (saisie manuelle)
     List<GameHistoryParticipantDto> TeamA,
     List<GameHistoryParticipantDto> TeamB,
-    List<int> Mvp,
     List<int> Dofd
 );
 
@@ -28,7 +26,7 @@ public record GameHistoryResponse(
 /// <param name="Performance">Sa note de performance sur 100 et ses composantes, null sans stats suffisantes.</param>
 /// <param name="Details">Son rôle joué et sa source, ses objets, son objet de rôle, ses sorts, ses runes et ses valeurs dérivées (par minute, parts de l'Équipe), sur les valeurs effectives.</param>
 /// <param name="Place">Sa place dans la game, de 1 à 10, d'après sa note de performance ; null sans note.</param>
-/// <param name="Badge">Le badge « Meilleure perf » (meilleure note de l'Équipe gagnante) ou « ACE » (meilleure note de l'Équipe perdante) ; null sinon. Ce n'est pas le MVP voté.</param>
+/// <param name="Badge">Le badge « Meilleure perf » (meilleure note de l'Équipe gagnante) ou « ACE » (meilleure note de l'Équipe perdante) ; null sinon.</param>
 /// <param name="Impact">Ses sous-scores Global / Vs adversaire / Objectifs / Équipe / Rôle (lettre et lignes tirées de la note) et son face-à-face à six axes contre l'adversaire du même rôle ; null sans stats. Une stat absente masque sa ligne ou son axe.</param>
 /// <param name="ChampsCorriges">Les champs (champion, position, kills, deaths, assists, cs, goldEarned, damageToChampions, visionScore, note) dont la valeur affichée est corrigée par un admin ; vide si aucun.</param>
 public record GameHistoryParticipantDto(

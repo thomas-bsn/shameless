@@ -2,7 +2,7 @@
 
 Shameless est une app open source (MIT) pour organiser des parties personnalisées 5v5  
 de League of Legends entre amis : former les équipes, jouer des séries, récupérer les  
-stats, garder l'historique et voter MVP et DOFD. Chaque communauté héberge sa propre  
+stats, garder l'historique et voter le DOFD. Chaque communauté héberge sa propre  
 instance.
 
 Ce fichier est le vocabulaire du projet. Le code, les issues et les specs utilisent ces  
@@ -37,7 +37,7 @@ joueur ; un joueur peut avoir plusieurs Comptes Discord liés (le Discord princi
 pour l'identité affichée) ou aucun.
 - **Spectateur** : un membre du serveur Discord qui regarde une game sans jouer. Il fait  
 des pronostics ; identifié par le bot comme présent en vocal pendant la game, il vote  
-aussi pour son MVP et son DOFD.
+aussi pour le DOFD.
 - **Instance** : un déploiement de Shameless pour une communauté, avec son serveur  
 Discord, sa base de données et sa propre clé Riot.
 - **Opérateur** : la personne qui installe et héberge l'Instance de sa communauté.  
@@ -205,12 +205,10 @@ classé dans une file y figure, en fin de liste.
 ## Votes et titres
 
 - **Vote** : à la fin d'une game, ses dix joueurs et les spectateurs présents en vocal  
-votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game par titre  
-(MVP, DOFD), jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
+votent dans Discord, pendant 10 minutes, pour au plus un joueur de la game,  
+le DOFD, jamais pour eux-mêmes. Voter est facultatif. Les joueurs ayant le plus de  
 voix remportent le titre, tous en cas d'égalité. Les voix restent secrètes jusqu'à la  
 clôture ; résultats ensuite dans le récap et l'historique, titres comptés sur la fiche du joueur.
-- **Roi ou Reine** : le titre voté du meilleur joueur d'une game (le vote « MVP » des  
-Votes), gardé sous son nom d'affichage Roi ou Reine ; à ne pas confondre avec le badge **MVP**.
 - **DOFD** : « Dick of the Day », le joueur le plus nul ou le plus toxique d'une game,  
 élu par vote ; son badge sur la page d'une game vient des votes clos. Illustré par une bouse de cheval.
 - **Honte** *(à valider)* : mention attribuée automatiquement par les stats (pire KDA,  
@@ -219,10 +217,10 @@ plus de morts, plus faible participation aux kills), sans vote.
 les Games terminées, sans remise à zéro mensuelle) ; les ex æquo partagent le même rang (1, 1, 3).  
 C'est la vue « DOFD » de l'onglet Classements, à côté du cost et de la SoloQ, et non un onglet à part.
 - **Pronostic** : le pari d'un spectateur, dans Discord, sur la prochaine game d'une  
-série : l'équipe gagnante, le MVP et le DOFD, chacun facultatif. Les joueurs de la  
+série : l'équipe gagnante et le DOFD, chacun facultatif. Les joueurs de la  
 série ne pronostiquent pas. Verrouillé au lancement de la game. Chaque choix est jugé  
-séparément dès que son résultat est connu (le vainqueur à la fin de la game, le MVP et  
-le DOFD à la clôture des votes ; un joueur à égalité parmi les gagnants rend le choix  
+séparément dès que son résultat est connu (le vainqueur à la fin de la game, le  
+DOFD à la clôture des votes ; un joueur à égalité parmi les gagnants rend le choix  
 juste). Les pronostics justes se lisent dans le récap. Ni points, ni classement, ni  
 titre : il n'y a pas de Doyen, et aucune voix ne compte double aux votes.
 
@@ -269,8 +267,7 @@ connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; 
 récent, « aucun Companion détecté ».
 - **MVP**, **ACE** et **DOFD** (badges) : les trois badges de la page d'une Game. « MVP » est le badge de  
 la plus haute note de l'Équipe gagnante (`MeilleurePerf` dans l'API), « ACE » celui de la plus haute note  
-de l'Équipe perdante, « DOFD » vient des votes clos. Le titre voté par les joueurs garde son nom  
-d'affichage, Roi ou Reine.
+de l'Équipe perdante, « DOFD » vient des votes clos.
 - **Rôle joué** : le rôle qu'un Joueur a réellement tenu dans une Game, tel que le client LoL  
 le détecte et le transmet dans le Rapport (`teamPosition`, ADR 0021). À défaut, le rôle de  
 l'Autorole de la Série, puis le rôle principal du Joueur. Un Administrateur peut le corriger.

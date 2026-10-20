@@ -124,10 +124,10 @@ public class PlusieursDiscordTests(ApiFactory factory) : IntegrationTest(factory
 
         var gameId = await PlayAndWinAsync(client, serie.SeriesId, "A");
         var vote = await bot.PutAsJsonAsync($"/bot/games/{gameId}/votes",
-            new { votantDiscordId = "100000000000000099", mvpPlayerId = serie.TeamA[0], dofdPlayerId = (int?)null }, Ct);
+            new { votantDiscordId = "100000000000000099", dofdPlayerId = serie.TeamA[0] }, Ct);
         Assert.Equal(HttpStatusCode.BadRequest, vote.StatusCode); // pour soi-même
         var voteAutre = await bot.PutAsJsonAsync($"/bot/games/{gameId}/votes",
-            new { votantDiscordId = "100000000000000099", mvpPlayerId = serie.TeamA[1], dofdPlayerId = (int?)null }, Ct);
+            new { votantDiscordId = "100000000000000099", dofdPlayerId = serie.TeamA[1] }, Ct);
         Assert.Equal(HttpStatusCode.OK, voteAutre.StatusCode); // c'est un Joueur de la game, il peut voter
     }
 

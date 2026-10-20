@@ -60,7 +60,6 @@ function Kda({ game: g }: { game: Game }) {
       </span>
       <span className="flex flex-nowrap gap-1 whitespace-nowrap">
         {titre && <BadgeDeTitre titre={titre} />}
-        {g.mvp && <BadgeDeTitre titre="Roi/Reine" />}
         {g.dofd && <BadgeDeTitre titre="DOFD" />}
       </span>
     </div>

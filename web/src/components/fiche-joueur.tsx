@@ -137,7 +137,6 @@ export function HeroDuJoueur({ player, fiche }: { player: Schemas["PlayerDto"]; 
             </div>
             {fiche && (
               <div role="group" aria-label="Titres" className="flex flex-wrap gap-2">
-                <Badge className="bg-yellow-400 text-black">{fiche.titres.mvp} Roi/Reine</Badge>
                 <Badge variant="destructive">{fiche.titres.dofd} DOFD</Badge>
               </div>
             )}
@@ -301,7 +300,6 @@ function ResumeDesDernieresGames({ resume }: { resume: Fiche["resume"] }) {
   const titres: Array<[string, number, string]> = [
     ["MVP", resume.meilleuresPerfs, "bg-sky-400/15 text-sky-300"],
     ["ACE", resume.aces, "bg-violet-400/15 text-violet-300"],
-    ["Roi/Reine", resume.mvp, "bg-yellow-300/15 text-yellow-200"],
     ["DOFD", resume.dofd, "bg-red-400/15 text-red-300"],
   ];
   return (

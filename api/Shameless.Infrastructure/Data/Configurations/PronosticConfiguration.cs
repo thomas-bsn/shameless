@@ -18,7 +18,6 @@ public sealed class PronosticConfiguration : IEntityTypeConfiguration<Pronostic>
 
         // Les pronostics disparaissent avec leur Série (ADR 0009).
         entity.HasOne(p => p.Series).WithMany().HasForeignKey(p => p.SeriesId).OnDelete(DeleteBehavior.Cascade);
-        entity.HasOne(p => p.Mvp).WithMany().HasForeignKey(p => p.MvpPlayerId).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne(p => p.Dofd).WithMany().HasForeignKey(p => p.DofdPlayerId).OnDelete(DeleteBehavior.Restrict);
     }
 }

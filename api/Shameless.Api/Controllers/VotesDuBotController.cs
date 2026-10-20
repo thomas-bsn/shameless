@@ -8,7 +8,7 @@ using Shameless.Application.Votes;
 namespace Shameless.Api.Controllers;
 
 /// <summary>
-/// Les votes MVP et DOFD déposés par le bot Discord (identité machine, ADR 0013) : présence des
+/// Les votes DOFD déposés par le bot Discord (identité machine, ADR 0013) : présence des
 /// Spectateurs en vocal, bulletins et résultats d'une Game.
 /// </summary>
 [ApiController]
@@ -50,7 +50,7 @@ public sealed class VotesDuBotController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
     public async Task<ActionResult<BulletinDuVotant>> Voter(int id, [FromBody] VoterRequest request)
     {
-        var result = await _votes.VoterAsync(id, request.VotantDiscordId, request.MvpPlayerId, request.DofdPlayerId);
+        var result = await _votes.VoterAsync(id, request.VotantDiscordId, request.DofdPlayerId);
         return result.IsOk ? result.Value! : this.Refusal(result);
     }
 

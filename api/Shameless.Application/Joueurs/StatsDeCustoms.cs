@@ -148,7 +148,6 @@ internal sealed record PartieDuJoueur(
         Role,
         Stats,
         Performance,
-        Mvp: votes is { Statut: FenetreDeVote.Clos } && votes.Mvp.Gagnants.Contains(Participant.PlayerId),
         Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId),
         Place: Place,
         Badge: Badge,

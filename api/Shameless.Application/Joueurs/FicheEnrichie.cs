@@ -48,7 +48,7 @@ public sealed record ChampionDuResume(string ChampionId, int Games, double Winra
 
 /// <summary>
 /// Le résumé des 30 dernières games terminées du Joueur. Les badges sont ceux de la game
-/// (Meilleure perf, ACE), les titres sont ceux des votes clos : rien à voir avec le MVP voté pour les badges.
+/// (Meilleure perf, ACE), le titre de DOFD est celui des votes clos.
 /// </summary>
 public sealed record ResumeDesDernieresGames(
     int Games,
@@ -60,7 +60,6 @@ public sealed record ResumeDesDernieresGames(
     double? NoteMoyenne,
     int MeilleuresPerfs,
     int Aces,
-    int Mvp,
     int Dofd)
 {
     /// <summary>Le nombre de games du résumé.</summary>
@@ -89,7 +88,6 @@ public sealed record ResumeDesDernieresGames(
             stats.NoteMoyenne,
             recentes.Count(l => l.Badge == Stats.BadgeDeGame.MeilleurePerf),
             recentes.Count(l => l.Badge == Stats.BadgeDeGame.Ace),
-            recentes.Count(l => l.Mvp),
             recentes.Count(l => l.Dofd));
     }
 }

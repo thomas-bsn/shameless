@@ -127,7 +127,6 @@ const historique = {
           match: null,
           teamA: equipe(1, NOMS_A),
           teamB: equipe(11, NOMS_B),
-          mvp: [],
           dofd: [],
         },
       ],

@@ -14,10 +14,10 @@ public class HallDeLaHonteTests
         var joueurs = new[] { Joueur(1, "Zed"), Joueur(2, "Ana"), Joueur(3, "Bob"), Joueur(4, "Cid") };
         var titres = new Dictionary<int, TitresDuJoueur>
         {
-            [1] = new(Mvp: 0, Dofd: 3),
-            [2] = new(Mvp: 5, Dofd: 3),
-            [3] = new(Mvp: 0, Dofd: 1),
-            [4] = new(Mvp: 2, Dofd: 0),
+            [1] = new(3),
+            [2] = new(3),
+            [3] = new(1),
+            [4] = new(0),
         };
 
         var hall = HallDeLaHonte.Classer(joueurs, titres);

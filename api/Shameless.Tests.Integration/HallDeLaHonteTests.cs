@@ -16,7 +16,7 @@ public class HallDeLaHonteTests(ApiFactory factory) : IntegrationTest(factory)
     private Task<HttpResponseMessage> VoterDofdAsync(int gameId, string votant, int dofd) =>
         Factory.CreateBotClient().PutAsJsonAsync(
             $"/bot/games/{gameId}/votes",
-            new { votantDiscordId = votant, mvpPlayerId = (int?)null, dofdPlayerId = dofd },
+            new { votantDiscordId = votant, dofdPlayerId = dofd },
             Ct);
 
     private static List<(int Rang, int PlayerId, int Dofd)> Lignes(JsonElement hall) =>

@@ -21,7 +21,7 @@ public static class FenetreDeVote
 }
 
 /// <summary>
-/// Les résultats des votes MVP et DOFD d'une Game.
+/// Les résultats des votes DOFD d'une Game.
 /// </summary>
 /// <param name="Statut">« a_venir » (Game en cours), « ouverts » ou « clos » (voir <see cref="FenetreDeVote"/>).</param>
 /// <param name="OuvertureLe">La fin de la Game, null tant qu'elle n'est pas terminée.</param>
@@ -33,7 +33,6 @@ public sealed record ResultatsDesVotes(
     DateTime? OuvertureLe,
     DateTime? FermetureLe,
     int Votants,
-    ResultatDuTitre Mvp,
     ResultatDuTitre Dofd)
 {
     /// <summary>
@@ -49,13 +48,12 @@ public sealed record ResultatsDesVotes(
             statut,
             game.CompletedAt,
             game.CompletedAt + FenetreDeVote.Duree,
-            liste.Count(b => b.MvpPlayerId is not null || b.DofdPlayerId is not null),
-            ResultatDuTitre.Calculer(game, liste.Select(b => b.MvpPlayerId), clos),
+            liste.Count(b => b.DofdPlayerId is not null),
             ResultatDuTitre.Calculer(game, liste.Select(b => b.DofdPlayerId), clos));
     }
 }
 
-/// <summary>Le résultat d'un titre (MVP ou DOFD).</summary>
+/// <summary>Le résultat du titre de DOFD.</summary>
 /// <param name="Gagnants">
 /// Les Joueurs ayant reçu le plus de voix, tous reconnus en cas d'égalité ; vide tant que les votes
 /// ne sont pas clos ou si personne n'a voté pour ce titre.

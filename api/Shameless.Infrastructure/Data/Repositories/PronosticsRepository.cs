@@ -12,7 +12,6 @@ public sealed class PronosticsRepository : IPronosticsRepository
 
     public Task<List<Pronostic>> GetDeLaGameAsync(int seriesId, int numeroDansLaSerie) =>
         _db.Pronostics.AsNoTracking()
-            .Include(p => p.Mvp).ThenInclude(j => j!.User)
             .Include(p => p.Dofd).ThenInclude(j => j!.User)
             .Where(p => p.SeriesId == seriesId && p.NumeroDansLaSerie == numeroDansLaSerie)
             .ToListAsync();

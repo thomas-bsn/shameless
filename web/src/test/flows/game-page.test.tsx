@@ -207,13 +207,12 @@ describe("Page d'une game : onglets", () => {
   });
 });
 
-const votes = (mvp: number[], dofd: number[]): Schemas["ResultatsDesVotes"] => ({
+const votes = (dofd: number[]): Schemas["ResultatsDesVotes"] => ({
   gameId: 42,
   statut: "Clos",
   ouvertureLe: null,
   fermetureLe: null,
   votants: 5,
-  mvp: { gagnants: mvp, decompte: [] },
   dofd: { gagnants: dofd, decompte: [] },
 });
 
@@ -313,14 +312,13 @@ describe("Onglet Général", () => {
     expect(screen.queryByText(/Quête/)).not.toBeInTheDocument();
   });
 
-  it("montre MVP et ACE d'après les badges, DOFD et Roi ou Reine d'après les votes clos", async () => {
-    ouvrirApp(recap(), { "GET /catalogue": catalogue, "GET /games/42/votes": votes([3], [1]) });
+  it("montre MVP et ACE d'après les badges, DOFD d'après les votes clos", async () => {
+    ouvrirApp(recap(), { "GET /catalogue": catalogue, "GET /games/42/votes": votes([1]) });
 
     await screen.findByRole("list", { name: "Équipe A · Red side" });
     expect(await within(ligne("Alice")).findByText("DOFD")).toBeInTheDocument();
     expect(within(ligne("Alice")).getByText("ACE")).toBeInTheDocument();
     expect(within(ligne("Bob")).getByText("MVP")).toBeInTheDocument();
-    expect(within(ligne("Chloé")).getByText(/Roi/)).toBeInTheDocument();
     expect(within(ligne("Dan")).queryByText("DOFD")).not.toBeInTheDocument();
     expect(within(ligne("Dan")).queryByText("MVP")).not.toBeInTheDocument();
     expect(within(ligne("Dan")).queryByText("ACE")).not.toBeInTheDocument();

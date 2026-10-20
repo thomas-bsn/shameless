@@ -4,7 +4,7 @@ using Shameless.Application.Entities;
 
 namespace Shameless.Infrastructure.Data.Configurations;
 
-/// <summary>Les bulletins de vote MVP/DOFD : un par votant et par Game.</summary>
+/// <summary>Les bulletins de vote DOFD : un par votant et par Game.</summary>
 public sealed class BulletinDeVoteConfiguration : IEntityTypeConfiguration<BulletinDeVote>
 {
     public void Configure(EntityTypeBuilder<BulletinDeVote> entity)
@@ -15,7 +15,6 @@ public sealed class BulletinDeVoteConfiguration : IEntityTypeConfiguration<Bulle
 
         // Les bulletins disparaissent avec leur Game (ADR 0009).
         entity.HasOne(b => b.Game).WithMany().HasForeignKey(b => b.GameId).OnDelete(DeleteBehavior.Cascade);
-        entity.HasOne<Player>().WithMany().HasForeignKey(b => b.MvpPlayerId).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne<Player>().WithMany().HasForeignKey(b => b.DofdPlayerId).OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -2,7 +2,7 @@ using Shameless.Application.Entities;
 
 namespace Shameless.Application.Interfaces;
 
-/// <summary>Les bulletins de vote MVP/DOFD et les Spectateurs présents de chaque Game.</summary>
+/// <summary>Les bulletins de vote DOFD et les Spectateurs présents de chaque Game.</summary>
 public interface IVotesRepository
 {
     Task<List<BulletinDeVote>> GetBulletinsAsync(int gameId);

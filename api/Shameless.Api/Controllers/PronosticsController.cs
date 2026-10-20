@@ -15,7 +15,7 @@ public sealed class PronosticsController : ControllerBase
 
     /// <summary>
     /// Les pronostics de la Game, chaque choix marqué juste ou faux dès que son résultat est connu
-    /// (vainqueur à la fin de la Game, MVP et DOFD à la clôture des votes). Ni points ni classement.
+    /// (vainqueur à la fin de la Game, DOFD à la clôture des votes). Ni points ni classement.
     /// </summary>
     [HttpGet]
     [ProducesResponseType<PronosticsDeLaGame>(StatusCodes.Status200OK)]

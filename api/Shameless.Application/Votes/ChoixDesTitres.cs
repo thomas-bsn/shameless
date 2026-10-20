@@ -1,18 +1,17 @@
 namespace Shameless.Application.Votes;
 
 /// <summary>
-/// Les Joueurs choisis pour les titres de MVP et de DOFD, chacun facultatif : le bulletin d'un votant
-/// ou la partie MVP/DOFD d'un pronostic.
+/// Le Joueur choisi pour le titre de DOFD, facultatif : le bulletin d'un votant ou la partie DOFD d'un
+/// pronostic.
 /// </summary>
-public readonly record struct ChoixDesTitres(int? Mvp, int? Dofd)
+public readonly record struct ChoixDesTitres(int? Dofd)
 {
     /// <summary>Aucun Joueur n'est choisi.</summary>
-    public bool Aucun => Mvp is null && Dofd is null;
+    public bool Aucun => Dofd is null;
 
-    /// <summary>Les choix faits, avec le nom de leur titre (« MVP », « DOFD »).</summary>
+    /// <summary>Les choix faits, avec le nom de leur titre (« DOFD »).</summary>
     public IEnumerable<(int PlayerId, string Titre)> Faits()
     {
-        if (Mvp is { } mvp) yield return (mvp, "MVP");
         if (Dofd is { } dofd) yield return (dofd, "DOFD");
     }
 

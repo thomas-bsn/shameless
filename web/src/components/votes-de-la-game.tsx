@@ -7,7 +7,7 @@ import { AvatarJoueur } from "@/components/avatar-joueur";
 
 const heureLabel = (iso: string) => new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-/** Les votes Roi/Reine et DOFD d'une Game, déposés dans Discord : statut, gagnants et décompte des voix. */
+/** Les votes DOFD d'une Game, déposés dans Discord : statut, gagnants et décompte des voix. */
 export function VotesDeLaGame({ gameId }: { gameId: number }) {
   const votes = $api.useQuery("get", "/games/{id}/votes", { params: { path: { id: gameId } } });
 
@@ -48,7 +48,6 @@ function Resultats({ votes }: { votes: Schemas["ResultatsDesVotes"] }) {
     <>
       <p className="text-sm text-muted-foreground">{`Votes clos · ${votants}`}</p>
       <div className="grid gap-4 md:grid-cols-2">
-        <Titre titre="Roi/Reine" resultat={votes.mvp} />
         <Titre titre="DOFD" resultat={votes.dofd} />
       </div>
     </>

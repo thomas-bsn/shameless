@@ -6,9 +6,9 @@ using Shameless.Application.Discord;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Les votes MVP et DOFD d'une Game (ADR 0013 pour l'identité du bot qui les dépose). Les dix Joueurs
+/// Les votes DOFD d'une Game (ADR 0013 pour l'identité du bot qui les dépose). Les dix Joueurs
 /// (par leur compte Discord lié) et les Spectateurs signalés présents en vocal peuvent voter, pendant
-/// les 10 minutes qui suivent la fin de la Game, au plus un Joueur par titre, jamais pour eux-mêmes.
+/// les 10 minutes qui suivent la fin de la Game, au plus un Joueur, jamais pour eux-mêmes.
 /// </summary>
 public sealed class VotesService
 {
@@ -66,10 +66,9 @@ public sealed class VotesService
     }
 
     /// <summary>
-    /// Dépose (ou remplace) le bulletin d'un votant : null pour s'abstenir sur un titre ; deux null
-    /// retirent le bulletin.
+    /// Dépose (ou remplace) le bulletin d'un votant : null retire le bulletin (abstention).
     /// </summary>
-    public async Task<CommandResult<BulletinDuVotant>> VoterAsync(int gameId, string votantDiscordId, int? mvpPlayerId, int? dofdPlayerId)
+    public async Task<CommandResult<BulletinDuVotant>> VoterAsync(int gameId, string votantDiscordId, int? dofdPlayerId)
     {
         if (await _games.GetRecitAsync(gameId) is not { } game)
             return CommandResult<BulletinDuVotant>.NotFound("Cette game n'existe pas.");
@@ -91,7 +90,7 @@ public sealed class VotesService
             return CommandResult<BulletinDuVotant>.Invalid(
                 "Seuls les dix Joueurs de la game et les Spectateurs présents en vocal peuvent voter.");
 
-        var choix = new ChoixDesTitres(mvpPlayerId, dofdPlayerId);
+        var choix = new ChoixDesTitres(dofdPlayerId);
         if (choix.TitreHorsDe(game.Participants.Select(p => p.PlayerId)) is { } horsDeLaGame)
             return CommandResult<BulletinDuVotant>.Invalid($"Le {horsDeLaGame} doit être l'un des dix Joueurs de la game.");
         if (choix.TitreParmi(game.Participants.Where(p => p.PlayerId == joueurDuVotant).Select(p => p.PlayerId)) is { } pourSoi)
@@ -105,14 +104,13 @@ public sealed class VotesService
             retirer: _votes.Remove,
             remplir: bulletin =>
             {
-                bulletin.MvpPlayerId = mvpPlayerId;
                 bulletin.DofdPlayerId = dofdPlayerId;
                 bulletin.VoteLe = maintenant;
             });
 
         if (!await _votes.TrySaveChangesAsync())
             return CommandResult<BulletinDuVotant>.Conflict("Ce bulletin a changé entre-temps : réessayez.");
-        return CommandResult<BulletinDuVotant>.Ok(new BulletinDuVotant(gameId, votantDiscordId, mvpPlayerId, dofdPlayerId));
+        return CommandResult<BulletinDuVotant>.Ok(new BulletinDuVotant(gameId, votantDiscordId, dofdPlayerId));
     }
 
     /// <summary>
@@ -128,7 +126,7 @@ public sealed class VotesService
     }
 
     /// <summary>
-    /// Les titres de MVP et de DOFD remportés par chaque Joueur dans les Games données (chargées avec
+    /// Les titres de DOFD remportés par chaque Joueur dans les Games données (chargées avec
     /// leurs participants et leurs Joueurs) dont les votes sont clos, égalités comprises.
     /// </summary>
     public async Task<Dictionary<int, TitresDuJoueur>> GetTitresAsync(IReadOnlyCollection<CustomGame> games) =>
@@ -139,5 +137,5 @@ public sealed class VotesService
 /// <summary>Les Spectateurs présents en vocal pendant une Game, par ID Discord (texte).</summary>
 public sealed record SpectateursDeLaGame(int GameId, List<string> DiscordIds);
 
-/// <summary>Le bulletin d'un votant : null pour une abstention sur ce titre.</summary>
-public sealed record BulletinDuVotant(int GameId, string VotantDiscordId, int? MvpPlayerId, int? DofdPlayerId);
+/// <summary>Le bulletin d'un votant : null pour une abstention.</summary>
+public sealed record BulletinDuVotant(int GameId, string VotantDiscordId, int? DofdPlayerId);

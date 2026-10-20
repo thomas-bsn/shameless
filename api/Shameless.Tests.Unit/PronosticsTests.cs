@@ -19,16 +19,16 @@ public class PronosticsTests
         WinningTeam = Equipes.A,
     };
 
-    private static ResultatsDesVotes VotesClos(List<int> mvp, List<int> dofd) => new(
-        7, FenetreDeVote.Clos, null, null, 0, new ResultatDuTitre(mvp, []), new ResultatDuTitre(dofd, []));
+    private static ResultatsDesVotes VotesClos(List<int> dofd) => new(
+        7, FenetreDeVote.Clos, null, null, 0, new ResultatDuTitre(dofd, []));
 
-    private static Pronostic Pronostic(long discordId, DateTime le, int? mvp = null, string? equipe = null) => new()
+    private static Pronostic Pronostic(long discordId, DateTime le, int? dofd = null, string? equipe = null) => new()
     {
         PronostiqueurDiscordId = discordId,
         PronostiqueLe = le,
         EquipeGagnante = equipe,
-        MvpPlayerId = mvp,
-        Mvp = mvp is { } id ? new Player { Id = id, Prenom = $"J{id}" } : null,
+        DofdPlayerId = dofd,
+        Dofd = dofd is { } id ? new Player { Id = id, Prenom = $"J{id}" } : null,
     };
 
     [Fact]
@@ -37,7 +37,7 @@ public class PronosticsTests
         var evalues = PronosticsDeLaGame.Evaluer(
             GameTerminee(),
             [Pronostic(1, Lancement, equipe: "A"), Pronostic(2, Lancement.AddSeconds(1), equipe: "A")],
-            VotesClos([], []));
+            VotesClos([]));
 
         var seul = Assert.Single(evalues.Pronostics);
         Assert.Equal("1", seul.PronostiqueurDiscordId);
@@ -52,7 +52,7 @@ public class PronosticsTests
         game.Status = GameStatuses.Pending;
         game.WinningTeam = null;
 
-        var evalues = PronosticsDeLaGame.Evaluer(game, [Pronostic(1, Lancement.AddHours(1), equipe: "A")], VotesClos([], []));
+        var evalues = PronosticsDeLaGame.Evaluer(game, [Pronostic(1, Lancement.AddHours(1), equipe: "A")], VotesClos([]));
 
         Assert.Single(evalues.Pronostics);
     }
@@ -66,7 +66,7 @@ public class PronosticsTests
         var evalues = PronosticsDeLaGame.Evaluer(
             game,
             [Pronostic(1, Lancement.AddMinutes(30), equipe: "A"), Pronostic(2, Lancement.AddMinutes(31), equipe: "A")],
-            VotesClos([], []));
+            VotesClos([]));
 
         Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
     }
@@ -80,16 +80,16 @@ public class PronosticsTests
         var evalues = PronosticsDeLaGame.Evaluer(
             game,
             [Pronostic(1, game.CreatedAt, equipe: "A"), Pronostic(2, game.CreatedAt.AddMinutes(1), equipe: "A")],
-            VotesClos([], []));
+            VotesClos([]));
 
         Assert.Equal("1", Assert.Single(evalues.Pronostics).PronostiqueurDiscordId);
     }
 
     [Fact]
-    public void Sans_mvp_elu_le_pronostic_de_mvp_est_faux()
+    public void Sans_dofd_elu_le_pronostic_de_dofd_est_faux()
     {
-        var evalues = PronosticsDeLaGame.Evaluer(GameTerminee(), [Pronostic(1, Lancement, mvp: 3)], VotesClos([], []));
+        var evalues = PronosticsDeLaGame.Evaluer(GameTerminee(), [Pronostic(1, Lancement, dofd: 3)], VotesClos([]));
 
-        Assert.Equal(new JoueurPronostique(3, "J3", false), evalues.Pronostics[0].Mvp);
+        Assert.Equal(new JoueurPronostique(3, "J3", false), evalues.Pronostics[0].Dofd);
     }
 }

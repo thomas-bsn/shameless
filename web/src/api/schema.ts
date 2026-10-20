@@ -6636,8 +6636,6 @@ export interface components {
             gameId: number;
             votantDiscordId: string;
             /** Format: int32 */
-            mvpPlayerId: null | number;
-            /** Format: int32 */
             dofdPlayerId: null | number;
         };
         CandidatsVocaux: {
@@ -7148,8 +7146,6 @@ export interface components {
             stats: null | components["schemas"]["StatsDuParticipant"];
             performance: null | components["schemas"]["NoteDePerformance"];
             /** @default false */
-            mvp: boolean;
-            /** @default false */
             dofd: boolean;
             /** Format: int32 */
             place: null | number;
@@ -7234,7 +7230,6 @@ export interface components {
             match: null | components["schemas"]["DonneesDuMatch"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
-            mvp: number[];
             dofd: number[];
         };
         GameParticipantDto: {
@@ -7728,15 +7723,12 @@ export interface components {
             pronostiqueurNom: null | string;
             equipeGagnante: null | string;
             /** Format: int32 */
-            mvpPlayerId: null | number;
-            /** Format: int32 */
             dofdPlayerId: null | number;
         };
         PronosticEvalue: {
             pronostiqueurDiscordId: string;
             pronostiqueurNom: null | string;
             equipeGagnante: null | components["schemas"]["EquipePronostiquee"];
-            mvp: null | components["schemas"]["JoueurPronostique"];
             dofd: null | components["schemas"]["JoueurPronostique"];
         };
         PronosticsDeLaGame: {
@@ -7764,8 +7756,6 @@ export interface components {
             /** Format: int32 */
             gameNumber: number;
             equipeGagnante: null | string;
-            /** Format: int32 */
-            mvpPlayerId: null | number;
             /** Format: int32 */
             dofdPlayerId: null | number;
         };
@@ -7869,7 +7859,6 @@ export interface components {
             fermetureLe: null | string;
             /** Format: int32 */
             votants: number;
-            mvp: components["schemas"]["ResultatDuTitre"];
             dofd: components["schemas"]["ResultatDuTitre"];
         };
         ResumeDesDernieresGames: {
@@ -7890,8 +7879,6 @@ export interface components {
             meilleuresPerfs: number;
             /** Format: int32 */
             aces: number;
-            /** Format: int32 */
-            mvp: number;
             /** Format: int32 */
             dofd: number;
         };
@@ -8194,8 +8181,6 @@ export interface components {
         };
         TitresDuJoueur: {
             /** Format: int32 */
-            mvp: number;
-            /** Format: int32 */
             dofd: number;
         };
         TourCourantResponse: {
@@ -8255,8 +8240,6 @@ export interface components {
         };
         VoterRequest: {
             votantDiscordId: string;
-            /** Format: int32 */
-            mvpPlayerId: null | number;
             /** Format: int32 */
             dofdPlayerId: null | number;
         };

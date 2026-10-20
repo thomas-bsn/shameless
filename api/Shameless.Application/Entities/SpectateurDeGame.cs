@@ -2,7 +2,7 @@ namespace Shameless.Application.Entities;
 
 /// <summary>
 /// Un Spectateur identifié par le bot comme présent dans un salon vocal pendant la Game : il peut
-/// voter pour le MVP et le DOFD de cette Game.
+/// voter pour le DOFD de cette Game.
 /// </summary>
 public class SpectateurDeGame
 {

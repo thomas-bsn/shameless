@@ -3,7 +3,7 @@ using Shameless.Application.Entities;
 
 namespace Shameless.Application.Stats;
 
-/// <summary>Le badge qu'un joueur porte pour une game (à ne pas confondre avec le MVP voté).</summary>
+/// <summary>Le badge qu'un joueur porte pour une game.</summary>
 public enum BadgeDeGame
 {
     /// <summary>La meilleure note de l'Équipe gagnante.</summary>
