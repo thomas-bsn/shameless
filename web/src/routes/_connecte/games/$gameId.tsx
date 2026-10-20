@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { $api, type Schemas } from "@/api/client";
+import { ObjectifsDesEquipes } from "@/components/game-objectifs-equipes";
+import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
-import { OngletReplay, OngletStats } from "@/components/game-stats-onglets";
+import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,24 +43,24 @@ function Recit({ game }: { game: Recap }) {
   return (
     <>
       <Banniere game={game} />
-      <Tabs defaultValue="resume">
+      <Tabs defaultValue="general">
         <TabsList>
-          <TabsTrigger value="resume">Résumé</TabsTrigger>
-          <TabsTrigger value="degats">Dégâts</TabsTrigger>
-          <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          <TabsTrigger value="vision">Vision</TabsTrigger>
+          <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="details">Détails</TabsTrigger>
+          <TabsTrigger value="runes">Runes</TabsTrigger>
           <TabsTrigger value="replay" className="opacity-60">
             Replay
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="resume" className="flex flex-col gap-4">
+        <TabsContent value="general" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <ResumeScoreboard game={game} />}
         </TabsContent>
-        {(["degats", "objectifs", "vision"] as const).map((onglet) => (
-          <TabsContent key={onglet} value={onglet} className="flex flex-col gap-4">
-            {saisieAMain ? <ResumeSansStats game={game} /> : <OngletStats game={game} onglet={onglet} />}
-          </TabsContent>
-        ))}
+        <TabsContent value="details" className="flex flex-col gap-4">
+          {saisieAMain ? <ResumeSansStats game={game} /> : <OngletDetails game={game} />}
+        </TabsContent>
+        <TabsContent value="runes" className="flex flex-col gap-4">
+          {saisieAMain ? <ResumeSansStats game={game} /> : <OngletRunes game={game} />}
+        </TabsContent>
         <TabsContent value="replay">
           <OngletReplay />
         </TabsContent>
@@ -124,6 +126,7 @@ function ResumeScoreboard({ game }: { game: Recap }) {
       {sidesOf(game).map((s) => (
         <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} />
       ))}
+      <ObjectifsDesEquipes game={game} />
     </>
   );
 }
