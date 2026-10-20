@@ -64,14 +64,16 @@ public sealed record ObjectifsDEquipe(
 public static class LectureDeLaGame
 {
     /// <summary>Par PlayerId. La game est chargée avec ses participants, leurs joueurs, leurs corrections et sa Série (joueurs).</summary>
-    public static IReadOnlyDictionary<int, LectureDuJoueur> Calculer(CustomGame game)
+    public static IReadOnlyDictionary<int, LectureDuJoueur> Calculer(CustomGame game) => Lire(game).Lectures;
+
+    /// <summary>La lecture de la game et ce qui a servi à la calculer (stats effectives, totaux d'Équipe), pour ne rien relire.</summary>
+    internal static (IReadOnlyDictionary<int, LectureDuJoueur> Lectures, IReadOnlyDictionary<int, StatsDuParticipant?> Stats,
+        IReadOnlyDictionary<string, NotesDeLaGame.TotauxDEquipe> Totaux, int? DureeSecondes) Lire(CustomGame game)
     {
-        var notes = NotesDeLaGame.Calculer(game);
         var duree = NotesDeLaGame.DureeDe(game);
         var stats = game.Participants.ToDictionary(p => p.PlayerId, ValeursEffectives.Stats);
-        var totaux = game.Participants.Select(p => p.Side).Distinct().ToDictionary(
-            side => side,
-            side => DetailsDuJoueur.TotauxDEquipe.De(game.Participants.Where(p => p.Side == side).Select(p => stats[p.PlayerId])));
+        var totaux = NotesDeLaGame.TotauxParSide(game, stats);
+        var notes = NotesDeLaGame.Calculer(game, stats, totaux, duree);
 
         var classes = game.Participants
             .Where(p => notes[p.PlayerId] is not null)
@@ -87,11 +89,12 @@ public static class LectureDeLaGame
                 : game.EquipeOn(p.Side) == game.WinningTeam ? BadgeDeGame.MeilleurePerf : BadgeDeGame.Ace;
         }
 
-        return game.Participants.ToDictionary(p => p.PlayerId, p =>
+        var lectures = game.Participants.ToDictionary(p => p.PlayerId, p =>
         {
             var rang = classes.IndexOf(p);
             var details = DetailsDuJoueur.Calculer(NotesDeLaGame.RoleJoueDe(game, p, stats[p.PlayerId]), stats[p.PlayerId], duree, totaux[p.Side]);
             return new LectureDuJoueur(notes[p.PlayerId], details, rang >= 0 ? rang + 1 : null, rang >= 0 ? BadgeDe(p) : null);
         });
+        return (lectures, stats, totaux, duree);
     }
 }

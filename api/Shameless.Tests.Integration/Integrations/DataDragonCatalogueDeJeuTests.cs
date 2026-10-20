@@ -55,6 +55,59 @@ public class DataDragonCatalogueDeJeuTests
         await Assert.ThrowsAsync<CatalogueIndisponibleException>(() => catalogue.GetAsync(Ct));
     }
 
+    [Fact]
+    public async Task Une_panne_au_rafraichissement_sert_le_catalogue_perime_et_attend_avant_de_reessayer()
+    {
+        var horloge = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        var panne = false;
+        var appels = 0;
+        var catalogue = new DataDragonCatalogueDeJeu(new FakeHttpClientFactory(new Repondeur(chemin =>
+        {
+            appels++;
+            return panne ? new HttpResponseMessage(HttpStatusCode.InternalServerError) : Reponse(chemin);
+        })), horloge);
+        var premier = await catalogue.GetAsync(Ct);
+        var appelsDuChargement = appels;
+
+        horloge.Advance(TimeSpan.FromHours(7));
+        panne = true;
+        var enPanne = await catalogue.GetAsync(Ct);
+        var appelsApresLaPremierePanne = appels;
+        var encore = await catalogue.GetAsync(Ct);
+
+        Assert.Same(premier, enPanne);
+        Assert.Same(premier, encore);
+        Assert.True(appelsApresLaPremierePanne > appelsDuChargement); // une tentative a bien eu lieu
+        Assert.Equal(appelsApresLaPremierePanne, appels);             // aucune autre avant le délai
+
+        horloge.Advance(TimeSpan.FromMinutes(10));
+        panne = false;
+        var rafraichi = await catalogue.GetAsync(Ct);
+
+        Assert.NotSame(premier, rafraichi);
+    }
+
+    [Fact]
+    public async Task Sans_aucun_catalogue_en_memoire_une_panne_reste_indisponible_sans_marteler_Data_Dragon()
+    {
+        var horloge = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        var appels = 0;
+        var catalogue = new DataDragonCatalogueDeJeu(new FakeHttpClientFactory(new Repondeur(_ =>
+        {
+            appels++;
+            return new HttpResponseMessage(HttpStatusCode.InternalServerError);
+        })), horloge);
+
+        await Assert.ThrowsAsync<CatalogueIndisponibleException>(() => catalogue.GetAsync(Ct));
+        var apresLaPremiere = appels;
+        await Assert.ThrowsAsync<CatalogueIndisponibleException>(() => catalogue.GetAsync(Ct));
+        Assert.Equal(apresLaPremiere, appels);
+
+        horloge.Advance(TimeSpan.FromMinutes(10));
+        await Assert.ThrowsAsync<CatalogueIndisponibleException>(() => catalogue.GetAsync(Ct));
+        Assert.True(appels > apresLaPremiere);
+    }
+
     private static DataDragonCatalogueDeJeu Catalogue(Func<string, HttpResponseMessage> repondre) =>
         new(new FakeHttpClientFactory(new Repondeur(repondre)), TimeProvider.System);
 

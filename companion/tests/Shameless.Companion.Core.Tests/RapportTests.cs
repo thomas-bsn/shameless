@@ -81,6 +81,24 @@ public class RapportTests
     }
 
     [Fact]
+    public void Un_teamPosition_deja_present_dans_les_stats_n_est_pas_remplace_et_un_vide_l_est()
+    {
+        var eog = Modifie(e =>
+        {
+            var joueurs = e["teams"]![0]!["players"]!.AsArray();
+            joueurs[0]!["stats"]!["teamPosition"] = "JUNGLE";
+            joueurs[0]!["detectedTeamPosition"] = "TOP";
+            joueurs[1]!["stats"]!["teamPosition"] = "";
+            joueurs[1]!["detectedTeamPosition"] = "BOTTOM";
+        });
+
+        var joueurs = Construit(eog).Joueurs;
+
+        Assert.Equal("JUNGLE", JsonNode.Parse(joueurs[0].Stats.GetRawText())!["teamPosition"]!.GetValue<string>());
+        Assert.Equal("BOTTOM", JsonNode.Parse(joueurs[1].Stats.GetRawText())!["teamPosition"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void Les_emplacements_d_objets_vides_sont_gardes_et_un_joueur_sans_role_ni_objets_reste_rapporte()
     {
         var eog = Modifie(e =>

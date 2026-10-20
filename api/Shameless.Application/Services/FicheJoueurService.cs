@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using Shameless.Application.Clips;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Joueurs;
 using Shameless.Application.Votes;
@@ -11,8 +13,11 @@ public class FicheJoueurService
     private readonly ICustomGameRepository _games;
     private readonly VotesService _votes;
 
-    public FicheJoueurService(IPlayerRepository players, ICustomGameRepository games, VotesService votes)
+    private readonly TimeZoneInfo _fuseau;
+
+    public FicheJoueurService(IPlayerRepository players, ICustomGameRepository games, VotesService votes, IOptions<InstanceOptions> instance)
     {
+        _fuseau = instance.Value.Fuseau();
         _players = players;
         _games = games;
         _votes = votes;
@@ -23,6 +28,6 @@ public class FicheJoueurService
     {
         if (await _players.GetWithUserAsync(playerId) is not { } joueur) return null;
         var games = await _games.GetCompletedGamesOfPlayerAsync(playerId);
-        return FicheJoueur.Calculer(joueur, games, await _votes.GetResultatsDesGamesAsync(games), filtre);
+        return FicheJoueur.Calculer(joueur, games, await _votes.GetResultatsDesGamesAsync(games), filtre, _fuseau);
     }
 }

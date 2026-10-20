@@ -156,6 +156,25 @@ public class NoteDePerformanceTests
     }
 
     [Fact]
+    public void La_victoire_ne_compte_qu_avec_au_moins_quatre_autres_criteres_mesures()
+    {
+        var stats = Stats(kills: 10, deaths: 2, assists: 5, minions: 200);
+        var role = RoleJoue.Determiner(Role.Mid);
+
+        // Trois critères (KDA, KP, part des kills) : la victoire (jusqu'à 34 % de la note) est omise.
+        var troisSansVictoire = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: null)!;
+        var troisPerdue = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: null, gagnee: false)!;
+        Assert.Equal(3, troisPerdue.Composantes.Count);
+        Assert.DoesNotContain(troisPerdue.Composantes, c => c.Critere == CritereDeNote.Victoire);
+        Assert.Equal(troisSansVictoire.Note, troisPerdue.Note);
+
+        // Quatre critères (avec le CS par minute) : la victoire compte.
+        var quatrePerdue = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: QuaranteMinutes, gagnee: false)!;
+        Assert.Equal(5, quatrePerdue.Composantes.Count);
+        Assert.Contains(quatrePerdue.Composantes, c => c.Critere == CritereDeNote.Victoire);
+    }
+
+    [Fact]
     public void Sans_mort_le_kda_vaut_kills_plus_assists_et_sans_kill_d_equipe_la_participation_est_omise()
     {
         var note = NoteDePerformance.Calculer(Stats(kills: 0, deaths: 0, assists: 2), RoleJoue.Determiner(Role.Top), killsDeLEquipe: 0, dureeSecondes: TrenteMinutes);
@@ -252,6 +271,65 @@ public class NoteDePerformanceTests
         Assert.DoesNotContain(CritereDeNote.PartDeLOr, criteres);
         Assert.Contains(CritereDeNote.OrParMinute, criteres);        // l'or du joueur seul suffit au « par minute »
         Assert.Null(NotesDeLaGame.Calculer(game)[2]);                // sans stats, pas de note
+    }
+
+    private static CustomGame GameDeDeux(Action<CustomGameParticipant>? corriger = null)
+    {
+        string Stats(int kills, int degats, int or) =>
+            $$"""{ "kills": {{kills}}, "deaths": 2, "assists": 3, "totalDamageDealtToChampions": {{degats}}, "goldEarned": {{or}}, "teamPosition": "MIDDLE" }""";
+        var game = new CustomGame
+        {
+            TeamASide = "blue",
+            WinningTeam = Equipes.A,
+            RiotMatchData = """{ "gameDuration": 1800 }""",
+            Participants =
+            {
+                Participant(1, "blue", Stats(4, 20000, 15000)),
+                Participant(2, "blue", Stats(6, 10000, 10000)),
+                Participant(3, "red", Stats(8, 25000, 20000))
+            }
+        };
+        corriger?.Invoke(game.Participants.Single(p => p.PlayerId == 2));
+        return game;
+    }
+
+    [Fact]
+    public void La_note_d_origine_se_calcule_sur_les_stats_d_origine_du_joueur_et_de_toute_son_equipe()
+    {
+        var sansCorrection = NotesDeLaGame.Calculer(GameDeDeux());
+        var corrigee = GameDeDeux(p => p.Corrections.Add(new CorrectionDeStat { Champ = ChampCorrigeable.Kills, Valeur = "20" }));
+
+        var notes = NotesDeLaGame.Calculer(corrigee);
+
+        Assert.Equal(sansCorrection[2]!.Note, notes[2]!.NoteOrigine);
+        Assert.Equal(sansCorrection[1]!.Note, notes[1]!.NoteOrigine); // le coéquipier corrigé change les totaux de l'Équipe
+        Assert.NotEqual(sansCorrection[1]!.Note, notes[1]!.Note);
+    }
+
+    [Fact]
+    public void Une_correction_de_champion_ou_de_note_ne_change_pas_la_note_d_origine()
+    {
+        var game = GameDeDeux(p => p.Corrections.Add(new CorrectionDeStat { Champ = ChampCorrigeable.Note, Valeur = "99" }));
+        var sansCorrection = NotesDeLaGame.Calculer(GameDeDeux());
+
+        var notes = NotesDeLaGame.Calculer(game);
+
+        Assert.Equal(99, notes[2]!.Note);
+        Assert.Equal(sansCorrection[2]!.Note, notes[2]!.NoteOrigine);
+        Assert.Equal(sansCorrection[1]!.Note, notes[1]!.NoteOrigine);
+    }
+
+    [Fact]
+    public void La_page_de_la_game_n_affiche_pas_de_part_sur_un_total_d_equipe_incomplet()
+    {
+        var game = GameDeDeux();
+        game.Participants.Add(Participant(4, "blue", stats: null)); // un coéquipier sans stats : les totaux de dégâts et d'or sont partiels
+
+        var details = LectureDeLaGame.Calculer(game)[1].Details;
+
+        Assert.Null(details.PartDesDegats);
+        Assert.Null(details.PartDeLOr);
+        Assert.Equal(0.4, details.PartDesKills); // les kills connus : 4 / 10, comme pour la note
     }
 
     [Fact]

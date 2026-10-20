@@ -51,7 +51,8 @@ La note est la moyenne pondérée des scores de dix critères et d'une composant
   ou les kills de l'Équipe pour la KP et la part des kills) est omis, et les poids des critères
   restants sont renormalisés. Les parts de dégâts et d'or demandent les stats de tous les
   participants de l'Équipe (une part sur un total partiel serait gonflée) ; la victoire demande
-  que la game ait un vainqueur. Sans aucun critère mesurable (la victoire seule ne suffit pas),
+  que la game ait un vainqueur et au moins quatre autres critères mesurés (le calage a été fait
+  sur des jeux complets : avec moins, la victoire pèserait jusqu'à 34 % de la note). Sans aucun critère mesurable (la victoire seule ne suffit pas),
   pas de note : game saisie à la main, Joueur absent du rapport.
 - **Rôle noté** : la position transmise par la partie, sinon le rôle de l'Autorole dans la
   Série, sinon le rôle principal SoloQ du Joueur. La source du rôle est exposée avec la note.
