@@ -25,6 +25,14 @@ export function groupByCostTier<P extends { prenom: string; currentCost: number 
   );
 }
 
+/** Les six marches de l'escalier, du D au SS ; dans une marche, par prénom (le cost ne départage pas). */
+export function stairSteps<P extends { prenom: string; currentCost: number }>(players: P[]) {
+  return [...COST_TIERS].reverse().map((tier) => ({
+    tier,
+    players: players.filter((p) => costTier(p.currentCost) === tier).sort((a, b) => a.prenom.localeCompare(b.prenom, "fr")),
+  }));
+}
+
 /** Les Joueurs du plus gros cost au plus petit, à égalité par prénom. */
 export function rankByCost<P extends { prenom: string; currentCost: number }>(players: P[]) {
   return [...players].sort((a, b) => b.currentCost - a.currentCost || a.prenom.localeCompare(b.prenom, "fr"));

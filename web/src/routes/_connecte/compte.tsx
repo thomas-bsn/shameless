@@ -3,8 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRightIcon, LinkIcon, MoonIcon, RefreshCwIcon, SunIcon, UnlinkIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
-import { CourbeDuCost, DernieresGames } from "@/components/fiche-joueur";
-import { ErrorAlert } from "@/components/query-state";
 import { SelecteurDePeak, type Peak } from "@/components/selecteur-de-peak";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,14 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COST_TIERS, costText, costTier, evolutionDuCost } from "@/lib/cost";
-import { decimalLabel, entierLabel, pourcentLabel } from "@/lib/fiche";
+import { costText, costTier } from "@/lib/cost";
+import { entierLabel } from "@/lib/fiche";
 import { matchesPlayer, myPlayerQuery } from "@/lib/players";
 import { problemMessage } from "@/lib/problem";
 import { normalizeTier, rankLabel, roleLabel } from "@/lib/ranks";
 import { useTheme } from "@/lib/theme";
 import { useDeconnexion } from "@/lib/use-deconnexion";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_connecte/compte")({
   component: Compte,
@@ -114,122 +111,85 @@ function CompteDiscord() {
   );
 }
 
-/** Le Profil d'un Utilisateur lié : cost et customs d'abord, SoloQ discrète sous le Joueur lié. */
+/** La vue privée d'un Utilisateur lié : seulement ce que le profil public n'a pas (Joueur lié, résumé, accès). */
 function ProfilDuJoueur({ player }: { player: Player }) {
   const fiche = $api.useQuery("get", "/players/{playerId}/fiche", { params: { path: { playerId: player.id } } });
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+    <div className="grid items-start gap-4 lg:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-4">
-        <MonCost player={player} />
-        <MesCustoms playerId={player.id} fiche={fiche} />
+        <JoueurLie player={player} comptes={fiche.data?.comptesDiscord ?? []} />
       </div>
       <div className="flex min-w-0 flex-col gap-4">
-        {fiche.data ? <DernieresGames games={fiche.data.games} /> : null}
-        <JoueurLie player={player} comptes={fiche.data?.comptesDiscord ?? []} />
+        <ResumePublic player={player} noteMoyenne={fiche.data?.stats.noteMoyenne} />
+        <AccesRapides />
         <Preferences />
       </div>
     </div>
   );
 }
 
-function MonCost({ player }: { player: Player }) {
-  const tier = costTier(player.currentCost);
-  const evolution = evolutionDuCost(player.costEvolution);
+/** Trois chiffres de ce que les autres voient, et le chemin vers le profil public. */
+function ResumePublic({ player, noteMoyenne }: { player: Player; noteMoyenne: number | null | undefined }) {
+  const rang = player.rankTier ? rankLabel(player.rankTier, player.rankDivision, player.lp) : ABSENT;
+  const chiffres = [
+    { libelle: "Rang", valeur: rang },
+    { libelle: "Cost", valeur: `${costText(player.currentCost)} · ${costTier(player.currentCost)}` },
+    { libelle: "Note moy.", valeur: noteMoyenne == null ? ABSENT : entierLabel(noteMoyenne) },
+  ];
 
   return (
-    <Bloc titre="Mon cost">
-      <div className="flex items-center gap-4">
-        <span
-          aria-label={`Tier ${tier}`}
-          role="img"
-          className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-3xl font-bold text-primary-foreground"
-        >
-          {tier}
-        </span>
-        <div className="flex flex-col">
-          <span className="text-3xl leading-none font-bold tabular-nums">{costText(player.currentCost)}</span>
-          <span className="text-sm text-muted-foreground">
-            {evolution ? (
-              <span role="img" aria-label={evolution.label}>
-                {evolution.texte}
-              </span>
-            ) : (
-              ABSENT
-            )}
-          </span>
-        </div>
-      </div>
-      <ol aria-label="Échelle des tiers" className="flex gap-1">
-        {[...COST_TIERS].reverse().map((t) => (
-          <li
-            key={t}
-            aria-current={t === tier ? "true" : undefined}
-            className={cn(
-              "flex-1 rounded-sm bg-muted py-1 text-center font-mono text-xs font-semibold text-muted-foreground",
-              t === tier && "bg-primary text-primary-foreground",
-            )}
-          >
-            {t}
-          </li>
+    <Bloc titre="Ce que les autres voient">
+      <dl className="grid grid-cols-3 gap-2 text-center">
+        {chiffres.map((c) => (
+          <div key={c.libelle} className="rounded-lg bg-muted/50 px-1.5 py-2">
+            <dt className="text-xs text-muted-foreground">{c.libelle}</dt>
+            <dd className="mt-0.5 text-sm font-semibold tabular-nums">{c.valeur}</dd>
+          </div>
         ))}
-      </ol>
-      <CourbeDuCost playerId={player.id} />
+      </dl>
+      <Link
+        to="/joueurs/$playerId"
+        params={{ playerId: String(player.id) }}
+        className="inline-flex items-center gap-1 text-sm font-medium underline underline-offset-4"
+      >
+        Voir mon profil public
+        <ArrowRightIcon className="size-4" />
+      </Link>
     </Bloc>
   );
 }
 
-function Ligne({ libelle, children }: { libelle: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <dt className="text-muted-foreground">{libelle}</dt>
-      <dd className="text-right font-semibold tabular-nums">{children}</dd>
-    </div>
-  );
-}
+/** Raccourcis vers l'Administration, pour les Administrateurs et le Superadministrateur seulement. */
+function AccesRapides() {
+  const { user } = Route.useRouteContext();
+  if (user.role !== "Administrateur" && user.role !== "Superadministrateur") return null;
 
-function MesCustoms({
-  playerId,
-  fiche,
-}: {
-  playerId: number;
-  fiche: { isPending: boolean; isError: boolean; error: unknown; data?: Schemas["FicheJoueur"] };
-}) {
   return (
-    <Bloc titre="Mes customs">
-      {fiche.isPending ? (
-        <Skeleton className="h-40 w-full" />
-      ) : fiche.isError || !fiche.data ? (
-        <ErrorAlert error={fiche.error} />
-      ) : (
-        <>
-          <dl className="flex flex-col gap-2">
-            <Ligne libelle="Games">{fiche.data.stats.gamesJouees}</Ligne>
-            <Ligne libelle="Winrate">{pourcentLabel(fiche.data.stats.winrate)}</Ligne>
-            <Ligne libelle="KDA">{decimalLabel(fiche.data.stats.kda)}</Ligne>
-            <Ligne libelle="Note moyenne">
-              {fiche.data.stats.noteMoyenne == null ? ABSENT : `${entierLabel(fiche.data.stats.noteMoyenne)} / 100`}
-            </Ligne>
-            <Ligne libelle="Participation aux kills">{pourcentLabel(fiche.data.stats.participationAuxKills)}</Ligne>
-            <Ligne libelle="MVP · DOFD">
-              {fiche.data.titres.mvp} · {fiche.data.titres.dofd}
-            </Ligne>
-          </dl>
-          <Link
-            to="/joueurs/$playerId"
-            params={{ playerId: String(playerId) }}
-            className="inline-flex items-center gap-1 text-sm font-medium underline underline-offset-4"
-          >
-            Voir ma fiche joueur
-            <ArrowRightIcon className="size-4" />
+    <Bloc titre="Accès rapides">
+      <ul className="flex flex-col divide-y text-sm">
+        <li>
+          <Link to="/administration" className="flex items-center justify-between gap-3 py-2 font-medium hover:underline">
+            Administration
+            <span className="font-normal text-muted-foreground">Games, cost, peak, Clips du Fond</span>
           </Link>
-        </>
-      )}
+        </li>
+        <li>
+          <Link
+            to="/administration"
+            search={{ onglet: "administrateurs" }}
+            className="flex items-center justify-between gap-3 py-2 font-medium hover:underline"
+          >
+            Administrateurs
+            <span className="font-normal text-muted-foreground">Nommer ou retirer</span>
+          </Link>
+        </li>
+      </ul>
     </Bloc>
   );
 }
 
-/** Le Joueur lié : RiotId, changement et déliage ; la SoloQ (rang, rôle principal, peak) reste discrète. */
+/** Le Joueur lié : RiotId, changement et déliage ; rôle principal et peak restent discrets. */
 function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["CompteDiscordLie"][] }) {
   const { user } = Route.useRouteContext();
   const [changement, setChangement] = useState(false);
@@ -257,7 +217,6 @@ function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["Comp
     },
   });
 
-  const rang = player.rankTier ? rankLabel(player.rankTier, player.rankDivision, player.lp) : ABSENT;
   const role = roleLabel(player.mainRole) ?? ABSENT;
   const aUnPeak = normalizeTier(player.peakTier) !== "UNRANKED";
 
@@ -273,7 +232,7 @@ function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["Comp
             </Button>
             <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDelier(true)}>
               <UnlinkIcon />
-              Délier
+              Me délier
             </Button>
           </div>
         }
@@ -282,10 +241,6 @@ function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["Comp
         <ComptesDiscordLies comptes={comptes} moi={user.discordUserId} />
         <AvertissementLiaison />
         <dl className="flex flex-col gap-2 border-t pt-3 text-sm text-muted-foreground">
-          <div className="flex items-center justify-between gap-3">
-            <dt>SoloQ</dt>
-            <dd className="text-foreground">{rang}</dd>
-          </div>
           <div className="flex items-center justify-between gap-3">
             <dt>Rôle principal</dt>
             <dd className="text-foreground">{role}</dd>
