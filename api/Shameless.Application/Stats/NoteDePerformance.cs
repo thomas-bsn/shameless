@@ -21,6 +21,12 @@ public sealed record ComposanteDeNote(CritereDeNote Critere, double Valeur, int 
 public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole SourceDuRole, IReadOnlyList<ComposanteDeNote> Composantes, int? NoteOrigine = null)
 {
     /// <summary>
+    /// Le nombre de critères mesurés (hors victoire) à partir duquel la victoire compte : le calage a été fait
+    /// sur des jeux complets, et avec peu de critères elle pèserait jusqu'à 34 % de la note.
+    /// </summary>
+    internal const int CriteresMinimumPourLaVictoire = 4;
+
+    /// <summary>
     /// La note d'un Joueur à partir de ses stats, de son rôle, des kills, dégâts et de l'or de son
     /// Équipe, de la durée de la game et de son résultat ; null si aucun critère du rôle n'est
     /// mesurable. Le résultat seul ne fait pas une note.
@@ -40,7 +46,7 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
             .Select(r => (Critere: r.Key, Valeur: mesures[r.Key], Score: Score(mesures[r.Key], r.Value), r.Value.Poids))
             .ToList();
         if (notes.Count == 0) return null;
-        if (gagnee is { } victoire && references.PoidsVictoire > 0)
+        if (gagnee is { } victoire && references.PoidsVictoire > 0 && notes.Count >= CriteresMinimumPourLaVictoire)
             notes.Add((CritereDeNote.Victoire, victoire ? 1 : 0, victoire ? 100 : 0, references.PoidsVictoire));
 
         double poidsTotal = notes.Sum(n => n.Poids);

@@ -156,6 +156,25 @@ public class NoteDePerformanceTests
     }
 
     [Fact]
+    public void La_victoire_ne_compte_qu_avec_au_moins_quatre_autres_criteres_mesures()
+    {
+        var stats = Stats(kills: 10, deaths: 2, assists: 5, minions: 200);
+        var role = RoleJoue.Determiner(Role.Mid);
+
+        // Trois critères (KDA, KP, part des kills) : la victoire (jusqu'à 34 % de la note) est omise.
+        var troisSansVictoire = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: null)!;
+        var troisPerdue = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: null, gagnee: false)!;
+        Assert.Equal(3, troisPerdue.Composantes.Count);
+        Assert.DoesNotContain(troisPerdue.Composantes, c => c.Critere == CritereDeNote.Victoire);
+        Assert.Equal(troisSansVictoire.Note, troisPerdue.Note);
+
+        // Quatre critères (avec le CS par minute) : la victoire compte.
+        var quatrePerdue = NoteDePerformance.Calculer(stats, role, killsDeLEquipe: 20, dureeSecondes: QuaranteMinutes, gagnee: false)!;
+        Assert.Equal(5, quatrePerdue.Composantes.Count);
+        Assert.Contains(quatrePerdue.Composantes, c => c.Critere == CritereDeNote.Victoire);
+    }
+
+    [Fact]
     public void Sans_mort_le_kda_vaut_kills_plus_assists_et_sans_kill_d_equipe_la_participation_est_omise()
     {
         var note = NoteDePerformance.Calculer(Stats(kills: 0, deaths: 0, assists: 2), RoleJoue.Determiner(Role.Top), killsDeLEquipe: 0, dureeSecondes: TrenteMinutes);
