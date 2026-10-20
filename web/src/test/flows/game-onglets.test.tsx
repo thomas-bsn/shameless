@@ -2,12 +2,13 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
-import { user } from "@/test/fixtures";
+import { ORIGINE_VIDE, STATS_VIDES, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 type Stats = Schemas["StatsDuParticipant"];
 
 const stats = (overrides: Partial<Stats> = {}): Stats => ({
+  ...STATS_VIDES,
   kills: 1,
   deaths: 1,
   assists: 1,
@@ -41,6 +42,7 @@ const participant = (playerId: number, prenom: string, s: Stats | null): Schemas
   stats: s,
   performance: null,
   champsCorriges: [],
+  ...ORIGINE_VIDE,
 });
 
 /** Équipe A (rouge) : Alice 20 k + Chloé 10 k de dégâts ; équipe B (bleue) : Bob 15 k + Dan 5 k. Game de 30 min. */

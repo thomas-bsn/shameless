@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import type { Schemas } from "@/api/client";
 import { mockApi, problem } from "@/test/api";
-import { user } from "@/test/fixtures";
+import { ORIGINE_VIDE, STATS_VIDES, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const participant = (
@@ -20,6 +20,7 @@ const participant = (
   stats: null,
   performance: null,
   champsCorriges: [],
+  ...ORIGINE_VIDE,
   ...overrides,
 });
 
@@ -29,6 +30,7 @@ const stats = (
   assists: number,
   overrides: Partial<Schemas["StatsDuParticipant"]> = {},
 ): Schemas["StatsDuParticipant"] => ({
+  ...STATS_VIDES,
   kills,
   deaths,
   assists,
@@ -55,6 +57,7 @@ const note = (value: number): Schemas["NoteDePerformance"] => ({
   role: "Top",
   sourceDuRole: "Partie",
   composantes: [],
+  noteOrigine: null,
 });
 
 const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["GameRecapResponse"] => ({

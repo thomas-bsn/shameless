@@ -7,20 +7,11 @@ using Shameless.Application.Picker;
 namespace Shameless.Application.Services;
 
 /// <summary>
-/// Les champs à corriger pour un joueur ; les champs absents (null) ne changent pas. Le CS est le
-/// total (sbires et monstres neutres), la voie un rôle (Top, Jungle, Mid, Adc, Support), la note va de 0 à 100.
+/// Les champs à corriger pour un joueur : un nombre pour une stat, un objet, une rune ou la note, un texte
+/// pour le champion (id Data Dragon) et la voie (Top, Jungle, Mid, Adc, Support). Un champ absent ne change
+/// pas. Le CS est le total (sbires et monstres neutres), la note va de 0 à 100.
 /// </summary>
-public sealed record DemandeDeCorrectionDeStats(
-    string? Champion = null,
-    string? Position = null,
-    int? Kills = null,
-    int? Deaths = null,
-    int? Assists = null,
-    int? Cs = null,
-    int? GoldEarned = null,
-    int? DamageToChampions = null,
-    int? VisionScore = null,
-    int? Note = null);
+public sealed record DemandeDeCorrectionDeStats(IReadOnlyDictionary<ChampCorrigeable, object> Champs);
 
 /// <summary>
 /// La correction des stats d'un joueur dans une game terminée par un Administrateur (ADR 0009) : une
@@ -30,8 +21,6 @@ public sealed record DemandeDeCorrectionDeStats(
 /// </summary>
 public sealed class CorrectionDeStatsService
 {
-    private const int StatMax = 1_000_000;
-
     private readonly ICustomGameRepository _games;
     private readonly CostCalculationService _costs;
     private readonly TimeProvider _clock;
@@ -120,36 +109,33 @@ public sealed class CorrectionDeStatsService
         var valeurs = new List<(ChampCorrigeable, string)>();
         string? detail = null;
 
-        void Stat(ChampCorrigeable champ, int? valeur, int max = StatMax)
+        foreach (var (champ, valeur) in d.Champs)
         {
-            if (valeur is not { } v) return;
-            if (v < 0 || v > max)
-                detail ??= $"Le champ « {champ.Nom()} » va de 0 à {max}.";
-            valeurs.Add((champ, v.ToString(CultureInfo.InvariantCulture)));
+            switch (valeur)
+            {
+                case string texte when champ == ChampCorrigeable.Champion:
+                    var champion = texte.Trim();
+                    if (champion.Length == 0 || champion.Length > RapportDeGame.LongueurMaxChampionId)
+                        detail ??= "Le champion est un identifiant Data Dragon (ex. « LeeSin »).";
+                    valeurs.Add((champ, champion));
+                    break;
+                case string texte when champ == ChampCorrigeable.Position:
+                    if (Enum.TryParse<Role>(texte, ignoreCase: true, out var role) && Enum.IsDefined(role))
+                        valeurs.Add((champ, role.ToString()));
+                    else
+                        detail ??= "La voie est Top, Jungle, Mid, Adc ou Support.";
+                    break;
+                case int nombre when !champ.Definition().Texte:
+                    var (_, min, max) = champ.Definition();
+                    if (nombre < min || nombre > max)
+                        detail ??= $"Le champ « {champ.Nom()} » va de {min} à {max}.";
+                    valeurs.Add((champ, nombre.ToString(CultureInfo.InvariantCulture)));
+                    break;
+                default:
+                    detail ??= $"La valeur du champ « {champ.Nom()} » n'a pas le bon type.";
+                    break;
+            }
         }
-
-        if (d.Champion != null)
-        {
-            var champion = d.Champion.Trim();
-            if (champion.Length == 0 || champion.Length > RapportDeGame.LongueurMaxChampionId)
-                detail ??= "Le champion est un identifiant Data Dragon (ex. « LeeSin »).";
-            valeurs.Add((ChampCorrigeable.Champion, champion));
-        }
-        if (d.Position != null)
-        {
-            if (Enum.TryParse<Role>(d.Position, ignoreCase: true, out var role) && Enum.IsDefined(role))
-                valeurs.Add((ChampCorrigeable.Position, role.ToString()));
-            else
-                detail ??= "La voie est Top, Jungle, Mid, Adc ou Support.";
-        }
-        Stat(ChampCorrigeable.Kills, d.Kills);
-        Stat(ChampCorrigeable.Deaths, d.Deaths);
-        Stat(ChampCorrigeable.Assists, d.Assists);
-        Stat(ChampCorrigeable.Cs, d.Cs);
-        Stat(ChampCorrigeable.GoldEarned, d.GoldEarned);
-        Stat(ChampCorrigeable.DamageToChampions, d.DamageToChampions);
-        Stat(ChampCorrigeable.VisionScore, d.VisionScore);
-        Stat(ChampCorrigeable.Note, d.Note, max: 100);
 
         if (detail == null && valeurs.Count == 0)
             detail = "Indiquez au moins un champ à corriger.";

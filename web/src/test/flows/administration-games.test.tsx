@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { shiftMonth } from "@/lib/history";
 import { json, mockApi, problem } from "@/test/api";
-import { player, user } from "@/test/fixtures";
+import { ORIGINE_VIDE, STATS_VIDES, player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 type Participant = Schemas["GameHistoryParticipantDto"];
@@ -18,6 +18,7 @@ const participant = (playerId: number, prenom: string, overrides: Partial<Partic
   cost: 3,
   championId: "Ahri",
   stats: {
+    ...STATS_VIDES,
     kills: 5,
     deaths: 2,
     assists: 7,
@@ -37,8 +38,9 @@ const participant = (playerId: number, prenom: string, overrides: Partial<Partic
     champLevel: 16,
     position: "Mid",
   },
-  performance: { note: 70, role: "Mid", sourceDuRole: "Partie", composantes: [] },
+  performance: { note: 70, role: "Mid", sourceDuRole: "Partie", composantes: [], noteOrigine: null },
   champsCorriges: [],
+  ...ORIGINE_VIDE,
   ...overrides,
 });
 

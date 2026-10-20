@@ -300,6 +300,62 @@ function StatsDesJoueurs({ game, onErreur }: { game: Recap } & SurErreur) {
   );
 }
 
+const CORPS_VIDE: Schemas["CorrectPlayerStatsRequest"] = {
+  champion: null,
+  position: null,
+  kills: null,
+  deaths: null,
+  assists: null,
+  cs: null,
+  goldEarned: null,
+  damageToChampions: null,
+  visionScore: null,
+  note: null,
+  champLevel: null,
+  spell1Id: null,
+  spell2Id: null,
+  largestKillingSpree: null,
+  killingSprees: null,
+  doubleKills: null,
+  tripleKills: null,
+  quadraKills: null,
+  pentaKills: null,
+  minionsKilled: null,
+  neutralMinionsKilled: null,
+  goldSpent: null,
+  physicalDamageToChampions: null,
+  magicDamageToChampions: null,
+  trueDamageToChampions: null,
+  damageTaken: null,
+  totalHeal: null,
+  damageShielded: null,
+  timeCcingOthers: null,
+  wardsPlaced: null,
+  wardsKilled: null,
+  controlWardsBought: null,
+  damageToObjectives: null,
+  turretKills: null,
+  dragonKills: null,
+  baronKills: null,
+  inhibitorKills: null,
+  roleBoundItem: null,
+  perkPrimaryStyle: null,
+  perkSubStyle: null,
+  item0: null,
+  item1: null,
+  item2: null,
+  item3: null,
+  item4: null,
+  item5: null,
+  item6: null,
+  perk0: null,
+  perk1: null,
+  perk2: null,
+  perk3: null,
+  perk4: null,
+  perk5: null,
+};
+
 function StatsForm({ gameId, participant, onErreur }: { gameId: number; participant: Participant } & SurErreur) {
   const relire = useRelire();
   const initiales = valeursDe(participant);
@@ -311,18 +367,7 @@ function StatsForm({ gameId, participant, onErreur }: { gameId: number; particip
 
   const modifies = CHAMPS.filter((c) => valeurs[c.nom] !== initiales[c.nom] && valeurs[c.nom].trim() !== "");
   const enregistrer = () => {
-    const corps: Schemas["CorrectPlayerStatsRequest"] = {
-      champion: null,
-      position: null,
-      kills: null,
-      deaths: null,
-      assists: null,
-      cs: null,
-      goldEarned: null,
-      damageToChampions: null,
-      visionScore: null,
-      note: null,
-    };
+    const corps: Schemas["CorrectPlayerStatsRequest"] = { ...CORPS_VIDE };
     for (const c of modifies) {
       (corps as Record<ChampStat, string | number | null>)[c.nom] = c.texte ? valeurs[c.nom].trim() : Number(valeurs[c.nom]);
     }

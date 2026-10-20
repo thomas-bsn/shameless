@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
-import { user } from "@/test/fixtures";
+import { ORIGINE_VIDE, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
@@ -18,6 +18,7 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
     stats: null,
     performance: null,
     champsCorriges: [],
+    ...ORIGINE_VIDE,
   }));
 
 const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({

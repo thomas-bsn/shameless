@@ -40,10 +40,17 @@ public static class NotesDeLaGame
         var role = RoleJoue.Determiner(stats?.Position, AutoroleDe(game, participant.PlayerId), Autorole.RolePrincipal(participant.Player.MainRole));
         var calculee = stats is null ? null : NoteDePerformance.Calculer(stats, role, killsDeLEquipe, dureeSecondes);
 
+        // La note sur les stats d'origine, pour l'afficher à côté d'une valeur corrigée.
+        int? origine = participant.Corrections.Count == 0 ? calculee?.Note
+            : ValeursEffectives.StatsOrigine(participant) is { } brutes
+                ? NoteDePerformance.Calculer(brutes, RoleJoue.Determiner(brutes.Position, AutoroleDe(game, participant.PlayerId),
+                    Autorole.RolePrincipal(participant.Player.MainRole)), killsDeLEquipe, dureeSecondes)?.Note
+                : null;
+
         // Une note corrigée par un admin remplace la note calculée (sans composantes si rien n'était mesurable).
         return ValeursEffectives.NoteCorrigee(participant) is { } corrigee
-            ? (calculee ?? new NoteDePerformance(corrigee, role.Role, role.Source, [])) with { Note = corrigee }
-            : calculee;
+            ? (calculee ?? new NoteDePerformance(corrigee, role.Role, role.Source, [])) with { Note = corrigee, NoteOrigine = origine }
+            : calculee is null ? null : calculee with { NoteOrigine = origine };
     }
 
     /// <summary>La durée de la game envoyée par le Companion, null sans données.</summary>

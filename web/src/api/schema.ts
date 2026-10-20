@@ -6698,6 +6698,92 @@ export interface components {
             visionScore: null | number;
             /** Format: int32 */
             note: null | number;
+            /** Format: int32 */
+            champLevel: null | number;
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            /** Format: int32 */
+            largestKillingSpree: null | number;
+            /** Format: int32 */
+            killingSprees: null | number;
+            /** Format: int32 */
+            doubleKills: null | number;
+            /** Format: int32 */
+            tripleKills: null | number;
+            /** Format: int32 */
+            quadraKills: null | number;
+            /** Format: int32 */
+            pentaKills: null | number;
+            /** Format: int32 */
+            minionsKilled: null | number;
+            /** Format: int32 */
+            neutralMinionsKilled: null | number;
+            /** Format: int32 */
+            goldSpent: null | number;
+            /** Format: int32 */
+            physicalDamageToChampions: null | number;
+            /** Format: int32 */
+            magicDamageToChampions: null | number;
+            /** Format: int32 */
+            trueDamageToChampions: null | number;
+            /** Format: int32 */
+            damageTaken: null | number;
+            /** Format: int32 */
+            totalHeal: null | number;
+            /** Format: int32 */
+            damageShielded: null | number;
+            /** Format: int32 */
+            timeCcingOthers: null | number;
+            /** Format: int32 */
+            wardsPlaced: null | number;
+            /** Format: int32 */
+            wardsKilled: null | number;
+            /** Format: int32 */
+            controlWardsBought: null | number;
+            /** Format: int32 */
+            damageToObjectives: null | number;
+            /** Format: int32 */
+            turretKills: null | number;
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            /** Format: int32 */
+            roleBoundItem: null | number;
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            /** Format: int32 */
+            item0: null | number;
+            /** Format: int32 */
+            item1: null | number;
+            /** Format: int32 */
+            item2: null | number;
+            /** Format: int32 */
+            item3: null | number;
+            /** Format: int32 */
+            item4: null | number;
+            /** Format: int32 */
+            item5: null | number;
+            /** Format: int32 */
+            item6: null | number;
+            /** Format: int32 */
+            perk0: null | number;
+            /** Format: int32 */
+            perk1: null | number;
+            /** Format: int32 */
+            perk2: null | number;
+            /** Format: int32 */
+            perk3: null | number;
+            /** Format: int32 */
+            perk4: null | number;
+            /** Format: int32 */
+            perk5: null | number;
         };
         CostMensuelHistorique: {
             /** Format: date */
@@ -6930,6 +7016,8 @@ export interface components {
             performance: null | components["schemas"]["NoteDePerformance"];
             champsCorriges: string[];
             avatarUrl: null | string;
+            statsOrigine: null | components["schemas"]["StatsDuParticipant"];
+            championOrigine: null | string;
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -7135,6 +7223,8 @@ export interface components {
             role: null | components["schemas"]["Role"];
             sourceDuRole: components["schemas"]["SourceDuRole"];
             composantes: components["schemas"]["ComposanteDeNote"][];
+            /** Format: int32 */
+            noteOrigine: null | number;
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
@@ -7631,6 +7721,46 @@ export interface components {
             /** Format: int32 */
             champLevel: null | number;
             position: null | components["schemas"]["Role"];
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            /** Format: int32 */
+            largestKillingSpree: null | number;
+            /** Format: int32 */
+            killingSprees: null | number;
+            /** Format: int32 */
+            doubleKills: null | number;
+            /** Format: int32 */
+            tripleKills: null | number;
+            /** Format: int32 */
+            quadraKills: null | number;
+            /** Format: int32 */
+            pentaKills: null | number;
+            /** Format: int32 */
+            goldSpent: null | number;
+            /** Format: int32 */
+            physicalDamageToChampions: null | number;
+            /** Format: int32 */
+            magicDamageToChampions: null | number;
+            /** Format: int32 */
+            trueDamageToChampions: null | number;
+            /** Format: int32 */
+            totalHeal: null | number;
+            /** Format: int32 */
+            damageShielded: null | number;
+            /** Format: int32 */
+            timeCcingOthers: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            /** Format: int32 */
+            roleBoundItem: null | number;
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            items: null | (null | number)[];
+            perks: null | (null | number)[];
         };
         StatsParChampion: {
             championId: string;

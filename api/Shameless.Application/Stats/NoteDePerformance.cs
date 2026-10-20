@@ -16,7 +16,8 @@ public sealed record ComposanteDeNote(CritereDeNote Critere, double Valeur, int 
 /// <param name="Role">Le rôle selon lequel le Joueur est noté, null si inconnu (profil polyvalent).</param>
 /// <param name="SourceDuRole">D'où vient ce rôle.</param>
 /// <param name="Composantes">Les critères notés, dans l'ordre de <see cref="CritereDeNote"/>.</param>
-public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole SourceDuRole, IReadOnlyList<ComposanteDeNote> Composantes)
+/// <param name="NoteOrigine">La note calculée sur les stats d'origine du Companion, avant toute correction ; null si rien n'est mesurable.</param>
+public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole SourceDuRole, IReadOnlyList<ComposanteDeNote> Composantes, int? NoteOrigine = null)
 {
     /// <summary>
     /// La note d'un Joueur à partir de ses stats, de son rôle, des kills de son Équipe et de la durée
