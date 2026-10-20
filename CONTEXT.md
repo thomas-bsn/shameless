@@ -259,6 +259,11 @@ la game en attente si la Série est interrompue ou annulée (`RapportCompanion`)
 reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
 connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
 récent, « aucun Companion détecté ».
+- **Rôle joué** : le rôle qu'un Joueur a réellement tenu dans une Game, tel que le client LoL  
+le détecte et le transmet dans le Rapport (`teamPosition`, ADR 0021). À défaut, le rôle de  
+l'Autorole de la Série, puis le rôle principal du Joueur. Un Administrateur peut le corriger.
+- **Objet de rôle** : l'objet de quête propre au rôle d'un joueur, à côté de ses six objets et de sa  
+babiole. Quête en cours (objets 1200 à 1204) ou terminée (récompenses 1205 à 1208 et 1221).
 - **Fichier de Rapport** : le corps JSON exact d'un Rapport, gardé par le Companion tant  
 que l'envoi n'a pas abouti (`rapport-<riotMatchId>.json`). Si l'API est injoignable ou  
 refuse définitivement le Rapport, le Companion le garde et dit à son utilisateur de le  
