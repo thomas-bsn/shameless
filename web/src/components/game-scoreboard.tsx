@@ -2,7 +2,9 @@ import { $api, type Schemas } from "@/api/client";
 import { type Participant, type Side, sideName, TableauEquipe } from "@/components/game-equipe-table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { csTotal, kdaLabel, millierLabel, noteTone, statLabel } from "@/lib/game";
+import { IconeDeJeu } from "@/components/icone-de-jeu";
+import { useCatalogue } from "@/lib/catalogue";
+import { csTotal, kdaLabel, millierLabel, noteTone, parMinuteLabel, posteLabel, statLabel } from "@/lib/game";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 import { AvatarJoueur } from "@/components/avatar-joueur";
@@ -54,6 +56,7 @@ export function ScoreboardEquipe({
   players: Participant[];
 }) {
   const titres = useTitres(game.id);
+  const catalogue = useCatalogue();
   const maxDegats = Math.max(1, ...sidesOf(game).flatMap((s) => s.players.map((p) => p.stats?.damageToChampions ?? 0)));
 
   return (
@@ -62,37 +65,101 @@ export function ScoreboardEquipe({
       side={side}
       resume={game.winner === team ? "Victoire" : "Défaite"}
       colonnes={[
+        { titre: "Sorts" },
+        { titre: "Objets" },
         { titre: "K/D/A" },
+        { titre: "PK", droite: true },
         { titre: "CS", droite: true },
         { titre: "Or", droite: true },
         { titre: "Dégâts" },
         { titre: "Note", droite: true },
       ]}
       players={players}
+      colonneAvant="Rôle"
       ligne={(p) => {
         const estMvp = titres.mvp.includes(p.playerId);
         const estDofd = titres.dofd.includes(p.playerId);
         const mono = "font-mono tabular-nums";
+        const d = p.details;
+        const sorts = [d?.spell1Id ?? p.stats?.spell1Id, d?.spell2Id ?? p.stats?.spell2Id];
+        const objets = d?.items ?? p.stats?.items ?? null;
         return {
+          avant: posteLabel(d?.role ?? p.stats?.position) ?? "–",
           className: cn(estMvp && ENTOURE_MVP, estDofd && !estMvp && ENTOURE_DOFD),
           badges: (
             <>
               {estMvp && <Badge className="bg-yellow-400 text-black">MVP</Badge>}
               {estDofd && <Badge variant="destructive">DOFD</Badge>}
+              {p.badge === "MeilleurePerf" && <Badge className="bg-emerald-500 text-black">Meilleure perf</Badge>}
+              {p.badge === "Ace" && <Badge className="bg-fuchsia-500 text-black">ACE</Badge>}
             </>
           ),
           cellules: [
+            <div className="flex gap-1">
+              {sorts.map((id, i) => (
+                <IconeDeJeu key={i} id={id} element={id == null ? undefined : catalogue.sort(id)} />
+              ))}
+            </div>,
+            <Objets items={objets} roleItem={d?.objetDeRole ?? null} />,
             <span className={mono}>{p.stats ? kdaLabel(p.stats) : "–"}</span>,
-            <span className={mono}>{statLabel(p.stats ? csTotal(p.stats) : null)}</span>,
-            <span className={mono}>{millierLabel(p.stats?.goldEarned ?? null)}</span>,
+            <span className={mono}>{d?.partDesKills == null ? "–" : `${Math.round(d.partDesKills * 100)} %`}</span>,
+            <div className={cn("flex flex-col", mono)}>
+              <span>{statLabel(p.stats ? csTotal(p.stats) : null)}</span>
+              <span className="text-xs text-muted-foreground">{parMinuteLabel(d?.csParMinute ?? null, 1)}</span>
+            </div>,
+            <div className={cn("flex flex-col", mono)}>
+              <span>{millierLabel(p.stats?.goldEarned ?? null)}</span>
+              <span className="text-xs text-muted-foreground">{parMinuteLabel(d?.orParMinute ?? null)}</span>
+            </div>,
             <Degats value={p.stats?.damageToChampions ?? null} max={maxDegats} side={side} />,
-            <span className={cn(mono, p.performance && toneClass[noteTone(p.performance.note)])}>
-              {p.performance ? `${p.performance.note}/100` : "–"}
-            </span>,
+            <div className={cn("flex flex-col items-end", mono)}>
+              <span className={cn(p.performance && toneClass[noteTone(p.performance.note)])}>
+                {p.performance ? `${p.performance.note}/100` : "–"}
+              </span>
+              {p.place != null && <span className="text-xs text-muted-foreground">#{p.place}</span>}
+            </div>,
           ],
         };
       }}
     />
+  );
+}
+
+/** Les sept emplacements d'objets (six objets et la babiole), puis l'objet de rôle à part, liseré doré. */
+function Objets({
+  items,
+  roleItem,
+}: {
+  items: Array<number | null> | null;
+  roleItem: Schemas["ObjetDeRole"] | null;
+}) {
+  const catalogue = useCatalogue();
+  if (!items && !roleItem) return <span>–</span>;
+  const emplacements = Array.from({ length: 7 }, (_, i) => items?.[i] ?? null);
+  return (
+    <div className="flex items-center gap-2">
+      <ul className="flex gap-0.5">
+        {emplacements.map((id, i) => (
+          <li key={i}>
+            <IconeDeJeu id={id} element={id == null ? undefined : catalogue.objet(id)} />
+          </li>
+        ))}
+      </ul>
+      {roleItem && (
+        <div role="group" aria-label="Objet de rôle" className="flex flex-col items-center gap-0.5">
+          <IconeDeJeu
+            id={roleItem.id}
+            element={catalogue.objet(roleItem.id)}
+            className="border-2 border-yellow-400"
+          />
+          {roleItem.etat && (
+            <span className="text-[10px] leading-3 text-yellow-400">
+              {roleItem.etat === "Terminee" ? "Quête terminée" : "Quête en cours"}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
