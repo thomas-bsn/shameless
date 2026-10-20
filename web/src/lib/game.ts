@@ -116,3 +116,10 @@ export function csParMinute(
   const cs = csTotal(stats);
   return cs == null || !dureeSecondes ? null : cs / (dureeSecondes / 60);
 }
+
+/** Le badge MVP ou ACE que l'API attribue d'après les notes (BadgeDeGame) ; null sans badge. */
+export function titreDeBadge(badge: "MeilleurePerf" | "Ace" | null | undefined): "MVP" | "ACE" | null {
+  if (badge === "MeilleurePerf") return "MVP";
+  if (badge === "Ace") return "ACE";
+  return null;
+}

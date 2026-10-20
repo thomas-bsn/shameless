@@ -6,6 +6,7 @@ import { AnneauDeNote } from "@/components/icones-de-jeu/anneau-de-note";
 import { BadgeDeTitre } from "@/components/icones-de-jeu/badge-de-titre";
 import { IconeChampion } from "@/components/icones-de-jeu/icones-catalogue";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { titreDeBadge } from "@/lib/game";
 import { sideBorderClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +97,7 @@ export function VueEnCibles({ game }: { game: Schemas["GameRecapResponse"] }) {
 function Pastille({ place }: { place: Place }) {
   const { joueur, side, anneau, classe } = place;
   const centre = anneau === 0;
+  const titre = titreDeBadge(joueur.badge);
 
   return (
     <div data-anneau={anneau} className={cn("absolute -translate-x-1/2 -translate-y-1/2", classe)}>
@@ -116,8 +118,7 @@ function Pastille({ place }: { place: Place }) {
         <span className="max-w-full truncate text-xs font-medium underline underline-offset-2 sm:text-sm">{joueur.prenom}</span>
         <span className="flex items-center gap-1.5">
           {joueur.performance && <AnneauDeNote note={joueur.performance.note} className="size-8" />}
-          {joueur.badge === "MeilleurePerf" && <BadgeDeTitre titre="MVP" />}
-          {joueur.badge === "Ace" && <BadgeDeTitre titre="ACE" />}
+          {titre && <BadgeDeTitre titre={titre} />}
         </span>
       </Link>
     </div>

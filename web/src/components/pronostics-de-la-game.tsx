@@ -39,7 +39,7 @@ export function PronosticsDeLaGame({ gameId }: { gameId: number }) {
                   {p.equipeGagnante && (
                     <Choix label={`Vainqueur : Équipe ${p.equipeGagnante.equipe}`} correct={p.equipeGagnante.correct} />
                   )}
-                  {p.mvp && <Choix label={`MVP : ${p.mvp.prenom}`} joueur={p.mvp} correct={p.mvp.correct} />}
+                  {p.mvp && <Choix label={`Roi/Reine : ${p.mvp.prenom}`} joueur={p.mvp} correct={p.mvp.correct} />}
                   {p.dofd && <Choix label={`DOFD : ${p.dofd.prenom}`} joueur={p.dofd} correct={p.dofd.correct} />}
                 </ul>
               </CardContent>

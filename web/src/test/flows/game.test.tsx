@@ -182,7 +182,7 @@ describe("Page d'une Game", () => {
     expect(await within(await screen.findByRole("listitem", { name: "Dan" })).findByText("DOFD")).toBeInTheDocument();
     expect(within(ligne("Bob")).queryByText("Roi/Reine")).not.toBeInTheDocument();
 
-    const mvp = screen.getByRole("group", { name: "MVP" });
+    const mvp = screen.getByRole("group", { name: "Roi/Reine" });
     expect(within(mvp).getByText("3 voix")).toBeInTheDocument();
   });
 

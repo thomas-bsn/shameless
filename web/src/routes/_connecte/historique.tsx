@@ -281,7 +281,7 @@ function TeamColumn({
           <span className="flex min-w-0 items-center gap-1.5">
             <AvatarJoueur prenom={p.prenom} avatarUrl={p.avatarUrl} className="size-5 text-[9px]" />
             <span className="truncate">{p.prenom}</span>
-            {mvp.includes(p.playerId) && <Badge variant="secondary">MVP</Badge>}
+            {mvp.includes(p.playerId) && <Badge variant="secondary">Roi/Reine</Badge>}
             {dofd.includes(p.playerId) && <Badge variant="outline">DOFD</Badge>}
           </span>
           <RankBadge tier={p.rankTier} division={p.rankDivision} lp={null} className="text-[10px]" />

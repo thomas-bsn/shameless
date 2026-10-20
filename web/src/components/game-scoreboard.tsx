@@ -11,7 +11,7 @@ import { IconeChampion, IconeObjet, IconeRune, IconeSort } from "@/components/ic
 import { PanneauImpact } from "@/components/panneau-impact";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { millierLabel, nombreLabel, parMinuteLabel, statLabel, trierParRole } from "@/lib/game";
+import { millierLabel, nombreLabel, parMinuteLabel, partLabel, statLabel, titreDeBadge, trierParRole } from "@/lib/game";
 import { rankLabel } from "@/lib/ranks";
 import { sideBorderClass, sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,7 @@ export function ScoreboardEquipe({
             const d = p.details;
             const s = p.stats;
             const role = ROLES[d?.role ?? s?.position ?? ""];
-            const badge: Titre | null = p.badge === "MeilleurePerf" ? "MVP" : p.badge === "Ace" ? "ACE" : null;
+            const badge: Titre | null = titreDeBadge(p.badge);
             const estDofd = titres.dofd.includes(p.playerId);
             const estRoi = titres.mvp.includes(p.playerId);
             const degats = s?.damageToChampions ?? null;
@@ -167,14 +167,7 @@ export function ScoreboardEquipe({
                         {p.prenom}
                       </Link>
                       {estDofd && <BadgeDeTitre titre="DOFD" />}
-                      {estRoi && (
-                        <span
-                          title="Titre voté du meilleur joueur"
-                          className="rounded bg-amber-400/15 px-1.5 text-[10px] font-bold text-amber-500 ring-1 ring-amber-400/40 ring-inset"
-                        >
-                          Roi/Reine
-                        </span>
-                      )}
+                      {estRoi && <BadgeDeTitre titre="Roi/Reine" />}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
                       {rankLabel(p.rankTier, p.rankDivision, null)}
@@ -200,7 +193,7 @@ export function ScoreboardEquipe({
                 </div>
 
                 <Mesure
-                  valeur={d?.partDesKills == null ? "–" : `${Math.round(d.partDesKills * 100)} %`}
+                  valeur={d?.partDesKills == null ? "–" : partLabel(d.partDesKills, 1)}
                   legende="KP"
                 />
                 {role === "Support" ? (

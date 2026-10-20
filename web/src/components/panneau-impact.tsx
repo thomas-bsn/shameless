@@ -5,7 +5,7 @@ import { IconeChampion } from "@/components/icones-de-jeu/icones-catalogue";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { nombreLabel, posteLabel } from "@/lib/game";
+import { nombreLabel, partLabel, posteLabel } from "@/lib/game";
 import { cn } from "@/lib/utils";
 
 type Participant = Schemas["GameHistoryParticipantDto"];
@@ -46,7 +46,7 @@ function valeurLabel(valeur: number, format: Format): string {
     case "entier":
       return nombreLabel(valeur, 0);
     case "part":
-      return `${Math.round(valeur * 100)} %`;
+      return partLabel(valeur, 1);
     case "oui-non":
       return valeur >= 0.5 ? "oui" : "non";
   }

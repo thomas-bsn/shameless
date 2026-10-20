@@ -123,7 +123,7 @@ const open = (reponse: Fiche | ((url: URL) => Fiche) = fiche()) => {
 };
 
 describe("Fiche publique", () => {
-  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges, MVP et DOFD", async () => {
+  it("résume les 30 dernières games : winrate, top champions, KDA, note, badges, Roi/Reine et DOFD", async () => {
     open(
       fiche({
         resume: {
@@ -148,9 +148,9 @@ describe("Fiche publique", () => {
     expect(within(resume).getByRole("listitem", { name: /Camille/ })).toHaveTextContent("75 %");
     expect(within(resume).getByText("2,8").parentElement).toHaveTextContent("KDA moyen");
     expect(within(resume).getByText("78").parentElement).toHaveTextContent("Note moyenne");
-    expect(within(resume).getByText("Meilleure perf").parentElement).toHaveTextContent("× 4");
+    expect(within(resume).getByText("MVP").parentElement).toHaveTextContent("× 4");
     expect(within(resume).getByText("ACE").parentElement).toHaveTextContent("× 2");
-    expect(within(resume).getByText("MVP").parentElement).toHaveTextContent("× 6");
+    expect(within(resume).getByText("Roi/Reine").parentElement).toHaveTextContent("× 6");
     expect(within(resume).getByText("DOFD").parentElement).toHaveTextContent("× 1");
   });
 
@@ -211,7 +211,7 @@ describe("Fiche publique", () => {
     expect(lien).toHaveAttribute("href", "/games/31");
     expect(lien).toHaveTextContent("86");
     expect(lien).toHaveTextContent("1er");
-    expect(lien).toHaveTextContent("Meilleure perf");
+    expect(lien).toHaveTextContent("MVP");
     expect(lien).toHaveTextContent("9 / 2 / 7");
     expect(within(groupe).getByRole("link", { name: "Voir la game 30" })).toHaveTextContent("ACE");
   });
@@ -225,6 +225,7 @@ describe("Fiche publique", () => {
             jour: null,
             games: [
               ligne(31, {
+                badge: "MeilleurePerf",
                 mvp: true,
                 role: "Mid",
                 dureeSecondes: 1500,
@@ -252,10 +253,11 @@ describe("Fiche publique", () => {
 
     const lien = await screen.findByRole("link", { name: "Voir la game 31" });
     expect(lien).toHaveTextContent("Victoire");
-    expect(lien).toHaveTextContent("Série 5");
+    expect(lien).not.toHaveTextContent("Série");
     expect(lien).toHaveTextContent("25:00");
     expect(lien).toHaveTextContent("41 / 3 / 3");
     expect(lien).toHaveTextContent("MVP");
+    expect(lien).toHaveTextContent("Roi/Reine");
     expect(lien).toHaveTextContent("14,7 KDA");
     expect(lien).toHaveTextContent("7 CS/m");
     expect(lien).toHaveTextContent("86 % KP");
