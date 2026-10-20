@@ -46,3 +46,20 @@ const ROLES: Record<string, string> = {
 /** Poste Riot (teamPosition) tel que les joueurs le disent. */
 export const roleLabel = (role: string | null | undefined): string | null =>
   (role && ROLES[role.toUpperCase()]) || null;
+
+/** Les emblèmes officiels de Riot (Community Dragon), un PNG par palier : `emblem-<palier>.png`. */
+export const EMBLEMES_DE_RANG_URL =
+  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem";
+
+/** L'URL de l'emblème d'un palier classé ; null pour Unranked. */
+export function emblemeDeRangUrl(tier: string | null | undefined): string | null {
+  const t = normalizeTier(tier);
+  return t === "UNRANKED" ? null : `${EMBLEMES_DE_RANG_URL}/emblem-${t.toLowerCase()}.png`;
+}
+
+const ROLES_DE_JEU = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "Adc", UTILITY: "Support" } as const;
+
+/** Le rôle des icônes de jeu pour un poste Riot (teamPosition) ; null si inconnu. */
+export function roleDeJeu(poste: string | null | undefined): (typeof ROLES_DE_JEU)[keyof typeof ROLES_DE_JEU] | null {
+  return ROLES_DE_JEU[(poste ?? "").toUpperCase() as keyof typeof ROLES_DE_JEU] ?? null;
+}

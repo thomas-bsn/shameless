@@ -65,7 +65,7 @@ public sealed record FicheJoueur(
             joueur.Id,
             joueur.Prenom,
             joueur.RiotId,
-            joueur.User is { } user ? new CompteDiscordLie(user.DiscordId.ToString(), user.DiscordUsername, user.AvatarUrl, true) : null,
+            joueur.User is { } user ? new CompteDiscordLie(user.DiscordId.ToString(), user.DiscordUsername, user.AvatarUrl, true, user.BannerUrl, user.BannerColor) : null,
             joueur.Users
                 .OrderBy(u => u.PlayerLinkedAt).ThenBy(u => u.Id)
                 .Select(u => new CompteDiscordLie(u.DiscordId.ToString(), u.DiscordUsername, u.AvatarUrl, u.Id == joueur.UserId))
@@ -98,8 +98,12 @@ public sealed record FicheJoueur(
 
 /// <summary>Le compte Discord lié au Joueur.</summary>
 /// <param name="DiscordId">L'identifiant Discord, en texte (trop grand pour un nombre JavaScript).</param>
-/// <summary>Un Compte Discord lié au Joueur ; <paramref name="Principal"/> pour le plus ancien lien (ADR 0018).</summary>
-public sealed record CompteDiscordLie(string DiscordId, string? Username, string? AvatarUrl, bool Principal);
+/// <summary>
+/// Un Compte Discord lié au Joueur ; <paramref name="Principal"/> pour le plus ancien lien (ADR 0018).
+/// La bannière et sa couleur d'accent ne sont renseignées que sur le compte principal de <see cref="FicheJoueur.Discord"/>.
+/// </summary>
+public sealed record CompteDiscordLie(
+    string DiscordId, string? Username, string? AvatarUrl, bool Principal, string? BannerUrl = null, string? BannerColor = null);
 
 /// <summary>Les stats d'un champion joué par le Joueur.</summary>
 /// <param name="ChampionId">Le champion (id Data Dragon).</param>

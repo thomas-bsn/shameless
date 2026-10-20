@@ -29,8 +29,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
   playerId: 7,
   prenom: "Aldric",
   riotId: "Aldric#EUW",
-  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true },
-  comptesDiscord: [{ discordId: "1", username: "aldric", avatarUrl: null, principal: true }],
+  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true, bannerUrl: null, bannerColor: null },
+  comptesDiscord: [{ discordId: "1", username: "aldric", avatarUrl: null, principal: true, bannerUrl: null, bannerColor: null }],
   cost: 6,
   soloQ: { tier: "DIAMOND", division: 2, lp: 45 },
   flex: { tier: "PLATINUM", division: 1, lp: 0 },
@@ -152,6 +152,26 @@ describe("Fiche d'un joueur", () => {
     expect(screen.getByText("1 DOFD")).toBeInTheDocument();
     expect(screen.getByText("SS")).toBeInTheDocument();
     expect(screen.getByText("6 pts")).toBeInTheDocument();
+  });
+
+  it("affiche la bannière Discord du compte principal en tête de la fiche", async () => {
+    open(
+      fiche({
+        discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true, bannerUrl: "https://cdn.discordapp.com/banners/1/b.png", bannerColor: null },
+      }),
+    );
+
+    expect(await screen.findByRole("img", { name: "Bannière Discord" })).toHaveAttribute(
+      "src",
+      "https://cdn.discordapp.com/banners/1/b.png",
+    );
+  });
+
+  it("sans bannière, l'en-tête garde un fond neutre et aucune image de bannière", async () => {
+    open();
+
+    await screen.findByRole("heading", { name: "Aldric" });
+    expect(screen.queryByRole("img", { name: "Bannière Discord" })).not.toBeInTheDocument();
   });
 
   it("affiche les stats en customs, une stat absente comme absente et non comme zéro", async () => {
