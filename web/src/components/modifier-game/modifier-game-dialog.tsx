@@ -4,6 +4,7 @@ import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dateHeureLabel, dateLabel } from "@/lib/dates";
+import { OngletComposition } from "./onglet-composition";
 import { OngletResultat } from "./onglet-resultat";
 
 /**
@@ -42,9 +43,15 @@ export function ModifierGameDialog({ gameId, onFermer, onSupprimee }: { gameId: 
               <TabsTrigger value="resultat" className="flex-none">
                 Résultat
               </TabsTrigger>
+              <TabsTrigger value="composition" className="flex-none">
+                Composition
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="resultat" className="pt-2">
               <OngletResultat game={game.data} onFermer={onFermer} />
+            </TabsContent>
+            <TabsContent value="composition" className="pt-2">
+              <OngletComposition game={game.data} onFermer={onFermer} />
             </TabsContent>
           </Tabs>
         )}
