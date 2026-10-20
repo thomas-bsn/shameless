@@ -101,3 +101,18 @@ export function partLabel(value: number | null, total: number | null): string {
   if (value == null || total == null || total <= 0) return "–";
   return `${Math.round((value / total) * 100)} %`;
 }
+
+/** Le ratio (kills + assists) / morts, au moins une mort comme l'API ; null sans kills, morts ou assists. */
+export function ratioKda({ kills, deaths, assists }: Kda): number | null {
+  if (kills == null || deaths == null || assists == null) return null;
+  return (kills + assists) / Math.max(1, deaths);
+}
+
+/** Les CS par minute ; null sans CS connus ou sans durée. */
+export function csParMinute(
+  stats: { minionsKilled: number | null; neutralMinionsKilled: number | null },
+  dureeSecondes: number | null,
+): number | null {
+  const cs = csTotal(stats);
+  return cs == null || !dureeSecondes ? null : cs / (dureeSecondes / 60);
+}

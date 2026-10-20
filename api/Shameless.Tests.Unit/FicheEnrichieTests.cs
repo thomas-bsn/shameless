@@ -44,3 +44,37 @@ public class FicheEnrichieTests
         Assert.Equal([("2026-10-21", 1), ("2026-10-20", 1)], Jours(null));
     }
 }
+
+/// <summary>Ce que la ligne de game de la fiche ajoute : l'adversaire de la voie et la participation aux kills.</summary>
+public class LigneDeGameDeLaFicheTests
+{
+    private static CustomGameParticipant Participant(CustomGame game, int id, string side, string champion, string position, int kills, int assists) => new()
+    {
+        PlayerId = id, Side = side, ChampionId = champion, CustomGame = game,
+        Player = new Player { Id = id, Prenom = $"J{id}", MainRole = "TOP" },
+        RiotParticipantData = $$"""{ "kills": {{kills}}, "assists": {{assists}}, "deaths": 1, "teamPosition": "{{position}}" }"""
+    };
+
+    private static GameDeLaFiche Ligne()
+    {
+        var game = new CustomGame { Id = 1, Status = GameStatuses.Completed, PlayedAt = DateTime.UtcNow };
+        game.Participants.Add(Participant(game, 1, "blue", "Zed", "MIDDLE", 8, 2));
+        game.Participants.Add(Participant(game, 2, "blue", "Ornn", "TOP", 2, 0));
+        game.Participants.Add(Participant(game, 3, "red", "Ahri", "MIDDLE", 3, 3));
+        game.Participants.Add(Participant(game, 4, "red", "Fiora", "TOP", 1, 1));
+        return FicheJoueur.Calculer(new Player { Id = 1, Prenom = "J1" }, [game]).Games.Single();
+    }
+
+    [Fact]
+    public void L_adversaire_de_la_voie_est_le_champion_adverse_du_meme_poste()
+    {
+        Assert.Equal("Ahri", Ligne().AdversaireChampionId);
+    }
+
+    [Fact]
+    public void La_participation_aux_kills_est_en_pourcentage_des_kills_de_l_equipe()
+    {
+        // (8 kills + 2 assists) / 10 kills d'équipe
+        Assert.Equal(100.0, Ligne().ParticipationAuxKills);
+    }
+}

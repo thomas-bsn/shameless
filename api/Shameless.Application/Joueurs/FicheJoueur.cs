@@ -120,6 +120,8 @@ public sealed record StatsParRole(Role Role, StatsDeCustoms Stats);
 /// <param name="Dofd">true si le Joueur a le titre de DOFD de la Game : votes clos, égalités comprises.</param>
 /// <param name="Place">Sa place de 1 à 10 dans la game d'après sa note, null sans note.</param>
 /// <param name="Badge">Son badge de note (Meilleure perf, ACE), null sinon ; distinct du titre MVP voté.</param>
+/// <param name="ParticipationAuxKills">Ses kills et assists / les kills de son Équipe, en pourcentage (une décimale), null sans ces données.</param>
+/// <param name="AdversaireChampionId">Le champion adverse du même poste (id Data Dragon), null sans poste connu ou sans adversaire unique.</param>
 public sealed record GameDeLaFiche(
     int GameId,
     int? SeriesId,
@@ -134,4 +136,6 @@ public sealed record GameDeLaFiche(
     bool Mvp = false,
     bool Dofd = false,
     int? Place = null,
-    BadgeDeGame? Badge = null);
+    BadgeDeGame? Badge = null,
+    double? ParticipationAuxKills = null,
+    string? AdversaireChampionId = null);
