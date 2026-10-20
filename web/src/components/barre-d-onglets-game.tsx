@@ -36,6 +36,14 @@ const IconePerformance: Icone = (props) => (
   </Svg>
 );
 
+/** Courbes : une courbe qui monte, sur ses axes. */
+const IconeCourbes: Icone = (props) => (
+  <Svg {...props}>
+    <path d="M3 3v18h18" />
+    <path d="m7 15 4-5 3 3 6-7" />
+  </Svg>
+);
+
 /** Détails : des barres de statistiques. */
 const IconeDetails: Icone = (props) => (
   <Svg {...props}>
@@ -62,6 +70,7 @@ const IconeReplay3D: Icone = (props) => (
 const ONGLETS: { valeur: string; nom: string; Icone: Icone; grise?: boolean }[] = [
   { valeur: "general", nom: "Général", Icone: IconeGeneral },
   { valeur: "cibles", nom: "Performance", Icone: IconePerformance },
+  { valeur: "courbes", nom: "Courbes", Icone: IconeCourbes },
   { valeur: "details", nom: "Détails", Icone: IconeDetails },
   { valeur: "runes", nom: "Runes", Icone: IconeRunes },
   { valeur: "replay", nom: "Replay 3D", Icone: IconeReplay3D, grise: true },

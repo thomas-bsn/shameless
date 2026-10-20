@@ -180,7 +180,7 @@ public class RapportTests
     {
         var json = JsonNode.Parse(RapportJson.Serialiser(Construit()))!.AsObject();
 
-        Assert.Equal(["riotMatchId", "donnees", "joueurs"], json.Select(p => p.Key));
+        Assert.Equal(["riotMatchId", "donnees", "joueurs", "chronologie"], json.Select(p => p.Key));
         var joueur = json["joueurs"]![0]!.AsObject();
         Assert.Equal(["puuid", "side", "championId", "victoire", "stats"], joueur.Select(p => p.Key));
     }

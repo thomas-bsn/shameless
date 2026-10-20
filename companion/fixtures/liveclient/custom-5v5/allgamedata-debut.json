@@ -1,0 +1,479 @@
+{
+  "activePlayer": {
+    "abilities": {},
+    "championStats": {},
+    "currentGold": 500.0,
+    "level": 2,
+    "riotId": "Joueur1#TAG1",
+    "riotIdGameName": "Joueur1",
+    "riotIdTagLine": "TAG1",
+    "summonerName": "Joueur1#TAG1"
+  },
+  "allPlayers": [
+    {
+      "championName": "Zed",
+      "isBot": false,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        }
+      ],
+      "level": 2,
+      "position": "TOP",
+      "rawChampionName": "game_character_displayname_Zed",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur1#TAG1",
+      "riotIdGameName": "Joueur1",
+      "riotIdTagLine": "TAG1",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur1#TAG1",
+      "team": "ORDER"
+    },
+    {
+      "championName": "Garen",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "JUNGLE",
+      "rawChampionName": "game_character_displayname_Garen",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur2#TAG1",
+      "riotIdGameName": "Joueur2",
+      "riotIdTagLine": "TAG1",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur2#TAG1",
+      "team": "ORDER"
+    },
+    {
+      "championName": "Ahri",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "MIDDLE",
+      "rawChampionName": "game_character_displayname_Ahri",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur3#TAG1",
+      "riotIdGameName": "Joueur3",
+      "riotIdTagLine": "TAG1",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur3#TAG1",
+      "team": "ORDER"
+    },
+    {
+      "championName": "Jinx",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "BOTTOM",
+      "rawChampionName": "game_character_displayname_Jinx",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur4#TAG1",
+      "riotIdGameName": "Joueur4",
+      "riotIdTagLine": "TAG1",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur4#TAG1",
+      "team": "ORDER"
+    },
+    {
+      "championName": "Leona",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "UTILITY",
+      "rawChampionName": "game_character_displayname_Leona",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur5#TAG1",
+      "riotIdGameName": "Joueur5",
+      "riotIdTagLine": "TAG1",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur5#TAG1",
+      "team": "ORDER"
+    },
+    {
+      "championName": "Darius",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "TOP",
+      "rawChampionName": "game_character_displayname_Darius",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur6#TAG2",
+      "riotIdGameName": "Joueur6",
+      "riotIdTagLine": "TAG2",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur6#TAG2",
+      "team": "CHAOS"
+    },
+    {
+      "championName": "Sion",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "JUNGLE",
+      "rawChampionName": "game_character_displayname_Sion",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur7#TAG2",
+      "riotIdGameName": "Joueur7",
+      "riotIdTagLine": "TAG2",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur7#TAG2",
+      "team": "CHAOS"
+    },
+    {
+      "championName": "Lux",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "MIDDLE",
+      "rawChampionName": "game_character_displayname_Lux",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur8#TAG2",
+      "riotIdGameName": "Joueur8",
+      "riotIdTagLine": "TAG2",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur8#TAG2",
+      "team": "CHAOS"
+    },
+    {
+      "championName": "Ashe",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "BOTTOM",
+      "rawChampionName": "game_character_displayname_Ashe",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur9#TAG2",
+      "riotIdGameName": "Joueur9",
+      "riotIdTagLine": "TAG2",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur9#TAG2",
+      "team": "CHAOS"
+    },
+    {
+      "championName": "Soraka",
+      "isBot": true,
+      "isDead": false,
+      "items": [
+        {
+          "canUse": false,
+          "consumable": false,
+          "count": 1,
+          "displayName": "Objet 1055",
+          "itemID": 1055,
+          "price": 450,
+          "rawDescription": "game_item_description_1055",
+          "rawDisplayName": "game_item_displayname_1055",
+          "slot": 0
+        },
+        {
+          "canUse": false,
+          "consumable": true,
+          "count": 2,
+          "displayName": "Objet 2003",
+          "itemID": 2003,
+          "price": 50,
+          "rawDescription": "game_item_description_2003",
+          "rawDisplayName": "game_item_displayname_2003",
+          "slot": 1
+        }
+      ],
+      "level": 1,
+      "position": "UTILITY",
+      "rawChampionName": "game_character_displayname_Soraka",
+      "respawnTimer": 0.0,
+      "riotId": "Joueur10#TAG2",
+      "riotIdGameName": "Joueur10",
+      "riotIdTagLine": "TAG2",
+      "scores": {
+        "assists": 0,
+        "creepScore": 3,
+        "deaths": 0,
+        "kills": 0,
+        "wardScore": 0.0
+      },
+      "skinID": 0,
+      "summonerName": "Joueur10#TAG2",
+      "team": "CHAOS"
+    }
+  ],
+  "events": {
+    "Events": [
+      {
+        "EventID": 0,
+        "EventName": "GameStart",
+        "EventTime": 0.05
+      }
+    ]
+  },
+  "gameData": {
+    "gameMode": "CLASSIC",
+    "gameTime": 95.2,
+    "mapName": "Map11",
+    "mapNumber": 11,
+    "mapTerrain": "Default"
+  }
+}
