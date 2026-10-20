@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { AvatarJoueur } from "@/components/avatar-joueur";
 import { type Participant, type Side, sideName } from "@/components/game-equipe-table";
@@ -7,6 +8,7 @@ import { BadgeDeTitre, type Titre } from "@/components/icones-de-jeu/badge-de-ti
 import { IconeObjectif, type Objectif } from "@/components/icones-de-jeu/icone-objectif";
 import { IconeRole, type Role } from "@/components/icones-de-jeu/icone-role";
 import { IconeChampion, IconeObjet, IconeRune, IconeSort } from "@/components/icones-de-jeu/icones-catalogue";
+import { PanneauImpact } from "@/components/panneau-impact";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { millierLabel, nombreLabel, parMinuteLabel, statLabel, trierParRole } from "@/lib/game";
@@ -67,7 +69,7 @@ const placeLabel = (place: number): string => (place === 1 ? "1er" : `${place}e`
 const ROLES: Record<string, Role> = { Top: "Top", Jungle: "Jungle", Mid: "Mid", Adc: "Adc", Support: "Support" };
 
 /**
- * L'équipe façon client de LoL, une ligne par joueur : rôle, place et badge, champion, nom (lien vers sa fiche),
+ * L'équipe façon client de LoL, une ligne par joueur : rôle, place et badge, champion, nom (seul lien vers sa fiche ; le reste de la ligne ouvre son Impact),
  * sorts et runes, objets, K/D/A, participation aux kills, CS/min (vision pour le Support), dégâts et note.
  */
 export function ScoreboardEquipe({
@@ -82,8 +84,10 @@ export function ScoreboardEquipe({
   players: Participant[];
 }) {
   const titres = useTitres(game.id);
-  const navigate = useNavigate();
+  const [ouvert, setOuvert] = useState<number | null>(null);
+  const ligneOuverte = useRef<HTMLElement | null>(null);
   const maxDegats = Math.max(0, ...sidesOf(game).flatMap((s) => s.players.map((p) => p.stats?.damageToChampions ?? 0)));
+  const joueurOuvert = players.find((p) => p.playerId === ouvert);
   const label = `Équipe ${team} · ${sideName(side)} side`;
   const objectifs = team === "A" ? game.teamAObjectifs : game.teamBObjectifs;
 
@@ -114,11 +118,25 @@ export function ScoreboardEquipe({
               <li
                 key={p.playerId}
                 aria-label={p.prenom}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).closest("a")) return;
-                  void navigate(fiche);
-                }}
-                className="grid cursor-pointer grid-cols-[2rem_4.5rem_minmax(12rem,1.4fr)_5rem_13rem_6rem_4.5rem_4.5rem_9rem_3.5rem] items-center gap-x-2 rounded-xl border border-transparent bg-muted/20 px-2.5 py-2 hover:border-foreground/70 hover:bg-muted/40"
+                {...(p.impact && {
+                  tabIndex: 0,
+                  "aria-haspopup": "dialog" as const,
+                  onClick: (e: React.MouseEvent) => {
+                    if ((e.target as HTMLElement).closest("a")) return;
+                    ligneOuverte.current = e.currentTarget as HTMLElement;
+                    setOuvert(p.playerId);
+                  },
+                  onKeyDown: (e: React.KeyboardEvent) => {
+                    if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
+                    e.preventDefault();
+                    ligneOuverte.current = e.currentTarget as HTMLElement;
+                    setOuvert(p.playerId);
+                  },
+                })}
+                className={cn(
+                  "grid grid-cols-[2rem_4.5rem_minmax(12rem,1.4fr)_5rem_13rem_6rem_4.5rem_4.5rem_9rem_3.5rem] items-center gap-x-2 rounded-xl border border-transparent bg-muted/20 px-2.5 py-2 focus-visible:border-foreground/70 focus-visible:outline-none",
+                  p.impact && "cursor-pointer hover:border-foreground/70 hover:bg-muted/40",
+                )}
               >
                 <div className="flex justify-center">
                   {role && <IconeRole role={role} className="size-6 text-foreground/80" />}
@@ -220,6 +238,21 @@ export function ScoreboardEquipe({
           })}
         </ul>
       </div>
+      {joueurOuvert?.impact && (
+        <PanneauImpact
+          joueur={joueurOuvert}
+          impact={joueurOuvert.impact}
+          adversaire={
+            sidesOf(game)
+              .flatMap((s) => s.players)
+              .find((j) => j.playerId === joueurOuvert.impact?.faceAFace?.adversaireId) ?? null
+          }
+          equipe={team}
+          victoire={game.winner === team}
+          onFermer={() => setOuvert(null)}
+          retour={ligneOuverte}
+        />
+      )}
     </section>
   );
 }
