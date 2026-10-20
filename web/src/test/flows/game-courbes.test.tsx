@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
@@ -168,6 +168,38 @@ describe("Onglet Courbes", () => {
 
     expect(screen.getByRole("img", { name: "Dragon bleu à 5:00" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Tourelle rouge à 15:00" })).toBeInTheDocument();
+  });
+
+  it("remplace la lettre du marqueur par le logo de l'objectif", async () => {
+    await ouvrirCourbes(recap(chronologie()));
+
+    const marqueur = screen.getByRole("img", { name: "Dragon bleu à 5:00" });
+    expect(marqueur.textContent).toBe("");
+    expect(marqueur.querySelector("path")).not.toBeNull();
+  });
+
+  it("affiche une infobulle au survol d'un marqueur, puis la retire", async () => {
+    await ouvrirCourbes(recap(chronologie()));
+    const marqueur = screen.getByRole("img", { name: "Dragon bleu à 5:00" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    await userEvent.hover(marqueur);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Dragon · équipe bleue · 5:00");
+
+    await userEvent.unhover(marqueur);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("affiche l'infobulle au focus clavier d'un marqueur", async () => {
+    await ouvrirCourbes(recap(chronologie()));
+    const marqueur = screen.getByRole("img", { name: "Tourelle rouge à 15:00" });
+
+    act(() => marqueur.focus());
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Tourelle · équipe rouge · 15:00");
+    expect(marqueur).toHaveAttribute("aria-describedby", screen.getByRole("tooltip").id);
+
+    act(() => marqueur.blur());
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
   it("bascule sur la courbe d'un joueur, puis revient aux équipes", async () => {

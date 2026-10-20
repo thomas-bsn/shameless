@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Schemas } from "@/api/client";
 import type { Participant, Side } from "@/components/game-equipe-table";
 import { sidesOf } from "@/components/game-scoreboard";
 import { IconeChampion } from "@/components/icones-de-jeu/icones-catalogue";
+import { IconeObjectif, type Objectif } from "@/components/icones-de-jeu/icone-objectif";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -153,17 +154,32 @@ function Courbe({
   );
 }
 
-const OBJECTIFS: Record<string, { nom: string; lettre: string }> = {
-  dragon: { nom: "Dragon", lettre: "D" },
-  herald: { nom: "Héraut", lettre: "H" },
-  baron: { nom: "Baron", lettre: "B" },
-  turret: { nom: "Tourelle", lettre: "T" },
-  inhibitor: { nom: "Inhibiteur", lettre: "I" },
+const OBJECTIFS: Record<string, { nom: string; objectif: Objectif }> = {
+  dragon: { nom: "Dragon", objectif: "dragon" },
+  herald: { nom: "Héraut", objectif: "heraut" },
+  baron: { nom: "Baron", objectif: "baron" },
+  turret: { nom: "Tourelle", objectif: "tourelle" },
+  inhibitor: { nom: "Inhibiteur", objectif: "inhibiteur" },
 };
 
 const COTE_LABEL: Record<Side, string> = { blue: "bleu", red: "rouge" };
+const COTE_EQUIPE: Record<Side, string> = { blue: "bleue", red: "rouge" };
 
-/** Les marqueurs d'objectifs : un trait vertical à l'heure exacte et une pastille portant l'initiale. */
+/** L'infobulle d'un marqueur, dessinée au-dessus du reste du graphe et gardée dans ses bords. */
+function Infobulle({ id, texte, cx, cy, largeurGraphe }: { id: string; texte: string; cx: number; cy: number; largeurGraphe: number }) {
+  const largeur = texte.length * 6.2 + 16;
+  const gauche = Math.min(Math.max(cx - largeur / 2, 2), largeurGraphe - largeur - 2);
+  return (
+    <g id={id} role="tooltip" className="pointer-events-none">
+      <rect x={gauche} y={cy + 14} width={largeur} height={22} rx={4} className="fill-popover stroke-border" />
+      <text x={gauche + largeur / 2} y={cy + 29} textAnchor="middle" className="fill-popover-foreground text-[11px]">
+        {texte}
+      </text>
+    </g>
+  );
+}
+
+/** Les marqueurs d'objectifs : un trait vertical à l'heure exacte et une pastille portant le logo, avec une infobulle au survol et au focus. */
 function Marqueurs({
   evenements,
   tMax,
@@ -175,29 +191,47 @@ function Marqueurs({
   cadre: Cadre;
   x: (t: number) => number;
 }) {
+  const idInfobulle = useId();
+  const [actif, activer] = useState<string | null>(null);
+  const marqueurs = evenements
+    .filter((e) => e.t <= tMax && OBJECTIFS[e.type] && (e.side === "blue" || e.side === "red"))
+    .map((e) => {
+      const cote = e.side as Side;
+      const { nom, objectif } = OBJECTIFS[e.type];
+      return { cle: `${e.type}-${e.t}-${e.side}`, t: e.t, cote, nom, objectif };
+    });
+  const survole = marqueurs.find((m) => m.cle === actif);
   return (
     <g>
-      {evenements
-        .filter((e) => e.t <= tMax && OBJECTIFS[e.type] && (e.side === "blue" || e.side === "red"))
-        .map((e) => {
-          const cote = e.side as Side;
-          const { nom, lettre } = OBJECTIFS[e.type];
-          return (
-            <g key={`${e.type}-${e.t}-${e.side}`} role="img" aria-label={`${nom} ${COTE_LABEL[cote]} à ${horloge(e.t)}`}>
-              <line
-                x1={x(e.t)}
-                x2={x(e.t)}
-                y1={cadre.haut - 12}
-                y2={cadre.hauteur - cadre.bas}
-                className="stroke-foreground/25"
-              />
-              <circle cx={x(e.t)} cy={cadre.haut - 20} r={9} className={cn("fill-muted", TRAIT[cote])} />
-              <text x={x(e.t)} y={cadre.haut - 16} textAnchor="middle" className="fill-foreground text-[10px]">
-                {lettre}
-              </text>
-            </g>
-          );
-        })}
+      {marqueurs.map(({ cle, t, cote, nom, objectif }) => (
+        <g
+          key={cle}
+          role="img"
+          tabIndex={0}
+          aria-label={`${nom} ${COTE_LABEL[cote]} à ${horloge(t)}`}
+          aria-describedby={cle === actif ? idInfobulle : undefined}
+          onMouseEnter={() => activer(cle)}
+          onMouseLeave={() => activer((a) => (a === cle ? null : a))}
+          onFocus={() => activer(cle)}
+          onBlur={() => activer((a) => (a === cle ? null : a))}
+          className="outline-none [&:focus-visible>circle]:stroke-[3]"
+        >
+          <line x1={x(t)} x2={x(t)} y1={cadre.haut - 12} y2={cadre.hauteur - cadre.bas} className="stroke-foreground/25" />
+          <circle cx={x(t)} cy={cadre.haut - 20} r={10} className={cn("fill-muted", TRAIT[cote])} />
+          <g aria-hidden transform={`translate(${x(t) - 7} ${cadre.haut - 27})`}>
+            <IconeObjectif objectif={objectif} className="size-3.5 text-foreground" />
+          </g>
+        </g>
+      ))}
+      {survole && (
+        <Infobulle
+          id={idInfobulle}
+          texte={`${survole.nom} · équipe ${COTE_EQUIPE[survole.cote]} · ${horloge(survole.t)}`}
+          cx={x(survole.t)}
+          cy={cadre.haut - 20}
+          largeurGraphe={cadre.largeur}
+        />
+      )}
     </g>
   );
 }
