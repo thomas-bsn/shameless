@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Coins, Eye, EyeOff, Flame, Shield, Sword } from "lucide-react";
 import type { Schemas } from "@/api/client";
 import { ChampionCarre, type Participant } from "@/components/game-equipe-table";
 import { sidesOf } from "@/components/game-scoreboard";
+import { IconePing, type Ping } from "@/components/icones-de-jeu/icone-ping";
+import { IconeCapacite, IconeSort, type ToucheDeCapacite } from "@/components/icones-de-jeu/icones-catalogue";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useChampions } from "@/lib/draft-champions-queries";
@@ -11,63 +14,120 @@ import { cn } from "@/lib/utils";
 type Recap = Schemas["GameRecapResponse"];
 type Details = NonNullable<Participant["details"]>;
 
-function Mesure({ nom, valeur }: { nom: string; valeur: string }) {
+/** Une pastille ronde colorée portant une icône. */
+function Pastille({ className, children }: { className: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-border/50 py-1">
-      <dt className="text-sm text-muted-foreground">{nom}</dt>
-      <dd className="font-mono font-semibold tabular-nums">{valeur}</dd>
+    <span aria-hidden className={cn("flex size-8 items-center justify-center rounded-full [&>svg]:size-4", className)}>
+      {children}
+    </span>
+  );
+}
+
+/** Une mesure : son icône, sa valeur en grand et son nom en petit. */
+function Mesure({ nom, valeur, icone }: { nom: string; valeur: string; icone: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-1 text-center">
+      {icone}
+      <dl className="flex flex-col-reverse items-center">
+        <dt className="text-xs text-muted-foreground">{nom}</dt>
+        <dd className="font-mono text-xl font-semibold tabular-nums">{valeur}</dd>
+      </dl>
     </div>
   );
 }
 
-function Section({ titre, children }: { titre: string; children: React.ReactNode }) {
+function Section({ titre, children, className }: { titre: string; children: ReactNode; className?: string }) {
   return (
-    <section className="flex flex-col gap-1">
-      <h3 className="text-sm font-semibold">{titre}</h3>
-      <dl>{children}</dl>
+    <section className="flex flex-col gap-3">
+      <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{titre}</h3>
+      <div className={cn("grid gap-3", className)}>{children}</div>
     </section>
   );
 }
 
-const SORTS: [string, keyof NonNullable<Details["sortsLances"]>][] = [
+/** Une section en groupe nommé, pour les compteurs qui n'existent que si le Rapport les porte. */
+function Groupe({ titre, children, className }: { titre: string; children: ReactNode; className?: string }) {
+  return (
+    <section role="group" aria-label={titre} className={cn("flex flex-col gap-3", className)}>
+      <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{titre}</h3>
+      <div className="flex flex-wrap gap-x-4 gap-y-3">{children}</div>
+    </section>
+  );
+}
+
+const CAPACITES: [ToucheDeCapacite, keyof NonNullable<Details["sortsLances"]>][] = [
   ["Q", "q"],
   ["W", "w"],
   ["E", "e"],
   ["R", "r"],
-  ["D", "d"],
-  ["F", "f"],
 ];
 
-const PINGS: [string, keyof NonNullable<Details["pings"]>][] = [
-  ["Tous en avant", "allIn"],
-  ["À l'aide", "assistMe"],
-  ["Basique", "basic"],
-  ["Commande", "command"],
-  ["Danger", "danger"],
-  ["Ennemi disparu", "enemyMissing"],
-  ["Ennemi en vue", "enemyVision"],
-  ["Repli", "getBack"],
-  ["Tenir la position", "hold"],
-  ["Besoin de vision", "needVision"],
-  ["En route", "onMyWay"],
-  ["Pousser", "push"],
-  ["Retraite", "retreat"],
-  ["Zone dégagée", "visionCleared"],
+const PINGS: Ping[] = [
+  "allIn",
+  "assistMe",
+  "basic",
+  "command",
+  "danger",
+  "enemyMissing",
+  "enemyVision",
+  "getBack",
+  "hold",
+  "needVision",
+  "onMyWay",
+  "push",
+  "retreat",
+  "visionCleared",
 ];
 
-/** Une section en groupe nommé, pour les compteurs qui n'existent que si le Rapport les porte. */
-function Groupe({ titre, children }: { titre: string; children: React.ReactNode }) {
+/** Un sort lancé : son icône, sa touche en pastille et le nombre de lancers. */
+function SortLance({ touche, nombre, icone }: { touche: string; nombre: number | null | undefined; icone: ReactNode }) {
   return (
-    <section role="group" aria-label={titre} className="flex flex-col gap-1">
-      <h3 className="text-sm font-semibold">{titre}</h3>
-      <dl>{children}</dl>
-    </section>
+    <div className="flex w-14 flex-col items-center gap-1 text-center">
+      <span className="relative">
+        {icone}
+        <span className="absolute -bottom-2 left-1/2 flex h-4 min-w-4 -translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-[10px] leading-none">
+          {touche}
+        </span>
+      </span>
+      <span className="mt-2 font-mono text-lg font-semibold tabular-nums">{statLabel(nombre ?? null)}</span>
+    </div>
+  );
+}
+
+/** Les dégâts d'un type : son nom, sa valeur en milliers et une barre en part des dégâts totaux. */
+function BarreDeDegats({
+  nom,
+  valeur,
+  total,
+  className,
+}: {
+  nom: string;
+  valeur: number | null;
+  total: number;
+  className: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <dl className="flex items-baseline justify-between text-sm">
+        <dt className="text-muted-foreground">{nom}</dt>
+        <dd className="font-mono font-semibold tabular-nums">{millierLabel(valeur)}</dd>
+      </dl>
+      <progress
+        aria-hidden
+        value={valeur ?? 0}
+        max={total || 1}
+        className={cn(
+          "h-2 w-full appearance-none overflow-hidden rounded-full [&::-moz-progress-bar]:bg-current [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-current",
+          className,
+        )}
+      />
+    </div>
   );
 }
 
 /**
- * Le détail d'un joueur de la game : balises, stats par minute, dégâts par type, sorts lancés et pings
- * (ces deux derniers seulement si le Rapport les porte ; les pings à zéro ne sont pas listés).
+ * Le détail d'un joueur de la game : vision, stats par minute, dégâts par type, sorts lancés et pings
+ * (ces deux derniers seulement si le Rapport les porte ; les pings à zéro ne sont pas affichés).
  */
 export function DetailsDuJoueur({ participant, side }: { participant: Participant; side: "blue" | "red" }) {
   const champions = useChampions();
@@ -76,7 +136,11 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
   const d = participant.details;
   const role = posteLabel(d?.role ?? s?.position);
   const sorts = d?.sortsLances;
-  const pings = d?.pings ? PINGS.filter(([, cle]) => (d.pings?.[cle] ?? 0) > 0) : [];
+  const pings = d?.pings ? PINGS.filter((cle) => (d.pings?.[cle] ?? 0) > 0) : [];
+  const physiques = s?.physicalDamageToChampions ?? null;
+  const magiques = s?.magicDamageToChampions ?? null;
+  const bruts = s?.trueDamageToChampions ?? null;
+  const total = (physiques ?? 0) + (magiques ?? 0) + (bruts ?? 0);
 
   return (
     <Card role="group" aria-label={`Détails de ${participant.prenom}`}>
@@ -95,35 +159,100 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-3">
-        <Section titre="Vision">
-          <Mesure nom="Balises posées" valeur={statLabel(s?.wardsPlaced ?? null)} />
-          <Mesure nom="Balises détruites" valeur={statLabel(s?.wardsKilled ?? null)} />
-          <Mesure nom="Balises de contrôle" valeur={statLabel(s?.controlWardsBought ?? null)} />
-          <Mesure nom="Score de vision" valeur={statLabel(s?.visionScore ?? null)} />
+      <CardContent className="grid gap-8 md:grid-cols-3">
+        <Section titre="Vision" className="grid-cols-3">
+          <Mesure
+            nom="Balises posées"
+            valeur={statLabel(s?.wardsPlaced ?? null)}
+            icone={
+              <Pastille className="bg-indigo-400/15 text-indigo-300">
+                <Eye />
+              </Pastille>
+            }
+          />
+          <Mesure
+            nom="Balises détruites"
+            valeur={statLabel(s?.wardsKilled ?? null)}
+            icone={
+              <Pastille className="bg-red-400/15 text-red-400">
+                <EyeOff />
+              </Pastille>
+            }
+          />
+          <Mesure
+            nom="Balises de contrôle"
+            valeur={statLabel(s?.controlWardsBought ?? null)}
+            icone={
+              <Pastille className="bg-amber-400/15 text-amber-400">
+                <Shield />
+              </Pastille>
+            }
+          />
         </Section>
-        <Section titre="Par minute">
-          <Mesure nom="CS par minute" valeur={nombreLabel(d?.csParMinute ?? null, 1)} />
-          <Mesure nom="Or par minute" valeur={nombreLabel(d?.orParMinute ?? null)} />
-          <Mesure nom="Dégâts par minute" valeur={nombreLabel(d?.degatsParMinute ?? null)} />
-          <Mesure nom="Vision par minute" valeur={nombreLabel(d?.visionParMinute ?? null, 1)} />
+        <Section titre="Par minute" className="grid-cols-4">
+          <Mesure
+            nom="CS par minute"
+            valeur={nombreLabel(d?.csParMinute ?? null, 1)}
+            icone={
+              <Pastille className="bg-amber-400/15 text-amber-400">
+                <Sword />
+              </Pastille>
+            }
+          />
+          <Mesure
+            nom="Vision par minute"
+            valeur={nombreLabel(d?.visionParMinute ?? null, 1)}
+            icone={
+              <Pastille className="bg-indigo-400/15 text-indigo-300">
+                <Eye />
+              </Pastille>
+            }
+          />
+          <Mesure
+            nom="Dégâts par minute"
+            valeur={nombreLabel(d?.degatsParMinute ?? null)}
+            icone={
+              <Pastille className="bg-red-400/15 text-red-400">
+                <Flame />
+              </Pastille>
+            }
+          />
+          <Mesure
+            nom="Or par minute"
+            valeur={nombreLabel(d?.orParMinute ?? null)}
+            icone={
+              <Pastille className="bg-emerald-400/15 text-emerald-400">
+                <Coins />
+              </Pastille>
+            }
+          />
         </Section>
         <Section titre="Dégâts par type">
-          <Mesure nom="Dégâts physiques" valeur={millierLabel(s?.physicalDamageToChampions ?? null)} />
-          <Mesure nom="Dégâts magiques" valeur={millierLabel(s?.magicDamageToChampions ?? null)} />
-          <Mesure nom="Dégâts bruts" valeur={millierLabel(s?.trueDamageToChampions ?? null)} />
+          <BarreDeDegats nom="Dégâts physiques" valeur={physiques} total={total} className="text-orange-400" />
+          <BarreDeDegats nom="Dégâts magiques" valeur={magiques} total={total} className="text-sky-400" />
+          <BarreDeDegats nom="Dégâts bruts" valeur={bruts} total={total} className="text-zinc-200" />
         </Section>
         {sorts && (
-          <Groupe titre="Sorts lancés">
-            {SORTS.map(([nom, cle]) => (
-              <Mesure key={cle} nom={nom} valeur={statLabel(sorts[cle])} />
+          <Groupe titre="Sorts lancés" className="md:col-span-2">
+            {CAPACITES.map(([touche, cle]) => (
+              <SortLance
+                key={cle}
+                touche={touche}
+                nombre={sorts[cle]}
+                icone={<IconeCapacite championId={participant.championId} touche={touche} className="size-12" />}
+              />
             ))}
+            <SortLance touche="D" nombre={sorts.d} icone={<IconeSort sortId={d?.spell1Id} className="size-12" />} />
+            <SortLance touche="F" nombre={sorts.f} icone={<IconeSort sortId={d?.spell2Id} className="size-12" />} />
           </Groupe>
         )}
         {pings.length > 0 && (
           <Groupe titre="Pings">
-            {pings.map(([nom, cle]) => (
-              <Mesure key={cle} nom={nom} valeur={statLabel(d?.pings?.[cle] ?? null)} />
+            {pings.map((cle) => (
+              <span key={cle} className="flex flex-col items-center gap-1">
+                <IconePing ping={cle} className="size-6" />
+                <span className="font-mono text-base font-semibold tabular-nums">{statLabel(d?.pings?.[cle] ?? null)}</span>
+              </span>
             ))}
           </Groupe>
         )}
