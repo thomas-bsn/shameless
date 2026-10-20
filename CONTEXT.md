@@ -259,6 +259,9 @@ la game en attente si la Série est interrompue ou annulée (`RapportCompanion`)
 reconnue, qui envoie à intervalle régulier un signal de présence avec le PUUID du compte  
 connecté au client. L'Administration liste ces joueurs (« vu il y a X s ») ; sans signal  
 récent, « aucun Companion détecté ».
+- **Meilleure perf** et **ACE** : deux badges de note sur une Game. « Meilleure perf » va au joueur de  
+plus haute note de l'Équipe gagnante, « ACE » à celui de plus haute note de l'Équipe perdante. À ne pas  
+confondre avec le **MVP**, le titre voté par les joueurs (Roi ou Reine).
 - **Rôle joué** : le rôle qu'un Joueur a réellement tenu dans une Game, tel que le client LoL  
 le détecte et le transmet dans le Rapport (`teamPosition`, ADR 0021). À défaut, le rôle de  
 l'Autorole de la Série, puis le rôle principal du Joueur. Un Administrateur peut le corriger.
