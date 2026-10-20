@@ -7762,6 +7762,61 @@
           }
         }
       },
+      "ChronologieDeGameResponse": {
+        "required": [
+          "series",
+          "points",
+          "evenements"
+        ],
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SerieDeChronologieDto"
+            }
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PointDeChronologieDto"
+            }
+          },
+          "evenements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvenementDeChronologieDto"
+            }
+          }
+        }
+      },
+      "ChronologieRequest": {
+        "required": [
+          "points",
+          "evenements"
+        ],
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PointDeChronologieRequest"
+            }
+          },
+          "evenements": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EvenementDeChronologieRequest"
+            }
+          }
+        }
+      },
       "Classement5v5": {
         "required": [
           "joueurs"
@@ -9296,6 +9351,55 @@
           null
         ]
       },
+      "EvenementDeChronologieDto": {
+        "required": [
+          "t",
+          "type",
+          "side"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string"
+          }
+        }
+      },
+      "EvenementDeChronologieRequest": {
+        "required": [
+          "t",
+          "type",
+          "side"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "side": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -10060,7 +10164,8 @@
           "teamAObjectifs",
           "teamBObjectifs",
           "teamA",
-          "teamB"
+          "teamB",
+          "chronologie"
         ],
         "type": "object",
         "properties": {
@@ -10181,6 +10286,16 @@
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
             }
+          },
+          "chronologie": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChronologieDeGameResponse"
+              }
+            ]
           }
         }
       },
@@ -10314,6 +10429,142 @@
           },
           "riotId": {
             "type": "string"
+          }
+        }
+      },
+      "JoueurDuPointDto": {
+        "required": [
+          "playerId",
+          "kills",
+          "deaths",
+          "assists",
+          "cs",
+          "niveau",
+          "vision",
+          "valeurObjets",
+          "mort",
+          "orEstime"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kills": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deaths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assists": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "niveau": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valeurObjets": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mort": {
+            "type": "boolean"
+          },
+          "orEstime": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "JoueurDuPointRequest": {
+        "required": [
+          "puuid",
+          "kills",
+          "deaths",
+          "assists",
+          "cs",
+          "level",
+          "vision",
+          "itemsValue",
+          "dead"
+        ],
+        "type": "object",
+        "properties": {
+          "puuid": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "deaths": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "assists": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "cs": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "level": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "vision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "itemsValue": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dead": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         }
       },
@@ -11584,6 +11835,50 @@
           }
         }
       },
+      "PointDeChronologieDto": {
+        "required": [
+          "t",
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "joueurs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuPointDto"
+            }
+          }
+        }
+      },
+      "PointDeChronologieRequest": {
+        "required": [
+          "t",
+          "joueurs"
+        ],
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "joueurs": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/JoueurDuPointRequest"
+            }
+          }
+        }
+      },
       "PorteeLien": {
         "enum": [
           "Capitaine",
@@ -11884,7 +12179,8 @@
         "required": [
           "riotMatchId",
           "donnees",
-          "joueurs"
+          "joueurs",
+          "chronologie"
         ],
         "type": "object",
         "properties": {
@@ -11899,6 +12195,16 @@
             "items": {
               "$ref": "#/components/schemas/JoueurDuRapportRequest"
             }
+          },
+          "chronologie": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChronologieRequest"
+              }
+            ]
           }
         }
       },
@@ -12404,6 +12710,21 @@
               "type": "integer",
               "format": "int32"
             }
+          }
+        }
+      },
+      "SerieDeChronologieDto": {
+        "required": [
+          "nom",
+          "nature"
+        ],
+        "type": "object",
+        "properties": {
+          "nom": {
+            "type": "string"
+          },
+          "nature": {
+            "type": "string"
           }
         }
       },

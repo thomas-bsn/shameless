@@ -6680,6 +6680,15 @@ export interface components {
             imageUrl: string;
             voies: string[];
         };
+        ChronologieDeGameResponse: {
+            series: components["schemas"]["SerieDeChronologieDto"][];
+            points: components["schemas"]["PointDeChronologieDto"][];
+            evenements: components["schemas"]["EvenementDeChronologieDto"][];
+        };
+        ChronologieRequest: {
+            points: null | components["schemas"]["PointDeChronologieRequest"][];
+            evenements: null | components["schemas"]["EvenementDeChronologieRequest"][];
+        };
         Classement5v5: {
             joueurs: components["schemas"]["LigneClassement5v5"][];
         };
@@ -7048,6 +7057,18 @@ export interface components {
         };
         /** @enum {unknown} */
         EtatDeQuete: "EnCours" | "Terminee" | null;
+        EvenementDeChronologieDto: {
+            /** Format: int32 */
+            t: number;
+            type: string;
+            side: string;
+        };
+        EvenementDeChronologieRequest: {
+            /** Format: int32 */
+            t: null | number;
+            type: null | string;
+            side: null | string;
+        };
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -7235,6 +7256,7 @@ export interface components {
             teamBObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
+            chronologie: null | components["schemas"]["ChronologieDeGameResponse"];
         };
         GroupeDeGames: {
             /** Format: int32 */
@@ -7270,6 +7292,45 @@ export interface components {
             id: number;
             prenom: string;
             riotId: string;
+        };
+        JoueurDuPointDto: {
+            /** Format: int32 */
+            playerId: number;
+            /** Format: int32 */
+            kills: number;
+            /** Format: int32 */
+            deaths: number;
+            /** Format: int32 */
+            assists: number;
+            /** Format: int32 */
+            cs: number;
+            /** Format: int32 */
+            niveau: number;
+            /** Format: int32 */
+            vision: number;
+            /** Format: int32 */
+            valeurObjets: number;
+            mort: boolean;
+            /** Format: int32 */
+            orEstime: null | number;
+        };
+        JoueurDuPointRequest: {
+            puuid: null | string;
+            /** Format: int32 */
+            kills: null | number;
+            /** Format: int32 */
+            deaths: null | number;
+            /** Format: int32 */
+            assists: null | number;
+            /** Format: int32 */
+            cs: null | number;
+            /** Format: int32 */
+            level: null | number;
+            /** Format: int32 */
+            vision: null | number;
+            /** Format: int32 */
+            itemsValue: null | number;
+            dead: null | boolean;
         };
         JoueurDuRapportRequest: {
             puuid: string;
@@ -7592,6 +7653,16 @@ export interface components {
             /** Format: int32 */
             lp: null | number;
         };
+        PointDeChronologieDto: {
+            /** Format: int32 */
+            t: number;
+            joueurs: components["schemas"]["JoueurDuPointDto"][];
+        };
+        PointDeChronologieRequest: {
+            /** Format: int32 */
+            t: null | number;
+            joueurs: null | components["schemas"]["JoueurDuPointRequest"][];
+        };
         /** @enum {unknown} */
         PorteeLien: "Capitaine" | "Spectateur";
         PresenceRequest: {
@@ -7666,6 +7737,7 @@ export interface components {
             riotMatchId: string;
             donnees: components["schemas"]["JsonElement"];
             joueurs: components["schemas"]["JoueurDuRapportRequest"][];
+            chronologie: null | components["schemas"]["ChronologieRequest"];
         };
         RapportEnRevueResponse: {
             /** Format: int32 */
@@ -7802,6 +7874,10 @@ export interface components {
         };
         SelectPlayersRequest: {
             playerIds: number[];
+        };
+        SerieDeChronologieDto: {
+            nom: string;
+            nature: string;
         };
         SerieDuCompanionResponse: {
             /** Format: int32 */

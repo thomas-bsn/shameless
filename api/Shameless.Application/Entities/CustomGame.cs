@@ -13,6 +13,9 @@ public class CustomGame
 
     /// <summary>Les données Riot brutes de la partie (JSON), données par le rapport du Companion.</summary>
     public string? RiotMatchData { get; set; }
+
+    /// <summary>La chronologie de la partie (JSON, ADR 0022), donnée par le rapport du Companion ; null sans chronologie.</summary>
+    public string? Chronologie { get; set; }
     public string Status { get; set; } = GameStatuses.Pending; // voir GameStatuses
     /// <summary>Le lancement de la Game dans la Série (« Lancer la draft », ADR 0017).</summary>
     public DateTime CreatedAt { get; set; }
@@ -81,6 +84,8 @@ public class CustomGame
 
         RiotMatchId = rapport.RiotMatchId;
         RiotMatchData = rapport.Donnees;
+        // Un Rapport sans chronologie ne retire pas celle que la game garde déjà.
+        if (rapport.Chronologie != null) Chronologie = rapport.Chronologie.ToJson();
         var joueurs = rapport.Joueurs.ToDictionary(j => j.Puuid);
         foreach (var participant in Participants)
         {

@@ -293,6 +293,10 @@ namespace Shameless.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Chronologie")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("chronologie");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("completed_at");

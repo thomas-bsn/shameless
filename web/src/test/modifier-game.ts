@@ -62,7 +62,7 @@ export const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Sc
   riotMatchId: null,
   match: null,
   teamAObjectifs: null,
-  teamBObjectifs: null,
+  teamBObjectifs: null, chronologie: null,
   teamA: equipe(1, NOMS_A),
   teamB: equipe(11, NOMS_B),
   ...overrides,
