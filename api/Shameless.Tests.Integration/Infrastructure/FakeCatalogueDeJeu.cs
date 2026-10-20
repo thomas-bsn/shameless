@@ -22,6 +22,15 @@ public sealed class FakeCatalogueDeJeu : ICatalogueDeJeu
         [
             new(8100, "Domination", "https://ddragon.test/cdn/img/perk-images/Styles/7200_Domination.png",
                 [new(8112, "Électrocution", "https://ddragon.test/cdn/img/perk-images/Styles/Domination/Electrocute/Electrocute.png")])
+        ],
+        [
+            new("LeeSin",
+            [
+                new("Q", "Onde sonore", "https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkQOne.png"),
+                new("W", "Égide", "https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkWOne.png"),
+                new("E", "Tempête", "https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkEOne.png"),
+                new("R", "Fureur du dragon", "https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkRKick.png")
+            ])
         ]);
 
     /// <summary>Le catalogue est indisponible ; remis à disposition avant chaque test.</summary>

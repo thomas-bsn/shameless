@@ -7599,12 +7599,32 @@
           }
         }
       },
+      "CapaciteDuCatalogue": {
+        "required": [
+          "touche",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "touche": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
+      },
       "CatalogueDeJeu": {
         "required": [
           "version",
           "objets",
           "sorts",
-          "arbres"
+          "arbres",
+          "champions"
         ],
         "type": "object",
         "properties": {
@@ -7628,6 +7648,12 @@
             "items": {
               "$ref": "#/components/schemas/ArbreDuCatalogue"
             }
+          },
+          "champions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChampionDuCatalogue"
+            }
           }
         }
       },
@@ -7642,6 +7668,24 @@
           "Inattendue",
           null
         ]
+      },
+      "ChampionDuCatalogue": {
+        "required": [
+          "id",
+          "capacites"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "capacites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapaciteDuCatalogue"
+            }
+          }
+        }
       },
       "ChampionDuResume": {
         "required": [

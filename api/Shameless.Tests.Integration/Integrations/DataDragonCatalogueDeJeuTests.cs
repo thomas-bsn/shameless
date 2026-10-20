@@ -18,12 +18,21 @@ public class DataDragonCatalogueDeJeuTests
                    {"runes":[{"id":8126,"key":"CheapShot","icon":"perk-images/Styles/Domination/CheapShot/CheapShot.png","name":"Coup bas"}]}]}]
         """;
 
+    private const string ChampionsComplets = """
+        {"data":{"LeeSin":{"id":"LeeSin","name":"Lee Sin","spells":[
+          {"id":"BlindMonkQOne","name":"Onde sonore","image":{"full":"BlindMonkQOne.png"}},
+          {"id":"BlindMonkWOne","name":"Égide","image":{"full":"BlindMonkWOne.png"}},
+          {"id":"BlindMonkEOne","name":"Tempête","image":{"full":"BlindMonkEOne.png"}},
+          {"id":"BlindMonkRKick","name":"Fureur du dragon","image":{"full":"BlindMonkRKick.png"}}]}}}
+        """;
+
     private static HttpResponseMessage Reponse(string chemin) => chemin switch
     {
         var c when c.EndsWith("versions.json") => Json("""["15.1.1","15.0.1"]"""),
         var c when c.EndsWith("/fr_FR/item.json") => Json(Items),
         var c when c.EndsWith("/fr_FR/summoner.json") => Json(Sorts),
         var c when c.EndsWith("/fr_FR/runesReforged.json") => Json(Runes),
+        var c when c.EndsWith("/fr_FR/championFull.json") => Json(ChampionsComplets),
         _ => new HttpResponseMessage(HttpStatusCode.NotFound)
     };
 
@@ -44,7 +53,20 @@ public class DataDragonCatalogueDeJeuTests
         Assert.Equal("https://ddragon.test/cdn/img/perk-images/Styles/Domination/Electrocute/Electrocute.png", domination.Runes[0].IconUrl);
     }
 
+    [Fact]
+    public async Task Le_catalogue_donne_les_quatre_capacites_de_chaque_champion_dans_l_ordre_Q_W_E_R()
+    {
+        var catalogue = await Catalogue(Reponse).GetAsync(Ct);
+
+        var leeSin = Assert.Single(catalogue.Champions);
+        Assert.Equal("LeeSin", leeSin.Id);
+        Assert.Equal(["Q", "W", "E", "R"], leeSin.Capacites.Select(c => c.Touche));
+        Assert.Equal("Onde sonore", leeSin.Capacites[0].Name);
+        Assert.Equal("https://ddragon.test/cdn/15.1.1/img/spell/BlindMonkRKick.png", leeSin.Capacites[3].IconUrl);
+    }
+
     [Theory]
+    [InlineData("championFull.json")]
     [InlineData("item.json")]
     [InlineData("summoner.json")]
     [InlineData("runesReforged.json")]

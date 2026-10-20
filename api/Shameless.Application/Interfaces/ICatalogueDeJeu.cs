@@ -12,12 +12,19 @@ public sealed record RuneDuCatalogue(int Id, string Name, string IconUrl);
 /// <summary>Un arbre de runes (<c>perkPrimaryStyle</c>, <c>perkSubStyle</c>) et ses runes.</summary>
 public sealed record ArbreDuCatalogue(int Id, string Name, string IconUrl, IReadOnlyList<RuneDuCatalogue> Runes);
 
-/// <summary>Ce que le site affiche des objets, sorts et runes d'une game, pour la version courante du jeu.</summary>
+/// <summary>Une capacité d'un champion : touche (Q, W, E ou R), nom en français, icône.</summary>
+public sealed record CapaciteDuCatalogue(string Touche, string Name, string IconUrl);
+
+/// <summary>Un champion et ses quatre capacités ; <c>Id</c> est l'identifiant Data Dragon (« LeeSin »), celui du catalogue des champions.</summary>
+public sealed record ChampionDuCatalogue(string Id, IReadOnlyList<CapaciteDuCatalogue> Capacites);
+
+/// <summary>Ce que le site affiche des objets, sorts, runes et capacités de champions d'une game, pour la version courante du jeu.</summary>
 public sealed record CatalogueDeJeu(
     string Version,
     IReadOnlyList<ObjetDuCatalogue> Objets,
     IReadOnlyList<SortDuCatalogue> Sorts,
-    IReadOnlyList<ArbreDuCatalogue> Arbres);
+    IReadOnlyList<ArbreDuCatalogue> Arbres,
+    IReadOnlyList<ChampionDuCatalogue> Champions);
 
 /// <summary>
 /// Le catalogue des objets, sorts d'invocateur et runes (Data Dragon, en français). Les lectures d'une
