@@ -101,9 +101,22 @@ par les stats ; points, classement des pronostics et titre de Doyen (voix double
   - [ ] Capitaines : jamais le même joueur des deux côtés ; liens envoyés en DM par le bot, « rejoint » mémorisé
   - [x] Game créée au lancement de la draft, `game_started` au signal du Companion, Side sans choix manuel
 
+## Statistiques détaillées (hors phases 0 à 3)
+- [ ] Spec : Rapport enrichi, page de game, profil, classements, note (#168)
+  - [ ] Rapport enrichi : rôle joué, objets, sorts, objectifs d'équipe (#169)
+  - [ ] API : détails d'un joueur dans une game (#170)
+  - [ ] Page d'une game : Général, Détails, Runes (#171) et vue en cibles (#172)
+  - [ ] Administration : correction de toutes les stats (#173), fenêtre « Modifier la game » (#174), recherche sur l'onglet Joueurs (#180)
+  - [ ] Profil joueur : fiche enrichie (#175), profil public (#176), Mon profil (#177)
+  - [ ] Classement des costs : escalier et podium avec liste (#178)
+  - [ ] Historique : le bloc de game cliquable (#179)
+  - [ ] Note : script de collecte (#181), outil d'appariement et d'ajustement (#185), calage sur dpm.lol (#182)
+  - [ ] Rapport d'exemple pour la game #78 (#183)
+
 ## Backlog
 - Teaser vidéo avec vraies captures
 - Fusion proxchat dans le Companion
+- Entraîner le cost sur l'historique des customs (le calage de la note est dans #182)
 - Companion : mise à jour automatique, signature de l'exécutable, installeur
 - Administrateurs repérables dans Discord (pseudo en rouge) pour que le Companion dise « donne le fichier à un admin »
 - Nom du bot lu depuis Forgeyard (aujourd'hui saisi dans le wizard)
