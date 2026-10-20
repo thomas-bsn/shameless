@@ -37,7 +37,7 @@ public static class NotesDeLaGame
     internal static NoteDePerformance? Noter(
         CustomGame game, CustomGameParticipant participant, StatsDuParticipant? stats, int? killsDeLEquipe, int? dureeSecondes)
     {
-        var role = RoleJoue.Determiner(stats?.Position, AutoroleDe(game, participant.PlayerId), Autorole.RolePrincipal(participant.Player.MainRole));
+        var role = RoleJoueDe(game, participant, stats);
         var calculee = stats is null ? null : NoteDePerformance.Calculer(stats, role, killsDeLEquipe, dureeSecondes);
 
         // La note sur les stats d'origine, pour l'afficher à côté d'une valeur corrigée.
@@ -52,6 +52,10 @@ public static class NotesDeLaGame
             ? (calculee ?? new NoteDePerformance(corrigee, role.Role, role.Source, [])) with { Note = corrigee, NoteOrigine = origine }
             : calculee is null ? null : calculee with { NoteOrigine = origine };
     }
+
+    /// <summary>Le rôle joué par le participant : position de la partie, sinon Autorole, sinon rôle principal.</summary>
+    internal static RoleJoue RoleJoueDe(CustomGame game, CustomGameParticipant participant, StatsDuParticipant? stats) =>
+        RoleJoue.Determiner(stats?.Position, AutoroleDe(game, participant.PlayerId), Autorole.RolePrincipal(participant.Player.MainRole));
 
     /// <summary>La durée de la game envoyée par le Companion, null sans données.</summary>
     internal static int? DureeDe(CustomGame game) => DonneesDuMatch.Lire(game.RiotMatchData)?.DurationSeconds;

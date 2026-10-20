@@ -19,7 +19,7 @@ const participant = (
   championId: null,
   stats: null,
   performance: null,
-  champsCorriges: [],
+  champsCorriges: [], details: null, place: null, badge: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
@@ -76,7 +76,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   teamBWins: 1,
   seriesOutcome: "EnCours",
   riotMatchId: "EUW1_1",
-  match: { durationSeconds: 1834, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
+  match: { durationSeconds: 1834, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null }, teamAObjectifs: null, teamBObjectifs: null,
   teamA: [
     participant(1, "Alice", { championId: "Ahri", stats: stats(7, 2, 9), performance: note(86) }),
     participant(3, "Chloé", { championId: "Jinx", stats: stats(1, 5, 3, { goldEarned: null }), performance: note(40) }),

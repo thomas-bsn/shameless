@@ -639,6 +639,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CatalogueDeJeu"];
+                        "application/json": components["schemas"]["CatalogueDeJeu"];
+                        "text/json": components["schemas"]["CatalogueDeJeu"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/champions": {
         parameters: {
             query?: never;
@@ -6533,6 +6588,13 @@ export interface components {
             superadministrateurs: string[];
             administrateurs: string[];
         };
+        ArbreDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+            runes: components["schemas"]["RuneDuCatalogue"][];
+        };
         /** @enum {unknown} */
         ArretSerie: "Annulee" | "Interrompue";
         AuthUserResponse: {
@@ -6550,6 +6612,8 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        /** @enum {unknown} */
+        BadgeDeGame: "MeilleurePerf" | "Ace" | null;
         BulletinDuVotant: {
             /** Format: int32 */
             gameId: number;
@@ -6570,6 +6634,12 @@ export interface components {
             playerId: number;
             prenom: string;
             discordId: string;
+        };
+        CatalogueDeJeu: {
+            version: string;
+            objets: components["schemas"]["ObjetDuCatalogue"][];
+            sorts: components["schemas"]["SortDuCatalogue"][];
+            arbres: components["schemas"]["ArbreDuCatalogue"][];
         };
         /** @enum {unknown} */
         CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "PuuidPerime" | "Inattendue" | null;
@@ -6829,6 +6899,35 @@ export interface components {
             /** Format: int32 */
             playerId: null | number;
         };
+        DetailsDuJoueur: {
+            role: null | components["schemas"]["Role"];
+            sourceDuRole: components["schemas"]["SourceDuRole"];
+            items: null | (null | number)[];
+            objetDeRole: null | components["schemas"]["ObjetDeRole"];
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            perks: null | (null | number)[];
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            /** Format: double */
+            csParMinute: null | number;
+            /** Format: double */
+            orParMinute: null | number;
+            /** Format: double */
+            degatsParMinute: null | number;
+            /** Format: double */
+            visionParMinute: null | number;
+            /** Format: double */
+            partDesDegats: null | number;
+            /** Format: double */
+            partDeLOr: null | number;
+            /** Format: double */
+            partDesKills: null | number;
+        };
         DonneesDuMatch: {
             /** Format: int32 */
             durationSeconds: null | number;
@@ -6907,6 +7006,8 @@ export interface components {
             /** Format: date-time */
             termineeLe: null | string;
         };
+        /** @enum {unknown} */
+        EtatDeQuete: "EnCours" | "Terminee" | null;
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -7018,6 +7119,10 @@ export interface components {
             avatarUrl: null | string;
             statsOrigine: null | components["schemas"]["StatsDuParticipant"];
             championOrigine: null | string;
+            details: null | components["schemas"]["DetailsDuJoueur"];
+            /** Format: int32 */
+            place: null | number;
+            badge: null | components["schemas"]["BadgeDeGame"];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -7077,6 +7182,8 @@ export interface components {
             seriesOutcome: null | components["schemas"]["SeriesOutcome"];
             riotMatchId: null | string;
             match: null | components["schemas"]["DonneesDuMatch"];
+            teamAObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
+            teamBObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
         };
@@ -7225,6 +7332,34 @@ export interface components {
             composantes: components["schemas"]["ComposanteDeNote"][];
             /** Format: int32 */
             noteOrigine: null | number;
+        };
+        ObjectifsDEquipe: {
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            riftHeraldKills: null | number;
+            /** Format: int32 */
+            hordeKills: null | number;
+            /** Format: int32 */
+            towerKills: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            firstBlood: null | boolean;
+            firstTower: null | boolean;
+            firstInhibitor: null | boolean;
+        };
+        ObjetDeRole: {
+            /** Format: int32 */
+            id: number;
+            etat: null | components["schemas"]["EtatDeQuete"];
+        };
+        ObjetDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
@@ -7547,6 +7682,12 @@ export interface components {
         Role: "Top" | "Jungle" | "Mid" | "Adc" | "Support" | null;
         /** @enum {unknown} */
         RouletteVariante: "Aleatoire" | "Equilibree" | null;
+        RuneDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+        };
         SelectPlayersRequest: {
             playerIds: number[];
         };
@@ -7646,6 +7787,12 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        SortDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+        };
         /** @enum {unknown} */
         SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
         /** @enum {unknown} */

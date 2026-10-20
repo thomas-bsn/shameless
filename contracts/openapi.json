@@ -647,6 +647,55 @@
         }
       }
     },
+    "/catalogue": {
+      "get": {
+        "tags": [
+          "Catalogue"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/champions": {
       "get": {
         "tags": [
@@ -7324,6 +7373,33 @@
           }
         }
       },
+      "ArbreDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl",
+          "runes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "runes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuneDuCatalogue"
+            }
+          }
+        }
+      },
       "ArretSerie": {
         "enum": [
           "Annulee",
@@ -7401,6 +7477,13 @@
           "Aleatoire"
         ]
       },
+      "BadgeDeGame": {
+        "enum": [
+          "MeilleurePerf",
+          "Ace",
+          null
+        ]
+      },
       "BulletinDuVotant": {
         "required": [
           "gameId",
@@ -7476,6 +7559,38 @@
           },
           "discordId": {
             "type": "string"
+          }
+        }
+      },
+      "CatalogueDeJeu": {
+        "required": [
+          "version",
+          "objets",
+          "sorts",
+          "arbres"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "objets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjetDuCatalogue"
+            }
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortDuCatalogue"
+            }
+          },
+          "arbres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArbreDuCatalogue"
+            }
           }
         }
       },
@@ -8494,6 +8609,155 @@
           }
         }
       },
+      "DetailsDuJoueur": {
+        "required": [
+          "role",
+          "sourceDuRole",
+          "items",
+          "objetDeRole",
+          "spell1Id",
+          "spell2Id",
+          "perks",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "csParMinute",
+          "orParMinute",
+          "degatsParMinute",
+          "visionParMinute",
+          "partDesDegats",
+          "partDeLOr",
+          "partDesKills"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "sourceDuRole": {
+            "$ref": "#/components/schemas/SourceDuRole"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "objetDeRole": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjetDeRole"
+              }
+            ]
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perks": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "csParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "orParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "degatsParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "visionParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDesDegats": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDeLOr": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDesKills": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "DonneesDuMatch": {
         "required": [
           "durationSeconds",
@@ -8851,6 +9115,13 @@
             "format": "date-time"
           }
         }
+      },
+      "EtatDeQuete": {
+        "enum": [
+          "EnCours",
+          "Terminee",
+          null
+        ]
       },
       "FicheJoueur": {
         "required": [
@@ -9266,7 +9537,10 @@
           "champsCorriges",
           "avatarUrl",
           "statsOrigine",
-          "championOrigine"
+          "championOrigine",
+          "details",
+          "place",
+          "badge"
         ],
         "type": "object",
         "properties": {
@@ -9352,6 +9626,33 @@
             "type": [
               "null",
               "string"
+            ]
+          },
+          "details": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DetailsDuJoueur"
+              }
+            ]
+          },
+          "place": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "badge": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BadgeDeGame"
+              }
             ]
           }
         }
@@ -9531,6 +9832,8 @@
           "seriesOutcome",
           "riotMatchId",
           "match",
+          "teamAObjectifs",
+          "teamBObjectifs",
           "teamA",
           "teamB"
         ],
@@ -9619,6 +9922,26 @@
               },
               {
                 "$ref": "#/components/schemas/DonneesDuMatch"
+              }
+            ]
+          },
+          "teamAObjectifs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjectifsDEquipe"
+              }
+            ]
+          },
+          "teamBObjectifs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjectifsDEquipe"
               }
             ]
           },
@@ -10205,6 +10528,125 @@
               "integer"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "ObjectifsDEquipe": {
+        "required": [
+          "dragonKills",
+          "baronKills",
+          "riftHeraldKills",
+          "hordeKills",
+          "towerKills",
+          "inhibitorKills",
+          "firstBlood",
+          "firstTower",
+          "firstInhibitor"
+        ],
+        "type": "object",
+        "properties": {
+          "dragonKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "baronKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "riftHeraldKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "hordeKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "towerKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "firstBlood": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "firstTower": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "firstInhibitor": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "ObjetDeRole": {
+        "required": [
+          "id",
+          "etat"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "etat": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EtatDeQuete"
+              }
+            ]
+          }
+        }
+      },
+      "ObjetDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
           }
         }
       },
@@ -11470,6 +11912,26 @@
           null
         ]
       },
+      "RuneDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
+      },
       "SelectPlayersRequest": {
         "required": [
           "playerIds"
@@ -11879,6 +12341,26 @@
           "Open",
           "Closed"
         ]
+      },
+      "SortDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
       },
       "SourceDuCostDeDepart": {
         "enum": [
@@ -12716,6 +13198,9 @@
     },
     {
       "name": "Bot"
+    },
+    {
+      "name": "Catalogue"
     },
     {
       "name": "Champions"
