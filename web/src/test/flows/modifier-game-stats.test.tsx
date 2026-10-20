@@ -40,7 +40,7 @@ describe("Fenêtre Modifier la game : onglet Stats, liste", () => {
 
 describe("Fenêtre Modifier la game : onglet Stats, ordre", () => {
   it("liste chaque équipe Top, Jungle, Mid, ADC, Support quel que soit l'ordre reçu", async () => {
-    const poste = (id: number, prenom: string, position: string) =>
+    const poste = (id: number, prenom: string, position: "Top" | "Jungle" | "Mid" | "Adc" | "Support") =>
       participant(id, prenom, { stats: { ...participant(id, prenom).stats!, position } });
     const desordre = [poste(1, "Alice", "Top"), poste(2, "Bob", "Jungle"), poste(3, "Chloé", "Support"), poste(4, "David", "Mid"), poste(5, "Emma", "Adc")];
     const { dialogue } = await ouvrirLesStats({ ...base(), "GET /games/42": recap({ teamA: desordre }) } as ReturnType<typeof base>);

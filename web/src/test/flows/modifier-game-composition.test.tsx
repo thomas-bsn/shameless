@@ -17,7 +17,7 @@ describe("Fenêtre Modifier la game : onglet Composition", () => {
   });
 
   it("garde les lignes dans l'ordre Top, Jungle, Mid, ADC, Support même si l'équipe arrive dans le désordre", async () => {
-    const poste = (id: number, prenom: string, position: string) =>
+    const poste = (id: number, prenom: string, position: "Top" | "Jungle" | "Mid" | "Adc" | "Support") =>
       participant(id, prenom, { stats: { ...participant(id, prenom).stats!, position } });
     const desordre = [poste(1, "Alice", "Top"), poste(2, "Bob", "Jungle"), poste(3, "Chloé", "Support"), poste(4, "David", "Mid"), poste(5, "Emma", "Adc")];
     mockApi({ ...base(), "GET /games/42": recap({ teamA: desordre }) });
