@@ -5,6 +5,7 @@ import { DraftChampionsTerminee } from "@/components/draft-champions-organisateu
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
+import { GameLinkCard } from "@/components/game-link-card";
 import { Button } from "@/components/ui/button";
 import { outcomeLabel, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
@@ -87,29 +88,29 @@ function GamesList({ series }: { series: Series }) {
       </h2>
       <ol aria-label="Games de la série" className="flex flex-col gap-2">
         {series.games.map((g, index) => (
-          <li key={g.id} className="flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span>
-                Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> ·
-                Équipe B <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
-              </span>
-              <span className="flex items-center gap-3">
-                {g.winner ? (
+          <li key={g.id}>
+            <GameLinkCard
+              gameId={g.id}
+              label={`Voir la game ${index + 1}`}
+              header={
+                <>
+                  Game {index + 1} · Équipe A <span className={sideTextClass(g.teamASide)}>{sideLabel(g.teamASide)}</span> ·
+                  Équipe B <span className={sideTextClass(g.teamBSide)}>{sideLabel(g.teamBSide)}</span>
+                </>
+              }
+              badge={
+                g.winner ? (
                   <Badge variant="secondary">Équipe {g.winner} gagne</Badge>
                 ) : (
                   <Badge variant="outline">En attente</Badge>
-                )}
-                <Link
-                  to="/games/$gameId"
-                  params={{ gameId: String(g.id) }}
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  Voir la Game
-                </Link>
-              </span>
-            </div>
-            <ChampionsJoues game={g} />
-            {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
+                )
+              }
+            >
+              <div className="flex flex-col gap-2 px-3 py-2">
+                <ChampionsJoues game={g} />
+                {g.status === "completed" && <DraftChampionsTerminee gameId={g.id} />}
+              </div>
+            </GameLinkCard>
           </li>
         ))}
       </ol>

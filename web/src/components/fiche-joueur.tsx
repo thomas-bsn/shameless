@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { GameLinkCard } from "@/components/game-link-card";
 import type { ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { AvatarJoueur } from "@/components/avatar-joueur";
@@ -241,36 +241,39 @@ export function DernieresGames({ games }: { games: Fiche["games"] }) {
       {games.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucune game en customs.</p>
       ) : (
-        <ul className="flex flex-col divide-y">
+        <ul className="flex flex-col gap-3">
           {games.slice(0, 10).map((g) => {
             const champion = catalogue.find((c) => c.id === g.championId);
             const poste = posteLabel(g.role ?? g.stats?.position);
             return (
               <li key={g.gameId}>
-                <Link
-                  to="/games/$gameId"
-                  params={{ gameId: String(g.gameId) }}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2 text-sm hover:bg-muted/40"
+                <GameLinkCard
+                  gameId={g.gameId}
+                  label={`Voir la game ${g.gameId}`}
+                  header={dateHeureLabel(g.playedAt)}
+                  badge={
+                    <Badge variant={g.victoire ? "secondary" : "destructive"} className={cn(g.victoire && "text-emerald-400")}>
+                      {g.victoire ? "Victoire" : "Défaite"}
+                    </Badge>
+                  }
                 >
-                  <span className="w-28 text-xs text-muted-foreground">{dateHeureLabel(g.playedAt)}</span>
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    <ChampionCarre nom={champion?.name ?? g.championId} image={champion?.imageUrl} />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium">{champion?.name ?? g.championId ?? "–"}</span>
-                      {poste && <span className="text-xs text-muted-foreground">{poste}</span>}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-sm">
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      <ChampionCarre nom={champion?.name ?? g.championId} image={champion?.imageUrl} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate font-medium">{champion?.name ?? g.championId ?? "–"}</span>
+                        {poste && <span className="text-xs text-muted-foreground">{poste}</span>}
+                      </span>
                     </span>
-                  </span>
-                  <span className="font-mono tabular-nums">{kdaDetailLabel(g.stats)}</span>
-                  <Badge variant={g.victoire ? "secondary" : "destructive"} className={cn(g.victoire && "text-emerald-400")}>
-                    {g.victoire ? "Victoire" : "Défaite"}
-                  </Badge>
-                  {g.mvp && <Badge className="bg-yellow-400 text-black">Roi/Reine</Badge>}
-                  {g.dofd && <Badge variant="destructive">DOFD</Badge>}
-                  <span className={cn("font-mono tabular-nums", g.performance && noteClass[noteTone(g.performance.note)])}>
-                    <span className="font-sans text-xs text-muted-foreground">Note </span>
-                    {g.performance ? `${g.performance.note}/100` : "–"}
-                  </span>
-                </Link>
+                    <span className="font-mono tabular-nums">{kdaDetailLabel(g.stats)}</span>
+                    {g.mvp && <Badge className="bg-yellow-400 text-black">Roi/Reine</Badge>}
+                    {g.dofd && <Badge variant="destructive">DOFD</Badge>}
+                    <span className={cn("font-mono tabular-nums", g.performance && noteClass[noteTone(g.performance.note)])}>
+                      <span className="font-sans text-xs text-muted-foreground">Note </span>
+                      {g.performance ? `${g.performance.note}/100` : "–"}
+                    </span>
+                  </div>
+                </GameLinkCard>
               </li>
             );
           })}
