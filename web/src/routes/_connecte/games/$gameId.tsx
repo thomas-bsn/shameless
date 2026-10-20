@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VueEnCibles } from "@/components/game-cibles";
 import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
@@ -7,6 +7,7 @@ import { ObjectifsDesEquipes } from "@/components/game-objectifs-equipes";
 import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
 import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
+import { BoutonModifierLaGame } from "@/components/modifier-game/bouton-modifier-la-game";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -90,6 +91,7 @@ function Recit({ game }: { game: Recap }) {
 }
 
 function Banniere({ game }: { game: Recap }) {
+  const navigate = useNavigate();
   const winner = gameWinner(game);
   const meta =
     game.seriesId == null
@@ -120,6 +122,7 @@ function Banniere({ game }: { game: Recap }) {
             </span>
           )}
           {!winner && <Badge variant="outline">En cours</Badge>}
+          <BoutonModifierLaGame gameId={game.id} onSupprimee={() => void navigate({ to: "/historique" })} />
           {game.seriesId != null && (
             <Link
               to="/series/$seriesId"
