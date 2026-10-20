@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
-import { player, user } from "@/test/fixtures";
+import { ORIGINE_VIDE, player, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 type Fiche = Schemas["FicheJoueur"];
@@ -49,7 +49,7 @@ const fiche = (o: Partial<Fiche> = {}): Fiche => ({
   playerId: 7,
   prenom: "Aldric",
   riotId: "Aldric#EUW",
-  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true },
+  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true, bannerUrl: null, bannerColor: null },
   comptesDiscord: [],
   cost: 4.4,
   soloQ: { tier: "DIAMOND", division: 2, lp: 45 },
@@ -292,17 +292,102 @@ describe("Fiche publique", () => {
     expect(lien).not.toHaveTextContent("NaN");
   });
 
-  it("déplie la ligne pour donner accès à la game sans ouvrir la game", async () => {
-    open(fiche({ liste: [{ soireeId: null, jour: null, games: [ligne(31)] }] }));
+  describe("ligne dépliable", () => {
+    const participant = (playerId: number, prenom: string) => ({
+      playerId,
+      prenom,
+      riotId: `${prenom}#EUW`,
+      avatarUrl: null,
+      rankTier: "GOLD",
+      rankDivision: 2,
+      cost: 3,
+      championId: "Camille",
+      stats: { kills: 5, deaths: 1, assists: 2, minionsKilled: 100, neutralMinionsKilled: 0 },
+      performance: null,
+      champsCorriges: [],
+      details: null,
+      place: 1,
+      badge: null,
+      impact: null,
+      ...ORIGINE_VIDE,
+    });
+    const recap = {
+      id: 31,
+      seriesId: null,
+      gameNumber: 1,
+      bestOf: 1,
+      status: "completed",
+      playedAt: "2026-10-17T20:00:00Z",
+      completedAt: null,
+      modifieeParAdminLe: null,
+      teamASide: "blue",
+      teamBSide: "red",
+      winner: "A",
+      teamAWins: 1,
+      teamBWins: 0,
+      seriesOutcome: "Gagnee",
+      riotMatchId: "EUW1_1",
+      match: { durationSeconds: 1500, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
+      teamAObjectifs: null,
+      teamBObjectifs: null,
+      chronologie: null,
+      teamA: [participant(1, "Alice")],
+      teamB: [participant(2, "Bob")],
+    };
+    const ouvrir = (game: () => Response) => {
+      let appels = 0;
+      const mock = mockApi({
+        "GET /auth/me": user(),
+        "GET /players/7": player({ id: 7, prenom: "Aldric" }),
+        "GET /players/7/fiche": fiche({ liste: [{ soireeId: null, jour: null, games: [ligne(31)] }] }),
+        "GET /players/7/cost/historique": { playerId: 7, mois: [] },
+        "GET /champions": [],
+        "GET /catalogue": { version: "1", objets: [], sorts: [], arbres: [], champions: [] },
+        "GET /games/31": () => {
+          appels++;
+          return game();
+        },
+        "GET /games/31/votes": { mvp: { gagnants: [] }, dofd: { gagnants: [] } },
+      });
+      renderApp("/joueurs/7");
+      return { mock, appels: () => appels };
+    };
 
-    const deplier = await screen.findByRole("button", { name: "Déplier la game 31" });
-    expect(deplier).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: /Scoreboard, stats, votes, pronostics et clips/ })).not.toBeInTheDocument();
+    it("ne charge la game qu'à l'ouverture, puis montre les onglets et le scoreboard des deux équipes", async () => {
+      const { appels } = ouvrir(() => Response.json(recap));
+      const deplier = await screen.findByRole("button", { name: "Déplier la game 31" });
+      expect(deplier).toHaveAttribute("aria-expanded", "false");
+      expect(appels()).toBe(0);
 
-    await userEvent.click(deplier);
+      await userEvent.click(deplier);
 
-    expect(screen.getByRole("button", { name: "Replier la game 31" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: /Scoreboard, stats, votes, pronostics et clips/ })).toHaveAttribute("href", "/games/31");
+      expect(screen.getByRole("button", { name: "Replier la game 31" })).toHaveAttribute("aria-expanded", "true");
+      expect(await screen.findByRole("tab", { name: "Général" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Détails" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Runes" })).toBeInTheDocument();
+      expect(screen.getByRole("list", { name: /Équipe A/ })).toHaveTextContent("Alice");
+      expect(screen.getByRole("list", { name: /Équipe B/ })).toHaveTextContent("Bob");
+      expect(screen.getByRole("link", { name: /Voir la game complète/ })).toHaveAttribute("href", "/games/31");
+      expect(appels()).toBe(1);
+    });
+
+    it("ne navigue pas en dépliant, et replier masque le panneau", async () => {
+      ouvrir(() => Response.json(recap));
+      await userEvent.click(await screen.findByRole("button", { name: "Déplier la game 31" }));
+      await screen.findByRole("tab", { name: "Général" });
+      expect(screen.getByRole("link", { name: "Voir la game 31" })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Replier la game 31" }));
+      expect(screen.queryByRole("tab", { name: "Général" })).not.toBeInTheDocument();
+    });
+
+    it("signale l'erreur de chargement tout en gardant le lien vers la game", async () => {
+      ouvrir(() => Response.json({ title: "Boom" }, { status: 500 }));
+      await userEvent.click(await screen.findByRole("button", { name: "Déplier la game 31" }));
+
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Voir la game complète/ })).toHaveAttribute("href", "/games/31");
+    });
   });
 
   it("affiche une ligne dédiée « Stats non saisies » pour une game sans stats, qui reste ouvrable", async () => {

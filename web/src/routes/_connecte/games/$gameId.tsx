@@ -6,17 +6,15 @@ import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
 import { OngletCourbes } from "@/components/game-courbes";
 import { OngletRunes } from "@/components/game-runes";
-import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
+import { ResumeSansStats, ResumeScoreboard } from "@/components/game-resume";
 import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
 import { EnteteDeGame } from "@/components/game-entete";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PronosticsDeLaGame } from "@/components/pronostics-de-la-game";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { VotesDeLaGame } from "@/components/votes-de-la-game";
 import { estSaisieAMain } from "@/lib/game";
-import { gameWinner } from "@/lib/history";
 
 /** La page d'une Game : c'est le lien de récap posté par le bot Discord. */
 export const Route = createFileRoute("/_connecte/games/$gameId")({
@@ -78,36 +76,6 @@ function Recit({ game }: { game: Recap }) {
         <VotesDeLaGame gameId={game.id} />
         <PronosticsDeLaGame gameId={game.id} />
         <GameClips gameId={game.id} />
-      </div>
-    </>
-  );
-}
-
-function ResumeScoreboard({ game }: { game: Recap }) {
-  return (
-    <>
-      {sidesOf(game).map((s) => (
-        <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} />
-      ))}
-    </>
-  );
-}
-
-/** Une Game saisie à la main n'a ni stats ni note : on garde les équipes et le vainqueur, et on dit pourquoi. */
-function ResumeSansStats({ game }: { game: Recap }) {
-  const winner = gameWinner(game);
-  return (
-    <>
-      <Alert>
-        <AlertDescription>
-          <strong>Résultat saisi à la main.</strong> Les stats détaillées (K/D/A, CS, or, dégâts) ne sont pas disponibles
-          pour cette game, et les joueurs n'ont pas de note.
-        </AlertDescription>
-      </Alert>
-      <div className="grid gap-4 md:grid-cols-2">
-        {sidesOf(game).map((s) => (
-          <EquipeSansStats key={s.side} team={s.team} side={s.side} players={s.players} won={winner === s.team} />
-        ))}
       </div>
     </>
   );

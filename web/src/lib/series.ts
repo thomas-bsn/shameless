@@ -34,3 +34,23 @@ export function replacementCandidates<P extends { id: number }>(
   const inSeries = new Set([...series.teamA, ...series.teamB].map((p) => p.playerId));
   return players.filter((p) => !inSeries.has(p.id));
 }
+
+type Participant = Schemas["GameParticipantDto"];
+
+/**
+ * Les joueurs d'une Équipe avec le rôle réellement joué : celui de la dernière game où un rôle a été
+ * détecté pour eux, sinon le rôle déclaré. Aucun rôle n'est inventé.
+ */
+export function avecRolesJoues(
+  joueurs: Participant[],
+  games: { teamA: Participant[]; teamB: Participant[] }[],
+  equipe: "A" | "B",
+): Participant[] {
+  const joues = new Map<number, NonNullable<Participant["role"]>>();
+  for (const g of games) {
+    for (const p of equipe === "A" ? g.teamA : g.teamB) {
+      if (p.role) joues.set(p.playerId, p.role);
+    }
+  }
+  return joueurs.map((p) => ({ ...p, role: joues.get(p.playerId) ?? p.role }));
+}

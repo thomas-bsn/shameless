@@ -96,4 +96,80 @@ describe("Page de la Série", () => {
     await vi.waitFor(() => expect(router.state.location.pathname).toBe("/connexion"));
     expect(screen.queryByRole("link", { name: "Espace organisateur" })).not.toBeInTheDocument();
   });
+
+  describe("rôles joués", () => {
+    const joue = (playerId: number, prenom: string, role: Participant["role"]) => ({ ...participant(playerId, prenom), role });
+    const champions = [
+      { playerId: 1, championId: "Sion" },
+      { playerId: 2, championId: "Zed" },
+    ];
+
+    it("affiche dans le cadre d'Équipe le rôle de la dernière game jouée, pas le rôle déclaré, du Top au Support", async () => {
+      mockApi(
+        routes(
+          serie({
+            teamA: [joue(1, "Aldric", "Top"), joue(2, "Kuro", "Support")],
+            games: [
+              game(21, {
+                teamA: [joue(1, "Aldric", "Jungle"), joue(2, "Kuro", "Top")],
+                championsJoues: champions,
+              }),
+              game(22, {
+                teamA: [joue(2, "Kuro", "Mid"), joue(1, "Aldric", "Top")],
+                championsJoues: champions,
+              }),
+            ],
+          }),
+        ),
+      );
+      renderApp("/series/5");
+
+      const cadre = await screen.findByRole("group", { name: "Équipe A" });
+      const lignes = within(cadre).getAllByRole("listitem");
+      expect(lignes[0]).toHaveTextContent(/^Top.*Aldric/);
+      expect(lignes[1]).toHaveTextContent(/^Mid.*Kuro/);
+      expect(within(cadre).queryByText("Support")).not.toBeInTheDocument();
+    });
+
+    it("garde le rôle déclaré sans game jouée, ou sans rôle détecté dans la game", async () => {
+      mockApi(
+        routes(
+          serie({
+            teamA: [joue(1, "Aldric", "Top"), joue(2, "Kuro", "Support")],
+            games: [game(21, { teamA: [joue(1, "Aldric", null), joue(2, "Kuro", null)] })],
+          }),
+        ),
+      );
+      renderApp("/series/5");
+
+      const cadre = await screen.findByRole("group", { name: "Équipe A" });
+      expect(within(cadre).getByText("Top")).toBeInTheDocument();
+      expect(within(cadre).getByText("Support")).toBeInTheDocument();
+    });
+
+    it("ordonne la composition de chaque game par rôle joué", async () => {
+      mockApi({
+        ...routes(
+          serie({
+            games: [
+              game(21, {
+                teamA: [joue(1, "Aldric", "Support"), joue(2, "Kuro", "Top"), joue(5, "Zoe", "Mid")],
+                championsJoues: [
+                  { playerId: 1, championId: "Rakan" },
+                  { playerId: 2, championId: "Sion" },
+                  { playerId: 5, championId: "Zed" },
+                ],
+              }),
+            ],
+          }),
+        ),
+        "GET /champions": [],
+      });
+      renderApp("/series/5");
+
+      const liste = await screen.findByRole("list", { name: "Champions joués par l'Équipe A" });
+      const prenoms = within(liste).getAllByRole("listitem").slice(1).map((li) => li.textContent);
+      expect(prenoms.map((t) => ["Kuro", "Zoe", "Aldric"].findIndex((n) => t?.includes(n)))).toEqual([0, 1, 2]);
+    });
+  });
 });
