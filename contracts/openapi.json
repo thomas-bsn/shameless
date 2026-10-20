@@ -9505,7 +9505,9 @@
           "mvp",
           "dofd",
           "place",
-          "badge"
+          "badge",
+          "participationAuxKills",
+          "adversaireChampionId"
         ],
         "type": "object",
         "properties": {
@@ -9596,6 +9598,19 @@
               {
                 "$ref": "#/components/schemas/BadgeDeGame"
               }
+            ]
+          },
+          "participationAuxKills": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "adversaireChampionId": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }

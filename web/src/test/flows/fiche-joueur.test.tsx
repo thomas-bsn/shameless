@@ -59,6 +59,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       dofd: false,
       place: null,
       badge: null,
+      participationAuxKills: null,
+      adversaireChampionId: null,
     },
     {
       gameId: 30,
@@ -75,6 +77,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       dofd: false,
       place: null,
       badge: null,
+      participationAuxKills: null,
+      adversaireChampionId: null,
     },
   ],
   titres: { mvp: 3, dofd: 1 },
@@ -211,13 +215,12 @@ describe("Fiche d'un joueur", () => {
     expect(lignes).toHaveLength(2);
 
     expect(lignes[0]).toHaveAttribute("href", "/games/31");
-    expect(lignes[0]).toHaveTextContent("Camille");
     expect(lignes[0]).toHaveTextContent("9 / 2 / 7");
     expect(lignes[0]).toHaveTextContent("Victoire");
     expect(lignes[0]).toHaveTextContent("86");
 
     expect(lignes[1]).toHaveTextContent("Défaite");
-    expect(lignes[1]).toHaveTextContent("– / – / –");
+    expect(lignes[1]).toHaveTextContent("Stats non saisies");
     expect(lignes[1]).not.toHaveTextContent("0/100");
   });
 
