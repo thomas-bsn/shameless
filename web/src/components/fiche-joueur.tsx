@@ -502,12 +502,19 @@ function ListeDesGames({
         return (
           <section key={`${groupe.soireeId}-${groupe.jour}-${i}`} role="group" aria-label={titre ?? "Games"} className="flex flex-col gap-2">
             {titre && (
-              <div className="flex flex-wrap items-baseline justify-between gap-2 px-0.5">
-                <h2 className="text-base font-semibold">{titre}</h2>
-                <span className="text-xs text-muted-foreground">
-                  Note moy. {notes.length ? Math.round(notes.reduce((a, b) => a + b, 0) / notes.length) : "–"} ·{" "}
-                  {pluriel(victoires, "victoire")} · {pluriel(groupe.games.length - victoires, "défaite")}
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+                <h2 className="text-xl font-semibold">{titre}</h2>
+                <ul aria-label="Bilan" className="flex flex-wrap items-center gap-1.5 text-xs">
+                  {[
+                    [`Note moy. ${notes.length ? Math.round(notes.reduce((a, b) => a + b, 0) / notes.length) : "–"}`, ""],
+                    [pluriel(victoires, "victoire"), "text-sky-400"],
+                    [pluriel(groupe.games.length - victoires, "défaite"), "text-red-400"],
+                  ].map(([texte, couleur]) => (
+                    <li key={texte} className={cn("rounded-full border bg-muted/40 px-2.5 py-1 font-medium", couleur)}>
+                      {texte}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             <ul className="flex flex-col gap-2">

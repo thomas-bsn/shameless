@@ -204,9 +204,8 @@ describe("Fiche publique", () => {
     );
 
     const groupe = await screen.findByRole("group", { name: /Soirée du/ });
-    expect(groupe).toHaveTextContent("Note moy. 78");
-    expect(groupe).toHaveTextContent("1 victoire");
-    expect(groupe).toHaveTextContent("1 défaite");
+    const bilan = within(within(groupe).getByRole("list", { name: "Bilan" })).getAllByRole("listitem");
+    expect(bilan.map((li) => li.textContent)).toEqual(["Note moy. 78", "1 victoire", "1 défaite"]);
     const lien = within(groupe).getByRole("link", { name: "Voir la game 31" });
     expect(lien).toHaveAttribute("href", "/games/31");
     expect(lien).toHaveTextContent("86");
@@ -258,6 +257,8 @@ describe("Fiche publique", () => {
     expect(lien).toHaveTextContent("41 / 3 / 3");
     expect(lien).toHaveTextContent("MVP");
     expect(lien).toHaveTextContent("Roi/Reine");
+    expect(lien).toHaveTextContent(/il y a \d+ j/);
+    expect(lien).toHaveTextContent("Custom");
     expect(lien).toHaveTextContent("14,7 KDA");
     expect(lien).toHaveTextContent("7 CS/m");
     expect(lien).toHaveTextContent("86 % KP");
@@ -265,6 +266,7 @@ describe("Fiche publique", () => {
     expect(await within(lien).findByRole("img", { name: "Ahri" })).toHaveAttribute("src", "https://dd/ahri.png");
     expect(within(lien).getByRole("img", { name: "Mid" })).toBeInTheDocument();
     expect(within(lien).getByRole("img", { name: "Note 95 sur 100" })).toBeInTheDocument();
+    expect(lien.textContent?.match(/95/g)).toHaveLength(1);
     expect(await within(lien).findAllByRole("img", { name: "Saut éclair" })).toHaveLength(2);
     expect(within(lien).getByRole("img", { name: "Électrocution" })).toBeInTheDocument();
     expect(within(lien).getByRole("img", { name: "Domination" })).toBeInTheDocument();
@@ -353,7 +355,7 @@ describe("Fiche publique", () => {
       return { mock, appels: () => appels };
     };
 
-    it("ne charge la game qu'à l'ouverture, puis montre les onglets et le scoreboard des deux équipes", async () => {
+    it("ne charge la game qu'à l'ouverture, puis montre le scoreboard sans onglets des deux équipes", async () => {
       const { appels } = ouvrir(() => Response.json(recap));
       const deplier = await screen.findByRole("button", { name: "Déplier la game 31" });
       expect(deplier).toHaveAttribute("aria-expanded", "false");
@@ -362,10 +364,8 @@ describe("Fiche publique", () => {
       await userEvent.click(deplier);
 
       expect(screen.getByRole("button", { name: "Replier la game 31" })).toHaveAttribute("aria-expanded", "true");
-      expect(await screen.findByRole("tab", { name: "Général" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Détails" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Runes" })).toBeInTheDocument();
-      expect(screen.getByRole("list", { name: /Équipe A/ })).toHaveTextContent("Alice");
+      expect(await screen.findByRole("list", { name: /Équipe A/ })).toHaveTextContent("Alice");
+      expect(screen.queryByRole("tab")).not.toBeInTheDocument();
       expect(screen.getByRole("list", { name: /Équipe B/ })).toHaveTextContent("Bob");
       expect(screen.getByRole("link", { name: /Voir la game complète/ })).toHaveAttribute("href", "/games/31");
       expect(appels()).toBe(1);
@@ -374,11 +374,11 @@ describe("Fiche publique", () => {
     it("ne navigue pas en dépliant, et replier masque le panneau", async () => {
       ouvrir(() => Response.json(recap));
       await userEvent.click(await screen.findByRole("button", { name: "Déplier la game 31" }));
-      await screen.findByRole("tab", { name: "Général" });
+      await screen.findByRole("list", { name: /Équipe A/ });
       expect(screen.getByRole("link", { name: "Voir la game 31" })).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole("button", { name: "Replier la game 31" }));
-      expect(screen.queryByRole("tab", { name: "Général" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: /Équipe A/ })).not.toBeInTheDocument();
     });
 
     it("signale l'erreur de chargement tout en gardant le lien vers la game", async () => {

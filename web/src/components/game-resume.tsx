@@ -5,11 +5,11 @@ import { gameWinner } from "@/lib/history";
 
 type Recap = Schemas["GameRecapResponse"];
 
-export function ResumeScoreboard({ game }: { game: Recap }) {
+export function ResumeScoreboard({ game, compact = false }: { game: Recap; compact?: boolean }) {
   return (
     <>
       {sidesOf(game).map((s) => (
-        <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} />
+        <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} compact={compact} />
       ))}
     </>
   );

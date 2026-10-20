@@ -49,14 +49,22 @@ const OBJECTIFS: Array<[Objectif, (o: Objectifs) => number | null]> = [
 ];
 
 /** Les objectifs de l'équipe en icônes avec leur compteur ; rien quand le Rapport ne les donne pas. */
-function ObjectifsEnIcones({ objectifs, side }: { objectifs: Objectifs | null; side: Side }) {
+function ObjectifsEnIcones({
+  objectifs,
+  side,
+  compact,
+}: {
+  objectifs: Objectifs | null;
+  side: Side;
+  compact: boolean;
+}) {
   if (!objectifs) return null;
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+    <div className={cn("flex flex-wrap items-center gap-y-1", compact ? "gap-x-3" : "gap-x-5")}>
       {OBJECTIFS.map(([objectif, lire]) => (
         <span key={objectif} className="flex items-center gap-1.5">
-          <IconeObjectif objectif={objectif} equipe={side === "blue" ? 100 : 200} className="size-6" />
-          <span className="font-mono text-lg font-semibold tabular-nums">{statLabel(lire(objectifs))}</span>
+          <IconeObjectif objectif={objectif} equipe={side === "blue" ? 100 : 200} className={compact ? "size-4" : "size-6"} />
+          <span className={cn("font-mono font-semibold tabular-nums", compact ? "text-sm" : "text-lg")}>{statLabel(lire(objectifs))}</span>
         </span>
       ))}
     </div>
@@ -65,6 +73,46 @@ function ObjectifsEnIcones({ objectifs, side }: { objectifs: Objectifs | null; s
 
 /** « 1er », « 2e »… : la place du joueur dans la game d'après sa note. */
 const placeLabel = (place: number): string => (place === 1 ? "1er" : `${place}e`);
+
+/** Les dimensions d'une ligne de joueur : la densité normale de la page d'une game, ou la compacte du panneau déplié d'une ligne de game. */
+const DENSITES = {
+  normale: {
+    colonnes:
+      "grid-cols-[2rem_4.5rem_minmax(12rem,1.4fr)_5rem_13rem_6rem_4.5rem_4.5rem_9rem_3.5rem] gap-x-2 px-2.5 py-2",
+    largeurMin: "min-w-[64rem]",
+    role: "size-6",
+    portrait: "size-12 rounded-lg border-2",
+    niveau: "h-5 min-w-5 px-1 text-[11px]",
+    nom: "gap-2.5",
+    sousTexte: "text-xs",
+    sorts: "size-8",
+    kda: "text-lg",
+    mesure: "text-base",
+    legende: "text-[10px]",
+    barre: "h-2",
+    degats: "text-xs",
+    note: "size-12",
+  },
+  compacte: {
+    colonnes:
+      "grid-cols-[1.25rem_2.25rem_minmax(7rem,1.4fr)_2.75rem_8rem_4.25rem_2.5rem_2.5rem_5.5rem_2rem] gap-x-1.5 px-1.5 py-1",
+    largeurMin: "min-w-[40rem]",
+    role: "size-4",
+    portrait: "size-9 rounded-md border",
+    niveau: "h-3.5 min-w-3.5 px-0.5 text-[9px]",
+    nom: "gap-1.5",
+    sousTexte: "text-[10px]",
+    sorts: "size-[1.125rem]",
+    kda: "text-sm",
+    mesure: "text-xs",
+    legende: "text-[8px]",
+    barre: "h-1",
+    degats: "text-[10px]",
+    note: "size-8",
+  },
+} as const;
+
+type Densite = (typeof DENSITES)[keyof typeof DENSITES];
 
 const ROLES: Record<string, Role> = { Top: "Top", Jungle: "Jungle", Mid: "Mid", Adc: "Adc", Support: "Support" };
 
@@ -77,12 +125,16 @@ export function ScoreboardEquipe({
   team,
   side,
   players,
+  compact = false,
 }: {
   game: Schemas["GameRecapResponse"];
   team: string;
   side: Side;
   players: Participant[];
+  /** Densité réduite, pour le panneau déplié d'une ligne de game. */
+  compact?: boolean;
 }) {
+  const dim: Densite = DENSITES[compact ? "compacte" : "normale"];
   const titres = useTitres(game.id);
   const [ouvert, setOuvert] = useState<number | null>(null);
   const ligneOuverte = useRef<HTMLElement | null>(null);
@@ -92,18 +144,18 @@ export function ScoreboardEquipe({
   const objectifs = team === "A" ? game.teamAObjectifs : game.teamBObjectifs;
 
   return (
-    <section className="flex flex-col gap-2 rounded-xl border bg-card p-4">
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <section className={cn("flex flex-col rounded-xl border bg-card", compact ? "gap-1 p-2" : "gap-2 p-4")}>
+      <header className={cn("flex flex-wrap items-center gap-y-1", compact ? "gap-x-4" : "gap-x-6 gap-y-2")}>
         <div className="flex items-baseline gap-2">
-          <h2 className={cn("text-xl font-semibold", sideTextClass(side))}>
+          <h2 className={cn("font-semibold", compact ? "text-base" : "text-xl", sideTextClass(side))}>
             {game.winner === team ? "Victoire" : "Défaite"}
           </h2>
-          <span className="text-sm text-muted-foreground">{label}</span>
+          <span className={cn("text-muted-foreground", compact ? "text-xs" : "text-sm")}>{label}</span>
         </div>
-        <ObjectifsEnIcones objectifs={objectifs} side={side} />
+        <ObjectifsEnIcones objectifs={objectifs} side={side} compact={compact} />
       </header>
       <div className="overflow-x-auto">
-        <ul aria-label={label} className="flex min-w-[64rem] flex-col gap-1">
+        <ul aria-label={label} className={cn("flex flex-col gap-1", dim.largeurMin)}>
           {players.map((p) => {
             const d = p.details;
             const s = p.stats;
@@ -134,29 +186,35 @@ export function ScoreboardEquipe({
                   },
                 })}
                 className={cn(
-                  "grid grid-cols-[2rem_4.5rem_minmax(12rem,1.4fr)_5rem_13rem_6rem_4.5rem_4.5rem_9rem_3.5rem] items-center gap-x-2 rounded-xl border border-transparent bg-muted/20 px-2.5 py-2 focus-visible:border-foreground/70 focus-visible:outline-none",
+                  "grid items-center rounded-xl border border-transparent bg-muted/20 focus-visible:border-foreground/70 focus-visible:outline-none",
+                  dim.colonnes,
                   p.impact && "cursor-pointer hover:border-foreground/70 hover:bg-muted/40",
                 )}
               >
                 <div className="flex justify-center">
-                  {role && <IconeRole role={role} className="size-6 text-foreground/80" />}
+                  {role && <IconeRole role={role} className={cn("text-foreground/80", dim.role)} />}
                 </div>
 
                 <div className="flex flex-col items-center gap-0.5 text-center">
-                  <span className="text-xs font-semibold whitespace-nowrap text-muted-foreground">
+                  <span className={cn("font-semibold whitespace-nowrap text-muted-foreground", compact ? "text-[10px]" : "text-xs")}>
                     {p.place == null ? "–" : placeLabel(p.place)}
                   </span>
                   {badge && <BadgeDeTitre titre={badge} />}
                 </div>
 
-                <div className="flex min-w-0 items-center gap-2.5">
+                <div className={cn("flex min-w-0 items-center", dim.nom)}>
                   <span className="relative shrink-0">
                     <IconeChampion
                       championId={p.championId}
-                      className={cn("size-12 rounded-lg border-2", sideBorderClass(side))}
+                      className={cn(dim.portrait, sideBorderClass(side))}
                     />
                     {s?.champLevel != null && (
-                      <span className="absolute -right-1 -bottom-1 flex h-5 min-w-5 items-center justify-center rounded-full border bg-background px-1 font-mono text-[11px] font-semibold tabular-nums">
+                      <span
+                        className={cn(
+                          "absolute -right-1 -bottom-1 flex items-center justify-center rounded-full border bg-background font-mono font-semibold tabular-nums",
+                          dim.niveau,
+                        )}
+                      >
                         {s.champLevel}
                       </span>
                     )}
@@ -169,22 +227,22 @@ export function ScoreboardEquipe({
                       {estDofd && <BadgeDeTitre titre="DOFD" />}
                       {estRoi && <BadgeDeTitre titre="Roi/Reine" />}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className={cn("truncate text-muted-foreground", dim.sousTexte)}>
                       {rankLabel(p.rankTier, p.rankDivision, null)}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1">
-                  <IconeSort sortId={d?.spell1Id ?? s?.spell1Id} className="size-8" />
-                  <IconeRune runeId={d?.perks?.[0]} className="size-8 rounded-full" />
-                  <IconeSort sortId={d?.spell2Id ?? s?.spell2Id} className="size-8" />
-                  <IconeRune runeId={d?.perkSubStyle} className="size-8 rounded-full" />
+                <div className={cn("grid grid-cols-2", compact ? "gap-0.5" : "gap-1")}>
+                  <IconeSort sortId={d?.spell1Id ?? s?.spell1Id} className={dim.sorts} />
+                  <IconeRune runeId={d?.perks?.[0]} className={cn(dim.sorts, "rounded-full")} />
+                  <IconeSort sortId={d?.spell2Id ?? s?.spell2Id} className={dim.sorts} />
+                  <IconeRune runeId={d?.perkSubStyle} className={cn(dim.sorts, "rounded-full")} />
                 </div>
 
-                <Objets items={d?.items ?? s?.items ?? null} roleItem={d?.objetDeRole ?? null} />
+                <Objets items={d?.items ?? s?.items ?? null} roleItem={d?.objetDeRole ?? null} compact={compact} />
 
-                <div className="flex items-baseline justify-center gap-1 font-mono text-lg font-medium tabular-nums">
+                <div className={cn("flex items-baseline justify-center gap-1 font-mono font-medium tabular-nums", dim.kda)}>
                   <span>{statLabel(s?.kills ?? null)}</span>
                   <span className="text-muted-foreground">/</span>
                   <span className="text-red-300">{statLabel(s?.deaths ?? null)}</span>
@@ -195,33 +253,35 @@ export function ScoreboardEquipe({
                 <Mesure
                   valeur={d?.partDesKills == null ? "–" : partLabel(d.partDesKills, 1)}
                   legende="KP"
+                  dim={dim}
                 />
                 {role === "Support" ? (
-                  <Mesure valeur={statLabel(s?.visionScore ?? null)} legende="vision" />
+                  <Mesure valeur={statLabel(s?.visionScore ?? null)} legende="vision" dim={dim} />
                 ) : (
-                  <Mesure valeur={nombreLabel(d?.csParMinute ?? null, 1)} legende="CS/min" />
+                  <Mesure valeur={nombreLabel(d?.csParMinute ?? null, 1)} legende="CS/min" dim={dim} />
                 )}
 
-                <div className="flex flex-col gap-1">
+                <div className="flex min-w-0 flex-col gap-0.5">
                   <progress
                     aria-hidden
                     data-meilleur={String(meilleur)}
                     value={degats ?? 0}
                     max={maxDegats || 1}
                     className={cn(
-                      "h-2 w-full appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-emerald-700 [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-emerald-700",
+                      dim.barre,
+                      "w-full appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-emerald-700 [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-emerald-700",
                       meilleur &&
                         "shadow-[0_0_10px_rgb(187_247_208/0.6)] [&::-moz-progress-bar]:bg-emerald-200 [&::-webkit-progress-value]:bg-emerald-200",
                     )}
                   />
-                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  <span className={cn("truncate font-mono tabular-nums text-muted-foreground", dim.degats)}>
                     {millierLabel(degats)} ({parMinuteLabel(d?.degatsParMinute ?? null)})
                   </span>
                 </div>
 
                 <div className="flex justify-center">
                   {p.performance ? (
-                    <AnneauDeNote note={p.performance.note} className="size-12" />
+                    <AnneauDeNote note={p.performance.note} className={dim.note} />
                   ) : (
                     <span className="text-muted-foreground">–</span>
                   )}
@@ -250,11 +310,11 @@ export function ScoreboardEquipe({
   );
 }
 
-function Mesure({ valeur, legende }: { valeur: string; legende: string }) {
+function Mesure({ valeur, legende, dim }: { valeur: string; legende: string; dim: Densite }) {
   return (
     <div className="flex flex-col items-center leading-tight">
-      <span className="font-mono text-base font-semibold tabular-nums">{valeur}</span>
-      <span className="text-[10px] text-muted-foreground">{legende}</span>
+      <span className={cn("font-mono font-semibold tabular-nums", dim.mesure)}>{valeur}</span>
+      <span className={cn("text-muted-foreground", dim.legende)}>{legende}</span>
     </div>
   );
 }
@@ -263,22 +323,32 @@ function Mesure({ valeur, legende }: { valeur: string; legende: string }) {
 function Objets({
   items,
   roleItem,
+  compact,
 }: {
   items: Array<number | null> | null;
   roleItem: Schemas["ObjetDeRole"] | null;
+  compact: boolean;
 }) {
+  const taille = compact ? "size-5" : "size-7";
+  const tailleRole = compact ? "size-5" : "size-8";
   const emplacements = Array.from({ length: 7 }, (_, i) => items?.[i] ?? null);
   const fini = roleItem?.etat === "Terminee";
   return (
-    <div className="flex items-center gap-1.5">
-      <ul aria-label="Objets" className="grid grid-cols-[repeat(3,1.75rem)_1.75rem] items-center gap-0.5">
+    <div className={cn("flex items-center", compact ? "gap-1" : "gap-1.5")}>
+      <ul
+        aria-label="Objets"
+        className={cn(
+          "grid items-center gap-0.5",
+          compact ? "grid-cols-[repeat(3,1.25rem)_1.25rem]" : "grid-cols-[repeat(3,1.75rem)_1.75rem]",
+        )}
+      >
         {emplacements.slice(0, 6).map((id, i) => (
           <li key={i}>
-            <IconeObjet objetId={id} className="size-7" />
+            <IconeObjet objetId={id} className={taille} />
           </li>
         ))}
         <li className="col-start-4 row-span-2 row-start-1 self-center">
-          <IconeObjet objetId={emplacements[6]} className="size-7 rounded-full" />
+          <IconeObjet objetId={emplacements[6]} className={cn(taille, "rounded-full")} />
         </li>
       </ul>
       {roleItem ? (
@@ -287,10 +357,10 @@ function Objets({
           aria-label={fini ? "Objet de rôle terminé" : "Objet de rôle en cours"}
           className={cn("rounded-lg", fini ? "ring-2 ring-amber-400" : "opacity-50 grayscale")}
         >
-          <IconeObjet objetId={roleItem.id} className="size-8" />
+          <IconeObjet objetId={roleItem.id} className={tailleRole} />
         </div>
       ) : (
-        <span aria-hidden className="size-8 shrink-0 rounded-lg border border-dashed border-border" />
+        <span aria-hidden className={cn("shrink-0 rounded-lg border border-dashed border-border", tailleRole)} />
       )}
     </div>
   );
