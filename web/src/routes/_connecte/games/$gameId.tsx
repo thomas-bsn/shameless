@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { BarreDOngletsGame } from "@/components/barre-d-onglets-game";
 import { VueEnCibles } from "@/components/game-cibles";
 import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
@@ -14,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PronosticsDeLaGame } from "@/components/pronostics-de-la-game";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { VotesDeLaGame } from "@/components/votes-de-la-game";
 import { dureeLabel, estSaisieAMain } from "@/lib/game";
 import { gameWinner } from "@/lib/history";
@@ -56,15 +57,7 @@ function Recit({ game }: { game: Recap }) {
     <>
       <Banniere game={game} />
       <Tabs value={onglet} onValueChange={changerOnglet}>
-        <TabsList>
-          <TabsTrigger value="general">Général</TabsTrigger>
-          <TabsTrigger value="cibles">Cibles</TabsTrigger>
-          <TabsTrigger value="details">Détails</TabsTrigger>
-          <TabsTrigger value="runes">Runes</TabsTrigger>
-          <TabsTrigger value="replay" className="opacity-60">
-            Replay
-          </TabsTrigger>
-        </TabsList>
+        <BarreDOngletsGame />
         <TabsContent value="general" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <ResumeScoreboard game={game} />}
         </TabsContent>
