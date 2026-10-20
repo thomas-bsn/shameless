@@ -51,7 +51,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   riotMatchId: "EUW1_1",
   match: { durationSeconds: 1800, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
   teamAObjectifs: null,
-  teamBObjectifs: null,
+  teamBObjectifs: null, chronologie: null,
   teamA: [0, 2, 4, 6, 8].map((i) => participant(i + 1, NOMS[i]!, i + 1, i === 0 ? { badge: "Ace" } : {})),
   teamB: [1, 3, 5, 7, 9].map((i) => participant(i + 1, NOMS[i]!, i + 1, i === 1 ? { badge: "MeilleurePerf" } : {})),
   ...overrides,

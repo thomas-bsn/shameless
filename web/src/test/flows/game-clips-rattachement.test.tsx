@@ -21,7 +21,7 @@ const recap: Schemas["GameRecapResponse"] = {
   teamBWins: 0,
   seriesOutcome: "EnCours",
   riotMatchId: null,
-  match: null, teamAObjectifs: null, teamBObjectifs: null,
+  match: null, teamAObjectifs: null, teamBObjectifs: null, chronologie: null,
   teamA: [],
   teamB: [],
 };

@@ -143,7 +143,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   riotMatchId: "EUW1_1",
   match: { durationSeconds: 1800, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
   teamAObjectifs: objectifs({ dragonKills: 1 }),
-  teamBObjectifs: objectifs(),
+  teamBObjectifs: objectifs(), chronologie: null,
   teamA: [
     participant(1, "Alice", { championId: "Ahri", place: 4, badge: "Ace" }),
     participant(3, "Chloé", {
