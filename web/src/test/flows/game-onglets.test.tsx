@@ -41,7 +41,7 @@ const participant = (playerId: number, prenom: string, s: Stats | null): Schemas
   championId: null,
   stats: s,
   performance: null,
-  champsCorriges: [], details: null, place: null, badge: null,
+  champsCorriges: [], details: null, place: null, badge: null, impact: null,
   ...ORIGINE_VIDE,
 });
 

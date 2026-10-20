@@ -108,6 +108,7 @@ const participant = (
   details: details(),
   place: null,
   badge: null,
+  impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });

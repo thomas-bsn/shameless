@@ -27,6 +27,7 @@ const participant = (
   details: null,
   place,
   badge: null,
+  impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });

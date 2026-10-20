@@ -19,7 +19,7 @@ const participant = (
   championId: null,
   stats: null,
   performance: null,
-  champsCorriges: [], details: null, place: null, badge: null,
+  champsCorriges: [], details: null, place: null, badge: null, impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
