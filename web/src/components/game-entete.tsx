@@ -58,7 +58,7 @@ function Equipe({
           <IconeChampion
             key={p.playerId}
             championId={p.championId}
-            className={cn("size-9 rounded-lg border-2", sideBorderClass(side))}
+            className={cn("size-8 rounded-lg border-2 lg:size-9", sideBorderClass(side))}
           />
         ))}
       </div>

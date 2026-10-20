@@ -18,7 +18,7 @@ const placeLabel = (place: number) => (place === 1 ? "1er" : `${place}e`);
 /** Durée et ancienneté, le type de partie, puis le résultat : ce que la ligne dit de la game avant son champion. */
 function Contexte({ game: g }: { game: Game }) {
   return (
-    <div className="flex w-28 shrink-0 flex-col gap-0.5 leading-tight whitespace-nowrap">
+    <div className="flex w-24 shrink-0 flex-col gap-0.5 leading-tight">
       <span className="text-xs text-muted-foreground" title={dateHeureLabel(g.playedAt)}>
         {g.dureeSecondes != null && <>{dureeLabel(g.dureeSecondes)} </>}
         {ilYALabel(g.playedAt)}
@@ -50,7 +50,7 @@ function Kda({ game: g }: { game: Game }) {
   const titre = titreDeBadge(g.badge);
   const v = (n: number | null | undefined) => (n == null ? "–" : String(n));
   return (
-    <div className="flex min-w-28 shrink-0 flex-col items-center gap-1 leading-tight whitespace-nowrap">
+    <div className="flex min-w-24 shrink-0 flex-col items-center gap-1 leading-tight whitespace-nowrap">
       <span className="font-mono text-[28px] leading-none font-bold whitespace-nowrap tabular-nums">
         {v(g.stats?.kills)}
         <span className="font-light text-muted-foreground"> / </span>
@@ -84,25 +84,25 @@ function Equipement({ game: g }: { game: Game }) {
   const s = g.stats;
   const items = s?.items ?? [];
   return (
-    <div className="hidden shrink-0 items-center gap-2 rounded-xl border bg-background/70 p-1.5 @min-[52rem]:flex">
+    <div className="hidden shrink-0 items-center gap-2 rounded-xl border bg-background/70 p-1.5 @min-[47rem]:flex">
       <div className="grid grid-cols-2 gap-0.5">
-        <IconeSort sortId={s?.spell1Id} className="size-8" />
-        <IconeRune runeId={s?.perks?.[0]} className="size-8 rounded-full" />
-        <IconeSort sortId={s?.spell2Id} className="size-8" />
-        <IconeRune runeId={s?.perkSubStyle} className="size-8 rounded-full" />
+        <IconeSort sortId={s?.spell1Id} className="size-6 @min-[52rem]:size-8" />
+        <IconeRune runeId={s?.perks?.[0]} className="size-6 rounded-full @min-[52rem]:size-8" />
+        <IconeSort sortId={s?.spell2Id} className="size-6 @min-[52rem]:size-8" />
+        <IconeRune runeId={s?.perkSubStyle} className="size-6 rounded-full @min-[52rem]:size-8" />
       </div>
       {s?.items && (
         <>
-          <span aria-hidden className="h-14 w-px bg-border" />
-          <div className="grid grid-cols-4 gap-0.5">
+          <span aria-hidden className="h-10 w-px bg-border @min-[52rem]:h-14" />
+          <div className="grid grid-cols-[repeat(4,1.25rem)] gap-0.5 @min-[52rem]:grid-cols-[repeat(4,1.75rem)]">
             <ul aria-label="Objets" className="contents">
               {Array.from({ length: 6 }, (_, i) => (
                 <li key={i}>
-                  <IconeObjet objetId={items[i] ?? null} className="size-7" />
+                  <IconeObjet objetId={items[i] ?? null} className="size-5 @min-[52rem]:size-7" />
                 </li>
               ))}
             </ul>
-            <IconeObjet objetId={items[6] ?? null} className="size-7 rounded-full" />
+            <IconeObjet objetId={items[6] ?? null} className="size-5 rounded-full @min-[52rem]:size-7" />
           </div>
         </>
       )}
@@ -159,7 +159,7 @@ export function LigneDeGame({ game: g }: { game: Game }) {
         to="/games/$gameId"
         params={{ gameId: String(g.gameId) }}
         aria-label={`Voir la game ${g.gameId}`}
-        className="flex min-h-24 flex-nowrap items-center gap-x-3 rounded-xl py-2 pr-14 pl-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="flex min-h-24 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl py-2 pr-14 pl-4 @min-[30rem]:flex-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <Contexte game={g} />
         {g.stats == null ? (

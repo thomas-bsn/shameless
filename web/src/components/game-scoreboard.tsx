@@ -74,41 +74,82 @@ function ObjectifsEnIcones({
 /** « 1er », « 2e »… : la place du joueur dans la game d'après sa note. */
 const placeLabel = (place: number): string => (place === 1 ? "1er" : `${place}e`);
 
-/** Les dimensions d'une ligne de joueur : la densité normale de la page d'une game, ou la compacte du panneau déplié d'une ligne de game. */
+/**
+ * Les dimensions d'une ligne de joueur, qui se réduisent avec la largeur du conteneur (la section) pour que rien ne déborde jamais :
+ * en dessous du premier seuil la ligne passe sur deux étages (place, portrait, nom, K/D/A et note au-dessus ; le reste en dessous, qui revient à la ligne si besoin),
+ * au-dessus elle tient sur une seule rangée de colonnes dont seules celles du nom et des dégâts sont élastiques.
+ * La densité normale est celle de la page d'une game (seuils 48 et 64 rem), la compacte celle du panneau déplié d'une ligne de game (seuil 40 rem).
+ * Les colonnes fixes (rem) sont dimensionnées pour que leur somme, gouttières comprises, laisse au moins ~15 rem au nom et aux dégâts au seuil bas.
+ */
 const DENSITES = {
   normale: {
     colonnes:
-      "grid-cols-[2rem_4.5rem_minmax(12rem,1.4fr)_5rem_13rem_6rem_4.5rem_4.5rem_9rem_3.5rem] gap-x-2 px-2.5 py-2",
-    largeurMin: "min-w-[64rem]",
-    role: "size-6",
-    portrait: "size-12 rounded-lg border-2",
-    niveau: "h-5 min-w-5 px-1 text-[11px]",
-    nom: "gap-2.5",
-    sousTexte: "text-xs",
-    sorts: "size-8",
-    kda: "text-lg",
-    mesure: "text-base",
-    legende: "text-[10px]",
+      "grid-cols-[2.25rem_minmax(0,1fr)_auto_2.25rem] gap-x-2 gap-y-1.5 px-2 py-2 @min-[48rem]:grid-cols-[1.25rem_2.25rem_minmax(0,1.5fr)_3.25rem_8.25rem_5.25rem_3rem_3rem_minmax(0,1fr)_2.25rem] @min-[48rem]:gap-x-1.5 @min-[64rem]:grid-cols-[1.5rem_2.5rem_minmax(0,1.5fr)_3.75rem_9.75rem_7rem_3.5rem_3.5rem_minmax(0,1fr)_3rem] @min-[64rem]:gap-x-2 @min-[64rem]:px-2.5",
+    reste: "col-span-full flex flex-wrap items-center gap-x-3 gap-y-1.5 @min-[48rem]:contents",
+    role: "size-5 @min-[64rem]:size-6",
+    portrait: "size-10 rounded-lg border-2 @min-[64rem]:size-12",
+    niveau: "h-4 min-w-4 px-0.5 text-[10px] @min-[64rem]:h-5 @min-[64rem]:min-w-5 @min-[64rem]:px-1 @min-[64rem]:text-[11px]",
+    nom: "gap-2 @min-[64rem]:gap-2.5",
+    sousTexte: "text-[11px] @min-[64rem]:text-xs",
+    place: "text-xs",
+    sorts: "size-5 @min-[48rem]:size-6 @min-[64rem]:size-7",
+    objet: "size-5 @min-[48rem]:size-6 @min-[64rem]:size-7",
+    objetsGrille:
+      "grid-cols-[repeat(4,1.25rem)] @min-[48rem]:grid-cols-[repeat(4,1.5rem)] @min-[64rem]:grid-cols-[repeat(4,1.75rem)]",
+    objetDeRole: "size-5 @min-[48rem]:size-6 @min-[64rem]:size-8",
+    kda: "gap-0.5 text-base @min-[48rem]:text-sm @min-[64rem]:gap-1 @min-[64rem]:text-lg",
+    mesure: "text-sm @min-[64rem]:text-base",
+    legende: "text-[9px] @min-[64rem]:text-[10px]",
     barre: "h-2",
-    degats: "text-xs",
-    note: "size-12",
+    degats: "text-[10px] @min-[64rem]:text-xs",
+    degatsBloc: "min-w-28 flex-1 @min-[48rem]:min-w-0",
+    note: "size-9 @min-[64rem]:size-12",
+    pos: {
+      place: "@min-[48rem]:col-start-2 @min-[48rem]:row-start-1",
+      nom: "@min-[48rem]:col-start-3 @min-[48rem]:row-start-1",
+      kda: "@min-[48rem]:col-start-6 @min-[48rem]:row-start-1",
+      note: "@min-[48rem]:col-start-10 @min-[48rem]:row-start-1",
+      role: "@min-[48rem]:col-start-1 @min-[48rem]:row-start-1",
+      sorts: "@min-[48rem]:col-start-4 @min-[48rem]:row-start-1",
+      objets: "@min-[48rem]:col-start-5 @min-[48rem]:row-start-1",
+      kp: "@min-[48rem]:col-start-7 @min-[48rem]:row-start-1",
+      cs: "@min-[48rem]:col-start-8 @min-[48rem]:row-start-1",
+      degats: "@min-[48rem]:col-start-9 @min-[48rem]:row-start-1",
+    },
   },
   compacte: {
     colonnes:
-      "grid-cols-[1.25rem_2.25rem_minmax(7rem,1.4fr)_2.75rem_8rem_4.25rem_2.5rem_2.5rem_5.5rem_2rem] gap-x-1.5 px-1.5 py-1",
-    largeurMin: "min-w-[40rem]",
+      "grid-cols-[2.25rem_minmax(0,1fr)_auto_2rem] gap-x-1.5 gap-y-1 px-1.5 py-1 @min-[40rem]:grid-cols-[1rem_2.25rem_minmax(0,1.4fr)_2.5rem_7rem_4.75rem_2.5rem_2.5rem_minmax(0,1fr)_2rem]",
+    reste: "col-span-full flex flex-wrap items-center gap-x-2 gap-y-1 @min-[40rem]:contents",
     role: "size-4",
     portrait: "size-9 rounded-md border",
     niveau: "h-3.5 min-w-3.5 px-0.5 text-[9px]",
     nom: "gap-1.5",
     sousTexte: "text-[10px]",
+    place: "text-[10px]",
     sorts: "size-[1.125rem]",
-    kda: "text-sm",
+    objet: "size-5",
+    objetsGrille: "grid-cols-[repeat(4,1.25rem)]",
+    objetDeRole: "size-5",
+    kda: "gap-0.5 text-sm",
     mesure: "text-xs",
     legende: "text-[8px]",
     barre: "h-1",
     degats: "text-[10px]",
+    degatsBloc: "min-w-24 flex-1 @min-[40rem]:min-w-0",
     note: "size-8",
+    pos: {
+      place: "@min-[40rem]:col-start-2 @min-[40rem]:row-start-1",
+      nom: "@min-[40rem]:col-start-3 @min-[40rem]:row-start-1",
+      kda: "@min-[40rem]:col-start-6 @min-[40rem]:row-start-1",
+      note: "@min-[40rem]:col-start-10 @min-[40rem]:row-start-1",
+      role: "@min-[40rem]:col-start-1 @min-[40rem]:row-start-1",
+      sorts: "@min-[40rem]:col-start-4 @min-[40rem]:row-start-1",
+      objets: "@min-[40rem]:col-start-5 @min-[40rem]:row-start-1",
+      kp: "@min-[40rem]:col-start-7 @min-[40rem]:row-start-1",
+      cs: "@min-[40rem]:col-start-8 @min-[40rem]:row-start-1",
+      degats: "@min-[40rem]:col-start-9 @min-[40rem]:row-start-1",
+    },
   },
 } as const;
 
@@ -144,7 +185,7 @@ export function ScoreboardEquipe({
   const objectifs = team === "A" ? game.teamAObjectifs : game.teamBObjectifs;
 
   return (
-    <section className={cn("flex flex-col rounded-xl border bg-card", compact ? "gap-1 p-2" : "gap-2 p-4")}>
+    <section className={cn("@container flex flex-col rounded-xl border bg-card", compact ? "gap-1 p-2" : "gap-2 p-4")}>
       <header className={cn("flex flex-wrap items-center gap-y-1", compact ? "gap-x-4" : "gap-x-6 gap-y-2")}>
         <div className="flex items-baseline gap-2">
           <h2 className={cn("font-semibold", compact ? "text-base" : "text-xl", sideTextClass(side))}>
@@ -154,8 +195,8 @@ export function ScoreboardEquipe({
         </div>
         <ObjectifsEnIcones objectifs={objectifs} side={side} compact={compact} />
       </header>
-      <div className="overflow-x-auto">
-        <ul aria-label={label} className={cn("flex flex-col gap-1", dim.largeurMin)}>
+      <div>
+        <ul aria-label={label} className="flex flex-col gap-1">
           {players.map((p) => {
             const d = p.details;
             const s = p.stats;
@@ -191,18 +232,14 @@ export function ScoreboardEquipe({
                   p.impact && "cursor-pointer hover:border-foreground/70 hover:bg-muted/40",
                 )}
               >
-                <div className="flex justify-center">
-                  {role && <IconeRole role={role} className={cn("text-foreground/80", dim.role)} />}
-                </div>
-
-                <div className="flex flex-col items-center gap-0.5 text-center">
-                  <span className={cn("font-semibold whitespace-nowrap text-muted-foreground", compact ? "text-[10px]" : "text-xs")}>
+                <div className={cn("flex flex-col items-center gap-0.5 text-center", dim.pos.place)}>
+                  <span className={cn("font-semibold whitespace-nowrap text-muted-foreground", dim.place)}>
                     {p.place == null ? "–" : placeLabel(p.place)}
                   </span>
                   {badge && <BadgeDeTitre titre={badge} />}
                 </div>
 
-                <div className={cn("flex min-w-0 items-center", dim.nom)}>
+                <div className={cn("flex min-w-0 items-center", dim.nom, dim.pos.nom)}>
                   <span className="relative shrink-0">
                     <IconeChampion
                       championId={p.championId}
@@ -233,16 +270,7 @@ export function ScoreboardEquipe({
                   </div>
                 </div>
 
-                <div className={cn("grid grid-cols-2", compact ? "gap-0.5" : "gap-1")}>
-                  <IconeSort sortId={d?.spell1Id ?? s?.spell1Id} className={dim.sorts} />
-                  <IconeRune runeId={d?.perks?.[0]} className={cn(dim.sorts, "rounded-full")} />
-                  <IconeSort sortId={d?.spell2Id ?? s?.spell2Id} className={dim.sorts} />
-                  <IconeRune runeId={d?.perkSubStyle} className={cn(dim.sorts, "rounded-full")} />
-                </div>
-
-                <Objets items={d?.items ?? s?.items ?? null} roleItem={d?.objetDeRole ?? null} compact={compact} />
-
-                <div className={cn("flex items-baseline justify-center gap-1 font-mono font-medium tabular-nums", dim.kda)}>
+                <div className={cn("flex items-baseline justify-center font-mono font-medium tabular-nums", dim.kda, dim.pos.kda)}>
                   <span>{statLabel(s?.kills ?? null)}</span>
                   <span className="text-muted-foreground">/</span>
                   <span className="text-red-300">{statLabel(s?.deaths ?? null)}</span>
@@ -250,41 +278,57 @@ export function ScoreboardEquipe({
                   <span>{statLabel(s?.assists ?? null)}</span>
                 </div>
 
-                <Mesure
-                  valeur={d?.partDesKills == null ? "–" : partLabel(d.partDesKills, 1)}
-                  legende="KP"
-                  dim={dim}
-                />
-                {role === "Support" ? (
-                  <Mesure valeur={statLabel(s?.visionScore ?? null)} legende="vision" dim={dim} />
-                ) : (
-                  <Mesure valeur={nombreLabel(d?.csParMinute ?? null, 1)} legende="CS/min" dim={dim} />
-                )}
-
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <progress
-                    aria-hidden
-                    data-meilleur={String(meilleur)}
-                    value={degats ?? 0}
-                    max={maxDegats || 1}
-                    className={cn(
-                      dim.barre,
-                      "w-full appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-emerald-700 [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-emerald-700",
-                      meilleur &&
-                        "shadow-[0_0_10px_rgb(187_247_208/0.6)] [&::-moz-progress-bar]:bg-emerald-200 [&::-webkit-progress-value]:bg-emerald-200",
-                    )}
-                  />
-                  <span className={cn("truncate font-mono tabular-nums text-muted-foreground", dim.degats)}>
-                    {millierLabel(degats)} ({parMinuteLabel(d?.degatsParMinute ?? null)})
-                  </span>
-                </div>
-
-                <div className="flex justify-center">
+                <div className={cn("flex justify-center", dim.pos.note)}>
                   {p.performance ? (
                     <AnneauDeNote note={p.performance.note} className={dim.note} />
                   ) : (
                     <span className="text-muted-foreground">–</span>
                   )}
+                </div>
+
+                <div className={dim.reste}>
+                  <div className={cn("flex justify-center", dim.pos.role)}>
+                    {role && <IconeRole role={role} className={cn("text-foreground/80", dim.role)} />}
+                  </div>
+                  <div className={cn("grid grid-cols-2", compact ? "gap-0.5" : "gap-1", dim.pos.sorts)}>
+                    <IconeSort sortId={d?.spell1Id ?? s?.spell1Id} className={dim.sorts} />
+                    <IconeRune runeId={d?.perks?.[0]} className={cn(dim.sorts, "rounded-full")} />
+                    <IconeSort sortId={d?.spell2Id ?? s?.spell2Id} className={dim.sorts} />
+                    <IconeRune runeId={d?.perkSubStyle} className={cn(dim.sorts, "rounded-full")} />
+                  </div>
+
+                  <Objets items={d?.items ?? s?.items ?? null} roleItem={d?.objetDeRole ?? null} dim={dim} />
+
+                  <Mesure
+                    valeur={d?.partDesKills == null ? "–" : partLabel(d.partDesKills, 1)}
+                    legende="KP"
+                    dim={dim}
+                    className={dim.pos.kp}
+                  />
+                  {role === "Support" ? (
+                    <Mesure valeur={statLabel(s?.visionScore ?? null)} legende="vision" dim={dim} className={dim.pos.cs} />
+                  ) : (
+                    <Mesure valeur={nombreLabel(d?.csParMinute ?? null, 1)} legende="CS/min" dim={dim} className={dim.pos.cs} />
+                  )}
+
+                  <div className={cn("flex min-w-0 flex-col gap-0.5", dim.degatsBloc, dim.pos.degats)}>
+                    <progress
+                      aria-hidden
+                      data-meilleur={String(meilleur)}
+                      value={degats ?? 0}
+                      max={maxDegats || 1}
+                      className={cn(
+                        dim.barre,
+                        "w-full appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-emerald-700 [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-emerald-700",
+                        meilleur &&
+                          "shadow-[0_0_10px_rgb(187_247_208/0.6)] [&::-moz-progress-bar]:bg-emerald-200 [&::-webkit-progress-value]:bg-emerald-200",
+                      )}
+                    />
+                    <span className={cn("flex flex-wrap gap-x-1 font-mono tabular-nums text-muted-foreground", dim.degats)}>
+                      <span>{millierLabel(degats)}</span>
+                      <span>({parMinuteLabel(d?.degatsParMinute ?? null)})</span>
+                    </span>
+                  </div>
                 </div>
               </li>
             );
@@ -310,9 +354,9 @@ export function ScoreboardEquipe({
   );
 }
 
-function Mesure({ valeur, legende, dim }: { valeur: string; legende: string; dim: Densite }) {
+function Mesure({ valeur, legende, dim, className }: { valeur: string; legende: string; dim: Densite; className: string }) {
   return (
-    <div className="flex flex-col items-center leading-tight">
+    <div className={cn("flex flex-col items-center leading-tight", className)}>
       <span className={cn("font-mono font-semibold tabular-nums", dim.mesure)}>{valeur}</span>
       <span className={cn("text-muted-foreground", dim.legende)}>{legende}</span>
     </div>
@@ -323,24 +367,21 @@ function Mesure({ valeur, legende, dim }: { valeur: string; legende: string; dim
 function Objets({
   items,
   roleItem,
-  compact,
+  dim,
 }: {
   items: Array<number | null> | null;
   roleItem: Schemas["ObjetDeRole"] | null;
-  compact: boolean;
+  dim: Densite;
 }) {
-  const taille = compact ? "size-5" : "size-7";
-  const tailleRole = compact ? "size-5" : "size-8";
+  const taille = dim.objet;
+  const tailleRole = dim.objetDeRole;
   const emplacements = Array.from({ length: 7 }, (_, i) => items?.[i] ?? null);
   const fini = roleItem?.etat === "Terminee";
   return (
-    <div className={cn("flex items-center", compact ? "gap-1" : "gap-1.5")}>
+    <div className={cn("flex items-center gap-1", dim.pos.objets)}>
       <ul
         aria-label="Objets"
-        className={cn(
-          "grid items-center gap-0.5",
-          compact ? "grid-cols-[repeat(3,1.25rem)_1.25rem]" : "grid-cols-[repeat(3,1.75rem)_1.75rem]",
-        )}
+        className={cn("grid items-center gap-0.5", dim.objetsGrille)}
       >
         {emplacements.slice(0, 6).map((id, i) => (
           <li key={i}>

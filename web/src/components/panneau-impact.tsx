@@ -140,7 +140,7 @@ export function PanneauImpact({
           <p className="text-sm text-muted-foreground">Aucun critère mesuré pour ce joueur dans cette game.</p>
         ) : (
           <Tabs defaultValue={groupes[0]!.groupe}>
-            <TabsList className="w-full">
+            <TabsList className="h-auto w-full flex-wrap">
               {groupes.map((g) => (
                 <TabsTrigger key={g.groupe} value={g.groupe}>
                   {nomDuGroupe(g.groupe)}
@@ -163,10 +163,10 @@ export function PanneauImpact({
                   <span className="text-sm font-semibold">{nomDuGroupe(g.groupe)}</span>
                   <span className="ml-auto text-sm text-muted-foreground">{pointsLabel(g.points)} points</span>
                 </div>
-                <Table>
+                <Table className="text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Critère</TableHead>
+                      <TableHead className="whitespace-normal">Critère</TableHead>
                       <TableHead className="text-right">Valeur</TableHead>
                       <TableHead className="text-right">Score</TableHead>
                       <TableHead className="text-right">Points</TableHead>
@@ -175,7 +175,7 @@ export function PanneauImpact({
                   <TableBody>
                     {g.lignes.map((l) => (
                       <TableRow key={l.critere}>
-                        <TableCell>{CRITERES[l.critere].nom}</TableCell>
+                        <TableCell className="whitespace-normal">{CRITERES[l.critere].nom}</TableCell>
                         <TableCell className="text-right font-mono tabular-nums">
                           {valeurLabel(l.valeur, CRITERES[l.critere].format)}
                         </TableCell>
@@ -232,10 +232,10 @@ function FaceAFace({
           <li
             key={a.axe}
             aria-label={NOMS_DES_AXES[a.axe]}
-            className="grid grid-cols-[5.5rem_minmax(0,1fr)_6rem] items-center gap-3 text-sm"
+            className="grid grid-cols-[4.5rem_minmax(0,1fr)_5rem] items-center gap-2 text-sm sm:grid-cols-[5.5rem_minmax(0,1fr)_6rem] sm:gap-3"
           >
             <span>{NOMS_DES_AXES[a.axe]}</span>
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <progress
                 aria-label={`${joueur.prenom} : ${a.score}`}
                 value={a.score}

@@ -156,7 +156,7 @@ function BarreValeur({
   brut?: boolean;
 }) {
   return (
-    <div className="flex min-w-24 flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <span className="font-mono tabular-nums">{brut ? statLabel(value) : millierLabel(value)}</span>
       {value != null && (
         <progress
