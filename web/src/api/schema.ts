@@ -6618,6 +6618,17 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        AxeDeFaceAFace: {
+            axe: components["schemas"]["AxeDImpact"];
+            /** Format: int32 */
+            score: number;
+            /** Format: int32 */
+            scoreAdversaire: number;
+            /** Format: int32 */
+            ecart: number;
+        };
+        /** @enum {unknown} */
+        AxeDImpact: "Survie" | "Utilite" | "Combat" | "Objectifs" | "Vision" | "Economie";
         /** @enum {unknown} */
         BadgeDeGame: "MeilleurePerf" | "Ace" | null;
         BulletinDuVotant: {
@@ -7069,6 +7080,16 @@ export interface components {
             type: null | string;
             side: null | string;
         };
+        FaceAFace: {
+            /** Format: int32 */
+            adversaireId: number;
+            role: null | components["schemas"]["Role"];
+            axes: components["schemas"]["AxeDeFaceAFace"][];
+            /** Format: int32 */
+            axesGagnes: number;
+            /** Format: int32 */
+            axesPerdus: number;
+        };
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -7193,6 +7214,7 @@ export interface components {
             /** Format: int32 */
             place: null | number;
             badge: null | components["schemas"]["BadgeDeGame"];
+            impact: null | components["schemas"]["ImpactDuJoueur"];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -7264,11 +7286,17 @@ export interface components {
             jour: null | string;
             games: components["schemas"]["GameDeLaFiche"][];
         };
+        /** @enum {unknown} */
+        GroupeDImpact: "Global" | "VsAdversaire" | "Objectifs" | "Equipe" | "Role";
         HallDeLaHonte: {
             joueurs: components["schemas"]["LigneHallDeLaHonte"][];
         };
         /** Format: binary */
         IFormFile: string;
+        ImpactDuJoueur: {
+            sousScores: components["schemas"]["SousScoreDImpact"][];
+            faceAFace: null | components["schemas"]["FaceAFace"];
+        };
         ImportDeRapportRefuseResponse: {
             title: string;
             /** Format: int32 */
@@ -7363,6 +7391,8 @@ export interface components {
             capitaineB: null | number;
             premierPick: null | string;
         };
+        /** @enum {unknown} */
+        LettreDImpact: "S+" | "S" | "A" | "B" | "C" | "D";
         LiensSerieResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -7406,6 +7436,17 @@ export interface components {
             /** Format: int32 */
             lp: null | number;
             avatarUrl: null | string;
+        };
+        LigneDImpact: {
+            critere: components["schemas"]["CritereDeNote"];
+            /** Format: double */
+            valeur: number;
+            /** Format: int32 */
+            score: number;
+            /** Format: double */
+            poids: number;
+            /** Format: double */
+            points: number;
         };
         LigneHallDeLaHonte: {
             /** Format: int32 */
@@ -7999,6 +8040,15 @@ export interface components {
         SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
         /** @enum {unknown} */
         SourceDuRole: "Partie" | "Autorole" | "RolePrincipal" | "Inconnue";
+        SousScoreDImpact: {
+            groupe: components["schemas"]["GroupeDImpact"];
+            /** Format: int32 */
+            score: number;
+            lettre: components["schemas"]["LettreDImpact"];
+            /** Format: double */
+            points: number;
+            lignes: components["schemas"]["LigneDImpact"][];
+        };
         SpectateursDeLaGame: {
             /** Format: int32 */
             gameId: number;
