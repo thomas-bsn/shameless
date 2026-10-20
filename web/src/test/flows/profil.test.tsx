@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { json, mockApi, problem } from "@/test/api";
 import { player, user } from "@/test/fixtures";
@@ -145,11 +145,14 @@ describe("Profil (variante A3)", () => {
     const rang = within(resume).getByRole("group", { name: "Classé Solo" });
     expect(within(rang).getByRole("img", { name: "Emblème Emerald" })).toHaveAttribute(
       "src",
-      "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-emerald.png",
+      "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/emerald.png",
     );
     expect(within(rang).getByText("Emerald II · 47 LP")).toBeInTheDocument();
     const flex = within(resume).getByRole("group", { name: "Flex" });
-    expect(within(flex).getByRole("img", { name: "Emblème Gold" })).toBeInTheDocument();
+    const emblemeFlex = within(flex).getByRole("img", { name: "Emblème Gold" });
+    expect(emblemeFlex).toHaveClass("size-12", "object-contain");
+    fireEvent.error(emblemeFlex);
+    expect(within(flex).queryByRole("img", { name: "Emblème Gold" })).not.toBeInTheDocument();
     expect(within(resume).getByRole("group", { name: "Cost" })).toBeInTheDocument();
     expect(await within(resume).findByRole("img", { name: "Note 71 sur 100" })).toBeInTheDocument();
     const role = within(resume).getByRole("group", { name: "Rôle principal" });
