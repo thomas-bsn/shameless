@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { $api } from "@/api/client";
-import { HeroDuJoueur, SectionsDeLaFiche } from "@/components/fiche-joueur";
+import { FichePublique } from "@/components/fiche-joueur";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 
 export const Route = createFileRoute("/_connecte/joueurs/$playerId")({
@@ -23,10 +23,7 @@ function FicheJoueur() {
       ) : player.isError ? (
         <ErrorAlert error={player.error} />
       ) : (
-        <>
-          <HeroDuJoueur player={player.data} />
-          <SectionsDeLaFiche playerId={player.data.id} />
-        </>
+        <FichePublique player={player.data} />
       )}
     </div>
   );
