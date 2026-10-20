@@ -1,4 +1,5 @@
 import type { Schemas } from "@/api/client";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type Ping = keyof NonNullable<Schemas["PingsDuJoueur"]>;
@@ -41,8 +42,40 @@ const TRACES: Record<Ping, string> = {
   visionCleared: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm-1.5 12.5L6.5 11.5l1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4z",
 };
 
-/** L'icône d'un ping ; son nom accessible est son nom français. */
+/** Les icônes de ping officielles de Riot, servies par Community Dragon. */
+const BASE_ICONES_DE_PING = "https://raw.communitydragon.org/latest/game/assets/ux/minimap/pings";
+
+/** Le fichier officiel de chaque ping ; « command » n'a pas d'équivalent sûr et garde son tracé. */
+const FICHIERS: Partial<Record<Ping, string>> = {
+  allIn: "all_in",
+  assistMe: "assist",
+  basic: "ping",
+  danger: "caution",
+  enemyMissing: "mia_new",
+  enemyVision: "enemychampsighted",
+  getBack: "retreat",
+  hold: "hold",
+  needVision: "need_ward",
+  onMyWay: "on_my_way_new",
+  push: "push",
+  retreat: "retreat",
+  visionCleared: "cleared",
+};
+
+/** L'icône d'un ping ; son nom accessible est son nom français. Icône officielle quand elle existe, sinon (ou si elle ne charge pas) un tracé. */
 export function IconePing({ ping, className }: { ping: Ping; className?: string }) {
+  const [enEchec, setEnEchec] = useState(false);
+  const fichier = FICHIERS[ping];
+  if (fichier && !enEchec) {
+    return (
+      <img
+        src={`${BASE_ICONES_DE_PING}/${fichier}.png`}
+        alt={NOMS[ping]}
+        onError={() => setEnEchec(true)}
+        className={cn("inline-block size-5 shrink-0", className)}
+      />
+    );
+  }
   return (
     <svg
       role="img"

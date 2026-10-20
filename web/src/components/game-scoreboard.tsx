@@ -39,23 +39,23 @@ function useTitres(gameId: number) {
 
 type Objectifs = Schemas["ObjectifsDEquipe"];
 
-const OBJECTIFS: Array<[Objectif, (o: Objectifs) => number | null, string]> = [
-  ["tourelle", (o) => o.towerKills, "text-sky-300"],
-  ["dragon", (o) => o.dragonKills, "text-amber-400"],
-  ["baron", (o) => o.baronKills, "text-violet-400"],
-  ["heraut", (o) => o.riftHeraldKills, "text-teal-300"],
-  ["larve", (o) => o.hordeKills, "text-zinc-400"],
-  ["inhibiteur", (o) => o.inhibitorKills, "text-red-400"],
+const OBJECTIFS: Array<[Objectif, (o: Objectifs) => number | null]> = [
+  ["tourelle", (o) => o.towerKills],
+  ["dragon", (o) => o.dragonKills],
+  ["baron", (o) => o.baronKills],
+  ["heraut", (o) => o.riftHeraldKills],
+  ["larve", (o) => o.hordeKills],
+  ["inhibiteur", (o) => o.inhibitorKills],
 ];
 
 /** Les objectifs de l'équipe en icônes avec leur compteur ; rien quand le Rapport ne les donne pas. */
-function ObjectifsEnIcones({ objectifs }: { objectifs: Objectifs | null }) {
+function ObjectifsEnIcones({ objectifs, side }: { objectifs: Objectifs | null; side: Side }) {
   if (!objectifs) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-      {OBJECTIFS.map(([objectif, lire, couleur]) => (
+      {OBJECTIFS.map(([objectif, lire]) => (
         <span key={objectif} className="flex items-center gap-1.5">
-          <IconeObjectif objectif={objectif} className={cn("size-6", couleur)} />
+          <IconeObjectif objectif={objectif} equipe={side === "blue" ? 100 : 200} className="size-6" />
           <span className="font-mono text-lg font-semibold tabular-nums">{statLabel(lire(objectifs))}</span>
         </span>
       ))}
@@ -100,7 +100,7 @@ export function ScoreboardEquipe({
           </h2>
           <span className="text-sm text-muted-foreground">{label}</span>
         </div>
-        <ObjectifsEnIcones objectifs={objectifs} />
+        <ObjectifsEnIcones objectifs={objectifs} side={side} />
       </header>
       <div className="overflow-x-auto">
         <ul aria-label={label} className="flex min-w-[64rem] flex-col gap-1">

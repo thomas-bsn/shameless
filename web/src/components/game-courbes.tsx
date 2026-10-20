@@ -3,7 +3,7 @@ import type { Schemas } from "@/api/client";
 import type { Participant, Side } from "@/components/game-equipe-table";
 import { sidesOf } from "@/components/game-scoreboard";
 import { IconeChampion } from "@/components/icones-de-jeu/icones-catalogue";
-import { IconeObjectif, type Objectif } from "@/components/icones-de-jeu/icone-objectif";
+import { IconeObjectifSvg, type Objectif } from "@/components/icones-de-jeu/icone-objectif";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -218,8 +218,8 @@ function Marqueurs({
         >
           <line x1={x(t)} x2={x(t)} y1={cadre.haut - 12} y2={cadre.hauteur - cadre.bas} className="stroke-foreground/25" />
           <circle cx={x(t)} cy={cadre.haut - 20} r={10} className={cn("fill-muted", TRAIT[cote])} />
-          <g aria-hidden transform={`translate(${x(t) - 7} ${cadre.haut - 27})`}>
-            <IconeObjectif objectif={objectif} className="size-3.5 text-foreground" />
+          <g aria-hidden>
+            <IconeObjectifSvg objectif={objectif} equipe={cote === "blue" ? 100 : 200} cx={x(t)} cy={cadre.haut - 20} taille={20} />
           </g>
         </g>
       ))}
