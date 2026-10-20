@@ -109,7 +109,8 @@ public sealed class CorrectionDeStatsService
         var valeurs = new List<(ChampCorrigeable, string)>();
         string? detail = null;
 
-        foreach (var (champ, valeur) in d.Champs)
+        // Dans l'ordre de l'énumération : la première erreur ne dépend pas de l'ordre du dictionnaire reçu.
+        foreach (var (champ, valeur) in d.Champs.OrderBy(c => c.Key))
         {
             switch (valeur)
             {
