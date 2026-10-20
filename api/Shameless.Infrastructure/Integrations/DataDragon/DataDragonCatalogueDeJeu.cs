@@ -16,11 +16,16 @@ public sealed class DataDragonCatalogueDeJeu : ICatalogueDeJeu
     private const string Langue = "fr_FR";
     private static readonly TimeSpan DureeDuCache = TimeSpan.FromHours(6);
 
+    /// <summary>Le délai avant de retenter Data Dragon après une panne : pendant ce temps, le catalogue périmé est servi.</summary>
+    private static readonly TimeSpan DelaiApresPanne = TimeSpan.FromMinutes(5);
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimeProvider _clock;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private CatalogueDeJeu? _catalogue;
     private DateTimeOffset _expiration;
+    private DateTimeOffset _prochaineTentative;
+    private CatalogueIndisponibleException? _derniereErreur;
 
     public DataDragonCatalogueDeJeu(IHttpClientFactory httpClientFactory, TimeProvider clock)
     {
@@ -35,11 +40,28 @@ public sealed class DataDragonCatalogueDeJeu : ICatalogueDeJeu
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            if (_catalogue is { } dejaCharge && _clock.GetUtcNow() < _expiration) return dejaCharge;
+            var maintenant = _clock.GetUtcNow();
+            if (_catalogue is { } dejaCharge && maintenant < _expiration) return dejaCharge;
 
-            _catalogue = await ChargerOuIndisponibleAsync(cancellationToken);
-            _expiration = _clock.GetUtcNow() + DureeDuCache;
-            return _catalogue;
+            // Après une panne, pas de nouvel appel HTTP avant le délai : le catalogue périmé est servi, et sans
+            // catalogue du tout la panne se répète sans solliciter Data Dragon.
+            if (maintenant < _prochaineTentative)
+                return _catalogue ?? throw _derniereErreur!;
+
+            try
+            {
+                _catalogue = await ChargerOuIndisponibleAsync(cancellationToken);
+                _expiration = _clock.GetUtcNow() + DureeDuCache;
+                _derniereErreur = null;
+                return _catalogue;
+            }
+            catch (CatalogueIndisponibleException e)
+            {
+                _derniereErreur = e;
+                _prochaineTentative = _clock.GetUtcNow() + DelaiApresPanne;
+                if (_catalogue is { } perime) return perime;
+                throw;
+            }
         }
         finally
         {
