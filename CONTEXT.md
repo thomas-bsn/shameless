@@ -187,6 +187,10 @@ rapport aux références du rôle joué, puis pondéré selon ce rôle ; la vict
 une composante de plus (100 si gagnée, 0 sinon). Références et poids sont calés sur les  
 scores de dpm.lol (ADR 0011). Un critère non mesurable est omis et les poids renormalisés ;  
 une game saisie à la main n'a pas de note.
+- **Impact** : le détail d'un joueur pour une game : ses sous-scores par groupe (Global, Vs  
+adversaire, Objectifs, Équipe, Rôle) avec lettre (S+ à D) et lignes tirées de la note, et son  
+face-à-face à six axes (Survie, Utilité, Combat, Objectifs, Vision, Économie) contre  
+l'adversaire du même rôle (ADR 0011). Calculé à la lecture ; une stat absente masque sa ligne.
 - **Fiche Joueur** : la page d'un joueur : ses stats de customs sur ses games terminées  
 (winrate, KDA, CS/min, KP, dégâts, note de performance moyenne), par champion et par  
 rôle joué, l'historique de ses games avec leur note, son compte Discord lié, son cost  
