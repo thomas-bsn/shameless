@@ -22,6 +22,7 @@ describe("« ← Retour » de la fiche joueur", () => {
 
     await vi.waitFor(() => expect(router.state.location.pathname).toBe("/classements"));
     expect(router.state.location.search).toEqual({ vue: "soloq" });
+    await vi.waitFor(() => expect(router.state.status).toBe("idle"));
   });
 
   it("ramène à la liste des Joueurs quand la fiche est ouverte directement", async () => {
@@ -31,5 +32,6 @@ describe("« ← Retour » de la fiche joueur", () => {
     await userEvent.click(await screen.findByRole("button", { name: "← Retour" }));
 
     await vi.waitFor(() => expect(router.state.location.pathname).toBe("/joueurs"));
+    await vi.waitFor(() => expect(router.state.status).toBe("idle"));
   });
 });
