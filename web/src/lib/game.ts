@@ -40,6 +40,24 @@ export function csTotal({
 export const posteLabel = (role: string | null | undefined): string | null =>
   role ? (role === "Adc" ? "ADC" : role) : null;
 
+const ORDRE_DES_ROLES = ["Top", "Jungle", "Mid", "Adc", "Support"];
+
+/**
+ * Les joueurs d'une équipe dans l'ordre des voies (Top, Jungle, Mid, ADC, Support) d'après le rôle joué.
+ * Ceux dont le rôle est inconnu viennent après, dans leur ordre d'origine ; sans aucun rôle connu,
+ * l'ordre d'origine est gardé. La liste reçue n'est pas modifiée.
+ */
+export function trierParRole<T extends { stats?: { position?: string | null } | null }>(joueurs: readonly T[]): T[] {
+  const rang = (j: T) => {
+    const i = ORDRE_DES_ROLES.indexOf(j.stats?.position ?? "");
+    return i === -1 ? ORDRE_DES_ROLES.length : i;
+  };
+  return joueurs
+    .map((j, ordre) => ({ j, ordre }))
+    .sort((x, y) => rang(x.j) - rang(y.j) || x.ordre - y.ordre)
+    .map((x) => x.j);
+}
+
 /** Le ton d'une note sur 100 : 75 et plus bonne, 50 et plus moyenne, sinon mauvaise. */
 export function noteTone(note: number): "good" | "mid" | "bad" {
   return note >= 75 ? "good" : note >= 50 ? "mid" : "bad";

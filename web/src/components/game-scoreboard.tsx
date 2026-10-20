@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconeDeJeu } from "@/components/icone-de-jeu";
 import { useCatalogue } from "@/lib/catalogue";
-import { csTotal, kdaLabel, millierLabel, noteTone, parMinuteLabel, posteLabel, statLabel } from "@/lib/game";
+import { csTotal, kdaLabel, millierLabel, noteTone, parMinuteLabel, posteLabel, statLabel, trierParRole } from "@/lib/game";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 import { AvatarJoueur } from "@/components/avatar-joueur";
@@ -29,8 +29,8 @@ export function sidesOf(game: Schemas["GameRecapResponse"]) {
     ? ([["A", game.teamA], ["B", game.teamB]] as const)
     : ([["B", game.teamB], ["A", game.teamA]] as const);
   return [
-    { team: blue[0], side: "blue" as const, players: blue[1] },
-    { team: red[0], side: "red" as const, players: red[1] },
+    { team: blue[0], side: "blue" as const, players: trierParRole(blue[1]) },
+    { team: red[0], side: "red" as const, players: trierParRole(red[1]) },
   ];
 }
 
