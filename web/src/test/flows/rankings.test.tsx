@@ -119,3 +119,84 @@ describe("Classements", () => {
     expect(await screen.findByRole("list", { name: "Podium du cost" })).toBeInTheDocument();
   });
 });
+
+describe("Classement des costs, deux modes", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    mockApi({ "GET /auth/me": user(), "GET /players": players });
+  });
+
+  it("shows the six steps from D to SS, each player standing on the step of their tier", async () => {
+    renderApp("/classements");
+    await userEvent.click(await screen.findByRole("radio", { name: "Escalier" }));
+
+    const escalier = await screen.findByRole("list", { name: "Escalier du cost" });
+    expect(screen.queryByRole("list", { name: "Podium du cost" })).not.toBeInTheDocument();
+    const marches = within(escalier).getAllByRole("listitem", { name: /^Marche / });
+    expect(marches.map((m) => m.getAttribute("aria-label"))).toEqual(["Marche D", "Marche C", "Marche B", "Marche A", "Marche S", "Marche SS"]);
+    const prenoms = marches.map((m) => within(m).queryAllByRole("link").map((l) => l.textContent));
+    expect(prenoms).toEqual([["Dan"], ["Alice"], ["Bob"], [], ["Éva"], ["Chloé"]]);
+  });
+
+  it("does not rank the players inside a tier: alphabetical by first name", async () => {
+    mockApi({
+      "GET /auth/me": user(),
+      "GET /players": [
+        player({ id: 1, prenom: "Zoé", currentCost: 6 }),
+        player({ id: 2, prenom: "Ann", currentCost: 5.6 }),
+        player({ id: 3, prenom: "Léo", currentCost: 5.8 }),
+      ],
+    });
+    renderApp("/classements");
+    await userEvent.click(await screen.findByRole("radio", { name: "Escalier" }));
+
+    const marche = await screen.findByRole("listitem", { name: "Marche SS" });
+    expect(within(marche).getAllByRole("link").map((l) => l.textContent)).toEqual(["Ann", "Léo", "Zoé"]);
+  });
+
+  it("shows the cost and the month trend of a player on hover", async () => {
+    renderApp("/classements");
+    await userEvent.click(await screen.findByRole("radio", { name: "Escalier" }));
+
+    const marche = await screen.findByRole("listitem", { name: "Marche SS" });
+    expect(within(marche).queryByRole("tooltip")).not.toBeInTheDocument();
+    await userEvent.hover(within(marche).getByRole("link", { name: "Chloé" }));
+    const info = within(marche).getByRole("tooltip");
+    expect(info).toHaveTextContent("6,0");
+    expect(within(info).getByLabelText("Évolution du cost : +0,4")).toBeInTheDocument();
+    await userEvent.unhover(within(marche).getByRole("link", { name: "Chloé" }));
+    expect(within(marche).queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("keeps the chosen mode for the user", async () => {
+    const premier = renderApp("/classements");
+    await userEvent.click(await screen.findByRole("radio", { name: "Escalier" }));
+    premier.unmount();
+
+    renderApp("/classements");
+    expect(await screen.findByRole("list", { name: "Escalier du cost" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Escalier", checked: true })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Podium et liste" }));
+    expect(await screen.findByRole("list", { name: "Podium du cost" })).toBeInTheDocument();
+  });
+
+  it("still switches mode when the browser refuses storage", async () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("denied");
+    });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("denied");
+    });
+    renderApp("/classements");
+    await userEvent.click(await screen.findByRole("radio", { name: "Escalier" }));
+    expect(await screen.findByRole("list", { name: "Escalier du cost" })).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
+
+  it("leaves the SoloQ view without the mode choice", async () => {
+    renderApp("/classements?vue=soloq");
+    await screen.findAllByRole("region", { name: /^Tier / });
+    expect(screen.queryByRole("radio", { name: "Escalier" })).not.toBeInTheDocument();
+  });
+});
