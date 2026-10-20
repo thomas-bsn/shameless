@@ -8626,7 +8626,9 @@
           "visionParMinute",
           "partDesDegats",
           "partDeLOr",
-          "partDesKills"
+          "partDesKills",
+          "sortsLances",
+          "pings"
         ],
         "type": "object",
         "properties": {
@@ -8755,6 +8757,26 @@
               "number"
             ],
             "format": "double"
+          },
+          "sortsLances": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SortsLances"
+              }
+            ]
+          },
+          "pings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PingsDuJoueur"
+              }
+            ]
           }
         }
       },
@@ -10922,6 +10944,125 @@
           }
         }
       },
+      "PingsDuJoueur": {
+        "required": [
+          "allIn",
+          "assistMe",
+          "basic",
+          "command",
+          "danger",
+          "enemyMissing",
+          "enemyVision",
+          "getBack",
+          "hold",
+          "needVision",
+          "onMyWay",
+          "push",
+          "retreat",
+          "visionCleared"
+        ],
+        "type": "object",
+        "properties": {
+          "allIn": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "assistMe": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "basic": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "command": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "danger": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "enemyMissing": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "enemyVision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "getBack": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "hold": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "needVision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "onMyWay": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "push": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "retreat": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "visionCleared": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "PlayerCostHistoryResponse": {
         "required": [
           "playerId",
@@ -12362,6 +12503,61 @@
           }
         }
       },
+      "SortsLances": {
+        "required": [
+          "q",
+          "w",
+          "e",
+          "r",
+          "d",
+          "f"
+        ],
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "w": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "e": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "r": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "d": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "f": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "SourceDuCostDeDepart": {
         "enum": [
           "MoisPrecedent",
@@ -12543,7 +12739,9 @@
           "perkPrimaryStyle",
           "perkSubStyle",
           "items",
-          "perks"
+          "perks",
+          "sortsLances",
+          "pings"
         ],
         "type": "object",
         "properties": {
@@ -12834,6 +13032,26 @@
               ],
               "format": "int32"
             }
+          },
+          "sortsLances": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SortsLances"
+              }
+            ]
+          },
+          "pings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PingsDuJoueur"
+              }
+            ]
           }
         }
       },
