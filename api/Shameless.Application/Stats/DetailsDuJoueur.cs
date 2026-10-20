@@ -38,6 +38,8 @@ public sealed record ObjetDeRole(int Id, EtatDeQuete? Etat)
 /// <param name="PartDesDegats">Part des dégâts aux champions de l'Équipe, de 0 à 1.</param>
 /// <param name="PartDeLOr">Part de l'or gagné de l'Équipe, de 0 à 1.</param>
 /// <param name="PartDesKills">Part des kills de l'Équipe (le joueur : ses kills seuls, pas les assistances), de 0 à 1.</param>
+/// <param name="SortsLances">Les sorts lancés (Q W E R D F) ; null si le Rapport ne les porte pas.</param>
+/// <param name="Pings">Les pings par type ; null si le Rapport ne les porte pas.</param>
 public sealed record DetailsDuJoueur(
     Role? Role,
     SourceDuRole SourceDuRole,
@@ -54,7 +56,9 @@ public sealed record DetailsDuJoueur(
     double? VisionParMinute,
     double? PartDesDegats,
     double? PartDeLOr,
-    double? PartDesKills)
+    double? PartDesKills,
+    SortsLances? SortsLances = null,
+    PingsDuJoueur? Pings = null)
 {
     /// <summary>Les totaux de l'Équipe, sur les valeurs effectives de ses participants.</summary>
     internal sealed record TotauxDEquipe(int? Degats, int? Or, int? Kills)
@@ -85,6 +89,7 @@ public sealed record DetailsDuJoueur(
             ParMinute(stats?.VisionScore),
             Part(stats?.DamageToChampions, equipe.Degats),
             Part(stats?.GoldEarned, equipe.Or),
-            Part(stats?.Kills, equipe.Kills));
+            Part(stats?.Kills, equipe.Kills),
+            stats?.SortsLances, stats?.Pings);
     }
 }

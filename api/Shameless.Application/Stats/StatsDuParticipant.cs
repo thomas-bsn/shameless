@@ -38,6 +38,8 @@ namespace Shameless.Application.Stats;
 /// <param name="PerkSubStyle">L'arbre de runes secondaire.</param>
 /// <param name="Items">Les sept emplacements d'objets (six objets et la babiole), 0 ou null pour un emplacement vide ; null sans objets.</param>
 /// <param name="Perks">Les six runes (<c>PERK0</c> à <c>PERK5</c>) ; null sans runes. Les fragments ne sont dans aucune donnée du client.</param>
+/// <param name="SortsLances">Les sorts lancés (<c>spell1Casts</c> à <c>spell4Casts</c>, <c>summoner1Casts</c>, <c>summoner2Casts</c>) ; null sans aucun compteur.</param>
+/// <param name="Pings">Les pings par type (<c>*Pings</c>) ; null sans aucun compteur.</param>
 public sealed record StatsDuParticipant(
     int? Kills,
     int? Deaths,
@@ -77,7 +79,9 @@ public sealed record StatsDuParticipant(
     int? PerkPrimaryStyle = null,
     int? PerkSubStyle = null,
     IReadOnlyList<int?>? Items = null,
-    IReadOnlyList<int?>? Perks = null)
+    IReadOnlyList<int?>? Perks = null,
+    SortsLances? SortsLances = null,
+    PingsDuJoueur? Pings = null)
 {
     public const int NombreDObjets = 7;
     public const int NombreDeRunes = 6;
@@ -126,7 +130,9 @@ public sealed record StatsDuParticipant(
             PerkSubStyle: champs.Entier("perkSubStyle", "PERK_SUB_STYLE"),
             Items: champs.Entiers("items") is { } items ? Completer(items, NombreDObjets) : null,
             Perks: Enumerable.Range(0, NombreDeRunes).Select(i => champs.Entier($"PERK{i}", $"perk{i}")).ToArray() is { } perks
-                   && perks.Any(p => p is not null) ? perks : null);
+                   && perks.Any(p => p is not null) ? perks : null,
+            SortsLances: SortsLances.Lire(champs),
+            Pings: PingsDuJoueur.Lire(champs));
     }
 
     /// <summary>Les <paramref name="nombre"/> premières cases, complétées par des emplacements vides.</summary>

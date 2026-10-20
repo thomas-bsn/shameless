@@ -50,6 +50,11 @@ const details = (overrides: Partial<Details> = {}): Details => ({
   partDesDegats: 0.4,
   partDeLOr: 0.3,
   partDesKills: 0.65,
+  sortsLances: { q: 118, w: 87, e: 142, r: 9, d: 3, f: 2 },
+  pings: {
+    allIn: 0, assistMe: 10, basic: 0, command: 7, danger: 0, enemyMissing: 1, enemyVision: 0,
+    getBack: 0, hold: 0, needVision: 0, onMyWay: 14, push: 0, retreat: 0, visionCleared: 0,
+  },
   ...overrides,
 });
 
@@ -139,6 +144,8 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
         objetDeRole: { id: 1202, etat: "EnCours" },
         spell1Id: 999,
         perks: [777, null, null, null, null, null],
+        sortsLances: null,
+        pings: null,
       }),
     }),
   ],
@@ -324,6 +331,36 @@ describe("Onglet Détails", () => {
     await userEvent.click(within(selecteur).getByRole("button", { name: "Bob" }));
     expect(screen.getByRole("group", { name: "Détails de Bob" })).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Détails de Alice" })).not.toBeInTheDocument();
+  });
+
+  it("montre les six sorts lancés et les pings non nuls du joueur choisi", async () => {
+    ouvrirApp();
+    await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Joueur" })).getByRole("button", { name: "Alice" }));
+
+    const alice = screen.getByRole("group", { name: "Détails de Alice" });
+    const sorts = within(alice).getByRole("group", { name: "Sorts lancés" });
+    for (const [touche, valeur] of [["Q", "118"], ["W", "87"], ["E", "142"], ["R", "9"], ["D", "3"], ["F", "2"]]) {
+      expect(sorts).toHaveTextContent(new RegExp(`${touche}\\s*${valeur}(?!\\d)`));
+    }
+    const pings = within(alice).getByRole("group", { name: "Pings" });
+    expect(pings).toHaveTextContent(/En route\s*14/);
+    expect(pings).toHaveTextContent(/À l'aide\s*10/);
+    expect(pings).toHaveTextContent(/Commande\s*7/);
+    expect(pings).toHaveTextContent(/Ennemi disparu\s*1/);
+    expect(pings).not.toHaveTextContent(/Danger/);
+    expect(pings).not.toHaveTextContent(/Retraite/);
+  });
+
+  it("n'affiche ni sorts lancés ni pings pour un joueur dont le Rapport n'en porte pas", async () => {
+    ouvrirApp();
+    await userEvent.click(await screen.findByRole("tab", { name: "Détails" }));
+    await userEvent.click(within(screen.getByRole("group", { name: "Joueur" })).getByRole("button", { name: "Chloé" }));
+
+    const chloe = screen.getByRole("group", { name: "Détails de Chloé" });
+    expect(within(chloe).queryByRole("group", { name: "Sorts lancés" })).not.toBeInTheDocument();
+    expect(within(chloe).queryByRole("group", { name: "Pings" })).not.toBeInTheDocument();
+    expect(chloe).toHaveTextContent(/Balises posées/);
   });
 
   it("n'affiche ni ordre d'achat, ni ordre des compétences, ni phase de lane", async () => {

@@ -9,6 +9,7 @@ import { millierLabel, nombreLabel, posteLabel, statLabel } from "@/lib/game";
 import { cn } from "@/lib/utils";
 
 type Recap = Schemas["GameRecapResponse"];
+type Details = NonNullable<Participant["details"]>;
 
 function Mesure({ nom, valeur }: { nom: string; valeur: string }) {
   return (
@@ -28,9 +29,45 @@ function Section({ titre, children }: { titre: string; children: React.ReactNode
   );
 }
 
+const SORTS: [string, keyof NonNullable<Details["sortsLances"]>][] = [
+  ["Q", "q"],
+  ["W", "w"],
+  ["E", "e"],
+  ["R", "r"],
+  ["D", "d"],
+  ["F", "f"],
+];
+
+const PINGS: [string, keyof NonNullable<Details["pings"]>][] = [
+  ["Tous en avant", "allIn"],
+  ["À l'aide", "assistMe"],
+  ["Basique", "basic"],
+  ["Commande", "command"],
+  ["Danger", "danger"],
+  ["Ennemi disparu", "enemyMissing"],
+  ["Ennemi en vue", "enemyVision"],
+  ["Repli", "getBack"],
+  ["Tenir la position", "hold"],
+  ["Besoin de vision", "needVision"],
+  ["En route", "onMyWay"],
+  ["Pousser", "push"],
+  ["Retraite", "retreat"],
+  ["Zone dégagée", "visionCleared"],
+];
+
+/** Une section en groupe nommé, pour les compteurs qui n'existent que si le Rapport les porte. */
+function Groupe({ titre, children }: { titre: string; children: React.ReactNode }) {
+  return (
+    <section role="group" aria-label={titre} className="flex flex-col gap-1">
+      <h3 className="text-sm font-semibold">{titre}</h3>
+      <dl>{children}</dl>
+    </section>
+  );
+}
+
 /**
- * Le détail d'un joueur de la game : balises, stats par minute, dégâts par type.
- * Les sorts lancés et les pings ne sont pas encore transportés par l'API : ils ne sont pas affichés.
+ * Le détail d'un joueur de la game : balises, stats par minute, dégâts par type, sorts lancés et pings
+ * (ces deux derniers seulement si le Rapport les porte ; les pings à zéro ne sont pas listés).
  */
 export function DetailsDuJoueur({ participant, side }: { participant: Participant; side: "blue" | "red" }) {
   const champions = useChampions();
@@ -38,6 +75,8 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
   const s = participant.stats;
   const d = participant.details;
   const role = posteLabel(d?.role ?? s?.position);
+  const sorts = d?.sortsLances;
+  const pings = d?.pings ? PINGS.filter(([, cle]) => (d.pings?.[cle] ?? 0) > 0) : [];
 
   return (
     <Card role="group" aria-label={`Détails de ${participant.prenom}`}>
@@ -74,6 +113,20 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
           <Mesure nom="Dégâts magiques" valeur={millierLabel(s?.magicDamageToChampions ?? null)} />
           <Mesure nom="Dégâts bruts" valeur={millierLabel(s?.trueDamageToChampions ?? null)} />
         </Section>
+        {sorts && (
+          <Groupe titre="Sorts lancés">
+            {SORTS.map(([nom, cle]) => (
+              <Mesure key={cle} nom={nom} valeur={statLabel(sorts[cle])} />
+            ))}
+          </Groupe>
+        )}
+        {pings.length > 0 && (
+          <Groupe titre="Pings">
+            {pings.map(([nom, cle]) => (
+              <Mesure key={cle} nom={nom} valeur={statLabel(d?.pings?.[cle] ?? null)} />
+            ))}
+          </Groupe>
+        )}
       </CardContent>
     </Card>
   );

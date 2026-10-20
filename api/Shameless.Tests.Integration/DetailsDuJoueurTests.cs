@@ -39,7 +39,11 @@ public class DetailsDuJoueurTests(ApiFactory factory) : IntegrationTest(factory)
             items = i == 0 ? new[] { 6655, 3020, 3157, 0, 0, 0, 3340 } : new[] { 0, 0, 0, 0, 0, 0, 0 },
             spell1Id = 4, spell2Id = 14, roleBoundItem = i == 0 ? 1203 : 1206,
             perk0 = 8112, perk1 = 8126, perk2 = 8138, perk3 = 8135, perk4 = 8226, perk5 = 8210,
-            perkPrimaryStyle = 8100, perkSubStyle = 8200
+            perkPrimaryStyle = 8100, perkSubStyle = 8200,
+            spell1Casts = 118, spell2Casts = 87, spell3Casts = 142, spell4Casts = 9, summoner1Casts = 3, summoner2Casts = 2,
+            allInPings = 1, assistMePings = 10, basicPings = 0, commandPings = 7, dangerPings = 2, enemyMissingPings = 3,
+            enemyVisionPings = 0, getBackPings = 4, holdPings = 0, needVisionPings = 5, onMyWayPings = 14, pushPings = 0,
+            retreatPings = 6, visionClearedPings = 8
         }
         : new
         {
@@ -67,6 +71,34 @@ public class DetailsDuJoueurTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.Equal([8112, 8126, 8138, 8135, 8226, 8210], d.GetProperty("perks").EnumerateArray().Select(e => e.GetInt32()));
         Assert.Equal(8100, d.GetProperty("perkPrimaryStyle").GetInt32());
         Assert.Equal(8200, d.GetProperty("perkSubStyle").GetInt32());
+    }
+
+    [Fact]
+    public async Task Les_sorts_lances_et_les_pings_du_rapport_sont_donnes_pour_chaque_joueur()
+    {
+        var game = await GameAsync();
+
+        var d = Joueur(game, "teamA", 0).GetProperty("details");
+        var sorts = d.GetProperty("sortsLances");
+        Assert.Equal([118, 87, 142, 9, 3, 2],
+            new[] { "q", "w", "e", "r", "d", "f" }.Select(k => sorts.GetProperty(k).GetInt32()));
+        var pings = d.GetProperty("pings");
+        Assert.Equal(1, pings.GetProperty("allIn").GetInt32());
+        Assert.Equal(10, pings.GetProperty("assistMe").GetInt32());
+        Assert.Equal(0, pings.GetProperty("basic").GetInt32());
+        Assert.Equal(14, pings.GetProperty("onMyWay").GetInt32());
+        Assert.Equal(8, pings.GetProperty("visionCleared").GetInt32());
+        Assert.Equal(6, pings.GetProperty("retreat").GetInt32());
+    }
+
+    [Fact]
+    public async Task Un_joueur_dont_le_rapport_n_a_ni_sorts_lances_ni_pings_n_en_a_pas_et_la_game_se_lit()
+    {
+        var game = await GameAsync();
+
+        var d = Joueur(game, "teamB", 0).GetProperty("details");
+        Assert.Equal(JsonValueKind.Null, d.GetProperty("sortsLances").ValueKind);
+        Assert.Equal(JsonValueKind.Null, d.GetProperty("pings").ValueKind);
     }
 
     [Fact]
