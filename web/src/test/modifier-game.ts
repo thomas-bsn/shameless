@@ -147,11 +147,13 @@ export const base = (admin = true) => ({
 });
 
 /** Ouvre la fenêtre depuis la page de la game, comme un Administrateur. */
-export const ouvrir = async () => {
-  renderApp("/games/42");
+export const ouvrirAvecRouteur = async () => {
+  const { router } = renderApp("/games/42");
   await userEvent.click(await screen.findByRole("button", { name: "Modifier la game" }));
-  return screen.findByRole("dialog");
+  return { dialogue: await screen.findByRole("dialog"), router };
 };
+
+export const ouvrir = async () => (await ouvrirAvecRouteur()).dialogue;
 
 const appel = (fetchMock: ReturnType<typeof mockApi>, methode: string, chemin: string) =>
   fetchMock.mock.calls.find(([r]) => r.method === methode && new URL(r.url).pathname === `/api${chemin}`);
