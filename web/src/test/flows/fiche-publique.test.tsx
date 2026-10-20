@@ -40,6 +40,8 @@ const ligne = (gameId: number, o: Partial<Ligne> = {}): Ligne => ({
   dofd: false,
   place: 1,
   badge: null,
+  participationAuxKills: null,
+  adversaireChampionId: null,
   ...o,
 });
 

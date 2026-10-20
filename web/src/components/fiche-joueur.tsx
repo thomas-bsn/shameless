@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { points } from "@/lib/cost";
-import { dateHeureLabel } from "@/lib/dates";
 import { useChampions } from "@/lib/draft-champions-queries";
 import {
   COST_MAX,
@@ -19,12 +18,11 @@ import {
   COURBE,
   decimalLabel,
   entierLabel,
-  kdaDetailLabel,
   pointsDeLaCourbe,
   pourcentLabel,
   yDuCost,
 } from "@/lib/fiche";
-import { dureeLabel, noteTone, posteLabel } from "@/lib/game";
+import { posteLabel } from "@/lib/game";
 import { roleLabel } from "@/lib/ranks";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +31,6 @@ type Stats = Schemas["StatsDeCustoms"];
 
 const GRADUATIONS = Array.from({ length: COST_MAX - COST_MIN + 1 }, (_, i) => COST_MIN + i);
 
-const noteClass = { good: "text-emerald-400", mid: "text-foreground", bad: "text-red-400" } as const;
 
 type Filtres = {
   role: Schemas["Role"];
@@ -476,7 +473,6 @@ function BarreDeFiltres({
 
 const jourCourt = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
-const placeLabel = (place: number) => (place === 1 ? "1er" : `${place}e`);
 
 function titreDuGroupe(groupe: Fiche["liste"][number], regroupement: Schemas["Regroupement"]): string | null {
   const premiere = groupe.games[0];
