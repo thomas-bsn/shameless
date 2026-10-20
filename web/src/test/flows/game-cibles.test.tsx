@@ -62,7 +62,7 @@ const CATALOGUE = { version: "1", objets: [], sorts: [], arbres: [] };
 async function ouvrirCibles(game = recap()) {
   mockApi({ "GET /auth/me": user(), "GET /games/42": game, "GET /catalogue": CATALOGUE });
   renderApp("/games/42");
-  await userEvent.click(await screen.findByRole("tab", { name: "Cibles" }));
+  await userEvent.click(await screen.findByRole("tab", { name: "Performance" }));
 }
 
 const cible = () => screen.getByRole("group", { name: "Cibles" });
@@ -120,7 +120,7 @@ describe("Vue en cibles", () => {
     cleanup();
 
     renderApp("/games/42");
-    expect(await screen.findByRole("tab", { name: "Cibles" })).toHaveAttribute("data-state", "active");
+    expect(await screen.findByRole("tab", { name: "Performance" })).toHaveAttribute("data-state", "active");
     expect(screen.getByRole("tab", { name: "Général" })).toHaveAttribute("data-state", "inactive");
   });
 });
