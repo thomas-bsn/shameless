@@ -42,10 +42,11 @@ public sealed record FicheJoueur(
     /// La fiche du Joueur à partir de ses Games. Seules les Games terminées comptent (y compris celles
     /// d'une Série interrompue). Les Games doivent être chargées avec leurs participants et leurs
     /// Joueurs (et <c>Series.Players</c> pour le rôle de l'Autorole), comme pour <see cref="NotesDeLaGame"/>.
+    /// <paramref name="fuseau"/> : celui de l'Instance, pour le regroupement par jour (UTC sans lui).
     /// </summary>
     public static FicheJoueur Calculer(
         Player joueur, IEnumerable<CustomGame> games, IReadOnlyDictionary<int, ResultatsDesVotes>? votes = null,
-        FiltreDeGames? filtre = null)
+        FiltreDeGames? filtre = null, TimeZoneInfo? fuseau = null)
     {
         filtre ??= new FiltreDeGames();
         votes ??= new Dictionary<int, ResultatsDesVotes>();
@@ -91,7 +92,7 @@ public sealed record FicheJoueur(
             titres,
             FicheEnrichie.JoueAvec(joueur.Id, parties),
             ResumeDesDernieresGames.Calculer(parties, lignes.Select(l => l.Ligne).ToList()),
-            FicheEnrichie.Liste(lignes, filtre));
+            FicheEnrichie.Liste(lignes, filtre, fuseau ?? TimeZoneInfo.Utc));
     }
 }
 

@@ -11,7 +11,7 @@ public enum Regroupement
     /// <summary>Un groupe par Soirée (les games hors Soirée dans un groupe à part).</summary>
     Soiree,
 
-    /// <summary>Un groupe par jour (date UTC de la game).</summary>
+    /// <summary>Un groupe par jour calendaire dans le fuseau de l'Instance (comme le jour d'un clip, ADR 0014).</summary>
     Jour
 }
 
@@ -120,7 +120,7 @@ internal static class FicheEnrichie
             .ToList();
 
     /// <summary>Les parties (déjà triées, récentes d'abord) filtrées puis groupées.</summary>
-    public static List<GroupeDeGames> Liste(IEnumerable<(PartieDuJoueur Partie, GameDeLaFiche Ligne)> lignes, FiltreDeGames filtre)
+    public static List<GroupeDeGames> Liste(IEnumerable<(PartieDuJoueur Partie, GameDeLaFiche Ligne)> lignes, FiltreDeGames filtre, TimeZoneInfo fuseau)
     {
         var retenues = lignes.Where(l => filtre.Accepte(l.Partie)).ToList();
         if (retenues.Count == 0) return [];
@@ -131,7 +131,7 @@ internal static class FicheEnrichie
                 .Select(g => new GroupeDeGames(g.Key, null, g.Select(l => l.Ligne).ToList()))
                 .ToList(),
             Regroupement.Jour => retenues
-                .GroupBy(l => DateOnly.FromDateTime(l.Ligne.PlayedAt))
+                .GroupBy(l => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(l.Ligne.PlayedAt, DateTimeKind.Utc), fuseau)))
                 .Select(g => new GroupeDeGames(null, g.Key.ToString("yyyy-MM-dd"), g.Select(l => l.Ligne).ToList()))
                 .ToList(),
             _ => [new GroupeDeGames(null, null, retenues.Select(l => l.Ligne).ToList())]
