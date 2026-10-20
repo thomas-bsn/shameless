@@ -124,7 +124,10 @@ public static class ConstructeurRapport
     private static JsonElement StatsEnrichies(JsonElement joueur, JsonElement stats)
     {
         var enrichies = JsonNode.Parse(stats.GetRawText())!.AsObject();
-        CopierSous(joueur, enrichies, "detectedTeamPosition", "teamPosition");
+        // Le rôle des stats prime ; le rôle détecté ne comble qu'une clé absente ou vide.
+        if (enrichies["teamPosition"] is not JsonValue { } position || position.GetValueKind() != JsonValueKind.String
+            || string.IsNullOrEmpty(position.GetValue<string>()))
+            CopierSous(joueur, enrichies, "detectedTeamPosition", "teamPosition");
         CopierSous(joueur, enrichies, "items", "items");
         CopierSous(joueur, enrichies, "spell1Id", "spell1Id");
         CopierSous(joueur, enrichies, "spell2Id", "spell2Id");
