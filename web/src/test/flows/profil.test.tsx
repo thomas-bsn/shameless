@@ -117,32 +117,51 @@ const routes = (extra: Routes = {}): Routes => ({
 });
 
 describe("Profil (variante A3)", () => {
-  it("montre le Compte Discord avec son badge de rôle, puis le cost et les customs avant la SoloQ", async () => {
+  it("ne montre que la vue privée : compte Discord, Joueur lié et résumé, sans ce que le profil public porte déjà", async () => {
     mockApi(routes());
     renderApp("/compte");
 
     expect(await screen.findByRole("heading", { name: /^Sam\s*Admin$/ })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Joueur lié" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Ce que les autres voient" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Mon cost" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Mes customs" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Dernières games" })).not.toBeInTheDocument();
+  });
 
-    const cost = await screen.findByRole("region", { name: "Mon cost" });
-    expect(within(cost).getByLabelText("Tier A")).toBeInTheDocument();
-    expect(within(cost).getByText("4,4")).toBeInTheDocument();
-    expect(within(cost).getByLabelText("Évolution du cost : +0,3")).toBeInTheDocument();
+  it("résume en trois chiffres (rang, cost, note moyenne) et mène au profil public", async () => {
+    mockApi(routes());
+    renderApp("/compte");
 
-    const customs = screen.getByRole("region", { name: "Mes customs" });
-    expect(await within(customs).findByText("38")).toBeInTheDocument();
-    expect(within(customs).getByText("58 %")).toBeInTheDocument();
-    expect(within(customs).getByText("71 / 100")).toBeInTheDocument();
-    expect(within(customs).getByText("5 · 2")).toBeInTheDocument();
-    expect(within(customs).getByRole("link", { name: /Voir ma fiche joueur/ })).toHaveAttribute("href", "/joueurs/1");
+    const resume = await screen.findByRole("region", { name: "Ce que les autres voient" });
+    expect(within(resume).getByText("Emerald II · 47 LP")).toBeInTheDocument();
+    expect(within(resume).getByText(/4,4/)).toBeInTheDocument();
+    expect(await within(resume).findByText("71")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Voir mon profil public" })).toHaveAttribute("href", "/joueurs/1");
+  });
 
-    const games = await screen.findByRole("region", { name: "Dernières games" });
-    expect((await within(games).findAllByText("Lee Sin")).length).toBeGreaterThan(0);
-    expect(within(games).getByText("86/100")).toBeInTheDocument();
+  it("donne les accès rapides Administration et Administrateurs à un Administrateur", async () => {
+    mockApi(routes());
+    renderApp("/compte");
 
-    const ordre = [cost, customs, screen.getByRole("region", { name: "Joueur lié" })];
-    for (let i = 1; i < ordre.length; i++) {
-      expect(ordre[i - 1]!.compareDocumentPosition(ordre[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    }
+    const acces = await screen.findByRole("region", { name: "Accès rapides" });
+    expect(within(acces).getByRole("link", { name: /Administration/ })).toHaveAttribute("href", "/administration");
+    expect(within(acces).getByRole("link", { name: /Administrateurs/ })).toHaveAttribute(
+      "href",
+      "/administration?onglet=administrateurs",
+    );
+  });
+
+  it("donne aussi les accès rapides à un Superadministrateur, mais pas à un Utilisateur", async () => {
+    mockApi(routes({ "GET /auth/me": user({ role: "Superadministrateur", isAdmin: true }) }));
+    const { unmount } = renderApp("/compte");
+    expect(await screen.findByRole("region", { name: "Accès rapides" })).toBeInTheDocument();
+    unmount();
+
+    mockApi(routes({ "GET /auth/me": user() }));
+    renderApp("/compte");
+    await screen.findByRole("region", { name: "Joueur lié" });
+    expect(screen.queryByRole("region", { name: "Accès rapides" })).not.toBeInTheDocument();
   });
 
   it("affiche « Superadmin » pour un Superadministrateur et aucun badge pour un utilisateur", async () => {
@@ -180,13 +199,12 @@ describe("Profil (variante A3)", () => {
     expect(fetchMock.mock.calls.some(([r]) => new URL((r as Request).url).pathname.includes("/discord/refresh"))).toBe(false);
   });
 
-  it("montre le Joueur lié avec la SoloQ, le rôle principal et le peak avec sa saison", async () => {
+  it("montre le Joueur lié avec le rôle principal et le peak avec sa saison", async () => {
     mockApi(routes());
     renderApp("/compte");
 
     const joueur = await screen.findByRole("region", { name: "Joueur lié" });
     expect(within(joueur).getByText("Alice#EUW")).toBeInTheDocument();
-    expect(within(joueur).getByText("Emerald II · 47 LP")).toBeInTheDocument();
     expect(within(joueur).getByText("Jungle")).toBeInTheDocument();
     expect(within(joueur).getByText("Diamond IV · 10 LP")).toBeInTheDocument();
     expect(within(joueur).getByText("S25")).toBeInTheDocument();
@@ -223,20 +241,6 @@ describe("Profil (variante A3)", () => {
     renderApp("/compte");
 
     expect(await screen.findByText(/Le lien n'est pas vérifié/)).toBeInTheDocument();
-  });
-
-  it("affiche les titres Roi/Reine et DOFD des games où le joueur les a remportés", async () => {
-    mockApi(routes());
-    renderApp("/compte");
-
-    const games = await screen.findByRole("region", { name: "Dernières games" });
-    const lignes = await within(games).findAllByRole("link");
-    expect(within(lignes[0]!).getByText("Roi/Reine")).toBeInTheDocument();
-    expect(within(lignes[0]!).queryByText("DOFD")).not.toBeInTheDocument();
-    expect(within(lignes[1]!).getByText("DOFD")).toBeInTheDocument();
-    expect(within(lignes[1]!).queryByText("Roi/Reine")).not.toBeInTheDocument();
-    expect(within(lignes[2]!).queryByText("DOFD")).not.toBeInTheDocument();
-    expect(within(lignes[2]!).queryByText("Roi/Reine")).not.toBeInTheDocument();
   });
 
   it("efface le peak après confirmation", async () => {
@@ -305,14 +309,14 @@ describe("Profil (variante A3)", () => {
     );
     renderApp("/compte");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Délier" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Me délier" }));
     const dialogue = await screen.findByRole("dialog");
     expect(dialogue).toHaveTextContent("Le joueur et ses stats restent");
     await userEvent.click(within(dialogue).getByRole("button", { name: "Délier" }));
 
     expect(await screen.findByText("Aucun joueur n'est lié à ton compte Discord.")).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Chercher un joueur" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Mon cost" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Ce que les autres voient" })).not.toBeInTheDocument();
   });
 
   it("change de joueur depuis le formulaire de liaison", async () => {
@@ -346,10 +350,10 @@ describe("Profil (variante A3)", () => {
     );
     renderApp("/compte");
 
-    const customs = await screen.findByRole("region", { name: "Mes customs" });
-    expect((await within(customs).findAllByText("–")).length).toBeGreaterThanOrEqual(4);
+    const resume = await screen.findByRole("region", { name: "Ce que les autres voient" });
+    expect((await within(resume).findAllByText("–")).length).toBeGreaterThanOrEqual(2);
     const joueur = screen.getByRole("region", { name: "Joueur lié" });
-    expect(within(joueur).getAllByText("–").length).toBeGreaterThanOrEqual(3);
+    expect(within(joueur).getAllByText("–").length).toBeGreaterThanOrEqual(2);
   });
 
   it("propose le thème et la déconnexion dans les préférences", async () => {
