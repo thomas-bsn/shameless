@@ -82,7 +82,7 @@ describe("Historique", () => {
   });
 
   it("range chaque équipe Top, Jungle, Mid, ADC, Support d'après le rôle joué, avec son icône", async () => {
-    const positions = ["Top", "Jungle", null, "Mid", "Support"];
+    const positions = ["Top", "Jungle", null, "Mid", "Support"] as const;
     const desordre = team(1, "Charles", "Fares", "Qao", "Thomas", "Zoubir").map((p, i) => ({
       ...p,
       stats: positions[i] ? { ...STATS_VIDES, position: positions[i] } : null,
