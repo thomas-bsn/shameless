@@ -82,16 +82,19 @@ internal sealed record PartieDuJoueur(
     int? DureeSecondes,
     int? KillsDeLEquipe,
     Role? Role,
-    NoteDePerformance? Performance)
+    NoteDePerformance? Performance,
+    int? Place = null,
+    BadgeDeGame? Badge = null)
 {
     /// <summary>La participation du Joueur à la Game, null s'il n'y a pas joué.</summary>
     public static PartieDuJoueur? De(CustomGame game, int playerId)
     {
         if (game.Participants.FirstOrDefault(p => p.PlayerId == playerId) is not { } participant) return null;
 
-        var stats = ValeursEffectives.Stats(participant);
-        var duree = NotesDeLaGame.DureeDe(game);
-        var killsDeLEquipe = NotesDeLaGame.KillsDeLEquipe(game, participant.Side);
+        // Une seule lecture de la game : sa note, sa place et son badge viennent d'elle.
+        var (lectures, toutesLesStats, totaux, duree) = LectureDeLaGame.Lire(game);
+        var stats = toutesLesStats[playerId];
+        var lecture = lectures[playerId];
 
         // Rôle joué : la position de la partie, sinon le rôle de l'Autorole ; le rôle principal SoloQ
         // n'est qu'un repli de la note, pas un rôle réellement joué.
@@ -103,9 +106,11 @@ internal sealed record PartieDuJoueur(
             participant.HasWon,
             stats,
             duree is > 0 ? duree : null,
-            killsDeLEquipe,
+            totaux[participant.Side].Kills,
             role,
-            NotesDeLaGame.Noter(game, participant, stats, killsDeLEquipe, duree));
+            lecture.Note,
+            lecture.Place,
+            lecture.Badge);
     }
 
     /// <summary>Les minutes jouées, null sans durée connue.</summary>
@@ -124,5 +129,7 @@ internal sealed record PartieDuJoueur(
         Stats,
         Performance,
         Mvp: votes is { Statut: FenetreDeVote.Clos } && votes.Mvp.Gagnants.Contains(Participant.PlayerId),
-        Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId));
+        Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId),
+        Place: Place,
+        Badge: Badge);
 }

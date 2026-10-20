@@ -1,0 +1,16 @@
+{
+  "name": "shameless-riot-collecte",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Collecte des games de SoloQ d'un joueur via match-v5 (Node sans dépendance d'exécution).",
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3"
+  }
+}

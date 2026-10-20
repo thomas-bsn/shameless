@@ -113,11 +113,49 @@ public static class ConstructeurRapport
                     return new ResultatRapport.Ignore("stats absentes");
 
                 var puuid = Texte(joueur, "puuid");
-                joueurs.Add(new JoueurDuRapport(string.IsNullOrEmpty(puuid) ? null : puuid, side, championId, victoire, stats.Clone()));
+                joueurs.Add(new JoueurDuRapport(string.IsNullOrEmpty(puuid) ? null : puuid, side, championId, victoire, StatsEnrichies(joueur, stats)));
             }
         }
 
         return new ResultatRapport.Construit(new RapportDeGame($"{platformId}_{id}", Donnees(eog, historique, platformId), joueurs));
+    }
+
+    /// <summary>Les stats du client, plus ce que le client met à côté d'elles : rôle joué, objets, sorts (ADR 0021). Rien n'est inventé : une absence reste une absence.</summary>
+    private static JsonElement StatsEnrichies(JsonElement joueur, JsonElement stats)
+    {
+        var enrichies = JsonNode.Parse(stats.GetRawText())!.AsObject();
+        // Le rôle des stats prime ; le rôle détecté ne comble qu'une clé absente ou vide.
+        if (enrichies["teamPosition"] is not JsonValue { } position || position.GetValueKind() != JsonValueKind.String
+            || string.IsNullOrEmpty(position.GetValue<string>()))
+            CopierSous(joueur, enrichies, "detectedTeamPosition", "teamPosition");
+        CopierSous(joueur, enrichies, "items", "items");
+        CopierSous(joueur, enrichies, "spell1Id", "spell1Id");
+        CopierSous(joueur, enrichies, "spell2Id", "spell2Id");
+        return JsonSerializer.SerializeToElement(enrichies);
+    }
+
+    private static void CopierSous(JsonElement source, JsonObject cible, string cle, string nom)
+    {
+        if (source.TryGetProperty(cle, out var valeur) && valeur.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
+            cible[nom] = JsonNode.Parse(valeur.GetRawText());
+    }
+
+    private static readonly string[] Objectifs =
+        ["dragonKills", "baronKills", "riftHeraldKills", "hordeKills", "towerKills", "inhibitorKills", "firstBlood", "firstTower", "firstInhibitor"];
+
+    /// <summary>Objectifs de chaque équipe, lus dans l'historique : liste blanche, un objet par teamId.</summary>
+    private static JsonArray? ObjectifsDesEquipes(JsonElement historique)
+    {
+        if (!historique.TryGetProperty("teams", out var equipes) || equipes.ValueKind != JsonValueKind.Array) return null;
+        var resultat = new JsonArray();
+        foreach (var equipe in equipes.EnumerateArray())
+        {
+            if (equipe.ValueKind != JsonValueKind.Object || !equipe.TryGetProperty("teamId", out var teamId) || !teamId.TryGetInt32(out _)) continue;
+            var objet = new JsonObject();
+            Copier(equipe, objet, ["teamId", .. Objectifs]);
+            resultat.Add(objet);
+        }
+        return resultat.Count == 0 ? null : resultat;
     }
 
     /// <summary>Liste blanche : jamais de copie du bloc (jetons JWT, mot de passe de chat et XP n'ont rien à faire dans le Rapport).</summary>
@@ -127,6 +165,8 @@ public static class ConstructeurRapport
         Copier(eog, donnees, "gameId", "gameLength", "gameMode", "gameType", "queueType", "endOfGameTimestamp");
         Copier(historique, donnees, "gameVersion", "mapId", "queueId");
         donnees["platformId"] = platformId;
+        var equipes = ObjectifsDesEquipes(historique);
+        if (equipes is not null) donnees["teams"] = equipes;
         return donnees;
     }
 

@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import type { Schemas } from "@/api/client";
 import { mockApi, problem } from "@/test/api";
-import { user } from "@/test/fixtures";
+import { ORIGINE_VIDE, STATS_VIDES, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const participant = (
@@ -19,7 +19,8 @@ const participant = (
   championId: null,
   stats: null,
   performance: null,
-  champsCorriges: [],
+  champsCorriges: [], details: null, place: null, badge: null,
+  ...ORIGINE_VIDE,
   ...overrides,
 });
 
@@ -29,6 +30,7 @@ const stats = (
   assists: number,
   overrides: Partial<Schemas["StatsDuParticipant"]> = {},
 ): Schemas["StatsDuParticipant"] => ({
+  ...STATS_VIDES,
   kills,
   deaths,
   assists,
@@ -55,6 +57,7 @@ const note = (value: number): Schemas["NoteDePerformance"] => ({
   role: "Top",
   sourceDuRole: "Partie",
   composantes: [],
+  noteOrigine: null,
 });
 
 const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["GameRecapResponse"] => ({
@@ -73,7 +76,7 @@ const recap = (overrides: Partial<Schemas["GameRecapResponse"]> = {}): Schemas["
   teamBWins: 1,
   seriesOutcome: "EnCours",
   riotMatchId: "EUW1_1",
-  match: { durationSeconds: 1834, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null },
+  match: { durationSeconds: 1834, gameMode: "CLASSIC", gameType: "CUSTOM_GAME", gameVersion: null }, teamAObjectifs: null, teamBObjectifs: null,
   teamA: [
     participant(1, "Alice", { championId: "Ahri", stats: stats(7, 2, 9), performance: note(86) }),
     participant(3, "Chloé", { championId: "Jinx", stats: stats(1, 5, 3, { goldEarned: null }), performance: note(40) }),
@@ -117,7 +120,7 @@ describe("Page d'une Game", () => {
     expect(screen.getByText(/Game 2 · Série BO3/)).toBeInTheDocument();
     expect(screen.getByText("Équipe A 1 – 1 Équipe B")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Voir la Série" })).toHaveAttribute("href", "/series/5");
-    expect(screen.getByRole("tab", { name: "Résumé" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Général" })).toBeInTheDocument();
   });
 
   it("affiche les joueurs des deux équipes dans deux tableaux avec leurs stats et leur note sur 100", async () => {

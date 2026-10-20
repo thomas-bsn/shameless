@@ -639,6 +639,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CatalogueDeJeu"];
+                        "application/json": components["schemas"]["CatalogueDeJeu"];
+                        "text/json": components["schemas"]["CatalogueDeJeu"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Erreur */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/champions": {
         parameters: {
             query?: never;
@@ -4333,7 +4388,13 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    regroupement?: components["schemas"]["Regroupement"];
+                    role?: components["schemas"]["Role"];
+                    serieId?: number;
+                    champion?: string;
+                    resultat?: components["schemas"]["ResultatFiltre"];
+                };
                 header?: never;
                 path: {
                     playerId: number;
@@ -6533,6 +6594,13 @@ export interface components {
             superadministrateurs: string[];
             administrateurs: string[];
         };
+        ArbreDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+            runes: components["schemas"]["RuneDuCatalogue"][];
+        };
         /** @enum {unknown} */
         ArretSerie: "Annulee" | "Interrompue";
         AuthUserResponse: {
@@ -6550,6 +6618,8 @@ export interface components {
         };
         /** @enum {unknown} */
         AutoroleVariante: "HorsRole" | "Aleatoire";
+        /** @enum {unknown} */
+        BadgeDeGame: "MeilleurePerf" | "Ace" | null;
         BulletinDuVotant: {
             /** Format: int32 */
             gameId: number;
@@ -6571,8 +6641,23 @@ export interface components {
             prenom: string;
             discordId: string;
         };
+        CatalogueDeJeu: {
+            version: string;
+            objets: components["schemas"]["ObjetDuCatalogue"][];
+            sorts: components["schemas"]["SortDuCatalogue"][];
+            arbres: components["schemas"]["ArbreDuCatalogue"][];
+        };
         /** @enum {unknown} */
         CauseEchecRiot: "CleRefusee" | "LimiteAtteinte" | "Panne" | "Introuvable" | "Injoignable" | "PuuidPerime" | "Inattendue" | null;
+        ChampionDuResume: {
+            championId: string;
+            /** Format: int32 */
+            games: number;
+            /** Format: double */
+            winrate: number;
+            /** Format: double */
+            kda: null | number;
+        };
         ChampionJoueResponse: {
             /** Format: int32 */
             playerId: number;
@@ -6652,6 +6737,19 @@ export interface components {
             seriesId: number;
             code: string;
         };
+        CoequipierDeLaFiche: {
+            /** Format: int32 */
+            playerId: number;
+            prenom: string;
+            /** Format: int32 */
+            parties: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: number;
+        };
         CompanionConnecteResponse: {
             /** Format: int32 */
             seriesId: number;
@@ -6698,6 +6796,92 @@ export interface components {
             visionScore: null | number;
             /** Format: int32 */
             note: null | number;
+            /** Format: int32 */
+            champLevel: null | number;
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            /** Format: int32 */
+            largestKillingSpree: null | number;
+            /** Format: int32 */
+            killingSprees: null | number;
+            /** Format: int32 */
+            doubleKills: null | number;
+            /** Format: int32 */
+            tripleKills: null | number;
+            /** Format: int32 */
+            quadraKills: null | number;
+            /** Format: int32 */
+            pentaKills: null | number;
+            /** Format: int32 */
+            minionsKilled: null | number;
+            /** Format: int32 */
+            neutralMinionsKilled: null | number;
+            /** Format: int32 */
+            goldSpent: null | number;
+            /** Format: int32 */
+            physicalDamageToChampions: null | number;
+            /** Format: int32 */
+            magicDamageToChampions: null | number;
+            /** Format: int32 */
+            trueDamageToChampions: null | number;
+            /** Format: int32 */
+            damageTaken: null | number;
+            /** Format: int32 */
+            totalHeal: null | number;
+            /** Format: int32 */
+            damageShielded: null | number;
+            /** Format: int32 */
+            timeCcingOthers: null | number;
+            /** Format: int32 */
+            wardsPlaced: null | number;
+            /** Format: int32 */
+            wardsKilled: null | number;
+            /** Format: int32 */
+            controlWardsBought: null | number;
+            /** Format: int32 */
+            damageToObjectives: null | number;
+            /** Format: int32 */
+            turretKills: null | number;
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            /** Format: int32 */
+            roleBoundItem: null | number;
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            /** Format: int32 */
+            item0: null | number;
+            /** Format: int32 */
+            item1: null | number;
+            /** Format: int32 */
+            item2: null | number;
+            /** Format: int32 */
+            item3: null | number;
+            /** Format: int32 */
+            item4: null | number;
+            /** Format: int32 */
+            item5: null | number;
+            /** Format: int32 */
+            item6: null | number;
+            /** Format: int32 */
+            perk0: null | number;
+            /** Format: int32 */
+            perk1: null | number;
+            /** Format: int32 */
+            perk2: null | number;
+            /** Format: int32 */
+            perk3: null | number;
+            /** Format: int32 */
+            perk4: null | number;
+            /** Format: int32 */
+            perk5: null | number;
         };
         CostMensuelHistorique: {
             /** Format: date */
@@ -6730,7 +6914,7 @@ export interface components {
             seriesId: number;
         };
         /** @enum {unknown} */
-        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
+        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute" | "OrParMinute" | "PartDesKills" | "PartDesDegats" | "PartDeLOr" | "Victoire";
         DefinirPretRequest: {
             pret: boolean;
         };
@@ -6742,6 +6926,37 @@ export interface components {
             designation: components["schemas"]["DesignationCapitaine"];
             /** Format: int32 */
             playerId: null | number;
+        };
+        DetailsDuJoueur: {
+            role: null | components["schemas"]["Role"];
+            sourceDuRole: components["schemas"]["SourceDuRole"];
+            items: null | (null | number)[];
+            objetDeRole: null | components["schemas"]["ObjetDeRole"];
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            perks: null | (null | number)[];
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            /** Format: double */
+            csParMinute: null | number;
+            /** Format: double */
+            orParMinute: null | number;
+            /** Format: double */
+            degatsParMinute: null | number;
+            /** Format: double */
+            visionParMinute: null | number;
+            /** Format: double */
+            partDesDegats: null | number;
+            /** Format: double */
+            partDeLOr: null | number;
+            /** Format: double */
+            partDesKills: null | number;
+            sortsLances: null | components["schemas"]["SortsLances"];
+            pings: null | components["schemas"]["PingsDuJoueur"];
         };
         DonneesDuMatch: {
             /** Format: int32 */
@@ -6821,6 +7036,8 @@ export interface components {
             /** Format: date-time */
             termineeLe: null | string;
         };
+        /** @enum {unknown} */
+        EtatDeQuete: "EnCours" | "Terminee" | null;
         FicheJoueur: {
             /** Format: int32 */
             playerId: number;
@@ -6837,6 +7054,9 @@ export interface components {
             roles: components["schemas"]["StatsParRole"][];
             games: components["schemas"]["GameDeLaFiche"][];
             titres: components["schemas"]["TitresDuJoueur"];
+            joueAvec: components["schemas"]["CoequipierDeLaFiche"][];
+            resume: components["schemas"]["ResumeDesDernieresGames"];
+            liste: components["schemas"]["GroupeDeGames"][];
         };
         FileResult: {
             contentType: null | string;
@@ -6877,6 +7097,9 @@ export interface components {
             mvp: boolean;
             /** @default false */
             dofd: boolean;
+            /** Format: int32 */
+            place: null | number;
+            badge: null | components["schemas"]["BadgeDeGame"];
         };
         GameDeLaListeDeClips: {
             /** Format: int32 */
@@ -6930,6 +7153,12 @@ export interface components {
             performance: null | components["schemas"]["NoteDePerformance"];
             champsCorriges: string[];
             avatarUrl: null | string;
+            statsOrigine: null | components["schemas"]["StatsDuParticipant"];
+            championOrigine: null | string;
+            details: null | components["schemas"]["DetailsDuJoueur"];
+            /** Format: int32 */
+            place: null | number;
+            badge: null | components["schemas"]["BadgeDeGame"];
         };
         GameHistoryResponse: {
             /** Format: int32 */
@@ -6989,8 +7218,16 @@ export interface components {
             seriesOutcome: null | components["schemas"]["SeriesOutcome"];
             riotMatchId: null | string;
             match: null | components["schemas"]["DonneesDuMatch"];
+            teamAObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
+            teamBObjectifs: null | components["schemas"]["ObjectifsDEquipe"];
             teamA: components["schemas"]["GameHistoryParticipantDto"][];
             teamB: components["schemas"]["GameHistoryParticipantDto"][];
+        };
+        GroupeDeGames: {
+            /** Format: int32 */
+            soireeId: null | number;
+            jour: null | string;
+            games: components["schemas"]["GameDeLaFiche"][];
         };
         HallDeLaHonte: {
             joueurs: components["schemas"]["LigneHallDeLaHonte"][];
@@ -7135,6 +7372,36 @@ export interface components {
             role: null | components["schemas"]["Role"];
             sourceDuRole: components["schemas"]["SourceDuRole"];
             composantes: components["schemas"]["ComposanteDeNote"][];
+            /** Format: int32 */
+            noteOrigine: null | number;
+        };
+        ObjectifsDEquipe: {
+            /** Format: int32 */
+            dragonKills: null | number;
+            /** Format: int32 */
+            baronKills: null | number;
+            /** Format: int32 */
+            riftHeraldKills: null | number;
+            /** Format: int32 */
+            hordeKills: null | number;
+            /** Format: int32 */
+            towerKills: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            firstBlood: null | boolean;
+            firstTower: null | boolean;
+            firstInhibitor: null | boolean;
+        };
+        ObjetDeRole: {
+            /** Format: int32 */
+            id: number;
+            etat: null | components["schemas"]["EtatDeQuete"];
+        };
+        ObjetDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
         };
         OpenSoireeResponse: {
             soiree: null | components["schemas"]["SoireeResponse"];
@@ -7203,6 +7470,36 @@ export interface components {
             equipe: string;
             /** Format: int32 */
             playerId: number;
+        };
+        PingsDuJoueur: {
+            /** Format: int32 */
+            allIn: null | number;
+            /** Format: int32 */
+            assistMe: null | number;
+            /** Format: int32 */
+            basic: null | number;
+            /** Format: int32 */
+            command: null | number;
+            /** Format: int32 */
+            danger: null | number;
+            /** Format: int32 */
+            enemyMissing: null | number;
+            /** Format: int32 */
+            enemyVision: null | number;
+            /** Format: int32 */
+            getBack: null | number;
+            /** Format: int32 */
+            hold: null | number;
+            /** Format: int32 */
+            needVision: null | number;
+            /** Format: int32 */
+            onMyWay: null | number;
+            /** Format: int32 */
+            push: null | number;
+            /** Format: int32 */
+            retreat: null | number;
+            /** Format: int32 */
+            visionCleared: null | number;
         };
         PlayerCostHistoryResponse: {
             /** Format: int32 */
@@ -7385,6 +7682,8 @@ export interface components {
             /** Format: int32 */
             gameId: number;
         };
+        /** @enum {unknown} */
+        Regroupement: "Plat" | "Soiree" | "Jour";
         RematchRequest: {
             /** Format: int32 */
             format: number;
@@ -7430,6 +7729,8 @@ export interface components {
             gagnants: number[];
             decompte: components["schemas"]["VoixDuJoueur"][];
         };
+        /** @enum {unknown} */
+        ResultatFiltre: "Victoire" | "Defaite" | null;
         ResultatsDesVotes: {
             /** Format: int32 */
             gameId: number;
@@ -7442,6 +7743,29 @@ export interface components {
             votants: number;
             mvp: components["schemas"]["ResultatDuTitre"];
             dofd: components["schemas"]["ResultatDuTitre"];
+        };
+        ResumeDesDernieresGames: {
+            /** Format: int32 */
+            games: number;
+            /** Format: int32 */
+            victoires: number;
+            /** Format: int32 */
+            defaites: number;
+            /** Format: double */
+            winrate: null | number;
+            topChampions: components["schemas"]["ChampionDuResume"][];
+            /** Format: double */
+            kda: null | number;
+            /** Format: double */
+            noteMoyenne: null | number;
+            /** Format: int32 */
+            meilleuresPerfs: number;
+            /** Format: int32 */
+            aces: number;
+            /** Format: int32 */
+            mvp: number;
+            /** Format: int32 */
+            dofd: number;
         };
         RiotAccountPreview: {
             riotId: string;
@@ -7457,6 +7781,12 @@ export interface components {
         Role: "Top" | "Jungle" | "Mid" | "Adc" | "Support" | null;
         /** @enum {unknown} */
         RouletteVariante: "Aleatoire" | "Equilibree" | null;
+        RuneDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+        };
         SelectPlayersRequest: {
             playerIds: number[];
         };
@@ -7556,6 +7886,26 @@ export interface components {
         };
         /** @enum {unknown} */
         SoireeStatus: "Open" | "Closed";
+        SortDuCatalogue: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            iconUrl: string;
+        };
+        SortsLances: {
+            /** Format: int32 */
+            q: null | number;
+            /** Format: int32 */
+            w: null | number;
+            /** Format: int32 */
+            e: null | number;
+            /** Format: int32 */
+            r: null | number;
+            /** Format: int32 */
+            d: null | number;
+            /** Format: int32 */
+            f: null | number;
+        };
         /** @enum {unknown} */
         SourceDuCostDeDepart: "MoisPrecedent" | "RangSoloQ" | "FixeParAdmin";
         /** @enum {unknown} */
@@ -7631,6 +7981,48 @@ export interface components {
             /** Format: int32 */
             champLevel: null | number;
             position: null | components["schemas"]["Role"];
+            /** Format: int32 */
+            spell1Id: null | number;
+            /** Format: int32 */
+            spell2Id: null | number;
+            /** Format: int32 */
+            largestKillingSpree: null | number;
+            /** Format: int32 */
+            killingSprees: null | number;
+            /** Format: int32 */
+            doubleKills: null | number;
+            /** Format: int32 */
+            tripleKills: null | number;
+            /** Format: int32 */
+            quadraKills: null | number;
+            /** Format: int32 */
+            pentaKills: null | number;
+            /** Format: int32 */
+            goldSpent: null | number;
+            /** Format: int32 */
+            physicalDamageToChampions: null | number;
+            /** Format: int32 */
+            magicDamageToChampions: null | number;
+            /** Format: int32 */
+            trueDamageToChampions: null | number;
+            /** Format: int32 */
+            totalHeal: null | number;
+            /** Format: int32 */
+            damageShielded: null | number;
+            /** Format: int32 */
+            timeCcingOthers: null | number;
+            /** Format: int32 */
+            inhibitorKills: null | number;
+            /** Format: int32 */
+            roleBoundItem: null | number;
+            /** Format: int32 */
+            perkPrimaryStyle: null | number;
+            /** Format: int32 */
+            perkSubStyle: null | number;
+            items: null | (null | number)[];
+            perks: null | (null | number)[];
+            sortsLances: null | components["schemas"]["SortsLances"];
+            pings: null | components["schemas"]["PingsDuJoueur"];
         };
         StatsParChampion: {
             championId: string;

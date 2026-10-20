@@ -1,8 +1,8 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Schemas } from "@/api/client";
 import { mockApi } from "@/test/api";
-import { user } from "@/test/fixtures";
+import { ORIGINE_VIDE, user } from "@/test/fixtures";
 import { renderApp } from "@/test/render";
 
 const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryParticipantDto"][] =>
@@ -17,7 +17,8 @@ const team = (premierId: number, ...prenoms: string[]): Schemas["GameHistoryPart
     championId: null,
     stats: null,
     performance: null,
-    champsCorriges: [],
+    champsCorriges: [], details: null, place: null, badge: null,
+    ...ORIGINE_VIDE,
   }));
 
 const game = (id: number, winner: "A" | "B" | null, teamASide: "blue" | "red"): Schemas["GameHistoryResponse"] => ({
@@ -78,7 +79,36 @@ describe("Historique", () => {
     expect(within(games[1]!).getByText("Équipe B gagne")).toBeInTheDocument();
     expect(within(games[2]!).getByText("Équipe A gagne")).toBeInTheDocument();
     expect(within(games[1]!).getByRole("group", { name: "Équipe A · Red side" })).toHaveTextContent("Alice");
-    expect(within(games[1]!).getByRole("link", { name: "Game 2" })).toHaveAttribute("href", "/games/12");
+    expect(within(games[1]!).getByRole("link", { name: /Game 2/ })).toHaveAttribute("href", "/games/12");
+  });
+
+  it("ouvre la game d'un clic n'importe où dans son bloc, et le dit au repos", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    const series = await screen.findByRole("article", { name: "Série BO3" });
+    const bloc = within(series).getAllByRole("listitem")[1]!;
+    const lien = within(bloc).getByRole("link", { name: /Game 2/ });
+    expect(within(bloc).getAllByRole("link")).toHaveLength(1);
+    expect(lien).toHaveTextContent("Voir la game →");
+    expect(lien).toHaveTextContent("Scoreboard, stats, votes, pronostics et clips ›");
+    expect(lien).toHaveTextContent("Équipe B gagne");
+    expect(lien).toHaveTextContent("Alice");
+
+    await userEvent.click(within(lien).getByText("Dan"));
+
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Octobre 2026" })).not.toBeInTheDocument());
+  });
+
+  it("rend le bloc de game atteignable au clavier", async () => {
+    mockApi({ "GET /auth/me": user(), "GET /games/history/2026/10": october });
+
+    renderApp("/historique?annee=2026&mois=10");
+
+    const lien = await screen.findAllByRole("link", { name: /Game 1/ });
+    lien[0]!.focus();
+    expect(lien[0]).toHaveFocus();
   });
 
   it("montre le MVP et le DOFD élus de chaque game", async () => {
@@ -175,7 +205,7 @@ describe("Historique", () => {
     await userEvent.click(screen.getByRole("button", { name: "3 octobre, 1 game" }));
 
     const serie = await screen.findByRole("article", { name: "Série BO3" });
-    expect(within(serie).getByRole("link", { name: "Game 1" })).toHaveAttribute("href", "/games/11");
+    expect(within(serie).getByRole("link", { name: /Game 1/ })).toHaveAttribute("href", "/games/11");
     expect(screen.queryByRole("article", { name: "Games hors série" })).not.toBeInTheDocument();
   });
 });

@@ -34,6 +34,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeChampionCatalog Champions { get; } = new();
 
+    public FakeCatalogueDeJeu CatalogueDeJeu { get; } = new();
+
     /// <summary>Le bot Discord, simulé à la frontière HTTP (candidats vocaux, webhooks).</summary>
     public FakeBot Bot { get; } = new();
 
@@ -77,6 +79,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Riot.Reset();
         Discord.Reset();
         Champions.Reset();
+        CatalogueDeJeu.Reset();
         Bot.Reset();
         Clock.Reset();
         Random.Reset();
@@ -126,6 +129,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IRandomSource>(Random);
             services.RemoveAll<IChampionCatalog>();
             services.AddSingleton<IChampionCatalog>(Champions);
+            services.RemoveAll<ICatalogueDeJeu>();
+            services.AddSingleton<ICatalogueDeJeu>(CatalogueDeJeu);
             services.AddHttpClient<IBotDiscord, BotDiscordClient>().ConfigurePrimaryHttpMessageHandler(() => Bot);
             services.AddFakeLogging();
         });

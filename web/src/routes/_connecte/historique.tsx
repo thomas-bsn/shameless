@@ -12,6 +12,7 @@ import { outcomeLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 import { dateHeureLabel } from "@/lib/dates";
+import { GameLinkCard } from "@/components/game-link-card";
 import { AvatarJoueur } from "@/components/avatar-joueur";
 
 const currentMonth = (): Month => {
@@ -211,20 +212,23 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
   const winner = gameWinner(game);
 
   return (
-    <li className="overflow-hidden rounded-lg border">
-      <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        <span>
-          <Link to="/games/$gameId" params={{ gameId: String(game.id) }} className="hover:text-foreground">
-            Game {index}
-          </Link>{" "}
-          · #{game.id} · {dateHeureLabel(game.playedAt)}
-        </span>
-        {winner ? (
-          <Badge variant="secondary">Équipe {winner} gagne</Badge>
-        ) : (
-          <Badge variant="outline">En attente</Badge>
-        )}
-      </div>
+    <li>
+      <GameLinkCard
+        gameId={game.id}
+        label={`Game ${index} · #${game.id}`}
+        header={
+          <>
+            Game {index} · #{game.id} · {dateHeureLabel(game.playedAt)}
+          </>
+        }
+        badge={
+          winner ? (
+            <Badge variant="secondary">Équipe {winner} gagne</Badge>
+          ) : (
+            <Badge variant="outline">En attente</Badge>
+          )
+        }
+      >
       <div className="grid grid-cols-2 divide-x">
         <TeamColumn
           team={aOnBlue ? "A" : "B"}
@@ -243,6 +247,7 @@ function GameRow({ game, index }: { game: Schemas["GameHistoryResponse"]; index:
           dofd={game.dofd}
         />
       </div>
+      </GameLinkCard>
     </li>
   );
 }

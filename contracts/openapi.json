@@ -647,6 +647,55 @@
         }
       }
     },
+    "/catalogue": {
+      "get": {
+        "tags": [
+          "Catalogue"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueDeJeu"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erreur",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/champions": {
       "get": {
         "tags": [
@@ -4810,6 +4859,43 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "regroupement",
+            "in": "query",
+            "schema": {
+              "default": "Plat",
+              "$ref": "#/components/schemas/Regroupement"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          {
+            "name": "serieId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "champion",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resultat",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ResultatFiltre"
+            }
           }
         ],
         "responses": {
@@ -7324,6 +7410,33 @@
           }
         }
       },
+      "ArbreDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl",
+          "runes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "runes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuneDuCatalogue"
+            }
+          }
+        }
+      },
       "ArretSerie": {
         "enum": [
           "Annulee",
@@ -7399,6 +7512,13 @@
         "enum": [
           "HorsRole",
           "Aleatoire"
+        ]
+      },
+      "BadgeDeGame": {
+        "enum": [
+          "MeilleurePerf",
+          "Ace",
+          null
         ]
       },
       "BulletinDuVotant": {
@@ -7479,6 +7599,38 @@
           }
         }
       },
+      "CatalogueDeJeu": {
+        "required": [
+          "version",
+          "objets",
+          "sorts",
+          "arbres"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "objets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjetDuCatalogue"
+            }
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortDuCatalogue"
+            }
+          },
+          "arbres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArbreDuCatalogue"
+            }
+          }
+        }
+      },
       "CauseEchecRiot": {
         "enum": [
           "CleRefusee",
@@ -7490,6 +7642,35 @@
           "Inattendue",
           null
         ]
+      },
+      "ChampionDuResume": {
+        "required": [
+          "championId",
+          "games",
+          "winrate",
+          "kda"
+        ],
+        "type": "object",
+        "properties": {
+          "championId": {
+            "type": "string"
+          },
+          "games": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": "number",
+            "format": "double"
+          },
+          "kda": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
       },
       "ChampionJoueResponse": {
         "required": [
@@ -7789,6 +7970,42 @@
           }
         }
       },
+      "CoequipierDeLaFiche": {
+        "required": [
+          "playerId",
+          "prenom",
+          "parties",
+          "victoires",
+          "defaites",
+          "winrate"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "parties": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "CompanionConnecteResponse": {
         "required": [
           "seriesId",
@@ -7919,7 +8136,50 @@
           "goldEarned",
           "damageToChampions",
           "visionScore",
-          "note"
+          "note",
+          "champLevel",
+          "spell1Id",
+          "spell2Id",
+          "largestKillingSpree",
+          "killingSprees",
+          "doubleKills",
+          "tripleKills",
+          "quadraKills",
+          "pentaKills",
+          "minionsKilled",
+          "neutralMinionsKilled",
+          "goldSpent",
+          "physicalDamageToChampions",
+          "magicDamageToChampions",
+          "trueDamageToChampions",
+          "damageTaken",
+          "totalHeal",
+          "damageShielded",
+          "timeCcingOthers",
+          "wardsPlaced",
+          "wardsKilled",
+          "controlWardsBought",
+          "damageToObjectives",
+          "turretKills",
+          "dragonKills",
+          "baronKills",
+          "inhibitorKills",
+          "roleBoundItem",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "item0",
+          "item1",
+          "item2",
+          "item3",
+          "item4",
+          "item5",
+          "item6",
+          "perk0",
+          "perk1",
+          "perk2",
+          "perk3",
+          "perk4",
+          "perk5"
         ],
         "type": "object",
         "properties": {
@@ -7985,6 +8245,307 @@
             "format": "int32"
           },
           "note": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "champLevel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "largestKillingSpree": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "killingSprees": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "doubleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tripleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "quadraKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "pentaKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "minionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "neutralMinionsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "goldSpent": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "physicalDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "magicDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "trueDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageTaken": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "totalHeal": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageShielded": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "timeCcingOthers": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsPlaced": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "wardsKilled": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "controlWardsBought": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageToObjectives": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "turretKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dragonKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "baronKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "roleBoundItem": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item0": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item1": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item2": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item3": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item4": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item5": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "item6": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk0": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk1": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk2": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk3": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk4": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perk5": {
             "type": [
               "null",
               "integer"
@@ -8103,7 +8664,12 @@
           "CsParMinute",
           "DegatsParMinute",
           "VisionParMinute",
-          "ObjectifsParMinute"
+          "ObjectifsParMinute",
+          "OrParMinute",
+          "PartDesKills",
+          "PartDesDegats",
+          "PartDeLOr",
+          "Victoire"
         ]
       },
       "DefinirPretRequest": {
@@ -8147,6 +8713,177 @@
               "integer"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "DetailsDuJoueur": {
+        "required": [
+          "role",
+          "sourceDuRole",
+          "items",
+          "objetDeRole",
+          "spell1Id",
+          "spell2Id",
+          "perks",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "csParMinute",
+          "orParMinute",
+          "degatsParMinute",
+          "visionParMinute",
+          "partDesDegats",
+          "partDeLOr",
+          "partDesKills",
+          "sortsLances",
+          "pings"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "sourceDuRole": {
+            "$ref": "#/components/schemas/SourceDuRole"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "objetDeRole": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjetDeRole"
+              }
+            ]
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perks": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "csParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "orParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "degatsParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "visionParMinute": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDesDegats": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDeLOr": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "partDesKills": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "sortsLances": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SortsLances"
+              }
+            ]
+          },
+          "pings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PingsDuJoueur"
+              }
+            ]
           }
         }
       },
@@ -8508,6 +9245,13 @@
           }
         }
       },
+      "EtatDeQuete": {
+        "enum": [
+          "EnCours",
+          "Terminee",
+          null
+        ]
+      },
       "FicheJoueur": {
         "required": [
           "playerId",
@@ -8522,7 +9266,10 @@
           "champions",
           "roles",
           "games",
-          "titres"
+          "titres",
+          "joueAvec",
+          "resume",
+          "liste"
         ],
         "type": "object",
         "properties": {
@@ -8599,6 +9346,21 @@
           },
           "titres": {
             "$ref": "#/components/schemas/TitresDuJoueur"
+          },
+          "joueAvec": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoequipierDeLaFiche"
+            }
+          },
+          "resume": {
+            "$ref": "#/components/schemas/ResumeDesDernieresGames"
+          },
+          "liste": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupeDeGames"
+            }
           }
         }
       },
@@ -8697,7 +9459,9 @@
           "stats",
           "performance",
           "mvp",
-          "dofd"
+          "dofd",
+          "place",
+          "badge"
         ],
         "type": "object",
         "properties": {
@@ -8772,6 +9536,23 @@
           "dofd": {
             "type": "boolean",
             "default": false
+          },
+          "place": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "badge": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BadgeDeGame"
+              }
+            ]
           }
         }
       },
@@ -8920,7 +9701,12 @@
           "stats",
           "performance",
           "champsCorriges",
-          "avatarUrl"
+          "avatarUrl",
+          "statsOrigine",
+          "championOrigine",
+          "details",
+          "place",
+          "badge"
         ],
         "type": "object",
         "properties": {
@@ -8990,6 +9776,49 @@
             "type": [
               "null",
               "string"
+            ]
+          },
+          "statsOrigine": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatsDuParticipant"
+              }
+            ]
+          },
+          "championOrigine": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "details": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DetailsDuJoueur"
+              }
+            ]
+          },
+          "place": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "badge": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BadgeDeGame"
+              }
             ]
           }
         }
@@ -9169,6 +9998,8 @@
           "seriesOutcome",
           "riotMatchId",
           "match",
+          "teamAObjectifs",
+          "teamBObjectifs",
           "teamA",
           "teamB"
         ],
@@ -9260,6 +10091,26 @@
               }
             ]
           },
+          "teamAObjectifs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjectifsDEquipe"
+              }
+            ]
+          },
+          "teamBObjectifs": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObjectifsDEquipe"
+              }
+            ]
+          },
           "teamA": {
             "type": "array",
             "items": {
@@ -9270,6 +10121,35 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GameHistoryParticipantDto"
+            }
+          }
+        }
+      },
+      "GroupeDeGames": {
+        "required": [
+          "soireeId",
+          "jour",
+          "games"
+        ],
+        "type": "object",
+        "properties": {
+          "soireeId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "jour": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GameDeLaFiche"
             }
           }
         }
@@ -9809,7 +10689,8 @@
           "note",
           "role",
           "sourceDuRole",
-          "composantes"
+          "composantes",
+          "noteOrigine"
         ],
         "type": "object",
         "properties": {
@@ -9835,6 +10716,132 @@
             "items": {
               "$ref": "#/components/schemas/ComposanteDeNote"
             }
+          },
+          "noteOrigine": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ObjectifsDEquipe": {
+        "required": [
+          "dragonKills",
+          "baronKills",
+          "riftHeraldKills",
+          "hordeKills",
+          "towerKills",
+          "inhibitorKills",
+          "firstBlood",
+          "firstTower",
+          "firstInhibitor"
+        ],
+        "type": "object",
+        "properties": {
+          "dragonKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "baronKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "riftHeraldKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "hordeKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "towerKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "firstBlood": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "firstTower": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "firstInhibitor": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "ObjetDeRole": {
+        "required": [
+          "id",
+          "etat"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "etat": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EtatDeQuete"
+              }
+            ]
+          }
+        }
+      },
+      "ObjetDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
           }
         }
       },
@@ -10106,6 +11113,125 @@
           },
           "playerId": {
             "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PingsDuJoueur": {
+        "required": [
+          "allIn",
+          "assistMe",
+          "basic",
+          "command",
+          "danger",
+          "enemyMissing",
+          "enemyVision",
+          "getBack",
+          "hold",
+          "needVision",
+          "onMyWay",
+          "push",
+          "retreat",
+          "visionCleared"
+        ],
+        "type": "object",
+        "properties": {
+          "allIn": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "assistMe": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "basic": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "command": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "danger": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "enemyMissing": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "enemyVision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "getBack": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "hold": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "needVision": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "onMyWay": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "push": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "retreat": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "visionCleared": {
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         }
@@ -10817,6 +11943,13 @@
           }
         }
       },
+      "Regroupement": {
+        "enum": [
+          "Plat",
+          "Soiree",
+          "Jour"
+        ]
+      },
       "RematchRequest": {
         "required": [
           "format",
@@ -10993,6 +12126,13 @@
           }
         }
       },
+      "ResultatFiltre": {
+        "enum": [
+          "Victoire",
+          "Defaite",
+          null
+        ]
+      },
       "ResultatsDesVotes": {
         "required": [
           "gameId",
@@ -11035,6 +12175,79 @@
           },
           "dofd": {
             "$ref": "#/components/schemas/ResultatDuTitre"
+          }
+        }
+      },
+      "ResumeDesDernieresGames": {
+        "required": [
+          "games",
+          "victoires",
+          "defaites",
+          "winrate",
+          "topChampions",
+          "kda",
+          "noteMoyenne",
+          "meilleuresPerfs",
+          "aces",
+          "mvp",
+          "dofd"
+        ],
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "victoires": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaites": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "winrate": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "topChampions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChampionDuResume"
+            }
+          },
+          "kda": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "noteMoyenne": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "meilleuresPerfs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aces": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mvp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dofd": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -11099,6 +12312,26 @@
           "Equilibree",
           null
         ]
+      },
+      "RuneDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
       },
       "SelectPlayersRequest": {
         "required": [
@@ -11510,6 +12743,81 @@
           "Closed"
         ]
       },
+      "SortDuCatalogue": {
+        "required": [
+          "id",
+          "name",
+          "iconUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "SortsLances": {
+        "required": [
+          "q",
+          "w",
+          "e",
+          "r",
+          "d",
+          "f"
+        ],
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "w": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "e": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "r": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "d": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "f": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "SourceDuCostDeDepart": {
         "enum": [
           "MoisPrecedent",
@@ -11670,7 +12978,30 @@
           "dragonKills",
           "baronKills",
           "champLevel",
-          "position"
+          "position",
+          "spell1Id",
+          "spell2Id",
+          "largestKillingSpree",
+          "killingSprees",
+          "doubleKills",
+          "tripleKills",
+          "quadraKills",
+          "pentaKills",
+          "goldSpent",
+          "physicalDamageToChampions",
+          "magicDamageToChampions",
+          "trueDamageToChampions",
+          "totalHeal",
+          "damageShielded",
+          "timeCcingOthers",
+          "inhibitorKills",
+          "roleBoundItem",
+          "perkPrimaryStyle",
+          "perkSubStyle",
+          "items",
+          "perks",
+          "sortsLances",
+          "pings"
         ],
         "type": "object",
         "properties": {
@@ -11800,6 +13131,185 @@
               },
               {
                 "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "spell1Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "spell2Id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "largestKillingSpree": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "killingSprees": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "doubleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "tripleKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "quadraKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "pentaKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "goldSpent": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "physicalDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "magicDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "trueDamageToChampions": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "totalHeal": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "damageShielded": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "timeCcingOthers": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "inhibitorKills": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "roleBoundItem": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkPrimaryStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "perkSubStyle": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "perks": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": [
+                "null",
+                "integer"
+              ],
+              "format": "int32"
+            }
+          },
+          "sortsLances": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SortsLances"
+              }
+            ]
+          },
+          "pings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PingsDuJoueur"
               }
             ]
           }
@@ -12166,6 +13676,9 @@
     },
     {
       "name": "Bot"
+    },
+    {
+      "name": "Catalogue"
     },
     {
       "name": "Champions"

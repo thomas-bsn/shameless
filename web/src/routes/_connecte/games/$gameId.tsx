@@ -1,7 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { VueEnCibles } from "@/components/game-cibles";
+import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
+import { ObjectifsDesEquipes } from "@/components/game-objectifs-equipes";
+import { OngletRunes } from "@/components/game-runes";
 import { EquipeSansStats, ScoreboardEquipe, sidesOf } from "@/components/game-scoreboard";
-import { OngletReplay, OngletStats } from "@/components/game-stats-onglets";
+import { OngletDetails, OngletReplay } from "@/components/game-stats-onglets";
+import { BoutonModifierLaGame } from "@/components/modifier-game/bouton-modifier-la-game";
 import { GameClips } from "@/components/game-clips";
 import { ErrorAlert, LoadingRows } from "@/components/query-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -37,28 +43,40 @@ function GamePage() {
 
 function Recit({ game }: { game: Recap }) {
   const saisieAMain = estSaisieAMain(game);
+  const [vue, choisirVue] = useVueDeGame();
+  // Général (liste) et Cibles sont deux vues du même résumé : on retient la dernière visitée.
+  const [onglet, setOnglet] = useState<string>(vue === "cibles" ? "cibles" : "general");
+  const changerOnglet = (valeur: string) => {
+    setOnglet(valeur);
+    if (valeur === "general") choisirVue("liste");
+    if (valeur === "cibles") choisirVue("cibles");
+  };
 
   return (
     <>
       <Banniere game={game} />
-      <Tabs defaultValue="resume">
+      <Tabs value={onglet} onValueChange={changerOnglet}>
         <TabsList>
-          <TabsTrigger value="resume">Résumé</TabsTrigger>
-          <TabsTrigger value="degats">Dégâts</TabsTrigger>
-          <TabsTrigger value="objectifs">Objectifs</TabsTrigger>
-          <TabsTrigger value="vision">Vision</TabsTrigger>
+          <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="cibles">Cibles</TabsTrigger>
+          <TabsTrigger value="details">Détails</TabsTrigger>
+          <TabsTrigger value="runes">Runes</TabsTrigger>
           <TabsTrigger value="replay" className="opacity-60">
             Replay
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="resume" className="flex flex-col gap-4">
+        <TabsContent value="general" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <ResumeScoreboard game={game} />}
         </TabsContent>
-        {(["degats", "objectifs", "vision"] as const).map((onglet) => (
-          <TabsContent key={onglet} value={onglet} className="flex flex-col gap-4">
-            {saisieAMain ? <ResumeSansStats game={game} /> : <OngletStats game={game} onglet={onglet} />}
-          </TabsContent>
-        ))}
+        <TabsContent value="cibles" className="flex flex-col gap-4">
+          <VueEnCibles game={game} />
+        </TabsContent>
+        <TabsContent value="details" className="flex flex-col gap-4">
+          {saisieAMain ? <ResumeSansStats game={game} /> : <OngletDetails game={game} />}
+        </TabsContent>
+        <TabsContent value="runes" className="flex flex-col gap-4">
+          {saisieAMain ? <ResumeSansStats game={game} /> : <OngletRunes game={game} />}
+        </TabsContent>
         <TabsContent value="replay">
           <OngletReplay />
         </TabsContent>
@@ -73,6 +91,7 @@ function Recit({ game }: { game: Recap }) {
 }
 
 function Banniere({ game }: { game: Recap }) {
+  const navigate = useNavigate();
   const winner = gameWinner(game);
   const meta =
     game.seriesId == null
@@ -103,6 +122,7 @@ function Banniere({ game }: { game: Recap }) {
             </span>
           )}
           {!winner && <Badge variant="outline">En cours</Badge>}
+          <BoutonModifierLaGame gameId={game.id} onSupprimee={() => void navigate({ to: "/historique" })} />
           {game.seriesId != null && (
             <Link
               to="/series/$seriesId"
@@ -124,6 +144,7 @@ function ResumeScoreboard({ game }: { game: Recap }) {
       {sidesOf(game).map((s) => (
         <ScoreboardEquipe key={s.side} game={game} team={s.team} side={s.side} players={s.players} />
       ))}
+      <ObjectifsDesEquipes game={game} />
     </>
   );
 }

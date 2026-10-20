@@ -61,4 +61,13 @@ internal sealed class ChampsLcu
     public string? Texte(params string[] noms) =>
         noms.Select(nom => Premier([nom], JsonValueKind.String)?.GetString())
             .FirstOrDefault(texte => !string.IsNullOrWhiteSpace(texte));
+
+    /// <summary>Le premier tableau trouvé sous l'un des <paramref name="noms"/> : ses nombres, null pour une case qui n'en est pas un (vide tolérée).</summary>
+    public int?[]? Entiers(params string[] noms)
+    {
+        if (Premier(noms, JsonValueKind.Array) is not { } tableau) return null;
+        return tableau.EnumerateArray()
+            .Select(e => e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out var n) ? (int?)n : null)
+            .ToArray();
+    }
 }

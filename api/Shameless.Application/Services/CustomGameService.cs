@@ -64,9 +64,9 @@ public class CustomGameService
                     WinningTeam: series?.WinningTeam,
                     Games: group.Select(g =>
                     {
-                        var notes = NotesDeLaGame.Calculer(g);
+                        var lectures = LectureDeLaGame.Calculer(g);
                         List<GameHistoryParticipantDto> Equipe(string equipe) => g.ParticipantsOf(equipe)
-                            .Select(p => GameHistoryParticipantDto.From(p, notes[p.PlayerId]))
+                            .Select(p => GameHistoryParticipantDto.From(p, lectures[p.PlayerId]))
                             .ToList();
                         return new GameHistoryResponse(
                             Id: g.Id,

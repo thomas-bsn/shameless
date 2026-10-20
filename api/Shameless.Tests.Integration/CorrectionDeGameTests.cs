@@ -312,13 +312,15 @@ public class CorrectionDeGameTests(ApiFactory factory) : IntegrationTest(factory
         var admin = Factory.CreateAdminClient(); // avant de déplacer l'horloge : la session expirerait
         Factory.Clock.SetUtcNow(Mars);
         var serie = await CreateSerieAsync(client, format: 5);
-        // A1 noté 79 à chaque game, 3 victoires sur 5 : 2 + 0,406 + 0,06 = 2,466 → 2,5.
+        // A1 noté 89 en victoire et 55 en défaite : 3 victoires sur 5, note moyenne 75,4 ;
+        // 2 + 0,7 × 25,4 / 50 + 0,06 = 2,416 → 2,4.
         var games = new List<int>();
         foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
             games.Add(await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante));
-        Assert.Equal(2.5m, (await CostAsync(client, serie.TeamA[0])).GetProperty("cost").GetDecimal());
+        Assert.Equal(2.4m, (await CostAsync(client, serie.TeamA[0])).GetProperty("cost").GetDecimal());
 
-        // 4 victoires sur 5 : 2 + 0,406 + 0,18 = 2,586 → 2,6.
+        // 4 victoires sur 5 : la game corrigée passe de 55 à 89 (la victoire entre dans la note), note moyenne
+        // 82,2 ; 2 + 0,7 × 32,2 / 50 + 0,18 = 2,631 → 2,6.
         await ReadJsonAsync(await CorrigerAsync(admin, games[2], new { winner = "A" }));
 
         var cost = await CostAsync(client, serie.TeamA[0]);
@@ -339,7 +341,7 @@ public class CorrectionDeGameTests(ApiFactory factory) : IntegrationTest(factory
         foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
             games.Add(await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante));
         Factory.Clock.SetUtcNow(Avril);
-        Assert.Equal(2.5m, (await CostAsync(client, serie.TeamA[0])).GetProperty("costDeDepart").GetDecimal());
+        Assert.Equal(2.4m, (await CostAsync(client, serie.TeamA[0])).GetProperty("costDeDepart").GetDecimal());
 
         await ReadJsonAsync(await CorrigerAsync(admin, games[2], new { winner = "A" }));
 
@@ -412,7 +414,7 @@ public class CorrectionDeGameTests(ApiFactory factory) : IntegrationTest(factory
 
     private int _rapports;
 
-    /// <summary>Lance une game et la termine par un rapport sans durée : A1 y est noté 79 (ADR 0011).</summary>
+    /// <summary>Lance une game et la termine par un rapport sans durée : A1 y est noté 89 si son Équipe gagne, 55 sinon (ADR 0011).</summary>
     private async Task<int> JouerUneGameNoteeAsync(HttpClient client, int seriesId, string gagnante)
     {
         var gameId = await PlayGameAsync(client, seriesId, teamASide: "blue");

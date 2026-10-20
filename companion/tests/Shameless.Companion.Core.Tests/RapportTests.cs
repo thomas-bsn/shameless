@@ -51,8 +51,107 @@ public class RapportTests
 
         Assert.Equal(premier["championId"]!.GetValue<int>(), joueur.ChampionId);
         Assert.Equal(premier["puuid"]!.GetValue<string>(), joueur.Puuid);
-        Assert.True(JsonNode.DeepEquals(premier["stats"], JsonNode.Parse(joueur.Stats.GetRawText())));
-        Assert.Equal(183, joueur.Stats.EnumerateObject().Count());
+        // 183 stats du client + teamPosition, items, spell1Id, spell2Id (ADR 0021).
+        Assert.Equal(187, joueur.Stats.EnumerateObject().Count());
+        var sansAjouts = JsonNode.Parse(joueur.Stats.GetRawText())!.AsObject();
+        foreach (var cle in new[] { "teamPosition", "items", "spell1Id", "spell2Id" }) sansAjouts.Remove(cle);
+        Assert.True(JsonNode.DeepEquals(premier["stats"], sansAjouts));
+    }
+
+    [Fact]
+    public void Chaque_joueur_porte_le_role_joue_les_sept_objets_et_les_deux_sorts()
+    {
+        var eog = JsonNode.Parse(Fixtures.Eog())!;
+        var attendus = eog["teams"]!.AsArray().SelectMany(t => t!["players"]!.AsArray()).ToList();
+
+        var rapport = Construit();
+
+        Assert.Equal(10, rapport.Joueurs.Count);
+        for (var i = 0; i < 10; i++)
+        {
+            var stats = JsonNode.Parse(rapport.Joueurs[i].Stats.GetRawText())!;
+            Assert.Equal(attendus[i]!["detectedTeamPosition"]!.GetValue<string>(), stats["teamPosition"]!.GetValue<string>());
+            Assert.Equal(7, stats["items"]!.AsArray().Count);
+            Assert.True(JsonNode.DeepEquals(attendus[i]!["items"], stats["items"]));
+            Assert.Equal(attendus[i]!["spell1Id"]!.GetValue<int>(), stats["spell1Id"]!.GetValue<int>());
+            Assert.Equal(attendus[i]!["spell2Id"]!.GetValue<int>(), stats["spell2Id"]!.GetValue<int>());
+        }
+        // Zed est Mid dans la capture : le rôle vient du client, pas d'une déduction.
+        Assert.Equal("MIDDLE", JsonNode.Parse(rapport.Joueurs[2].Stats.GetRawText())!["teamPosition"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Un_teamPosition_deja_present_dans_les_stats_n_est_pas_remplace_et_un_vide_l_est()
+    {
+        var eog = Modifie(e =>
+        {
+            var joueurs = e["teams"]![0]!["players"]!.AsArray();
+            joueurs[0]!["stats"]!["teamPosition"] = "JUNGLE";
+            joueurs[0]!["detectedTeamPosition"] = "TOP";
+            joueurs[1]!["stats"]!["teamPosition"] = "";
+            joueurs[1]!["detectedTeamPosition"] = "BOTTOM";
+        });
+
+        var joueurs = Construit(eog).Joueurs;
+
+        Assert.Equal("JUNGLE", JsonNode.Parse(joueurs[0].Stats.GetRawText())!["teamPosition"]!.GetValue<string>());
+        Assert.Equal("BOTTOM", JsonNode.Parse(joueurs[1].Stats.GetRawText())!["teamPosition"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Les_emplacements_d_objets_vides_sont_gardes_et_un_joueur_sans_role_ni_objets_reste_rapporte()
+    {
+        var eog = Modifie(e =>
+        {
+            var j = e["teams"]![0]!["players"]![0]!.AsObject();
+            j["items"] = new JsonArray(3068, 0, 0, 0, 0, 0, 3340);
+            j.Remove("detectedTeamPosition");
+            j.Remove("spell2Id");
+            e["teams"]![0]!["players"]![1]!.AsObject().Remove("items");
+        });
+
+        var joueurs = Construit(eog).Joueurs;
+        var premier = JsonNode.Parse(joueurs[0].Stats.GetRawText())!;
+        var second = JsonNode.Parse(joueurs[1].Stats.GetRawText())!;
+
+        Assert.Equal([3068, 0, 0, 0, 0, 0, 3340], premier["items"]!.AsArray().Select(n => n!.GetValue<int>()));
+        Assert.Null(premier["teamPosition"]);
+        Assert.Null(premier["spell2Id"]);
+        Assert.Null(second["items"]);
+    }
+
+    [Fact]
+    public void Les_donnees_portent_les_objectifs_des_deux_equipes_lus_dans_l_historique()
+    {
+        var donnees = JsonNode.Parse(RapportJson.Serialiser(Construit()))!["donnees"]!.AsObject();
+        var equipes = donnees["teams"]!.AsArray();
+
+        Assert.Equal(2, equipes.Count);
+        var bleue = equipes.Single(e => e!["teamId"]!.GetValue<int>() == 100)!;
+        var rouge = equipes.Single(e => e!["teamId"]!.GetValue<int>() == 200)!;
+        Assert.Equal(1, bleue["dragonKills"]!.GetValue<int>());
+        Assert.Equal(0, bleue["baronKills"]!.GetValue<int>());
+        Assert.Equal(1, bleue["riftHeraldKills"]!.GetValue<int>());
+        Assert.Equal(3, bleue["hordeKills"]!.GetValue<int>());
+        Assert.Equal(11, bleue["towerKills"]!.GetValue<int>());
+        Assert.Equal(2, bleue["inhibitorKills"]!.GetValue<int>());
+        Assert.False(bleue["firstBlood"]!.GetValue<bool>());
+        Assert.True(bleue["firstTower"]!.GetValue<bool>());
+        Assert.True(bleue["firstInhibitor"]!.GetValue<bool>());
+        Assert.Equal(2, rouge["towerKills"]!.GetValue<int>());
+        Assert.True(rouge["firstBlood"]!.GetValue<bool>());
+        // Liste blanche : rien d'autre que le teamId et les neuf objectifs (pas de bans, pas de win).
+        Assert.Equal(10, bleue.AsObject().Count);
+    }
+
+    [Fact]
+    public void Un_historique_sans_equipes_donne_un_Rapport_sans_objectifs()
+    {
+        var historique = Modifie(h => h.AsObject().Remove("teams"), Fixtures.Historique());
+
+        var donnees = JsonNode.Parse(RapportJson.Serialiser(Construit(historique: historique)))!["donnees"]!.AsObject();
+
+        Assert.False(donnees.ContainsKey("teams"));
     }
 
     [Fact]
@@ -67,8 +166,11 @@ public class RapportTests
         Assert.Equal(11, donnees["mapId"]!.GetValue<int>());
         Assert.Equal(1507, donnees["gameLength"]!.GetValue<int>());
 
-        foreach (var interdit in new[] { "mucJwtDto", "multiUserChatPassword", "multiUserChatId", "experienceEarned", "experienceTotal", "localPlayer", "teams" })
+        foreach (var interdit in new[] { "mucJwtDto", "multiUserChatPassword", "multiUserChatId", "experienceEarned", "experienceTotal", "localPlayer" })
             Assert.False(donnees.ContainsKey(interdit), interdit);
+        // Aucun secret nulle part dans le Rapport, stats et objectifs compris.
+        foreach (var secret in new[] { "mucJwtDto", "multiUserChatId", "experienceEarned", "experienceTotal", "previousXpTotal", "nextLevelXp" })
+            Assert.DoesNotContain(secret, json);
         Assert.DoesNotContain("anon-jeton", json);
         Assert.DoesNotContain("multiUserChatPassword", json);
     }

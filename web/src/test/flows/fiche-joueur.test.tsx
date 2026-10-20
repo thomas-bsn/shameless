@@ -57,6 +57,8 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       performance: { note: 86, role: "Top", sourceDuRole: "Position", composantes: [] } as unknown as Schemas["NoteDePerformance"],
       mvp: false,
       dofd: false,
+      place: null,
+      badge: null,
     },
     {
       gameId: 30,
@@ -71,9 +73,26 @@ const fiche = (overrides: Partial<Fiche> = {}): Fiche => ({
       performance: null,
       mvp: false,
       dofd: false,
+      place: null,
+      badge: null,
     },
   ],
   titres: { mvp: 3, dofd: 1 },
+  joueAvec: [],
+  resume: {
+    games: 0,
+    victoires: 0,
+    defaites: 0,
+    winrate: null,
+    topChampions: [],
+    kda: null,
+    noteMoyenne: null,
+    meilleuresPerfs: 0,
+    aces: 0,
+    mvp: 0,
+    dofd: 0,
+  },
+  liste: [],
   ...overrides,
 });
 
@@ -171,32 +190,34 @@ describe("Fiche d'un joueur", () => {
   it("liste les champions et les rôles avec leurs games et leur winrate", async () => {
     open();
 
-    const champions = await screen.findByRole("region", { name: "Champions" });
+    const champions = await screen.findByRole("region", { name: "Performance par champion" });
     const camille = within(champions).getByRole("listitem", { name: /Camille/ });
-    expect(camille).toHaveTextContent("9 games · 78 %");
-    expect(within(champions).getByRole("listitem", { name: /Garen/ })).toHaveTextContent("5 games · –");
+    expect(camille).toHaveTextContent("9 games");
+    expect(camille).toHaveTextContent("78 %");
+    const garen = within(champions).getByRole("listitem", { name: /Garen/ });
+    expect(garen).toHaveTextContent("5 games");
+    expect(garen).toHaveTextContent("–");
 
-    const roles = screen.getByRole("region", { name: "Rôles" });
+    const roles = screen.getByRole("region", { name: "Performance par rôle" });
     expect(within(roles).getByRole("listitem", { name: /Top/ })).toHaveTextContent("18 games");
     expect(within(roles).getByRole("listitem", { name: /Jungle/ })).toHaveTextContent("4 games");
   });
 
-  it("liste les dernières games avec leur note sur 100, et une donnée manquante n'est pas un zéro", async () => {
-    open();
+  it("liste les games avec leur note sur 100, et une donnée manquante n'est pas un zéro", async () => {
+    const f = fiche();
+    open({ ...f, liste: [{ soireeId: null, jour: null, games: f.games }] });
 
-    const region = await screen.findByRole("region", { name: "Dernières games" });
-    const lignes = within(region).getAllByRole("listitem");
+    const lignes = await screen.findAllByRole("link", { name: /Voir la game/ });
     expect(lignes).toHaveLength(2);
 
-    expect(within(lignes[0]!).getByRole("link")).toHaveAttribute("href", "/games/31");
+    expect(lignes[0]).toHaveAttribute("href", "/games/31");
     expect(lignes[0]).toHaveTextContent("Camille");
     expect(lignes[0]).toHaveTextContent("9 / 2 / 7");
     expect(lignes[0]).toHaveTextContent("Victoire");
-    expect(lignes[0]).toHaveTextContent("86/100");
+    expect(lignes[0]).toHaveTextContent("86");
 
     expect(lignes[1]).toHaveTextContent("Défaite");
     expect(lignes[1]).toHaveTextContent("– / – / –");
-    expect(lignes[1]).toHaveTextContent("Note –");
     expect(lignes[1]).not.toHaveTextContent("0/100");
   });
 
