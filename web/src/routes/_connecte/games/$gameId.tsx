@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { VueEnCibles } from "@/components/game-cibles";
+import { useVueDeGame } from "@/lib/vue-de-game";
 import { $api, type Schemas } from "@/api/client";
 import { ObjectifsDesEquipes } from "@/components/game-objectifs-equipes";
 import { OngletRunes } from "@/components/game-runes";
@@ -39,13 +42,22 @@ function GamePage() {
 
 function Recit({ game }: { game: Recap }) {
   const saisieAMain = estSaisieAMain(game);
+  const [vue, choisirVue] = useVueDeGame();
+  // Général (liste) et Cibles sont deux vues du même résumé : on retient la dernière visitée.
+  const [onglet, setOnglet] = useState<string>(vue === "cibles" ? "cibles" : "general");
+  const changerOnglet = (valeur: string) => {
+    setOnglet(valeur);
+    if (valeur === "general") choisirVue("liste");
+    if (valeur === "cibles") choisirVue("cibles");
+  };
 
   return (
     <>
       <Banniere game={game} />
-      <Tabs defaultValue="general">
+      <Tabs value={onglet} onValueChange={changerOnglet}>
         <TabsList>
           <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="cibles">Cibles</TabsTrigger>
           <TabsTrigger value="details">Détails</TabsTrigger>
           <TabsTrigger value="runes">Runes</TabsTrigger>
           <TabsTrigger value="replay" className="opacity-60">
@@ -54,6 +66,9 @@ function Recit({ game }: { game: Recap }) {
         </TabsList>
         <TabsContent value="general" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <ResumeScoreboard game={game} />}
+        </TabsContent>
+        <TabsContent value="cibles" className="flex flex-col gap-4">
+          <VueEnCibles game={game} />
         </TabsContent>
         <TabsContent value="details" className="flex flex-col gap-4">
           {saisieAMain ? <ResumeSansStats game={game} /> : <OngletDetails game={game} />}
