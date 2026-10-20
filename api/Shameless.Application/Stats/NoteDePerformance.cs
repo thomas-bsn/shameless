@@ -59,7 +59,7 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
     }
 
     /// <summary>La valeur de chaque critère mesurable ; un critère manque si une de ses stats, la durée ou les kills de l'Équipe manquent.</summary>
-    private static Dictionary<CritereDeNote, double> Mesurer(
+    internal static Dictionary<CritereDeNote, double> Mesurer(
         StatsDuParticipant s, int? killsDeLEquipe, int? degatsDeLEquipe, int? orDeLEquipe, int? dureeSecondes)
     {
         var mesures = new Dictionary<CritereDeNote, double>();
@@ -86,8 +86,11 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
     }
 
     /// <summary>0 jusqu'à Faible, 50 à Moyen, 100 dès Excellent ; linéaire entre deux références.</summary>
-    private static double Score(double valeur, ReferenceDeCritere r)
+    /// <remarks>Quand Faible dépasse Excellent (critère où moins vaut mieux, ex. les morts par minute), l'échelle est inversée.</remarks>
+    internal static double Score(double valeur, ReferenceDeCritere r)
     {
+        if (r.Faible > r.Excellent)
+            return Score(-valeur, new ReferenceDeCritere(r.Poids, -r.Faible, -r.Moyen, -r.Excellent));
         if (valeur <= r.Faible) return 0;
         if (valeur >= r.Excellent) return 100;
         return valeur < r.Moyen

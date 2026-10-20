@@ -108,6 +108,43 @@ Alternatives écartées :
 - Utiliser les dégâts subis, les tourelles ou les dragons : redondants avec les critères
   retenus ou trop rares par game ; ils restent lus et peuvent entrer plus tard.
 
+## Addendum du 2026-10-20 : Impact d'un joueur (tickets #196, #200)
+
+Le détail d'une game expose pour chaque joueur qui a des stats un bloc `impact` (API seulement ; le panneau est
+le ticket #201). Rien n'est stocké : tout se calcule à la lecture, comme la note.
+
+- **Sous-scores** : des groupes de lignes tirées des composantes de la note (valeur, score, poids renormalisé,
+  points = score × poids). Global : toutes les composantes, avec le score et la lettre de la note effective.
+  Vs adversaire : KDA, CS, dégâts et or par minute. Objectifs : dégâts aux objectifs par minute. Équipe :
+  participation aux kills, parts de kills, de dégâts et d'or, victoire. Rôle : les trois critères les plus lourds
+  du rôle noté (victoire exclue ; groupe absent si le rôle est inconnu). Un critère peut figurer dans plusieurs
+  groupes. Le score d'un groupe est la moyenne de ses lignes pondérée par leur poids. Lettre : S+ ≥ 90, S ≥ 80,
+  A ≥ 70, B ≥ 55, C ≥ 40, sinon D. Une stat absente masque sa ligne (c'est la règle de la note).
+- **Face-à-face** : six axes de 0 à 100, contre l'unique joueur de l'autre Équipe qui joue le même rôle (pas de
+  face-à-face si le rôle est inconnu ou si l'adversaire n'est pas unique). Chaque axe est la moyenne des scores
+  de ses mesures calculables, notées avec les références du rôle ; un axe sans mesure est absent, et seuls les
+  axes mesurés des deux côtés sont comparés. L'écart est le score moins celui de l'adversaire ; un axe est gagné
+  si l'écart est positif, perdu s'il est négatif.
+
+  | Axe | Mesures |
+  |---|---|
+  | Survie | morts par minute (moins vaut mieux) |
+  | Utilité | (soins + boucliers posés) par minute ; secondes de contrôle infligé par minute |
+  | Combat | KDA ; dégâts par minute ; part des dégâts de l'Équipe |
+  | Objectifs | dégâts aux objectifs par minute ; tourelles + dragons + barons pris |
+  | Vision | score de vision par minute ; (balises posées + détruites) par minute |
+  | Économie | or par minute ; CS par minute (pas pour le Support) |
+
+  Les mesures déjà dans la note reprennent ses références. Les cinq autres (morts, soins et boucliers, contrôle,
+  objectifs pris, balises) ont leurs références dans `ReferencesDImpact.cs`.
+- **Références à calibrer** : ces cinq références par rôle sont des ordres de grandeur initiaux choisis à la main,
+  sans aucune donnée de joueur ni de partie : elles n'ont pas été mesurées. Elles doivent être calibrées sur des
+  percentiles de parties SoloQ par rôle (procédure dans `tools/note-calage/README.md`) ; seuls les trois paramètres
+  par rôle et par mesure entrent dans le dépôt, jamais les parties ni les joueurs. Tant que ce n'est pas fait, les
+  scores des axes Survie, Utilité, Vision (balises) et Objectifs (pris) sont indicatifs.
+- **Mesures écartées** : le temps passé mort et l'XP ne sont pas dans les stats du Companion ; les dégâts
+  encaissés ne disent pas si c'est bon ou mauvais (un tank en subit beaucoup, par choix) : aucun n'est utilisé.
+
 ## Conséquences
 - Ni stockage ni migration : la note se calcule à la lecture (`NotesDeLaGame.Calculer(game)`).
 - Une note historique peut changer si les références évoluent ; le cost mensuel, lui, est figé

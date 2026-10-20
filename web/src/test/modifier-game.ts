@@ -36,6 +36,7 @@ export const participant = (playerId: number, prenom: string, overrides: Partial
   details: null,
   place: null,
   badge: null,
+  impact: null,
   ...ORIGINE_VIDE,
   ...overrides,
 });
