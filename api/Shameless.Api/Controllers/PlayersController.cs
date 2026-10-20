@@ -4,6 +4,7 @@ using Shameless.Api.Models.Responses.Player;
 using Shameless.Application.DTOs.Players;
 using Shameless.Application.Interfaces;
 using Shameless.Application.Joueurs;
+using Shameless.Application.Picker;
 using Shameless.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,14 +43,23 @@ public sealed class PlayersController : ControllerBase
 
     /// <summary>
     /// La fiche du Joueur : stats de customs sur ses games terminées, champions et rôles joués, notes de
-    /// performance et historique, compte Discord lié, cost courant et rangs actuels.
+    /// performance et historique, compte Discord lié, cost courant et rangs actuels, « Joué avec », résumé
+    /// des 30 dernières games et liste des games. Les paramètres regroupent (<c>regroupement</c> : plat,
+    /// soirée, jour) et filtrent (rôle, série, champion, résultat) la liste seulement.
     /// </summary>
     [HttpGet("{playerId:int}/fiche")]
     [ProducesResponseType<FicheJoueur>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
-    public async Task<IActionResult> GetFiche(int playerId, [FromServices] FicheJoueurService fiches)
+    public async Task<IActionResult> GetFiche(
+        int playerId,
+        [FromServices] FicheJoueurService fiches,
+        [FromQuery] Regroupement regroupement = Regroupement.Plat,
+        [FromQuery] Role? role = null,
+        [FromQuery] int? serieId = null,
+        [FromQuery] string? champion = null,
+        [FromQuery] ResultatFiltre? resultat = null)
     {
-        var fiche = await fiches.GetAsync(playerId);
+        var fiche = await fiches.GetAsync(playerId, new FiltreDeGames(regroupement, role, serieId, champion, resultat));
         return fiche == null ? JoueurIntrouvable() : Ok(fiche);
     }
 

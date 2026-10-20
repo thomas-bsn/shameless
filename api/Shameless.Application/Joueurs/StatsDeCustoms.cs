@@ -82,7 +82,9 @@ internal sealed record PartieDuJoueur(
     int? DureeSecondes,
     int? KillsDeLEquipe,
     Role? Role,
-    NoteDePerformance? Performance)
+    NoteDePerformance? Performance,
+    int? Place = null,
+    BadgeDeGame? Badge = null)
 {
     /// <summary>La participation du Joueur à la Game, null s'il n'y a pas joué.</summary>
     public static PartieDuJoueur? De(CustomGame game, int playerId)
@@ -96,6 +98,7 @@ internal sealed record PartieDuJoueur(
         // Rôle joué : la position de la partie, sinon le rôle de l'Autorole ; le rôle principal SoloQ
         // n'est qu'un repli de la note, pas un rôle réellement joué.
         var role = stats?.Position ?? NotesDeLaGame.AutoroleDe(game, playerId);
+        var lecture = LectureDeLaGame.Calculer(game)[playerId];
 
         return new PartieDuJoueur(
             game,
@@ -105,7 +108,9 @@ internal sealed record PartieDuJoueur(
             duree is > 0 ? duree : null,
             killsDeLEquipe,
             role,
-            NotesDeLaGame.Noter(game, participant, stats, killsDeLEquipe, duree));
+            NotesDeLaGame.Noter(game, participant, stats, killsDeLEquipe, duree),
+            lecture.Place,
+            lecture.Badge);
     }
 
     /// <summary>Les minutes jouées, null sans durée connue.</summary>
@@ -124,5 +129,7 @@ internal sealed record PartieDuJoueur(
         Stats,
         Performance,
         Mvp: votes is { Statut: FenetreDeVote.Clos } && votes.Mvp.Gagnants.Contains(Participant.PlayerId),
-        Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId));
+        Dofd: votes is { Statut: FenetreDeVote.Clos } && votes.Dofd.Gagnants.Contains(Participant.PlayerId),
+        Place: Place,
+        Badge: Badge);
 }

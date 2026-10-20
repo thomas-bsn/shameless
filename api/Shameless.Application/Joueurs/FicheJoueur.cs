@@ -17,6 +17,9 @@ namespace Shameless.Application.Joueurs;
 /// <param name="Roles">Les rôles joués, du plus joué au moins joué.</param>
 /// <param name="Games">Les Games terminées du Joueur, de la plus récente à la plus ancienne.</param>
 /// <param name="Titres">Les titres de MVP et de DOFD remportés par le Joueur (votes clos, égalités comprises).</param>
+/// <param name="JoueAvec">Les coéquipiers du Joueur, du plus fréquent au moins fréquent.</param>
+/// <param name="Resume">Le résumé de ses 30 dernières games.</param>
+/// <param name="Liste">Ses games groupées et filtrées selon la demande ; <paramref name="Games"/> reste l'historique complet.</param>
 public sealed record FicheJoueur(
     int PlayerId,
     string Prenom,
@@ -30,7 +33,10 @@ public sealed record FicheJoueur(
     List<StatsParChampion> Champions,
     List<StatsParRole> Roles,
     List<GameDeLaFiche> Games,
-    TitresDuJoueur Titres)
+    TitresDuJoueur Titres,
+    List<CoequipierDeLaFiche> JoueAvec,
+    ResumeDesDernieresGames Resume,
+    List<GroupeDeGames> Liste)
 {
     /// <summary>
     /// La fiche du Joueur à partir de ses Games. Seules les Games terminées comptent (y compris celles
@@ -38,8 +44,10 @@ public sealed record FicheJoueur(
     /// Joueurs (et <c>Series.Players</c> pour le rôle de l'Autorole), comme pour <see cref="NotesDeLaGame"/>.
     /// </summary>
     public static FicheJoueur Calculer(
-        Player joueur, IEnumerable<CustomGame> games, IReadOnlyDictionary<int, ResultatsDesVotes>? votes = null)
+        Player joueur, IEnumerable<CustomGame> games, IReadOnlyDictionary<int, ResultatsDesVotes>? votes = null,
+        FiltreDeGames? filtre = null)
     {
+        filtre ??= new FiltreDeGames();
         votes ??= new Dictionary<int, ResultatsDesVotes>();
         var titres = TitresDuJoueur.Compter(votes.Values).GetValueOrDefault(joueur.Id, TitresDuJoueur.Aucun);
         var parties = games
@@ -49,6 +57,8 @@ public sealed record FicheJoueur(
             .OrderByDescending(p => p.Game.PlayedAt)
             .ThenByDescending(p => p.Game.Id)
             .ToList();
+
+        var lignes = parties.Select(p => (Partie: p, Ligne: p.EnLigne(votes.GetValueOrDefault(p.Game.Id)))).ToList();
 
         return new FicheJoueur(
             joueur.Id,
@@ -77,8 +87,11 @@ public sealed record FicheJoueur(
                 .OrderByDescending(r => r.Stats.GamesJouees)
                 .ThenBy(r => r.Role)
                 .ToList(),
-            parties.Select(p => p.EnLigne(votes.GetValueOrDefault(p.Game.Id))).ToList(),
-            titres);
+            lignes.Select(l => l.Ligne).ToList(),
+            titres,
+            FicheEnrichie.JoueAvec(joueur.Id, parties),
+            ResumeDesDernieresGames.Calculer(parties, lignes.Select(l => l.Ligne).ToList()),
+            FicheEnrichie.Liste(lignes, filtre));
     }
 }
 
@@ -104,6 +117,8 @@ public sealed record StatsParRole(Role Role, StatsDeCustoms Stats);
 /// <param name="Performance">Sa note de performance, null sans stats suffisantes.</param>
 /// <param name="Mvp">true si le Joueur a le titre de MVP (Roi ou Reine) de la Game : votes clos, égalités comprises.</param>
 /// <param name="Dofd">true si le Joueur a le titre de DOFD de la Game : votes clos, égalités comprises.</param>
+/// <param name="Place">Sa place de 1 à 10 dans la game d'après sa note, null sans note.</param>
+/// <param name="Badge">Son badge de note (Meilleure perf, ACE), null sinon ; distinct du titre MVP voté.</param>
 public sealed record GameDeLaFiche(
     int GameId,
     int? SeriesId,
@@ -116,4 +131,6 @@ public sealed record GameDeLaFiche(
     StatsDuParticipant? Stats,
     NoteDePerformance? Performance,
     bool Mvp = false,
-    bool Dofd = false);
+    bool Dofd = false,
+    int? Place = null,
+    BadgeDeGame? Badge = null);
