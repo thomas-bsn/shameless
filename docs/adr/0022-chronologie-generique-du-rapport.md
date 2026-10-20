@@ -34,6 +34,14 @@ Alternatives écartées : calculer l'or dans le Companion (ADR 0019) ; inventer 
 de l'XP à partir des stats finales (une courbe fausse plutôt qu'une courbe grisée) ; une
 table de points par game (une chronologie ne se lit et ne s'écrit qu'en bloc).
 
+## Exception à l'ADR 0019
+Le Companion normalise un peu : la somme prix × quantité des objets (`itemsValue`), le `side`
+de l'équipe qui prend un objectif, la conversion ORDER/CHAOS en blue/red et la troncature de
+la vision. L'API locale du jeu n'est lisible que pendant la partie : ces opérations
+élémentaires, qui ne font que mettre une lecture brute au format du Rapport, restent donc
+côté Companion. L'API reste seule responsable de toute interprétation : l'or estimé, les
+notes, les titres.
+
 ## Conséquences
 - L'or estimé suppose que l'or final est acheté en objets au même rythme que sa valeur : il
   sous-estime l'or non dépensé en cours de partie. C'est signalé « estimé ».

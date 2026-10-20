@@ -292,6 +292,10 @@ des objets et état mort ou vivant, et des événements d'objectifs datés (drag
 tourelle, inhibiteur, avec le side). Chaque série porte sa **nature** : réelle, **estimée**  
 (l'or : valeur des objets remise à l'échelle sur l'or total final, calculée par l'API) ou  
 indisponible (dégâts, XP). Une game sans chronologie reste valide (ADR 0022).
+- **Courbes** : l'onglet de la page d'une Game qui trace la Chronologie, une série à la fois (or,
+kills, CS, niveau, etc.), avec les objectifs en repères.
+- **Cible** (ou **Vue en cibles**) : la vue de l'onglet Performance d'une Game où les dix joueurs
+sont placés en anneaux autour d'un centre selon leur note, avec leur badge MVP ou ACE.
 - **Bot** : le bot Discord global, dans un repo séparé. Pour Shameless, il annonce les  
 séries, poste les récaps, gère les votes et rattache les clips. Il échange avec l'API  
 par deux identités machine distinctes (ADR 0013) : l'API l'appelle (candidats vocaux,  
