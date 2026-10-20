@@ -8664,7 +8664,12 @@
           "CsParMinute",
           "DegatsParMinute",
           "VisionParMinute",
-          "ObjectifsParMinute"
+          "ObjectifsParMinute",
+          "OrParMinute",
+          "PartDesKills",
+          "PartDesDegats",
+          "PartDeLOr",
+          "Victoire"
         ]
       },
       "DefinirPretRequest": {

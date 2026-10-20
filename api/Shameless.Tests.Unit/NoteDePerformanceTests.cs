@@ -6,42 +6,72 @@ namespace Shameless.Tests.Unit;
 
 /// <summary>
 /// La note Shameless de performance (0 à 100) d'un Joueur pour une Game : chaque critère est noté
-/// par rapport aux références du rôle joué, puis pondéré selon ce rôle (voir ADR 0011).
+/// par rapport aux références du rôle joué, puis pondéré selon ce rôle ; la victoire compte comme une
+/// composante (voir ADR 0011). Les valeurs attendues viennent des références calées de
+/// <c>tools/note-calage/resultats/calage-2026-10-20-lisse.json</c>, recalculées avec l'outil de calage.
 /// </summary>
 public class NoteDePerformanceTests
 {
     private const int TrenteMinutes = 1800;
+    private const int QuaranteMinutes = 2400;
 
     private static StatsDuParticipant Stats(
         int? kills = null, int? deaths = null, int? assists = null, int? minions = null, int? neutres = null,
-        int? degats = null, int? vision = null, int? objectifs = null, Role? position = null) =>
-        new(kills, deaths, assists, minions, neutres, degats, DamageTaken: null, GoldEarned: null, vision,
+        int? degats = null, int? vision = null, int? objectifs = null, Role? position = null, int? or = null) =>
+        new(kills, deaths, assists, minions, neutres, degats, DamageTaken: null, or, vision,
             WardsPlaced: null, WardsKilled: null, ControlWardsBought: null, objectifs, TurretKills: null,
             DragonKills: null, BaronKills: null, ChampLevel: null, position);
 
-    /// <summary>Un mid de 30 minutes pile à la référence « moyenne » du rôle sur chaque critère.</summary>
+    /// <summary>
+    /// Un mid de 40 minutes à la référence « moyenne » du rôle sur chaque critère, aux arrondis entiers
+    /// des stats près : KDA 23/15 (1,53), CS 245 (6,13/min), 24 200 dégâts (605/min), vision 34 (0,85/min),
+    /// 9 920 dégâts aux objectifs (248/min), 21 120 d'or (528/min), 16 kills.
+    /// Équipe : 53 kills (KP 43 %, 30 % des kills), 100 833 dégâts (24 %), 96 000 d'or (22 %).
+    /// </summary>
     private static StatsDuParticipant MidMoyen() => Stats(
-        kills: 5, deaths: 4, assists: 7, // KDA 3 ; 12 des 24 kills de l'équipe : KP 50 %
-        minions: 190, neutres: 20,       // 7 CS/min
-        degats: 21000,                   // 700 dégâts/min
-        vision: 24,                      // 0,8 vision/min
-        objectifs: 9000);                // 300 dégâts aux objectifs/min
+        kills: 16, deaths: 15, assists: 7, minions: 225, neutres: 20, degats: 24200, vision: 34, objectifs: 9920, or: 21120);
+
+    private static NoteDePerformance? NoterLeMidMoyen(Role? role, bool? gagnee = null) => NoteDePerformance.Calculer(
+        MidMoyen(), RoleJoue.Determiner(role), killsDeLEquipe: 53, dureeSecondes: QuaranteMinutes,
+        degatsDeLEquipe: 100833, orDeLEquipe: 96000, gagnee: gagnee);
 
     [Fact]
     public void Un_mid_a_la_reference_moyenne_de_son_role_sur_chaque_critere_a_50()
     {
-        var note = NoteDePerformance.Calculer(MidMoyen(), RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 24, dureeSecondes: TrenteMinutes);
+        var note = NoterLeMidMoyen(Role.Mid);
 
         Assert.NotNull(note);
         Assert.Equal(50, note.Note);
-        Assert.Equal(6, note.Composantes.Count);
-        Assert.All(note.Composantes, c => Assert.Equal(50, c.Score));
+        Assert.Equal(
+            [CritereDeNote.Kda, CritereDeNote.ParticipationAuxKills, CritereDeNote.CsParMinute, CritereDeNote.DegatsParMinute,
+             CritereDeNote.VisionParMinute, CritereDeNote.ObjectifsParMinute, CritereDeNote.OrParMinute,
+             CritereDeNote.PartDesKills, CritereDeNote.PartDesDegats, CritereDeNote.PartDeLOr],
+            note.Composantes.Select(c => c.Critere));
+        Assert.All(note.Composantes, c => Assert.InRange(c.Score, 49, 51)); // stats entières : à moins d'un point de 50
+    }
+
+    [Fact]
+    public void La_victoire_est_une_composante_qui_vaut_100_si_la_game_est_gagnee_et_0_sinon_avec_le_poids_du_role()
+    {
+        var gagnee = NoterLeMidMoyen(Role.Mid, gagnee: true)!;
+        var perdue = NoterLeMidMoyen(Role.Mid, gagnee: false)!;
+
+        var victoire = gagnee.Composantes.Single(c => c.Critere == CritereDeNote.Victoire);
+        Assert.Equal(1, victoire.Valeur);
+        Assert.Equal(100, victoire.Score);
+        Assert.Equal(0.149, victoire.Poids); // 15 sur 101 pour un mid
+        Assert.Equal(57, gagnee.Note);       // (50 × 86 + 100 × 15) / 101 = 57,4
+        var defaite = perdue.Composantes.Single(c => c.Critere == CritereDeNote.Victoire);
+        Assert.Equal(0, defaite.Valeur);
+        Assert.Equal(0, defaite.Score);
+        Assert.Equal(43, perdue.Note);       // 50 × 86 / 101 = 42,6
+        Assert.DoesNotContain(NoterLeMidMoyen(Role.Mid)!.Composantes, c => c.Critere == CritereDeNote.Victoire);
     }
 
     [Fact]
     public void Entre_deux_references_le_score_est_lineaire_et_seuls_les_criteres_mesurables_comptent_avec_leurs_poids_renormalises()
     {
-        // Sans durée de game : seuls le KDA et la participation aux kills sont mesurables.
+        // Sans durée de game ni dégâts ni or d'équipe : KDA, participation aux kills et part des kills.
         var stats = Stats(kills: 4, deaths: 2, assists: 5);
 
         var note = NoteDePerformance.Calculer(stats, RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 20, dureeSecondes: null);
@@ -52,27 +82,37 @@ public class NoteDePerformanceTests
             {
                 Assert.Equal(CritereDeNote.Kda, kda.Critere);
                 Assert.Equal(4.5, kda.Valeur);
-                Assert.Equal(75, kda.Score); // à mi-chemin entre Moyen (3) et Excellent (6)
-                Assert.Equal(0.5, kda.Poids);
+                Assert.Equal(100, kda.Score); // au-delà d'Excellent (3,51)
+                Assert.Equal(0.821, kda.Poids); // 23 sur 28
             },
             kp =>
             {
                 Assert.Equal(CritereDeNote.ParticipationAuxKills, kp.Critere);
                 Assert.Equal(0.45, kp.Valeur);
-                Assert.Equal(38, kp.Score); // 37,5 : aux trois quarts entre Faible (30 %) et Moyen (50 %)
-                Assert.Equal(0.5, kp.Poids);
+                Assert.Equal(54, kp.Score); // 54,1 : un peu au-dessus de Moyen (43,5 %), vers Excellent (61,9 %)
+                Assert.Equal(0.036, kp.Poids); // 1 sur 28
+            },
+            part =>
+            {
+                Assert.Equal(CritereDeNote.PartDesKills, part.Critere);
+                Assert.Equal(0.2, part.Valeur);
+                Assert.Equal(33, part.Score); // 32,8 : aux deux tiers entre Faible (0) et Moyen (30,5 %)
+                Assert.Equal(0.143, part.Poids); // 4 sur 28
             });
-        Assert.Equal(56, note.Note); // (75 × 20 + 37,5 × 20) / 40 = 56,25
+        Assert.Equal(89, note.Note); // (100 × 23 + 54,1 × 1 + 32,8 × 4) / 28 = 88,8
     }
 
     [Fact]
     public void La_note_reste_entre_0_et_100_quelles_que_soient_les_stats()
     {
-        var ecrasante = Stats(kills: 20, deaths: 0, assists: 15, minions: 400, neutres: 50, degats: 60000, vision: 80, objectifs: 30000);
-        var desastreuse = Stats(kills: 0, deaths: 12, assists: 1, minions: 40, neutres: 0, degats: 3000, vision: 2, objectifs: 0);
+        var ecrasante = Stats(kills: 20, deaths: 0, assists: 15, minions: 400, neutres: 50, degats: 60000, vision: 80, objectifs: 30000, or: 30000);
+        // Dégâts et vision sous les valeurs Faible du mid (63 dégâts/min, 0 vision/min) pour que tout tombe à 0.
+        var desastreuse = Stats(kills: 0, deaths: 12, assists: 1, minions: 40, neutres: 0, degats: 1000, vision: 0, objectifs: 0, or: 6000);
 
-        var haute = NoteDePerformance.Calculer(ecrasante, RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 35, dureeSecondes: TrenteMinutes);
-        var basse = NoteDePerformance.Calculer(desastreuse, RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 20, dureeSecondes: TrenteMinutes);
+        var haute = NoteDePerformance.Calculer(ecrasante, RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 35, dureeSecondes: TrenteMinutes,
+            degatsDeLEquipe: 70000, orDeLEquipe: 50000, gagnee: true);
+        var basse = NoteDePerformance.Calculer(desastreuse, RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 20, dureeSecondes: TrenteMinutes,
+            degatsDeLEquipe: 60000, orDeLEquipe: 60000, gagnee: false);
 
         Assert.Equal(100, haute?.Note);
         Assert.All(haute!.Composantes, c => Assert.Equal(100, c.Score));
@@ -83,30 +123,36 @@ public class NoteDePerformanceTests
     [Fact]
     public void Les_memes_stats_sont_notees_selon_les_poids_et_references_du_role_joue()
     {
-        var note = NoteDePerformance.Calculer(MidMoyen(), RoleJoue.Determiner(Role.Support), killsDeLEquipe: 24, dureeSecondes: TrenteMinutes);
+        var note = NoterLeMidMoyen(Role.Support);
 
         Assert.NotNull(note);
         Assert.Equal(Role.Support, note.Role);
-        // Le support n'est noté ni sur le CS ni sur les objectifs.
+        // Le support n'est pas noté sur le CS.
         Assert.Equal(
-            [CritereDeNote.Kda, CritereDeNote.ParticipationAuxKills, CritereDeNote.DegatsParMinute, CritereDeNote.VisionParMinute],
+            [CritereDeNote.Kda, CritereDeNote.ParticipationAuxKills, CritereDeNote.DegatsParMinute, CritereDeNote.VisionParMinute,
+             CritereDeNote.ObjectifsParMinute, CritereDeNote.OrParMinute, CritereDeNote.PartDesKills, CritereDeNote.PartDesDegats,
+             CritereDeNote.PartDeLOr],
             note.Composantes.Select(c => c.Critere));
-        Assert.Equal([38, 25, 100, 0], note.Composantes.Select(c => c.Score));
-        Assert.Equal([0.25, 0.3, 0.1, 0.35], note.Composantes.Select(c => c.Poids));
-        Assert.Equal(27, note.Note); // (37,5 × 25 + 25 × 30 + 100 × 10 + 0 × 35) / 100 = 26,875
+        Assert.Equal([22, 58, 74, 21, 100, 100, 100, 100, 100], note.Composantes.Select(c => c.Score));
+        Assert.Equal([0.258, 0.112, 0.124, 0.236, 0.045, 0.191, 0.011, 0.011, 0.011], note.Composantes.Select(c => c.Poids));
+        Assert.Equal(53, note.Note); // 53,3 : le KDA et la vision tirent vers le bas, l'or et les parts de l'équipe vers le haut
     }
 
     [Fact]
     public void Sans_role_connu_tous_les_criteres_comptent_autant()
     {
-        var note = NoteDePerformance.Calculer(MidMoyen(), RoleJoue.Determiner(null), killsDeLEquipe: 24, dureeSecondes: TrenteMinutes);
+        var note = NoterLeMidMoyen(role: null);
 
         Assert.NotNull(note);
         Assert.Null(note.Role);
         Assert.Equal(SourceDuRole.Inconnue, note.SourceDuRole);
-        Assert.Equal(6, note.Composantes.Count);
-        Assert.All(note.Composantes, c => Assert.Equal(0.167, c.Poids));
+        Assert.Equal(10, note.Composantes.Count);
+        Assert.All(note.Composantes, c => Assert.Equal(0.1, c.Poids));
         Assert.Equal(50, note.Note);
+        // La victoire compte comme un critère de plus.
+        var gagnee = NoterLeMidMoyen(role: null, gagnee: true)!;
+        Assert.All(gagnee.Composantes, c => Assert.Equal(0.091, c.Poids));
+        Assert.Equal(54, gagnee.Note); // (499 + 100) / 11 = 54,5
     }
 
     [Fact]
@@ -118,7 +164,7 @@ public class NoteDePerformanceTests
         Assert.Equal(CritereDeNote.Kda, kda.Critere);
         Assert.Equal(2, kda.Valeur);
         Assert.Equal(1.0, kda.Poids);
-        Assert.Equal(33, note.Note); // 2 entre Faible (1) et Moyen (2,5) pour un top : 33,3
+        Assert.Equal(78, note.Note); // 2 entre Moyen (1,02) et Excellent (2,78) pour un top : 77,8
     }
 
     [Fact]
@@ -126,22 +172,27 @@ public class NoteDePerformanceTests
     {
         Assert.Null(NoteDePerformance.Calculer(Stats(kills: 3), RoleJoue.Determiner(Role.Mid), killsDeLEquipe: null, dureeSecondes: null));
         Assert.Null(NoteDePerformance.Calculer(Stats(minions: 150), RoleJoue.Determiner(Role.Mid), killsDeLEquipe: 20, dureeSecondes: null));
+        // Le résultat seul ne fait pas une note.
+        Assert.Null(NoteDePerformance.Calculer(Stats(), RoleJoue.Determiner(Role.Mid), killsDeLEquipe: null, dureeSecondes: null, gagnee: true));
     }
+
+    private static CustomGameParticipant Participant(int playerId, string side, string? stats) => new()
+    {
+        PlayerId = playerId, Side = side,
+        Player = new Player { Id = playerId, MainRole = "TOP" },
+        RiotParticipantData = stats
+    };
 
     [Fact]
     public void Dans_une_game_la_participation_compte_les_kills_du_side_du_joueur_et_l_autorole_remplace_une_position_absente()
     {
         var serie = new BestOfSeries { Players = { new SeriesPlayer { PlayerId = 1, Role = Role.Support } } };
-        CustomGameParticipant Participant(int playerId, string side, int kills) => new()
-        {
-            PlayerId = playerId, Side = side,
-            Player = new Player { Id = playerId, MainRole = "TOP" },
-            RiotParticipantData = $$"""{ "kills": {{kills}}, "deaths": 1, "assists": 2 }"""
-        };
+        CustomGameParticipant Joueur(int playerId, string side, int kills) =>
+            Participant(playerId, side, $$"""{ "kills": {{kills}}, "deaths": 1, "assists": 2 }""");
         var game = new CustomGame
         {
             Series = serie,
-            Participants = { Participant(1, "blue", 2), Participant(2, "blue", 6), Participant(3, "red", 30) }
+            Participants = { Joueur(1, "blue", 2), Joueur(2, "blue", 6), Joueur(3, "red", 30) }
         };
 
         var notes = NotesDeLaGame.Calculer(game);
@@ -153,6 +204,54 @@ public class NoteDePerformanceTests
         Assert.Equal(Role.Top, notes[2]!.Role);
         Assert.Equal(notes[3]!.Note, NotesDeLaGame.DuJoueur(game, 3)?.Note);
         Assert.Null(NotesDeLaGame.DuJoueur(game, 99));
+    }
+
+    [Fact]
+    public void Dans_une_game_terminee_la_victoire_et_les_parts_de_l_equipe_viennent_du_vainqueur_et_des_stats_du_side()
+    {
+        string Stats(int kills, int degats, int or) =>
+            $$"""{ "kills": {{kills}}, "deaths": 2, "assists": 3, "totalDamageDealtToChampions": {{degats}}, "goldEarned": {{or}}, "teamPosition": "MIDDLE" }""";
+        var game = new CustomGame
+        {
+            TeamASide = "blue",
+            WinningTeam = Equipes.A,
+            RiotMatchData = """{ "gameDuration": 1800 }""",
+            Participants =
+            {
+                Participant(1, "blue", Stats(4, 20000, 15000)),
+                Participant(2, "blue", Stats(6, 10000, 10000)),
+                Participant(3, "red", Stats(8, 25000, 20000))
+            }
+        };
+
+        var notes = NotesDeLaGame.Calculer(game);
+
+        var vainqueur = notes[1]!.Composantes;
+        Assert.Equal(100, vainqueur.Single(c => c.Critere == CritereDeNote.Victoire).Score);
+        Assert.Equal(0.67, vainqueur.Single(c => c.Critere == CritereDeNote.PartDesDegats).Valeur); // 20 000 / 30 000
+        Assert.Equal(0.6, vainqueur.Single(c => c.Critere == CritereDeNote.PartDeLOr).Valeur);      // 15 000 / 25 000
+        Assert.Equal(0.4, vainqueur.Single(c => c.Critere == CritereDeNote.PartDesKills).Valeur);   // 4 / 10
+        Assert.Equal(0, notes[3]!.Composantes.Single(c => c.Critere == CritereDeNote.Victoire).Score);
+    }
+
+    [Fact]
+    public void Sans_vainqueur_ou_avec_un_coequipier_sans_stats_la_victoire_et_les_parts_de_l_equipe_sont_omises()
+    {
+        string Stats(int kills) =>
+            $$"""{ "kills": {{kills}}, "deaths": 2, "assists": 3, "totalDamageDealtToChampions": 20000, "goldEarned": 15000, "teamPosition": "MIDDLE" }""";
+        var game = new CustomGame
+        {
+            RiotMatchData = """{ "gameDuration": 1800 }""",
+            Participants = { Participant(1, "blue", Stats(4)), Participant(2, "blue", stats: null) }
+        };
+
+        var criteres = NotesDeLaGame.Calculer(game)[1]!.Composantes.Select(c => c.Critere).ToList();
+
+        Assert.DoesNotContain(CritereDeNote.Victoire, criteres);   // pas de vainqueur : game non terminée
+        Assert.DoesNotContain(CritereDeNote.PartDesDegats, criteres); // les dégâts d'un coéquipier manquent
+        Assert.DoesNotContain(CritereDeNote.PartDeLOr, criteres);
+        Assert.Contains(CritereDeNote.OrParMinute, criteres);        // l'or du joueur seul suffit au « par minute »
+        Assert.Null(NotesDeLaGame.Calculer(game)[2]);                // sans stats, pas de note
     }
 
     [Fact]

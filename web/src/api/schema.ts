@@ -6914,7 +6914,7 @@ export interface components {
             seriesId: number;
         };
         /** @enum {unknown} */
-        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute";
+        CritereDeNote: "Kda" | "ParticipationAuxKills" | "CsParMinute" | "DegatsParMinute" | "VisionParMinute" | "ObjectifsParMinute" | "OrParMinute" | "PartDesKills" | "PartDesDegats" | "PartDeLOr" | "Victoire";
         DefinirPretRequest: {
             pret: boolean;
         };

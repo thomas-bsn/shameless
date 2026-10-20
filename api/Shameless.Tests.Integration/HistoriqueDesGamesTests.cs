@@ -180,13 +180,14 @@ public class HistoriqueDesGamesTests(ApiFactory factory) : IntegrationTest(facto
         await PlayGameAsync(client, serie.SeriesId, teamASide: "blue");
         var code = await CodeCompanionAsync(client, serie.SeriesId);
 
-        // A3 joue mid, pile à la référence moyenne du rôle : KDA 3, KP 12/24, 7 CS/min, 700 dégâts/min,
-        // 0,8 vision/min, 300 dégâts aux objectifs/min sur 30 minutes. L'Équipe A fait 24 kills.
+        // A3 joue mid : KDA 3, KP 12/24, 5 kills sur 24, 7 CS/min, 700 dégâts/min, 0,8 vision/min,
+        // 300 dégâts aux objectifs/min, 528 d'or/min sur 30 minutes. L'Équipe A fait 24 kills et gagne.
+        // Les autres joueurs n'ont ni dégâts ni or : ni part des dégâts ni part de l'or pour A3.
         object StatsDe(int i) => i == 2
             ? new
             {
                 kills = 5, deaths = 4, assists = 7, totalMinionsKilled = 190, neutralMinionsKilled = 20,
-                totalDamageDealtToChampions = 21000, visionScore = 24, damageDealtToObjectives = 9000,
+                totalDamageDealtToChampions = 21000, visionScore = 24, damageDealtToObjectives = 9000, goldEarned = 15840,
                 teamPosition = "MIDDLE"
             }
             : new { kills = i < 5 ? (i == 4 ? 4 : 5) : 2, deaths = 3, assists = 6 };
@@ -195,17 +196,20 @@ public class HistoriqueDesGamesTests(ApiFactory factory) : IntegrationTest(facto
 
         var participants = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)));
         var a3 = participants[serie.TeamA[2]].GetProperty("performance");
-        Assert.Equal(50, a3.GetProperty("note").GetInt32());
+        Assert.Equal(74, a3.GetProperty("note").GetInt32()); // 73,75 : voir les scores ci-dessous, pondérés selon le mid
         Assert.Equal("Mid", a3.GetProperty("role").GetString());
         Assert.Equal("Partie", a3.GetProperty("sourceDuRole").GetString());
         var composantes = a3.GetProperty("composantes").EnumerateArray().ToList();
         Assert.Equal(
-            ["Kda", "ParticipationAuxKills", "CsParMinute", "DegatsParMinute", "VisionParMinute", "ObjectifsParMinute"],
+            ["Kda", "ParticipationAuxKills", "CsParMinute", "DegatsParMinute", "VisionParMinute", "ObjectifsParMinute",
+             "OrParMinute", "PartDesKills", "Victoire"],
             composantes.Select(c => c.GetProperty("critere").GetString()));
-        Assert.All(composantes, c => Assert.Equal(50, c.GetProperty("score").GetInt32()));
+        Assert.Equal([87, 68, 83, 64, 47, 70, 50, 34, 100], composantes.Select(c => c.GetProperty("score").GetInt32()));
         var cs = composantes[2];
         Assert.Equal(7, cs.GetProperty("valeur").GetDouble());
-        Assert.Equal(0.2, cs.GetProperty("poids").GetDouble());
+        Assert.Equal(0.091, cs.GetProperty("poids").GetDouble()); // 9 sur 99
+        Assert.Equal(1, composantes[^1].GetProperty("valeur").GetDouble());
+        Assert.Equal(0.152, composantes[^1].GetProperty("poids").GetDouble()); // 15 sur 99
     }
 
     [Fact]
@@ -223,10 +227,16 @@ public class HistoriqueDesGamesTests(ApiFactory factory) : IntegrationTest(facto
         var a1 = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)))[serie.TeamA[0]].GetProperty("performance");
         Assert.Equal("Mid", a1.GetProperty("role").GetString()); // rôle principal SoloQ (MIDDLE)
         Assert.Equal("RolePrincipal", a1.GetProperty("sourceDuRole").GetString());
-        // Sans durée de game, seuls le KDA (3,5 : 58) et la KP (70 % : 100) sont notés, à poids égaux.
-        Assert.Equal(["Kda", "ParticipationAuxKills"],
+        // Sans durée de game : le KDA (3,5 : 100), la KP (70 % : 100), la part des kills (0 sur 10 : 0), la part
+        // des dégâts (12 000 sur 60 010 : 30) et la victoire de l'Équipe A (100), pondérés selon le mid :
+        // (99,75 × 23 + 100 × 1 + 0 × 4 + 30 × 1 + 100 × 15) / 44 = 89,2.
+        Assert.Equal(["Kda", "ParticipationAuxKills", "PartDesKills", "PartDesDegats", "Victoire"],
             a1.GetProperty("composantes").EnumerateArray().Select(c => c.GetProperty("critere").GetString()));
-        Assert.Equal(79, a1.GetProperty("note").GetInt32());
+        Assert.Equal(89, a1.GetProperty("note").GetInt32());
+        // B1 est dans l'Équipe perdante : sa victoire vaut 0.
+        var b1 = ParticipantsParJoueur(Assert.Single(await GamesDuMoisAsync(client)))[serie.TeamB[0]].GetProperty("performance");
+        var victoireB1 = b1.GetProperty("composantes").EnumerateArray().Single(c => c.GetProperty("critere").GetString() == "Victoire");
+        Assert.Equal(0, victoireB1.GetProperty("score").GetInt32());
     }
 
     [Fact]
