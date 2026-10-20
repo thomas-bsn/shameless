@@ -8200,7 +8200,9 @@
           "discordId",
           "username",
           "avatarUrl",
-          "principal"
+          "principal",
+          "bannerUrl",
+          "bannerColor"
         ],
         "type": "object",
         "properties": {
@@ -8221,6 +8223,18 @@
           },
           "principal": {
             "type": "boolean"
+          },
+          "bannerUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bannerColor": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

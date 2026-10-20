@@ -44,4 +44,24 @@ public class AvatarsDesJoueursTests(ApiFactory factory) : IntegrationTest(factor
         Assert.Equal(Photo, Ligne(cinqContreCinq.GetProperty("joueurs"), lie, "playerId").GetProperty("avatarUrl").GetString());
         Assert.Equal(JsonValueKind.Null, Ligne(cinqContreCinq.GetProperty("joueurs"), libre, "playerId").GetProperty("avatarUrl").ValueKind);
     }
+
+    [Fact]
+    public async Task La_fiche_expose_la_banniere_du_compte_principal_et_aucune_autre()
+    {
+        var principal = Factory.CreateAnonymousClient();
+        await TestSession.CompleteLoginAsync(principal, Factory.Discord.AddProfile("6101", "ana", null, "ban1", 0x112233, TestSession.GuildId));
+        var joueur = await CreatePlayerAsync(principal, "Banniere");
+        await ReadJsonAsync(await principal.PostAsJsonAsync("/players/link", new { playerId = joueur }, Ct));
+        var second = Factory.CreateAnonymousClient();
+        await TestSession.CompleteLoginAsync(second, Factory.Discord.AddProfile("6102", "bob", null, "ban2", null, TestSession.GuildId));
+        await ReadJsonAsync(await second.PostAsJsonAsync("/players/link", new { playerId = joueur }, Ct));
+
+        var fiche = await principal.GetFromJsonAsync<JsonElement>($"/players/{joueur}/fiche", Ct);
+
+        var discord = fiche.GetProperty("discord");
+        Assert.Equal("https://cdn.discordapp.com/banners/6101/ban1.png", discord.GetProperty("bannerUrl").GetString());
+        Assert.Equal("#112233", discord.GetProperty("bannerColor").GetString());
+        foreach (var compte in fiche.GetProperty("comptesDiscord").EnumerateArray())
+            Assert.Equal(JsonValueKind.Null, compte.GetProperty("bannerUrl").ValueKind);
+    }
 }

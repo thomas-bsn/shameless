@@ -6801,6 +6801,8 @@ export interface components {
             username: null | string;
             avatarUrl: null | string;
             principal: boolean;
+            bannerUrl: null | string;
+            bannerColor: null | string;
         };
         CorrectGameRequest: {
             winner: null | string;

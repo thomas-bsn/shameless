@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import { $api, type Schemas } from "@/api/client";
 import { AvatarJoueur } from "@/components/avatar-joueur";
+import { BanniereDiscord } from "@/components/banniere-discord";
 import { ErrorAlert } from "@/components/query-state";
 import { CostTierBadge, RankBadge, RoleIcon } from "@/components/rank";
 import { Badge } from "@/components/ui/badge";
@@ -113,8 +114,9 @@ export function HeroDuJoueur({ player, fiche }: { player: Schemas["PlayerDto"]; 
   const role = roleLabel(player.mainRole);
 
   return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center justify-between gap-6">
+    <Card className="gap-0 overflow-hidden py-0">
+      <BanniereDiscord url={fiche?.discord?.bannerUrl} couleur={fiche?.discord?.bannerColor} />
+      <CardContent className="flex flex-wrap items-center justify-between gap-6 py-6">
         <div className="flex min-w-0 items-center gap-4">
           <AvatarJoueur prenom={player.prenom} avatarUrl={player.avatarUrl} className="size-14 text-xl" />
           <div className="flex min-w-0 flex-col gap-2">

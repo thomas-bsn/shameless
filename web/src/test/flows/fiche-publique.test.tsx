@@ -49,7 +49,7 @@ const fiche = (o: Partial<Fiche> = {}): Fiche => ({
   playerId: 7,
   prenom: "Aldric",
   riotId: "Aldric#EUW",
-  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true },
+  discord: { discordId: "1", username: "aldric", avatarUrl: null, principal: true, bannerUrl: null, bannerColor: null },
   comptesDiscord: [],
   cost: 4.4,
   soloQ: { tier: "DIAMOND", division: 2, lp: 45 },

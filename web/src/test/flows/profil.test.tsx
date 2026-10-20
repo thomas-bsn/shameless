@@ -140,6 +140,42 @@ describe("Profil (variante A3)", () => {
     expect(screen.getByRole("link", { name: "Voir mon profil public" })).toHaveAttribute("href", "/joueurs/1");
   });
 
+  it("illustre chaque tuile : emblème de palier, logo de file, pièce du cost, anneau de note et rôle principal", async () => {
+    mockApi(routes({ "GET /players/me": { ...lie, flexRankTier: "GOLD", flexRankDivision: 1, flexLp: 12 } }));
+    renderApp("/compte");
+
+    const resume = await screen.findByRole("region", { name: "Ce que les autres voient" });
+    const rang = within(resume).getByRole("group", { name: "Classé Solo" });
+    expect(within(rang).getByRole("img", { name: "Emblème Emerald" })).toHaveAttribute(
+      "src",
+      "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-emerald.png",
+    );
+    expect(within(rang).getByText("Emerald II · 47 LP")).toBeInTheDocument();
+    const flex = within(resume).getByRole("group", { name: "Flex" });
+    expect(within(flex).getByRole("img", { name: "Emblème Gold" })).toBeInTheDocument();
+    expect(within(resume).getByRole("group", { name: "Cost" })).toBeInTheDocument();
+    expect(await within(resume).findByRole("img", { name: "Note 71 sur 100" })).toBeInTheDocument();
+    const role = within(resume).getByRole("group", { name: "Rôle principal" });
+    expect(within(role).getByRole("img", { name: "Jungle" })).toBeInTheDocument();
+  });
+
+  it("masque les tuiles sans donnée : ni Flex, ni rang, ni rôle, ni note", async () => {
+    mockApi(
+      routes({
+        "GET /players/me": { ...lie, rankTier: null, rankDivision: null, lp: null, mainRole: null },
+        "GET /players/1/fiche": fiche({ stats: { ...fiche().stats, noteMoyenne: null } }),
+      }),
+    );
+    renderApp("/compte");
+
+    const resume = await screen.findByRole("region", { name: "Ce que les autres voient" });
+    expect(within(resume).getByRole("group", { name: "Cost" })).toBeInTheDocument();
+    expect(within(resume).queryByRole("group", { name: "Classé Solo" })).not.toBeInTheDocument();
+    expect(within(resume).queryByRole("group", { name: "Flex" })).not.toBeInTheDocument();
+    expect(within(resume).queryByRole("group", { name: "Rôle principal" })).not.toBeInTheDocument();
+    expect(within(resume).queryByRole("group", { name: "Note moyenne" })).not.toBeInTheDocument();
+  });
+
   it("donne les accès rapides Administration et Administrateurs à un Administrateur", async () => {
     mockApi(routes());
     renderApp("/compte");
@@ -338,7 +374,7 @@ describe("Profil (variante A3)", () => {
     await waitFor(() => expect(body).toEqual({ playerId: 2 }));
   });
 
-  it("affiche « – » pour les données optionnelles absentes, jamais 0", async () => {
+  it("masque les tuiles sans donnée dans le résumé et affiche « – » dans le Joueur lié, jamais 0", async () => {
     mockApi(
       routes({
         "GET /players/me": player({ id: 1, currentCost: 3, costEvolution: null, mainRole: null, rankTier: null, lp: null }),
@@ -351,7 +387,8 @@ describe("Profil (variante A3)", () => {
     renderApp("/compte");
 
     const resume = await screen.findByRole("region", { name: "Ce que les autres voient" });
-    expect((await within(resume).findAllByText("–")).length).toBeGreaterThanOrEqual(2);
+    expect(within(resume).queryByText("0")).not.toBeInTheDocument();
+    expect(within(resume).queryByText("–")).not.toBeInTheDocument();
     const joueur = screen.getByRole("region", { name: "Joueur lié" });
     expect(within(joueur).getAllByText("–").length).toBeGreaterThanOrEqual(2);
   });

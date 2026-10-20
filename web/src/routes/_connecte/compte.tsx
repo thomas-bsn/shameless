@@ -3,6 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRightIcon, LinkIcon, MoonIcon, RefreshCwIcon, SunIcon, UnlinkIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { $api, type Schemas } from "@/api/client";
+import { BanniereDiscord } from "@/components/banniere-discord";
+import { EmblemeDeRang } from "@/components/emblemes-de-rang";
+import { IconeRole } from "@/components/icones-de-jeu/icone-role";
+import { AnneauDeNote } from "@/components/icones-de-jeu/anneau-de-note";
+import { IconePiece, TuileDeProfil } from "@/components/tuile-de-profil";
 import { SelecteurDePeak, type Peak } from "@/components/selecteur-de-peak";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,10 +18,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { costText, costTier } from "@/lib/cost";
-import { entierLabel } from "@/lib/fiche";
 import { matchesPlayer, myPlayerQuery } from "@/lib/players";
 import { problemMessage } from "@/lib/problem";
-import { normalizeTier, rankLabel, roleLabel } from "@/lib/ranks";
+import { normalizeTier, rankLabel, roleDeJeu, roleLabel } from "@/lib/ranks";
+import { soloQTierClasses } from "@/lib/tier-styles";
 import { useTheme } from "@/lib/theme";
 import { useDeconnexion } from "@/lib/use-deconnexion";
 
@@ -65,13 +70,10 @@ function Bloc({ titre, children, className, action }: { titre: string; children:
   );
 }
 
-const COULEUR_HEX = /^#[0-9a-f]{6}$/i;
-
 /** Photo, pseudo, bannière et rôle du Compte Discord, avec le rafraîchissement à la demande. */
 function CompteDiscord() {
   const { user } = Route.useRouteContext();
   const role = user.role === "Superadministrateur" ? "Superadmin" : user.role === "Administrateur" ? "Admin" : null;
-  const couleur = user.bannerColor && COULEUR_HEX.test(user.bannerColor) ? user.bannerColor : null;
 
   // Le rafraîchissement passe par l'API puis Discord : il demande une vraie navigation, pas un fetch.
   const rafraichir = () =>
@@ -79,17 +81,7 @@ function CompteDiscord() {
 
   return (
     <Card className="gap-0 overflow-hidden py-0">
-      <div className="h-24 bg-muted sm:h-28">
-        {user.bannerUrl ? (
-          <img src={user.bannerUrl} alt="Bannière Discord" className="size-full object-cover" />
-        ) : (
-          couleur && (
-            <svg aria-hidden className="size-full">
-              <rect width="100%" height="100%" fill={couleur} />
-            </svg>
-          )
-        )}
-      </div>
+      <BanniereDiscord url={user.bannerUrl} couleur={user.bannerColor} />
       <div className="-mt-9 flex flex-wrap items-end gap-4 px-5 pb-4">
         <Avatar className="size-20 border-4 border-card">
           {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
@@ -129,25 +121,56 @@ function ProfilDuJoueur({ player }: { player: Player }) {
   );
 }
 
-/** Trois chiffres de ce que les autres voient, et le chemin vers le profil public. */
+/** Les tuiles de ce que les autres voient (rang, Flex, cost, note, rôle) et le chemin vers le profil public ; sans donnée, pas de tuile. */
 function ResumePublic({ player, noteMoyenne }: { player: Player; noteMoyenne: number | null | undefined }) {
-  const rang = player.rankTier ? rankLabel(player.rankTier, player.rankDivision, player.lp) : ABSENT;
-  const chiffres = [
-    { libelle: "Rang", valeur: rang },
-    { libelle: "Cost", valeur: `${costText(player.currentCost)} · ${costTier(player.currentCost)}` },
-    { libelle: "Note moy.", valeur: noteMoyenne == null ? ABSENT : entierLabel(noteMoyenne) },
-  ];
+  const role = roleDeJeu(player.mainRole);
+  const couleurDe = (tier: string | null) => soloQTierClasses[normalizeTier(tier)].split(" ")[0]!;
+  const classe = normalizeTier(player.rankTier) !== "UNRANKED";
+  const flex = normalizeTier(player.flexRankTier) !== "UNRANKED";
 
   return (
     <Bloc titre="Ce que les autres voient">
-      <dl className="grid grid-cols-3 gap-2 text-center">
-        {chiffres.map((c) => (
-          <div key={c.libelle} className="rounded-lg bg-muted/50 px-1.5 py-2">
-            <dt className="text-xs text-muted-foreground">{c.libelle}</dt>
-            <dd className="mt-0.5 text-sm font-semibold tabular-nums">{c.valeur}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="grid grid-cols-2 gap-2.5">
+        {classe && (
+          <TuileDeProfil
+            libelle="Classé Solo"
+            valeur={rankLabel(player.rankTier, player.rankDivision, player.lp)}
+            icone={<EmblemeDeRang tier={player.rankTier} />}
+            couleur={couleurDe(player.rankTier)}
+          />
+        )}
+        {flex && (
+          <TuileDeProfil
+            libelle="Flex"
+            valeur={rankLabel(player.flexRankTier, player.flexRankDivision, player.flexLp)}
+            icone={<EmblemeDeRang tier={player.flexRankTier} />}
+            couleur={couleurDe(player.flexRankTier)}
+          />
+        )}
+        <TuileDeProfil
+          libelle="Cost"
+          valeur={costText(player.currentCost)}
+          detail={`tier ${costTier(player.currentCost)}`}
+          icone={<IconePiece />}
+          couleur="text-amber-400"
+        />
+        {noteMoyenne != null && (
+          <TuileDeProfil
+            libelle="Note moyenne"
+            detail="sur 100"
+            icone={<AnneauDeNote note={noteMoyenne} />}
+            couleur="text-foreground"
+          />
+        )}
+        {role && (
+          <TuileDeProfil
+            libelle="Rôle principal"
+            valeur={roleLabel(player.mainRole) ?? ABSENT}
+            icone={<IconeRole role={role} className="size-8 text-sky-400" />}
+            couleur="text-sky-400"
+          />
+        )}
+      </div>
       <Link
         to="/joueurs/$playerId"
         params={{ playerId: String(player.id) }}
@@ -243,13 +266,17 @@ function JoueurLie({ player, comptes }: { player: Player; comptes: Schemas["Comp
         <dl className="flex flex-col gap-2 border-t pt-3 text-sm text-muted-foreground">
           <div className="flex items-center justify-between gap-3">
             <dt>Rôle principal</dt>
-            <dd className="text-foreground">{role}</dd>
+            <dd className="flex items-center gap-1.5 text-foreground">
+              {roleDeJeu(player.mainRole) && <IconeRole role={roleDeJeu(player.mainRole)!} className="size-4 text-sky-400" />}
+              {role}
+            </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
             <dt>Peak</dt>
             <dd className="flex items-center gap-2 text-foreground">
               {aUnPeak ? (
                 <>
+                  <EmblemeDeRang tier={player.peakTier} className="size-6" />
                   <span>{rankLabel(player.peakTier, player.peakDivision, player.peakLp)}</span>
                   {player.peakSeason && <Badge variant="outline">{player.peakSeason}</Badge>}
                 </>
