@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import type { Schemas } from "@/api/client";
 import { mockApi, problem } from "@/test/api";
 import { renderComponent } from "@/test/render";
@@ -96,16 +96,34 @@ describe("icônes du catalogue indisponible", () => {
 });
 
 describe("icônes SVG", () => {
-  it.each<[Role, string]>([
-    ["Top", "Top"],
-    ["Jungle", "Jungle"],
-    ["Mid", "Mid"],
-    ["Adc", "ADC"],
-    ["Support", "Support"],
-  ])("l'icône du rôle %s porte le nom accessible %s", async (role, nom) => {
+  it.each<[Role, string, string]>([
+    ["Top", "Top", "top"],
+    ["Jungle", "Jungle", "jungle"],
+    ["Mid", "Mid", "middle"],
+    ["Adc", "ADC", "bottom"],
+    ["Support", "Support", "utility"],
+  ])("l'icône du rôle %s est l'image officielle de Riot, nommée %s", async (role, nom, fichier) => {
     renderComponent(<IconeRole role={role} />);
 
-    expect(await screen.findByRole("img", { name: nom })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: nom })).toHaveAttribute(
+      "src",
+      `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/svg/position-${fichier}.svg`,
+    );
+  });
+
+  it("l'icône d'un rôle se replie sur l'emplacement neutre quand l'image ne charge pas", async () => {
+    renderComponent(<IconeRole role="Top" />);
+
+    fireEvent.error(await screen.findByRole("img", { name: "Top" }));
+
+    expect(await screen.findByRole("img", { name: "Inconnu" })).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Top" })).not.toBeInTheDocument();
+  });
+
+  it("l'icône d'un rôle inconnu est l'emplacement neutre", async () => {
+    renderComponent(<IconeRole role={"Autre" as Role} />);
+
+    expect(await screen.findByRole("img", { name: "Inconnu" })).toBeInTheDocument();
   });
 
   it.each<[Objectif, string]>([

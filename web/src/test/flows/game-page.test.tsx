@@ -232,7 +232,7 @@ describe("Onglet Général", () => {
     const bleue = await screen.findByRole("list", { name: "Équipe B · Blue side" });
     const roles = within(bleue)
       .getAllByRole("listitem", { name: /Bob|Dan|Eve/ })
-      .map((l) => within(l).getAllByRole("img", { name: /^(Top|Jungle|Mid|ADC|Support)$/ })[0]!.getAttribute("aria-label"));
+      .map((l) => within(l).getAllByRole("img", { name: /^(Top|Jungle|Mid|ADC|Support)$/ })[0]!.getAttribute("alt"));
     expect(roles).toEqual(["Top", "ADC", "Support"]);
   });
 
