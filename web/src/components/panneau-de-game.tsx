@@ -11,7 +11,7 @@ import { Link } from "@tanstack/react-router";
 export function PanneauDeGame({ gameId }: { gameId: number }) {
   const game = $api.useQuery("get", "/games/{id}", { params: { path: { id: gameId } } });
   return (
-    <div className="flex flex-col gap-3 rounded-b-xl border-t bg-card/60 p-3">
+    <div className="flex flex-col gap-3 rounded-b-xl border-t border-white/10 bg-black/25 p-3">
       {game.isPending ? (
         <LoadingRows />
       ) : game.isError ? (

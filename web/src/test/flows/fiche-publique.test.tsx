@@ -259,7 +259,10 @@ describe("Fiche publique", () => {
     expect(lien).toHaveTextContent("VS");
     expect(await within(lien).findByRole("img", { name: "Ahri" })).toHaveAttribute("src", "https://dd/ahri.png");
     expect(within(lien).getByRole("img", { name: "Mid" })).toBeInTheDocument();
-    expect(within(lien).getByRole("img", { name: "Note 95 sur 100" })).toBeInTheDocument();
+    const anneau = within(lien).getByRole("img", { name: "Note 95 sur 100" });
+    expect(anneau).toHaveTextContent("95");
+    expect(lien).toHaveTextContent("1er");
+    expect(lien.textContent?.match(/95/g)).toHaveLength(1);
     expect(lien.textContent?.match(/95/g)).toHaveLength(1);
     expect(await within(lien).findAllByRole("img", { name: "Saut éclair" })).toHaveLength(2);
     expect(within(lien).getByRole("img", { name: "Électrocution" })).toBeInTheDocument();
@@ -363,6 +366,9 @@ describe("Fiche publique", () => {
       expect(screen.getByRole("list", { name: /Équipe B/ })).toHaveTextContent("Bob");
       expect(screen.getByRole("link", { name: /Voir la game complète/ })).toHaveAttribute("href", "/games/31");
       expect(appels()).toBe(1);
+      const panneau = screen.getByRole("list", { name: /Équipe A/ }).closest("div.bg-black\\/25");
+      expect(panneau).not.toBeNull();
+      expect(panneau).not.toContainElement(screen.getByRole("button", { name: "Replier la game 31" }));
     });
 
     it("ne navigue pas en dépliant, et replier masque le panneau", async () => {
