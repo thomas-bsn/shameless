@@ -55,17 +55,19 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         Factory.Clock.SetUtcNow(Mars);
         var serie = await CreateSerieAsync(client, format: 5);
-        // A1 noté 79 à chaque game, 3 victoires sur 5 : 2 + 0,406 + 0,06 = 2,466 → 2,5.
+        // A1 est noté 89 dans une game gagnée et 55 dans une game perdue (KDA, KP, part des kills, part des dégâts
+        // et victoire : 89,2 gagnée, 55,1 perdue). 3 victoires sur 5 : note moyenne 75,4 ;
+        // 2 + 0,7 × 25,4 / 50 + 0,06 = 2,416 → 2,4.
         foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
             await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante);
 
         Factory.Clock.SetUtcNow(Avril);
         var debutAvril = await CostAsync(client, serie.TeamA[0]);
         Assert.Equal("2026-04-01", debutAvril.GetProperty("mois").GetString());
-        Assert.Equal(2.5m, debutAvril.GetProperty("costDeDepart").GetDecimal());
+        Assert.Equal(2.4m, debutAvril.GetProperty("costDeDepart").GetDecimal());
         Assert.Equal("MoisPrecedent", debutAvril.GetProperty("sourceDuCostDeDepart").GetString());
         Assert.Equal(0, debutAvril.GetProperty("gamesTerminees").GetInt32());
-        Assert.Equal(2.5m, debutAvril.GetProperty("cost").GetDecimal());
+        Assert.Equal(2.4m, debutAvril.GetProperty("cost").GetDecimal());
 
         // En avril, A gagne une game : moins de cinq games, le cost reste celui de départ.
         var revanche = await RevancheAsync(client, serie.SeriesId);
@@ -73,7 +75,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
 
         var historique = await HistoriqueAsync(client, serie.TeamA[0]);
         Assert.Equal(
-            [("2026-03-01", 2m, 2.5m, 5, 3), ("2026-04-01", 2.5m, 2.5m, 1, 1)],
+            [("2026-03-01", 2m, 2.4m, 5, 3), ("2026-04-01", 2.4m, 2.4m, 1, 1)],
             historique.Select(m => (
                 m.GetProperty("mois").GetString(),
                 m.GetProperty("costDeDepart").GetDecimal(),
@@ -89,7 +91,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         var admin = Factory.CreateAdminClient();
         Factory.Clock.SetUtcNow(Mars);
         var serie = await CreateSerieAsync(client, format: 5);
-        // A1 finit mars à 2,5 (voir le test du nouveau mois).
+        // A1 finit mars à 2,4 (voir le test du nouveau mois).
         foreach (var gagnante in new[] { "A", "A", "B", "B", "A" })
             await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante);
         var nouveau = await CreatePlayerAsync(client, "Nouveau");
@@ -103,7 +105,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await admin.PutAsJsonAsync($"/players/{serie.TeamA[0]}/cost", new { cost = 3.5m }, Ct));
         var a1 = await JoueurDeLaListeAsync(client, serie.TeamA[0]);
         Assert.Equal(3.5m, a1.GetProperty("currentCost").GetDecimal());
-        Assert.Equal(1m, a1.GetProperty("costEvolution").GetDecimal());
+        Assert.Equal(1.1m, a1.GetProperty("costEvolution").GetDecimal()); // 3,5 − le cost final de mars (2,4)
 
         // Un joueur sans historique n'a pas d'évolution.
         Assert.Equal(JsonValueKind.Null, (await JoueurDeLaListeAsync(client, nouveau)).GetProperty("costEvolution").ValueKind);
@@ -130,7 +132,8 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         Factory.Clock.SetUtcNow(Mars);
         var serie = await CreateSerieAsync(client, format: 5);
-        // A1 noté 79 à chaque game, 2 victoires sur 5 : 2 + 0,406 − 0,06 = 2,346 → 2,3.
+        // A1 noté 89 en victoire et 55 en défaite (voir le test du nouveau mois) : 2 victoires sur 5,
+        // note moyenne (2 × 89,2 + 3 × 55,1) / 5 = 68,7 ; 2 + 0,7 × 18,7 / 50 − 0,06 = 2,202 → 2,2.
         foreach (var gagnante in new[] { "B", "B", "A", "A", "B" })
             await JouerUneGameNoteeAsync(client, serie.SeriesId, gagnante);
 
@@ -138,7 +141,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
 
         var mai = await CostAsync(client, serie.TeamA[0]);
         Assert.Equal("2026-05-01", mai.GetProperty("mois").GetString());
-        Assert.Equal(2.3m, mai.GetProperty("costDeDepart").GetDecimal());
+        Assert.Equal(2.2m, mai.GetProperty("costDeDepart").GetDecimal());
         Assert.Equal("MoisPrecedent", mai.GetProperty("sourceDuCostDeDepart").GetString());
     }
 
@@ -169,7 +172,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         var client = Factory.CreateSignedInClient();
         var serie = await CreateSerieAsync(client, format: 5);
 
-        // Rapport par défaut sans durée : A1 (0/2/7, KP 70 %) est noté 79 à chaque game (ADR 0011).
+        // Rapport par défaut sans durée : A1 (0/2/7, KP 70 %, 0 % des kills) est noté 55 dans une game perdue (ADR 0011).
         // L'Équipe A perd les cinq games : trois dans le BO5, deux dans la revanche.
         var seriesId = serie.SeriesId;
         for (var i = 0; i < 5; i++)
@@ -179,13 +182,13 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
             await JouerUneGameNoteeAsync(client, seriesId, "B");
         }
 
-        // Performance : 0,7 × (79 − 50) / 50 = +0,406 ; résultats : 0 % de victoires = −0,3 → 2,106.
+        // Performance : 0,7 × (55,1 − 50) / 50 = +0,07 ; résultats : 0 % de victoires = −0,3 → 1,77 → 1,8.
         var a1 = await CostAsync(client, serie.TeamA[0]);
         Assert.Equal(5, a1.GetProperty("gamesNotees").GetInt32());
-        Assert.Equal(79, a1.GetProperty("noteMoyenne").GetDouble());
-        Assert.Equal(0.41m, a1.GetProperty("ajustementPerformance").GetDecimal());
+        Assert.Equal(55, a1.GetProperty("noteMoyenne").GetDouble());
+        Assert.Equal(0.07m, a1.GetProperty("ajustementPerformance").GetDecimal());
         Assert.Equal(-0.3m, a1.GetProperty("ajustementResultats").GetDecimal());
-        Assert.Equal(2.1m, a1.GetProperty("cost").GetDecimal());
+        Assert.Equal(1.8m, a1.GetProperty("cost").GetDecimal());
     }
 
     [Fact]
@@ -206,17 +209,17 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         await ReadJsonAsync(await admin.PutAsJsonAsync($"/players/{serie.TeamB[0]}/cost", new { cost = 4m }, Ct));
         Assert.Equal(2m, (await CostAsync(client, serie.TeamA[0])).GetProperty("costDeDepart").GetDecimal());
 
-        // La cinquième game de mars se termine : mars évolue (2,5), avril repart de ce cost final.
+        // La cinquième game de mars se termine : mars évolue (2,4), avril repart de ce cost final.
         await EnvoyerUnRapportNoteAsync(client, serie.SeriesId, "A");
 
         var historique = await HistoriqueAsync(client, serie.TeamA[0]);
         Assert.Equal(
-            [("2026-03-01", 2m, 2.5m), ("2026-04-01", 2.5m, 2.5m)],
+            [("2026-03-01", 2m, 2.4m), ("2026-04-01", 2.4m, 2.4m)],
             historique.Select(m => (
                 m.GetProperty("mois").GetString(),
                 m.GetProperty("costDeDepart").GetDecimal(),
                 m.GetProperty("cost").GetDecimal())));
-        Assert.Equal(2.5m, (await PlayerAsync(client, serie.TeamA[0])).GetProperty("currentCost").GetDecimal());
+        Assert.Equal(2.4m, (await PlayerAsync(client, serie.TeamA[0])).GetProperty("currentCost").GetDecimal());
 
         // Le cost fixé par un admin en avril reste le départ d'avril.
         var b1 = await CostAsync(client, serie.TeamB[0]);
@@ -242,17 +245,17 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
         await JouerUneGameNoteeAsync(client, serie.SeriesId, "B");
         Assert.Equal(4m, (await PlayerAsync(client, serie.TeamA[0])).GetProperty("currentCost").GetDecimal());
 
-        // A1 noté 79, 0 victoire sur 5 : 4 + 0,406 − 0,3 = 4,106 → 4,1.
+        // A1 noté 55 à chaque défaite, 0 victoire sur 5 : 4 + 0,07 − 0,3 = 3,77 → 3,8.
         var seriesId = serie.SeriesId;
         for (var i = 1; i < 5; i++)
         {
             if (i == 3) seriesId = await RevancheAsync(client, seriesId);
             await JouerUneGameNoteeAsync(client, seriesId, "B");
         }
-        Assert.Equal(4.1m, (await CostAsync(client, serie.TeamA[0])).GetProperty("cost").GetDecimal());
+        Assert.Equal(3.8m, (await CostAsync(client, serie.TeamA[0])).GetProperty("cost").GetDecimal());
 
         Factory.Clock.SetUtcNow(Avril);
-        Assert.Equal(4.1m, (await CostAsync(client, serie.TeamA[0])).GetProperty("costDeDepart").GetDecimal());
+        Assert.Equal(3.8m, (await CostAsync(client, serie.TeamA[0])).GetProperty("costDeDepart").GetDecimal());
     }
 
     [Fact]
@@ -304,7 +307,7 @@ public class CostMensuelTests(ApiFactory factory) : IntegrationTest(factory)
 
     /// <summary>
     /// Lance une game et la termine par un rapport du Companion sans durée : A1 (0/2/7, KP 70 %) y
-    /// est noté 79 (ADR 0011), quelle que soit l'Équipe gagnante.
+    /// est noté 89 si son Équipe gagne et 55 sinon (ADR 0011).
     /// </summary>
     private async Task JouerUneGameNoteeAsync(HttpClient client, int seriesId, string gagnante)
     {

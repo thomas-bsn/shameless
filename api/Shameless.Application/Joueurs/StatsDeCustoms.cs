@@ -93,7 +93,7 @@ internal sealed record PartieDuJoueur(
 
         var stats = ValeursEffectives.Stats(participant);
         var duree = NotesDeLaGame.DureeDe(game);
-        var killsDeLEquipe = NotesDeLaGame.KillsDeLEquipe(game, participant.Side);
+        var equipe = NotesDeLaGame.EquipeDe(game, participant.Side);
 
         // Rôle joué : la position de la partie, sinon le rôle de l'Autorole ; le rôle principal SoloQ
         // n'est qu'un repli de la note, pas un rôle réellement joué.
@@ -106,9 +106,9 @@ internal sealed record PartieDuJoueur(
             participant.HasWon,
             stats,
             duree is > 0 ? duree : null,
-            killsDeLEquipe,
+            equipe.Kills,
             role,
-            NotesDeLaGame.Noter(game, participant, stats, killsDeLEquipe, duree),
+            NotesDeLaGame.Noter(game, participant, stats, equipe, duree),
             lecture.Place,
             lecture.Badge);
     }

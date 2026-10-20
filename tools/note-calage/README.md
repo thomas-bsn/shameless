@@ -66,7 +66,7 @@ Critères de l'ADR : KDA, participation aux kills, CS/min, dégâts/min, vision/
 - `partDesKills`, `partDesDegats`, `partDeLOr` : part de l'équipe (kills, dégâts aux champions, or), composante relative à la game ;
 - composante **victoire** (`poidsVictoire`, par rôle) : score 100 si la game est gagnée, 0 sinon.
 
-Les paramètres par défaut redonnent donc exactement la note actuelle de l'API (références et poids de `ReferencesDeNote.cs`, recopiés dans `src/note.ts`).
+Les paramètres par défaut redonnent la note de l'API telle qu'elle était avant le calage (ADR 0011, première version, recopiée dans `src/note.ts`) : c'est le point de départ de l'ajustement. Depuis le ticket #182, l'API utilise les paramètres lissés de `resultats/calage-2026-10-20-lisse.json` (`src/lisser.ts` les produit à partir d'un ajustement) ; pour recaler, repartir de ceux-ci avec `--parametres`.
 
 ## Ajustement et évaluation
 

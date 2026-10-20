@@ -182,8 +182,11 @@ cost n'est jamais remis à zéro.
 `PlayerMonthlyCost` ; un nouveau mois n'efface pas l'historique.
 - **Note de performance** : la note de 0 à 100 d'un joueur pour une game, calculée depuis  
 ses stats envoyées par le Companion. Chaque critère (KDA, KP, CS, dégâts, vision,  
-objectifs) est noté par rapport aux références du rôle joué, puis pondéré selon ce rôle  
-(ADR 0011). Elle ne tient pas compte du résultat de la game.
+objectifs, or par minute, part des kills, des dégâts et de l'or de l'équipe) est noté par  
+rapport aux références du rôle joué, puis pondéré selon ce rôle ; la victoire de la game est  
+une composante de plus (100 si gagnée, 0 sinon). Références et poids sont calés sur les  
+scores de dpm.lol (ADR 0011). Un critère non mesurable est omis et les poids renormalisés ;  
+une game saisie à la main n'a pas de note.
 - **Fiche Joueur** : la page d'un joueur : ses stats de customs sur ses games terminées  
 (winrate, KDA, CS/min, KP, dégâts, note de performance moyenne), par champion et par  
 rôle joué, l'historique de ses games avec leur note, son compte Discord lié, son cost  

@@ -10,8 +10,9 @@ public sealed record ComposanteDeNote(CritereDeNote Critere, double Valeur, int 
 
 /// <summary>
 /// La note Shameless de performance d'un Joueur pour une Game, de 0 à 100 : la moyenne des scores
-/// de ses critères, pondérés selon le rôle joué. Les critères dont les stats manquent sont omis et
-/// les poids restants renormalisés. Formule et références : ADR 0011 et <see cref="ReferencesDeNote"/>.
+/// de ses critères, pondérés selon le rôle joué, avec la victoire (100 si la game est gagnée, 0 sinon)
+/// comme composante de plus. Les critères dont les stats manquent sont omis et les poids restants
+/// renormalisés. Formule et références : ADR 0011 et <see cref="ReferencesDeNote"/>.
 /// </summary>
 /// <param name="Role">Le rôle selon lequel le Joueur est noté, null si inconnu (profil polyvalent).</param>
 /// <param name="SourceDuRole">D'où vient ce rôle.</param>
@@ -20,18 +21,27 @@ public sealed record ComposanteDeNote(CritereDeNote Critere, double Valeur, int 
 public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole SourceDuRole, IReadOnlyList<ComposanteDeNote> Composantes, int? NoteOrigine = null)
 {
     /// <summary>
-    /// La note d'un Joueur à partir de ses stats, de son rôle, des kills de son Équipe et de la durée
-    /// de la game ; null si aucun critère du rôle n'est mesurable.
+    /// La note d'un Joueur à partir de ses stats, de son rôle, des kills, dégâts et de l'or de son
+    /// Équipe, de la durée de la game et de son résultat ; null si aucun critère du rôle n'est
+    /// mesurable. Le résultat seul ne fait pas une note.
     /// </summary>
-    public static NoteDePerformance? Calculer(StatsDuParticipant stats, RoleJoue role, int? killsDeLEquipe, int? dureeSecondes)
+    /// <param name="degatsDeLEquipe">Les dégâts aux champions de toute l'Équipe, null s'ils ne sont pas tous connus.</param>
+    /// <param name="orDeLEquipe">L'or gagné par toute l'Équipe, null s'il n'est pas connu pour tous.</param>
+    /// <param name="gagnee">Vrai si l'Équipe du Joueur a gagné, null si la game n'a pas de vainqueur.</param>
+    public static NoteDePerformance? Calculer(
+        StatsDuParticipant stats, RoleJoue role, int? killsDeLEquipe, int? dureeSecondes,
+        int? degatsDeLEquipe = null, int? orDeLEquipe = null, bool? gagnee = null)
     {
-        var mesures = Mesurer(stats, killsDeLEquipe, dureeSecondes);
-        var notes = ReferencesDeNote.Pour(role.Role)
+        var mesures = Mesurer(stats, killsDeLEquipe, degatsDeLEquipe, orDeLEquipe, dureeSecondes);
+        var references = ReferencesDeNote.Pour(role.Role);
+        var notes = references.Criteres
             .Where(r => r.Value.Poids > 0 && mesures.ContainsKey(r.Key))
             .OrderBy(r => r.Key)
             .Select(r => (Critere: r.Key, Valeur: mesures[r.Key], Score: Score(mesures[r.Key], r.Value), r.Value.Poids))
             .ToList();
         if (notes.Count == 0) return null;
+        if (gagnee is { } victoire && references.PoidsVictoire > 0)
+            notes.Add((CritereDeNote.Victoire, victoire ? 1 : 0, victoire ? 100 : 0, references.PoidsVictoire));
 
         double poidsTotal = notes.Sum(n => n.Poids);
         var note = notes.Sum(n => n.Score * n.Poids) / poidsTotal;
@@ -43,13 +53,20 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
     }
 
     /// <summary>La valeur de chaque critère mesurable ; un critère manque si une de ses stats, la durée ou les kills de l'Équipe manquent.</summary>
-    private static Dictionary<CritereDeNote, double> Mesurer(StatsDuParticipant s, int? killsDeLEquipe, int? dureeSecondes)
+    private static Dictionary<CritereDeNote, double> Mesurer(
+        StatsDuParticipant s, int? killsDeLEquipe, int? degatsDeLEquipe, int? orDeLEquipe, int? dureeSecondes)
     {
         var mesures = new Dictionary<CritereDeNote, double>();
         if (s is { Kills: { } k, Deaths: { } d, Assists: { } a })
             mesures[CritereDeNote.Kda] = FormulesDeStats.Kda(k, d, a);
         if (s is { Kills: { } kills, Assists: { } assists } && killsDeLEquipe > 0)
             mesures[CritereDeNote.ParticipationAuxKills] = Math.Min(1.0, FormulesDeStats.ParticipationAuxKills(kills, assists, killsDeLEquipe.Value));
+        if (s.Kills is { } faits && killsDeLEquipe > 0)
+            mesures[CritereDeNote.PartDesKills] = Math.Min(1.0, (double)faits / killsDeLEquipe.Value);
+        if (s.DamageToChampions is { } degatsFaits && degatsDeLEquipe > 0)
+            mesures[CritereDeNote.PartDesDegats] = Math.Min(1.0, (double)degatsFaits / degatsDeLEquipe.Value);
+        if (s.GoldEarned is { } orGagne && orDeLEquipe > 0)
+            mesures[CritereDeNote.PartDeLOr] = Math.Min(1.0, (double)orGagne / orDeLEquipe.Value);
 
         if (dureeSecondes is not > 0) return mesures;
         var minutes = dureeSecondes.Value / 60.0;
@@ -58,6 +75,7 @@ public sealed record NoteDePerformance(int Note, Role? Role, SourceDuRole Source
         if (s.DamageToChampions is { } degats) mesures[CritereDeNote.DegatsParMinute] = degats / minutes;
         if (s.VisionScore is { } vision) mesures[CritereDeNote.VisionParMinute] = vision / minutes;
         if (s.DamageToObjectives is { } objectifs) mesures[CritereDeNote.ObjectifsParMinute] = objectifs / minutes;
+        if (s.GoldEarned is { } or) mesures[CritereDeNote.OrParMinute] = or / minutes;
         return mesures;
     }
 

@@ -1,0 +1,454 @@
+{
+  "parametres": {
+    "roles": {
+      "TOP": {
+        "criteres": {
+          "kda": {
+            "poids": 32,
+            "faible": 0.332,
+            "moyen": 1.02,
+            "excellent": 2.78
+          },
+          "participationAuxKills": {
+            "poids": 1,
+            "faible": 0.092,
+            "moyen": 0.291,
+            "excellent": 0.508
+          },
+          "csParMinute": {
+            "poids": 12,
+            "faible": 5.55,
+            "moyen": 7.19,
+            "excellent": 8.27
+          },
+          "degatsParMinute": {
+            "poids": 11,
+            "faible": 0,
+            "moyen": 824,
+            "excellent": 947
+          },
+          "visionParMinute": {
+            "poids": 4,
+            "faible": 0.283,
+            "moyen": 0.333,
+            "excellent": 0.737
+          },
+          "objectifsParMinute": {
+            "poids": 11,
+            "faible": 130,
+            "moyen": 367,
+            "excellent": 600
+          },
+          "orParMinute": {
+            "poids": 11,
+            "faible": 359,
+            "moyen": 423,
+            "excellent": 486
+          },
+          "partDesKills": {
+            "poids": 1,
+            "faible": 0.08,
+            "moyen": 0.2,
+            "excellent": 0.32
+          },
+          "partDesDegats": {
+            "poids": 5,
+            "faible": 0.169,
+            "moyen": 0.199,
+            "excellent": 0.323
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.14,
+            "moyen": 0.21,
+            "excellent": 0.28
+          }
+        },
+        "poidsVictoire": 11
+      },
+      "JUNGLE": {
+        "criteres": {
+          "kda": {
+            "poids": 21,
+            "faible": 1.33,
+            "moyen": 3.5,
+            "excellent": 5.64
+          },
+          "participationAuxKills": {
+            "poids": 7,
+            "faible": 0.4,
+            "moyen": 0.469,
+            "excellent": 0.615
+          },
+          "csParMinute": {
+            "poids": 9,
+            "faible": 5.14,
+            "moyen": 5.84,
+            "excellent": 7.4
+          },
+          "degatsParMinute": {
+            "poids": 4,
+            "faible": 454,
+            "moyen": 516,
+            "excellent": 939
+          },
+          "visionParMinute": {
+            "poids": 9,
+            "faible": 0.458,
+            "moyen": 0.982,
+            "excellent": 1.1
+          },
+          "objectifsParMinute": {
+            "poids": 17,
+            "faible": 305,
+            "moyen": 621,
+            "excellent": 870
+          },
+          "orParMinute": {
+            "poids": 13,
+            "faible": 355,
+            "moyen": 461,
+            "excellent": 517
+          },
+          "partDesKills": {
+            "poids": 11,
+            "faible": 0.058,
+            "moyen": 0.066,
+            "excellent": 0.269
+          },
+          "partDesDegats": {
+            "poids": 1,
+            "faible": 0.08,
+            "moyen": 0.16,
+            "excellent": 0.24
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.171,
+            "moyen": 0.214,
+            "excellent": 0.24
+          }
+        },
+        "poidsVictoire": 8
+      },
+      "MID": {
+        "criteres": {
+          "kda": {
+            "poids": 23,
+            "faible": 1.13,
+            "moyen": 1.53,
+            "excellent": 3.51
+          },
+          "participationAuxKills": {
+            "poids": 1,
+            "faible": 0.196,
+            "moyen": 0.435,
+            "excellent": 0.619
+          },
+          "csParMinute": {
+            "poids": 9,
+            "faible": 5.16,
+            "moyen": 6.13,
+            "excellent": 7.45
+          },
+          "degatsParMinute": {
+            "poids": 20,
+            "faible": 63,
+            "moyen": 605,
+            "excellent": 952
+          },
+          "visionParMinute": {
+            "poids": 4,
+            "faible": 0,
+            "moyen": 0.851,
+            "excellent": 0.979
+          },
+          "objectifsParMinute": {
+            "poids": 12,
+            "faible": 103,
+            "moyen": 248,
+            "excellent": 381
+          },
+          "orParMinute": {
+            "poids": 11,
+            "faible": 286,
+            "moyen": 528,
+            "excellent": 607
+          },
+          "partDesKills": {
+            "poids": 4,
+            "faible": 0,
+            "moyen": 0.305,
+            "excellent": 0.35
+          },
+          "partDesDegats": {
+            "poids": 1,
+            "faible": 0.14,
+            "moyen": 0.24,
+            "excellent": 0.34
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.16,
+            "moyen": 0.22,
+            "excellent": 0.29
+          }
+        },
+        "poidsVictoire": 15
+      },
+      "ADC": {
+        "criteres": {
+          "kda": {
+            "poids": 25,
+            "faible": 0.714,
+            "moyen": 2.43,
+            "excellent": 3.3
+          },
+          "participationAuxKills": {
+            "poids": 1,
+            "faible": 0.219,
+            "moyen": 0.427,
+            "excellent": 0.626
+          },
+          "csParMinute": {
+            "poids": 14,
+            "faible": 3.24,
+            "moyen": 7.6,
+            "excellent": 8.74
+          },
+          "degatsParMinute": {
+            "poids": 12,
+            "faible": 442,
+            "moyen": 621,
+            "excellent": 1043
+          },
+          "visionParMinute": {
+            "poids": 7,
+            "faible": 0.285,
+            "moyen": 0.349,
+            "excellent": 0.902
+          },
+          "objectifsParMinute": {
+            "poids": 18,
+            "faible": 20,
+            "moyen": 121,
+            "excellent": 677
+          },
+          "orParMinute": {
+            "poids": 13,
+            "faible": 385,
+            "moyen": 491,
+            "excellent": 564
+          },
+          "partDesKills": {
+            "poids": 1,
+            "faible": 0.1,
+            "moyen": 0.22,
+            "excellent": 0.34
+          },
+          "partDesDegats": {
+            "poids": 1,
+            "faible": 0.16,
+            "moyen": 0.26,
+            "excellent": 0.36
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.17,
+            "moyen": 0.23,
+            "excellent": 0.3
+          }
+        },
+        "poidsVictoire": 7
+      },
+      "SUPPORT": {
+        "criteres": {
+          "kda": {
+            "poids": 23,
+            "faible": 1.24,
+            "moyen": 1.91,
+            "excellent": 4.86
+          },
+          "participationAuxKills": {
+            "poids": 10,
+            "faible": 0.332,
+            "moyen": 0.39,
+            "excellent": 0.667
+          },
+          "csParMinute": {
+            "poids": 0,
+            "faible": 5,
+            "moyen": 7,
+            "excellent": 9
+          },
+          "degatsParMinute": {
+            "poids": 11,
+            "faible": 159,
+            "moyen": 187,
+            "excellent": 1064
+          },
+          "visionParMinute": {
+            "poids": 21,
+            "faible": 0,
+            "moyen": 2,
+            "excellent": 2.91
+          },
+          "objectifsParMinute": {
+            "poids": 4,
+            "faible": 24,
+            "moyen": 29,
+            "excellent": 114
+          },
+          "orParMinute": {
+            "poids": 17,
+            "faible": 263,
+            "moyen": 335,
+            "excellent": 385
+          },
+          "partDesKills": {
+            "poids": 1,
+            "faible": 0.02,
+            "moyen": 0.08,
+            "excellent": 0.14
+          },
+          "partDesDegats": {
+            "poids": 1,
+            "faible": 0.042,
+            "moyen": 0.085,
+            "excellent": 0.169
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.07,
+            "moyen": 0.09,
+            "excellent": 0.118
+          }
+        },
+        "poidsVictoire": 12
+      },
+      "INCONNU": {
+        "criteres": {
+          "kda": {
+            "poids": 1,
+            "faible": 1.13,
+            "moyen": 1.53,
+            "excellent": 3.51
+          },
+          "participationAuxKills": {
+            "poids": 1,
+            "faible": 0.196,
+            "moyen": 0.435,
+            "excellent": 0.619
+          },
+          "csParMinute": {
+            "poids": 1,
+            "faible": 5.16,
+            "moyen": 6.13,
+            "excellent": 7.45
+          },
+          "degatsParMinute": {
+            "poids": 1,
+            "faible": 63,
+            "moyen": 605,
+            "excellent": 952
+          },
+          "visionParMinute": {
+            "poids": 1,
+            "faible": 0,
+            "moyen": 0.851,
+            "excellent": 0.979
+          },
+          "objectifsParMinute": {
+            "poids": 1,
+            "faible": 103,
+            "moyen": 248,
+            "excellent": 381
+          },
+          "orParMinute": {
+            "poids": 1,
+            "faible": 286,
+            "moyen": 528,
+            "excellent": 607
+          },
+          "partDesKills": {
+            "poids": 1,
+            "faible": 0,
+            "moyen": 0.305,
+            "excellent": 0.35
+          },
+          "partDesDegats": {
+            "poids": 1,
+            "faible": 0.14,
+            "moyen": 0.24,
+            "excellent": 0.34
+          },
+          "partDeLOr": {
+            "poids": 1,
+            "faible": 0.16,
+            "moyen": 0.22,
+            "excellent": 0.29
+          }
+        },
+        "poidsVictoire": 1
+      }
+    }
+  },
+  "lissage": {
+    "regle": "Faible <= Moyen x (1 - e) et Excellent >= Moyen x (1 + e) ; poids minimal de 1 sur 100 pour chaque critère (sauf le CS du support) et pour la victoire, arrondis à l entier ; références arrondies à 3 décimales (< 1), 2 (< 20) ou à l unité ; INCONNU : références du Mid lissé, tous les poids à 1 (non mesuré)",
+    "e": {
+      "TOP": 0.15,
+      "JUNGLE": 0.12,
+      "MID": 0.15,
+      "ADC": 0.15,
+      "SUPPORT": 0.15
+    }
+  },
+  "avantApprentissage": {
+    "lignes": 554,
+    "ecartMoyen": 13.770743202500874,
+    "games": 38,
+    "gamesDansLeMemeOrdre": 0,
+    "frequenceDuMemeOrdre": 0,
+    "frequenceDesPairesConcordantes": 0.8569739952718676
+  },
+  "avantTest": {
+    "lignes": 189,
+    "ecartMoyen": 14.58275028099592,
+    "games": 13,
+    "gamesDansLeMemeOrdre": 0,
+    "frequenceDuMemeOrdre": 0,
+    "frequenceDesPairesConcordantes": 0.8461538461538461
+  },
+  "apresApprentissage": {
+    "lignes": 554,
+    "ecartMoyen": 5.65505033722837,
+    "games": 38,
+    "gamesDansLeMemeOrdre": 1,
+    "frequenceDuMemeOrdre": 0.02631578947368421,
+    "frequenceDesPairesConcordantes": 0.9119385342789598
+  },
+  "apresTest": {
+    "lignes": 189,
+    "ecartMoyen": 7.426736693554491,
+    "games": 13,
+    "gamesDansLeMemeOrdre": 0,
+    "frequenceDuMemeOrdre": 0,
+    "frequenceDesPairesConcordantes": 0.905982905982906
+  },
+  "ajusteApprentissage": {
+    "lignes": 554,
+    "ecartMoyen": 5.101314831757953,
+    "games": 38,
+    "gamesDansLeMemeOrdre": 1,
+    "frequenceDuMemeOrdre": 0.02631578947368421,
+    "frequenceDesPairesConcordantes": 0.9148936170212766
+  },
+  "ajusteTest": {
+    "lignes": 189,
+    "ecartMoyen": 7.117133566528204,
+    "games": 13,
+    "gamesDansLeMemeOrdre": 0,
+    "frequenceDuMemeOrdre": 0,
+    "frequenceDesPairesConcordantes": 0.9094017094017094
+  }
+}
