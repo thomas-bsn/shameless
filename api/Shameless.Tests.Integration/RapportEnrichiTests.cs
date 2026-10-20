@@ -64,4 +64,19 @@ public class RapportEnrichiTests(ApiFactory factory) : IntegrationTest(factory)
         Assert.NotEqual(mid.GetProperty("performance").GetProperty("note").GetInt32(),
                         support.GetProperty("performance").GetProperty("note").GetInt32());
     }
+
+    [Fact]
+    public async Task La_Serie_donne_le_role_joue_de_chaque_joueur_dans_la_composition_de_sa_game()
+    {
+        var client = Factory.CreateSignedInClient();
+        var serie = await CreateSerieAsync(client);
+        await EnvoyerAsync(client, serie, await CodeCompanionAsync(client, serie.SeriesId), 1, "MIDDLE");
+
+        var lue = await ReadJsonAsync(await client.GetAsync($"/series/{serie.SeriesId}", Ct));
+
+        var roles = lue.GetProperty("games")[0].GetProperty("teamA").EnumerateArray()
+            .ToDictionary(p => p.GetProperty("playerId").GetInt32(), p => p.GetProperty("role").GetString());
+        Assert.Equal("Mid", roles[serie.TeamA[0]]);
+        Assert.Equal("Support", roles[serie.TeamA[1]]);
+    }
 }

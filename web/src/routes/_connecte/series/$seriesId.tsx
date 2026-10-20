@@ -7,7 +7,7 @@ import { TeamCard } from "@/components/team-card";
 import { Badge } from "@/components/ui/badge";
 import { GameLinkCard } from "@/components/game-link-card";
 import { Button } from "@/components/ui/button";
-import { outcomeLabel, sideLabel } from "@/lib/series";
+import { avecRolesJoues, outcomeLabel, sideLabel } from "@/lib/series";
 import { sideTextClass } from "@/lib/tier-styles";
 import { cn } from "@/lib/utils";
 
@@ -69,8 +69,8 @@ function SerieView({ series }: { series: Series }) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <TeamCard equipe="A" players={series.teamA} />
-        <TeamCard equipe="B" players={series.teamB} />
+        <TeamCard equipe="A" players={avecRolesJoues(series.teamA, series.games, "A")} />
+        <TeamCard equipe="B" players={avecRolesJoues(series.teamB, series.games, "B")} />
       </div>
 
       <GamesList series={series} />
