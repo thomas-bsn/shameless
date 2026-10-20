@@ -26,7 +26,7 @@ function Pastille({ className, children }: { className: string; children: ReactN
 /** Une mesure : son icône, sa valeur en grand et son nom en petit. */
 function Mesure({ nom, valeur, icone }: { nom: string; valeur: string; icone: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
+    <div className="flex min-w-0 flex-col items-center gap-1 text-center">
       {icone}
       <dl className="flex flex-col-reverse items-center">
         <dt className="text-xs text-muted-foreground">{nom}</dt>
@@ -160,7 +160,7 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-8 md:grid-cols-3">
-        <Section titre="Vision" className="grid-cols-3">
+        <Section titre="Vision" className="grid-cols-[repeat(auto-fit,minmax(5rem,1fr))]">
           <Mesure
             nom="Balises posées"
             valeur={statLabel(s?.wardsPlaced ?? null)}
@@ -189,7 +189,7 @@ export function DetailsDuJoueur({ participant, side }: { participant: Participan
             }
           />
         </Section>
-        <Section titre="Par minute" className="grid-cols-4">
+        <Section titre="Par minute" className="grid-cols-[repeat(auto-fit,minmax(5rem,1fr))]">
           <Mesure
             nom="CS par minute"
             valeur={nombreLabel(d?.csParMinute ?? null, 1)}

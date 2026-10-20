@@ -297,7 +297,7 @@ function PetitGraphe({ game, chronologie, id, tMax }: { game: Recap; chronologie
           <h3 className="text-sm font-semibold">{titre}</h3>
           <PastilleDeNature nature={nature} />
         </div>
-        <div className="flex gap-4 font-mono text-xl leading-tight font-bold tabular-nums">
+        <div className="flex flex-wrap gap-x-4 font-mono text-xl leading-tight font-bold tabular-nums">
           {traces.map((t) => (
             <span key={t.cote} className={TEXTE[t.cote]}>
               {t.points.length > 0 ? nombreLabel(t.points[t.points.length - 1].v, m.moyenne ? 1 : 0) : "–"}

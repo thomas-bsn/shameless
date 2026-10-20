@@ -91,20 +91,20 @@ export function TableauEquipe({
         <CardTitle className={cn("text-sm", sideTextClass(side))}>{label}</CardTitle>
         <span className="text-sm font-medium text-muted-foreground">{resume}</span>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table aria-label={label} className="w-full min-w-[640px] border-separate border-spacing-y-1 text-sm">
+      <CardContent className="px-2 sm:px-6">
+        <table aria-label={label} className="w-full border-separate border-spacing-y-1 text-xs sm:text-sm">
           <thead className="text-xs text-muted-foreground">
             <tr>
               {colonneAvant && (
-                <th scope="col" className="px-2 text-left font-medium">
+                <th scope="col" className="px-1 text-left font-medium sm:px-2">
                   {colonneAvant}
                 </th>
               )}
-              <th scope="col" className="px-2 text-left font-medium">
+              <th scope="col" className="px-1 text-left font-medium sm:px-2">
                 Joueur
               </th>
               {colonnes.map((c) => (
-                <th key={c.titre} scope="col" className={cn("px-2 font-medium", c.droite ? "text-right" : "text-left")}>
+                <th key={c.titre} scope="col" className={cn("px-1 font-medium sm:px-2", c.droite ? "text-right" : "text-left")}>
                   {c.titre}
                 </th>
               ))}
@@ -120,9 +120,9 @@ export function TableauEquipe({
                   aria-label={p.prenom}
                   className={cn("[&>td]:bg-muted/30 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg", className)}
                 >
-                  {colonneAvant && <td className="px-2 font-medium">{avant}</td>}
-                  <td className="px-2 py-2">
-                    <div className="flex items-center gap-3">
+                  {colonneAvant && <td className="px-1 font-medium sm:px-2">{avant}</td>}
+                  <td className="px-1 py-2 sm:px-2">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <ChampionCarre championId={p.championId} nom={champion?.name} image={champion?.imageUrl} niveau={p.stats?.champLevel} side={side} />
                       <div className="flex min-w-0 flex-col">
                         <span className="flex flex-wrap items-center gap-1 font-medium">
@@ -137,7 +137,7 @@ export function TableauEquipe({
                     </div>
                   </td>
                   {cellules.map((cellule, i) => (
-                    <td key={colonnes[i]!.titre} className={cn("px-2", colonnes[i]!.droite && "text-right")}>
+                    <td key={colonnes[i]!.titre} className={cn("px-1 sm:px-2", colonnes[i]!.droite && "text-right")}>
                       {cellule}
                     </td>
                   ))}
