@@ -1,7 +1,7 @@
 name: CI
 
 # Un seul workflow : les tests, puis (push sur main ou lancement manuel) la version, son tag git et la
-# publication des quatre images Shameless (api, migrate, proxy, wizard) dans GHCR.
+# publication des quatre images Shameless (api, migrate, web, wizard) dans GHCR.
 #
 # 1. Automatique : à chaque push sur main dont tous les jobs de test sont verts, calcule la version
 #    suivante (+patch par défaut ; +minor / +major si la PR mergée porte le label ou « [minor] » /

@@ -20,7 +20,7 @@ verifier "il sérialise les publications sans annuler" bash -c "grep -q 'group: 
 jobs_en_ecriture=$(awk '/^  [a-z0-9-]+:$/ {job=$1} /contents: write/ {print job}' "$WF" | tr -d ':' | sort | tr '\n' ' ')
 verifier "contents: write seulement dans version et publier-companion" test "$jobs_en_ecriture" = "publier-companion version "
 verifier "il publie sur ghcr.io avec GITHUB_TOKEN et packages: write" bash -c "grep -q 'ghcr.io' $WF && grep -q 'secrets.GITHUB_TOKEN' $WF && grep -q 'packages: write' $WF"
-for img in api migrate proxy wizard; do
+for img in api migrate web wizard; do
   verifier "la matrice contient l'image $img" grep -Eq "name:\s*$img\s*$" "$WF"
 done
 verifier "le tag latest est posé (versions stables)" grep -q 'value=latest' "$WF"
