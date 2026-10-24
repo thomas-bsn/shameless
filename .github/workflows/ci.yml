@@ -282,7 +282,7 @@ jobs:
           - name: migrate
             context: api
             target: migrate
-          - name: proxy
+          - name: web
             context: deploy/caddy
             build-contexts: web=./web
           - name: wizard

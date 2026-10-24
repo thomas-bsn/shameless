@@ -127,7 +127,7 @@ services:
       - api-clips:/clips
 
   proxy:
-    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-proxy:${SHAMELESS_VERSION:-latest}
+    image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-web:${SHAMELESS_VERSION:-latest}
     restart: unless-stopped
     # Aucun `ports:` ici : Forgeyard le refuse (il publie le service par x-forgeyard). Les ports locaux
     # viennent de compose.override.yaml (clone) ou de compose.ports.yaml (images publiées).

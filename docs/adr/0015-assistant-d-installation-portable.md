@@ -62,7 +62,7 @@ son hébergeur ou dans son infrastructure.
   l'arrêt après installation limitent la fenêtre d'accès.
 - Le mode Export reste indépendant des API propriétaires, mais chaque PaaS peut demander
   une adaptation de la configuration Compose ou une saisie manuelle de ses variables.
-- La CI Shameless doit construire et publier les images `api`, `migrate` et `proxy` dans
+- La CI Shameless doit construire et publier les images `api`, `migrate` et `web` dans
   GHCR. Les images ne contiennent aucun secret.
 - Le compose de déploiement utilise les images publiées au lieu de construire les images
   depuis les sources au démarrage.

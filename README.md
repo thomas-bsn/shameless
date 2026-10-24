@@ -40,7 +40,7 @@ docker compose -f compose.yaml -f compose.ports.yaml up -d
 docker compose -f compose.yaml -f compose.ports.yaml logs wizard
 ```
 
-Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,proxy,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). `compose.ports.yaml` ne fait que publier le proxy sur la machine.
+Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,web,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). `compose.ports.yaml` ne fait que publier le service proxy sur la machine.
 
 ### Avec Forgeyard
 
