@@ -45,7 +45,7 @@ et l'API en `restart: unless-stopped` (un plantage relance l'entrypoint, qui rel
 `instance.env`) ; le proxy surveille le fichier et recharge Caddy à chaud ; la base n'en lit que
 le mot de passe, qui ne change jamais. Une API déjà démarrée avec l'ancienne saisie (échec
 signalé par simple dépassement du délai) ne la relit pas : l'écran d'échec indique alors
-`docker compose restart migrate api proxy`.
+`docker compose restart migrate api web`.
 
 **Valeurs calculées et générées.** Le callback Discord est
 `<adresse publique>/api/auth/discord/callback`, `Auth__AllowedReturnOrigins` est l'origine

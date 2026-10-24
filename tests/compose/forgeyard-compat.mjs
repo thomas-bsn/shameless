@@ -51,7 +51,7 @@ verifie("fichier : seulement services et volumes à la racine", autresRacines.le
 // `docker compose config` retire les extensions `x-` : on lit donc le fichier brut pour x-forgeyard.
 const brut = readFileSync(join(racine, "compose.yaml"), "utf8");
 const bloc = (service) => new RegExp(`^  ${service}:\\n(?:(?!^  \\S).*\\n?)*`, "m").exec(brut)?.[0] ?? "";
-verifie("un seul service exposé : le proxy, sur le port 80", (brut.match(/expose:\s*\{/g) ?? []).length === 1 && /x-forgeyard:\s*\n\s*expose: \{ port: 80 \}/.test(bloc("proxy")));
+verifie("un seul service exposé : web, sur le port 80", (brut.match(/expose:\s*\{/g) ?? []).length === 1 && /x-forgeyard:\s*\n\s*expose: \{ port: 80 \}/.test(bloc("web")));
 verifie("la base est sauvegardée par pg_dump", /x-forgeyard:\s*\n\s*backup: \{ type: postgres \}/.test(bloc("postgres")));
 verifie("la base déclare POSTGRES_USER et POSTGRES_DB (lus par pg_dump)", projet.services.postgres.environment?.POSTGRES_USER && projet.services.postgres.environment?.POSTGRES_DB);
 
@@ -62,7 +62,7 @@ verifie("le service wizard existe et ne redémarre pas", projet.services.wizard?
 
 // Les ports locaux viennent d'ailleurs, et Compose les publie bien.
 const ports = JSON.parse(execFileSync("docker", ["compose", "--env-file", "/dev/null", "-f", join(racine, "compose.yaml"), "-f", join(racine, "compose.ports.yaml"), "config", "--format", "json"], { encoding: "utf8" }));
-verifie("compose.ports.yaml publie le proxy (8080:80, 8443:443)", ports.services.proxy.ports.map((p) => `${p.published}:${p.target}`).join() === "8080:80,8443:443");
+verifie("compose.ports.yaml publie web (8080:80, 8443:443)", ports.services.web.ports.map((p) => `${p.published}:${p.target}`).join() === "8080:80,8443:443");
 
 if (process.env.FORGEYARD_DIR) {
   // Le vrai analyseur de Forgeyard, avec un test temporaire ajouté à son paquet puis retiré.

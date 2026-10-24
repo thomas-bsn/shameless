@@ -434,7 +434,7 @@ export function WizardApp({ intervalleMs = 1500 }: { intervalleMs?: number }) {
                   <p>
                     Cliquez sur « Réessayer », corrigez la saisie puis installez à nouveau : la configuration corrigée est relue automatiquement par la base,
                     les migrations, l'API et le proxy, sans commande à lancer. Si l'installation reste bloquée malgré tout, exécutez{" "}
-                    <code>docker compose restart migrate api proxy</code> sur votre serveur.
+                    <code>docker compose restart migrate api web</code> sur votre serveur.
                   </p>
                 </AlertDescription>
               </Alert>

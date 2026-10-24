@@ -89,7 +89,7 @@ dc down -v --remove-orphans >/dev/null 2>&1 || true
 # --- A. Un code expiré est refusé -------------------------------------------------------------
 echo "== Code d'accès expiré"
 JAR_E="$TMP/expired.jar"
-WIZARD_CODE_TTL_SECONDS=2 dc up -d wizard proxy >/dev/null
+WIZARD_CODE_TTL_SECONDS=2 dc up -d wizard web >/dev/null
 wait_for 60 "le wizard affiche son code dans les logs" has_code
 EXPIRED=$(code_from_logs)
 sleep 4
@@ -271,9 +271,9 @@ ok "l'API a pris en compte la configuration corrigée (fuseau Europe/Brussels), 
 wait_for 60 "le wizard s'arrête une fois l'installation réussie" wizard_stopped
 [ "$(docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' "$(dc ps -a -q migrate)")" = "on-failure" ] || fail "migrate ne se relance pas en cas d'échec"
 ok "migrate est relancée en cas d'échec (elle relit instance.env à chaque démarrage)"
-proxy_recharge() { dc logs --no-color proxy 2>&1 | grep -q "instance.env a changé"; }
-wait_for 30 "le proxy a relu instance.env modifié par la correction" proxy_recharge
-! dc logs --no-color proxy 2>&1 | grep -q "Rechargement impossible" || fail "le proxy n'a pas pu recharger sa configuration"
+web_recharge() { dc logs --no-color web 2>&1 | grep -q "instance.env a changé"; }
+wait_for 30 "le service web a relu instance.env modifié par la correction" web_recharge
+! dc logs --no-color web 2>&1 | grep -q "Rechargement impossible" || fail "le service web n'a pas pu recharger sa configuration"
 
 echo "== Une API qui plante repart avec la configuration en vigueur"
 dc run --rm --no-deps -T --entrypoint sh wizard -c "sed -i \"s|^SHAMELESS_TIMEZONE=.*|SHAMELESS_TIMEZONE='Europe/Rome'|\" /instance/instance.env" >/dev/null 2>&1 || fail "modification d'instance.env impossible"

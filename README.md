@@ -19,9 +19,9 @@ Le cookie de session est toujours marqué `Secure`. Chrome et Firefox l'accepten
 
 Le Compose lance tous les services d'un coup, sans `.env` :
 
-1. **wizard** : un serveur temporaire, joint via le proxy. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée. Si le démarrage échoue, l'écran d'échec permet de corriger la saisie et de réessayer : la configuration corrigée est relue automatiquement par les autres services (sinon : `docker compose restart migrate api proxy`) ;
+1. **wizard** : un serveur temporaire, joint via le service web. Il est protégé par un code (16 caractères, à usage unique, valable 30 minutes) affiché dans ses logs. Il écrit la configuration dans le volume nommé `instance-config` (`instance.env`, puis le marqueur `ready`), attend que l'API réponde, puis s'arrête. Il ne se relance jamais sur une Instance configurée. Si le démarrage échoue, l'écran d'échec permet de corriger la saisie et de réessayer : la configuration corrigée est relue automatiquement par les autres services (sinon : `docker compose restart migrate api web`) ;
 2. **postgres**, **migrate**, **api** : attendent le marqueur `ready`, puis démarrent dans l'ordre (base, migrations, API). Les migrations ne s'appliquent jamais au démarrage de l'API, seulement via le service `migrate` ;
-3. **proxy** : Caddy ne sert que le wizard (HTTP sur le port 80, HTTPS auto-signé sur le port 443) tant que `ready` n'existe pas, puis redémarre avec l'adresse publique saisie (HTTPS automatique pour un domaine), `/api` vers l'API et le front sur tout le reste.
+3. **web** : Caddy ne sert que le wizard (HTTP sur le port 80, HTTPS auto-signé sur le port 443) tant que `ready` n'existe pas, puis redémarre avec l'adresse publique saisie (HTTPS automatique pour un domaine), `/api` vers l'API et le front sur tout le reste.
 
 Si le code a expiré ou si trop d'essais ont échoué : `docker compose restart wizard` en fait émettre un nouveau. Si le démarrage échoue, le wizard l'explique (`docker compose logs migrate api` donne la cause) et permet de corriger la saisie.
 
@@ -40,7 +40,7 @@ docker compose -f compose.yaml -f compose.ports.yaml up -d
 docker compose -f compose.yaml -f compose.ports.yaml logs wizard
 ```
 
-Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,web,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). `compose.ports.yaml` ne fait que publier le service proxy sur la machine.
+Le compose tire `ghcr.io/thomas-bsn/shameless-{api,migrate,web,wizard}` (`-f compose.yaml` évite l'override de dev, qui construit). `compose.ports.yaml` ne fait que publier le service web sur la machine.
 
 ### Avec Forgeyard
 

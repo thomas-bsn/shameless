@@ -1,5 +1,5 @@
 # Surcharge de dev : chargée automatiquement par `docker compose` depuis un clone du dépôt.
-# Elle construit les images depuis les sources au lieu de les tirer de GHCR, et publie le service proxy
+# Elle construit les images depuis les sources au lieu de les tirer de GHCR, et publie le service web
 # (compose.yaml n'a pas de `ports`, pour rester valide dans Forgeyard).
 # Pour utiliser les images publiées, sans build :
 #   docker compose -f compose.yaml -f compose.ports.yaml up -d
@@ -18,7 +18,7 @@ services:
       context: ./api
       target: api
 
-  proxy:
+  web:
     image: shameless-web:local
     ports:
       - "${SHAMELESS_HTTP_PORT:-8080}:80"

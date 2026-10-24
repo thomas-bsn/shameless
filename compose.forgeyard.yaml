@@ -6,13 +6,13 @@
 #   docker compose logs wizard      # code d'accès, puis ouvrir http://localhost:8080
 #
 # Premier démarrage : postgres, migrate et api attendent que le wizard écrive la configuration
-# dans le volume instance-config (marqueur ready) ; le proxy ne sert que le wizard jusque-là.
+# dans le volume instance-config (marqueur ready) ; le service web ne sert que le wizard jusque-là.
 # Ensuite le wizard s'arrête et ne se relance plus : l'Instance démarre seule, à chaque `up`.
 #
 # Ce fichier est la base de tout : le même, sans modification, se lance à la main et se colle dans
 # Forgeyard (qui ignore `x-forgeyard` ailleurs). Il se limite donc à ce que Forgeyard accepte : pas de
 # `ports`, `user`, `build`, `env_file`... ; tests/compose/forgeyard-compat.mjs le vérifie.
-# En local, publier le proxy : `docker compose -f compose.yaml -f compose.ports.yaml up -d`
+# En local, publier le service web : `docker compose -f compose.yaml -f compose.ports.yaml up -d`
 # (depuis un clone, compose.override.yaml le fait déjà).
 
 name: shameless
@@ -126,7 +126,7 @@ services:
       - api-keys:/keys
       - api-clips:/clips
 
-  proxy:
+  web:
     image: ${SHAMELESS_IMAGE_PREFIX:-ghcr.io/thomas-bsn/shameless}-web:${SHAMELESS_VERSION:-latest}
     restart: unless-stopped
     # Aucun `ports:` ici : Forgeyard le refuse (il publie le service par x-forgeyard). Les ports locaux
